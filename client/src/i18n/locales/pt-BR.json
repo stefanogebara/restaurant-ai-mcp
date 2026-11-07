@@ -2103,6 +2103,8 @@
     "language": "Idioma",
     "recentCalls": "Chamadas Recentes",
     "callsInPeriod": "Chamadas no período selecionado",
+    "timesInRestaurant": "Horários em {{city}}",
+    "timesOnDevice": "Horários no fuso do seu dispositivo",
     "statsUnavailable": "Os números das chamadas não estão disponíveis. A lista de conversas pode estar atualizada.",
     "noCallsForFilters": "Nenhuma chamada corresponde aos filtros",
     "noCallsForFiltersHint": "Tente outro período ou remova um filtro.",

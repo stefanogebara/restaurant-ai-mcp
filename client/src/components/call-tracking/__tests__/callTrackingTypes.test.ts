@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getSentimentLabelKey, formatDate, formatConfiguredDate } from '../callTrackingTypes';
+import { getSentimentLabelKey, formatDate, formatCallTime, formatCallExportDate, formatConfiguredDate, isValidTimeZone } from '../callTrackingTypes';
 
 describe('getSentimentLabelKey', () => {
   it('maps known sentiments to their callTracking.* key', () => {
@@ -28,6 +28,22 @@ describe('formatDate', () => {
 
   it('returns an empty string for an unparseable date (not "Invalid Date")', () => {
     expect(formatDate('not-a-date')).toBe('');
+  });
+
+  it('uses restaurant time in São Paulo even when the browser is in Madrid', () => {
+    const timestamp = '2026-11-07T18:10:17Z';
+    expect(formatDate(timestamp, 'pt-BR', 'America/Sao_Paulo')).toContain('15:10');
+    expect(formatCallTime(timestamp, 'pt-BR', 'America/Sao_Paulo')).toBe('15:10');
+    expect(formatCallTime(timestamp, 'pt-BR', 'Europe/Madrid')).toBe('19:10');
+    expect(formatCallExportDate(timestamp, 'pt-BR', 'America/Sao_Paulo')).toContain('2026');
+    expect(formatCallExportDate(timestamp, 'pt-BR', 'America/Sao_Paulo')).toContain('15:10');
+  });
+
+  it('handles invalid timestamps and time zones without a broken date', () => {
+    expect(formatCallTime('garbage', 'pt-BR', 'America/Sao_Paulo')).toBe('');
+    expect(formatCallTime('2026-11-07T18:10:17Z', 'pt-BR', 'invalid-zone')).not.toBe('');
+    expect(isValidTimeZone('invalid-zone')).toBe(false);
+    expect(isValidTimeZone('America/Sao_Paulo')).toBe(true);
   });
 });
 

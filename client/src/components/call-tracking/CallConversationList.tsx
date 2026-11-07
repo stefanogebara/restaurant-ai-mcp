@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
-import { type Conversation, type CallFilter, getOutcomeLabelKey, getOutcomePillColor } from './callTrackingTypes';
+import { type Conversation, type CallFilter, formatCallTime, getOutcomeLabelKey, getOutcomePillColor } from './callTrackingTypes';
 
 function callIconStyle(outcome?: string): string {
   switch (outcome) {
@@ -18,6 +18,8 @@ interface Props {
   onOutcomeChange: (outcome: string) => void;
   onConversationClick: (id: string) => void;
   onPhoneClick?: (phone: string) => void;
+  timeZone?: string;
+  timeZoneLabel: string;
 }
 
 export default function CallConversationList({
@@ -26,8 +28,10 @@ export default function CallConversationList({
   onOutcomeChange,
   onConversationClick,
   onPhoneClick,
+  timeZone,
+  timeZoneLabel,
 }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const OUTCOME_TABS = [
     { value: 'all',                  label: t('callTracking.outcomeAll') },
@@ -39,7 +43,10 @@ export default function CallConversationList({
     <div className="overflow-hidden">
       {/* Header + tabs */}
       <div className="flex flex-col items-start gap-3 py-5 border-b border-glass-border-dark sm:flex-row sm:items-center sm:justify-between">
-        <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('callTracking.callsInPeriod')}</span>
+        <div>
+          <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('callTracking.callsInPeriod')}</span>
+          <p className="text-xs text-muted-stone mt-1">{timeZoneLabel}</p>
+        </div>
         <div className="flex flex-wrap gap-0">
           {OUTCOME_TABS.map((tab) => (
             <button
@@ -73,10 +80,7 @@ export default function CallConversationList({
           {conversations.map((conv) => {
             // started_at is typed string but the payload is untrusted — an
             // invalid/missing value would otherwise render "Invalid Date".
-            const startedDate = conv.started_at ? new Date(conv.started_at) : null;
-            const startTime = startedDate && !Number.isNaN(startedDate.getTime())
-              ? startedDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
-              : '';
+            const startTime = formatCallTime(conv.started_at, i18n.language, timeZone);
             const duration = conv.duration_seconds
               ? `${Math.floor(conv.duration_seconds / 60)}:${String(conv.duration_seconds % 60).padStart(2, '0')}`
               : t('common.live', 'Live');

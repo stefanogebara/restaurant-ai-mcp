@@ -90,15 +90,51 @@ export interface CallFilter {
 
 // ─── Helper functions ──────────────────────────────────────────────────────────
 
-export function formatDate(dateString: string | null | undefined): string {
+export function isValidTimeZone(timeZone: string | null | undefined): timeZone is string {
+  if (!timeZone) return false;
+  try {
+    new Intl.DateTimeFormat(undefined, { timeZone });
+    return true;
+  } catch (error) {
+    if (error instanceof RangeError) return false;
+    throw error;
+  }
+}
+
+function formatCallPart(
+  dateString: string | null | undefined,
+  locale: string | undefined,
+  timeZone: string | undefined,
+  options: Intl.DateTimeFormatOptions,
+): string {
   if (!dateString) return '';
   const d = new Date(dateString);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleString(undefined, {
+  try {
+    return d.toLocaleString(locale, { ...options, timeZone });
+  } catch (error) {
+    // A stale or invalid restaurant timezone must not break the Calls page.
+    if (!(error instanceof RangeError)) throw error;
+    return d.toLocaleString(locale, options);
+  }
+}
+
+export function formatDate(dateString: string | null | undefined, locale?: string, timeZone?: string): string {
+  return formatCallPart(dateString, locale, timeZone, {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
+  });
+}
+
+export function formatCallTime(dateString: string | null | undefined, locale?: string, timeZone?: string): string {
+  return formatCallPart(dateString, locale, timeZone, { hour: '2-digit', minute: '2-digit' });
+}
+
+export function formatCallExportDate(dateString: string | null | undefined, locale?: string, timeZone?: string): string {
+  return formatCallPart(dateString, locale, timeZone, {
+    year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
   });
 }
 
