@@ -387,6 +387,20 @@ describe('Shared voice agent routing', () => {
     expect(res.status).toHaveBeenCalledWith(403);
   });
 
+  test('rejects the shared called number without an agent ID when using the legacy token', async () => {
+    const res = mockRes();
+    await handler(bearerReq({ body: { action: 'get_current_datetime' }, headers: { 'x-called-number': called } }), res);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(mockGetDateTime).not.toHaveBeenCalled();
+  });
+
+  test('rejects the shared phone query without an agent ID even with a valid signature', async () => {
+    const res = mockRes();
+    await handler(authenticatedReq({ body: { action: 'get_current_datetime' }, query: { phone: called } }), res);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(mockGetDateTime).not.toHaveBeenCalled();
+  });
+
   test('rejects a valid signature without the shared tool secret', async () => {
     const res = mockRes();
     await handler(authenticatedReq({ body: { action: 'get_current_datetime' }, headers: { 'x-agent-id': sharedAgent } }), res);

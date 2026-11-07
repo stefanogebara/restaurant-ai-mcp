@@ -171,8 +171,15 @@ module.exports = async (req, res) => {
   // The platform-level legacy token cannot operate the shared phone agent.
   // It has no conversation/tenant binding and would let model-authored IDs route calls.
   const claimedAgentIds = [req.headers['x-agent-id'], req.query?.agent_id, req.body?.agent_id];
-  if (process.env.ELEVENLABS_SHARED_AGENT_ID &&
-      claimedAgentIds.includes(process.env.ELEVENLABS_SHARED_AGENT_ID) && !sharedAuthenticated) {
+  const sharedPhone = process.env.ELEVENLABS_SHARED_PHONE;
+  // The old platform token must not reach the shared line by omitting agent_id.
+  // These are the same phone hints used by the legacy restaurant lookup below.
+  const calledPhoneHints = [req.headers['x-called-number'], req.query?.phone, req.query?.called_phone, req.body?.called_phone];
+  if (!req.headers['x-called-number'] && !req.query?.phone) calledPhoneHints.push(req.body?.phone);
+  const claimsSharedAgent = process.env.ELEVENLABS_SHARED_AGENT_ID &&
+    claimedAgentIds.includes(process.env.ELEVENLABS_SHARED_AGENT_ID);
+  const claimsSharedLine = sharedPhone && calledPhoneHints.includes(sharedPhone);
+  if ((claimsSharedAgent || claimsSharedLine) && !sharedAuthenticated) {
     return res.status(403).json({ error: 'Shared agent requires scoped tool authentication' });
   }
 
