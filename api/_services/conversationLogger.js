@@ -278,6 +278,14 @@ async function ingestCompletedConversation(provider, { restaurantId } = {}) {
     : [];
   const duration = Number(provider.metadata?.call_duration_secs);
   const now = new Date().toISOString();
+  // ElevenLabs already scores many completed calls. Use its result before
+  // spending another LLM call, and keep the language actually heard on the
+  // call instead of the initial English placeholder.
+  const providerSentiment = provider.analysis?.sentiment_analysis?.overall_label;
+  const sentiment = ['positive', 'neutral', 'negative'].includes(providerSentiment)
+    ? providerSentiment : null;
+  const providerLanguage = typeof provider.metadata?.main_language === 'string'
+    ? provider.metadata.main_language.trim().toLowerCase().split('-')[0] : null;
   const endedAt = providerStartedAt && Number.isFinite(duration) && duration >= 0
     ? new Date((start + duration) * 1000).toISOString() : now;
   const update = {
@@ -289,14 +297,21 @@ async function ingestCompletedConversation(provider, { restaurantId } = {}) {
     agent_id: agentId,
     restaurant_info_id: restaurantId,
   };
+  if (providerLanguage && /^[a-z]{2}$/.test(providerLanguage)) {
+    update.language = providerLanguage;
+  }
+  if (sentiment) {
+    update.customer_sentiment = sentiment;
+    update.post_call_analysis_done_at = now;
+  }
   if (providerStartedAt) update.started_at = providerStartedAt;
   if (!existing.caller_phone && externalNumber) update.caller_phone = externalNumber;
   if (!existing.called_phone && agentNumber) update.called_phone = agentNumber;
   if (Array.isArray(provider.transcript)) update.transcript = transcript;
-  if (transcript.length) {
+  if (transcript.length && !sentiment) {
     // Give the inline analysis a chance to finish before the hourly retry job.
     update.post_call_analysis_next_at = new Date(Date.now() + 5 * 60_000).toISOString();
-  } else {
+  } else if (!sentiment) {
     update.post_call_analysis_done_at = now;
   }
   if (Number.isFinite(duration) && duration >= 0) update.duration_seconds = Math.round(duration);
@@ -312,12 +327,11 @@ async function ingestCompletedConversation(provider, { restaurantId } = {}) {
 
   // Completion is durable before optional enrichment starts. The webhook must
   // acknowledge a completed call even if the LLM or memory service stalls.
-  // Limitation: elevenlabs_fetched_at suppresses duplicate delivery, so work
-  // that misses this deadline is best-effort and will not be retried. A durable
-  // enrichment cursor would require its own state and idempotent memory writes.
+  // Missing sentiment has a bounded hourly retry. Guest-memory extraction is
+  // still best-effort until each generated fact has an idempotent source key.
   let acceptingEnrichment = true;
   const tasks = [];
-  if (transcript.length) {
+  if (transcript.length && !sentiment) {
     tasks.push(analyzeTranscript(transcript).then(async analysis => {
       if (!acceptingEnrichment) return;
       const enrichment = {};

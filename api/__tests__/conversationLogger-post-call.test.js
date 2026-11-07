@@ -48,6 +48,21 @@ test('finishes an information-only call and stores only transcript fields', asyn
   expect(mockExtract).toHaveBeenCalledWith('conv-1');
 });
 
+test('persists provider language and sentiment without a second LLM call', async () => {
+  await ingestCompletedConversation({
+    conversation_id: 'conv-1', agent_id: 'agent-1', status: 'done',
+    transcript: [{ role: 'user', message: 'Tem mesa amanhã?' }],
+    metadata: { main_language: 'pt-BR' },
+    analysis: { sentiment_analysis: { overall_label: 'neutral' }, transcript_summary: 'Asked about a table' },
+  });
+  expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
+    language: 'pt', customer_sentiment: 'neutral',
+    post_call_analysis_done_at: expect.any(String),
+  }));
+  expect(mockCreateAnalysis).not.toHaveBeenCalled();
+  expect(mockExtract).toHaveBeenCalledWith('conv-1');
+});
+
 test('preserves a reservation outcome and skips a duplicate delivery', async () => {
   mockRow.reservation_id = 'booking-1';
   await ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'agent-1', status: 'done' });
