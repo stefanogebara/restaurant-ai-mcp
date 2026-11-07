@@ -69,16 +69,18 @@ export function DotNumber({
 export function Canvas({
   children,
   padding = 30,
+  fontFamily = font,
 }: {
   children: ReactNode;
   padding?: number;
+  fontFamily?: string;
 }) {
   return (
     <AbsoluteFill
       style={{
         background: "#eaece5",
         color: INK,
-        fontFamily: font,
+        fontFamily,
         padding,
         boxSizing: "border-box",
         overflow: "hidden",

@@ -1,14 +1,14 @@
 import { Canvas } from "./ScenePrimitives";
 import { reservationPalette } from "./reservationPalette";
 
-const { ink, muted, rule, action, canvas, detail: detailSurface, selection: selectionRgb } = reservationPalette;
+const { ink, muted, rule, status, canvas, detail: detailSurface, selection: selectionRgb } = reservationPalette;
 
 function ReservationRow({ top, time, name, party, emphasis = 0 }: {
   top: number; time: string; name: string; party: string; emphasis?: number;
 }) {
   return (
     <div style={{ position: "absolute", left: 22, right: 22, top, height: 56, borderTop: `1px solid ${rule}`, display: "flex", alignItems: "center", background: emphasis ? `rgba(${selectionRgb},${emphasis * 0.8})` : "transparent", color: ink }}>
-      {emphasis > 0 && <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: action, opacity: emphasis }} />}
+      {emphasis > 0 && <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: ink, opacity: emphasis }} />}
       <span style={{ width: 71, paddingLeft: emphasis ? 12 : 7, fontSize: 18, fontVariantNumeric: "tabular-nums" }}>{time}</span>
       <span style={{ flex: 1, fontSize: 18, letterSpacing: "-.35px" }}>{name}</span>
       <span style={{ paddingRight: 8, color: muted, fontSize: 13 }}>{party} pessoas</span>
@@ -22,7 +22,7 @@ export function CompactReservation({ arrival, selection, placeholder, detail }: 
 }) {
   const bookingReveal = Math.max(0, Math.min(1, (selection - 0.58) / 0.42));
   return (
-    <Canvas padding={0}>
+    <Canvas padding={0} fontFamily='"DM Sans", "Inter", sans-serif'>
       <div style={{ position: "absolute", inset: 0, background: canvas }} />
       <div style={{ position: "absolute", left: 22, right: 22, top: 17, display: "flex", justifyContent: "space-between", alignItems: "baseline", color: ink }}>
         <span style={{ fontSize: 19, letterSpacing: "-.4px" }}>Casa Tuim</span>
@@ -35,7 +35,7 @@ export function CompactReservation({ arrival, selection, placeholder, detail }: 
         Selecione uma reserva para ver os detalhes.
       </div>
       <div style={{ position: "absolute", left: 22, right: 22, top: 80, opacity: bookingReveal, transform: `translateY(${(1 - bookingReveal) * 7}px)` }}>
-        <div style={{ color: action, fontSize: 13, letterSpacing: ".5px" }}>RESERVA CONFIRMADA · WHATSAPP</div>
+        <div style={{ color: status, fontSize: 13, letterSpacing: ".5px" }}>RESERVA CONFIRMADA · WHATSAPP</div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: 8, color: ink }}>
           <span style={{ fontSize: 37, lineHeight: 1, letterSpacing: "-1.4px" }}>Marina</span>
           <span style={{ fontSize: 23, fontVariantNumeric: "tabular-nums" }}>20:00</span>
@@ -44,7 +44,7 @@ export function CompactReservation({ arrival, selection, placeholder, detail }: 
       </div>
       <div style={{ position: "absolute", left: 22, right: 22, top: 170, opacity: detail, transform: `translateY(${(1 - detail) * 7}px)` }}>
         <div style={{ height: 1, background: rule, marginBottom: 10 }} />
-        <div style={{ color: action, fontSize: 13, letterSpacing: ".5px" }}>PEDIDO ESPECIAL</div>
+        <div style={{ color: muted, fontSize: 13, letterSpacing: ".5px" }}>PEDIDO ESPECIAL</div>
         <div style={{ marginTop: 6, color: ink, fontSize: 17, lineHeight: 1.18, letterSpacing: "-.3px" }}>Cadeira infantil; mesa perto da janela, se possível.</div>
         <div style={{ marginTop: 7, color: muted, fontSize: 12 }}>A equipe confirma a disponibilidade.</div>
       </div>

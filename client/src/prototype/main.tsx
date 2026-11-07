@@ -16,6 +16,7 @@ import {
 } from "./FeaturePanels";
 import "./prototype-motion.css";
 import "./navigation-refinement.css";
+import "./landing-continuity.css";
 
 function mount(
   element: Element | null,
