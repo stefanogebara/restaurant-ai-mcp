@@ -1,10 +1,9 @@
 name: Live Smoke (production)
 
-# Runs the assertion-based Playwright smoke against seatable.one to catch
-# regressions on the analytics + coupons + events surfaces.
+# Runs read-only Playwright checks against the dedicated CI restaurant.
 #
 # Triggers:
-#   - push to main (after Vercel finishes deploying)
+#   - push to main (tests the production alias available at run time)
 #   - nightly at 06:00 UTC (03:00 São Paulo)
 #   - manual via workflow_dispatch
 
@@ -28,9 +27,9 @@ jobs:
     # criar qualquer job (0s, sem log). Foi o que derrubou 100 de 100 runs deste
     # arquivo. Em `if:` o que se le e `env.`, nao `secrets.`.
     env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      # Only presence flags are job-wide. Provider keys belong to exact steps,
+      # never npm ci or a third-party action.
+      TEM_SUPABASE: ${{ secrets.SUPABASE_URL != '' && secrets.SUPABASE_SERVICE_ROLE_KEY != '' }}
       # As credenciais do sandbox NAO ficam aqui. Env de job vaza para TODO
       # passo — inclusive `npm ci`, que executa scripts de ~400 dependencias
       # transitivas, e para toda action de terceiro. So o que precisa fazer
@@ -48,16 +47,12 @@ jobs:
           {
             echo "### Cobertura do live-smoke"
             echo ""
-            if [ -z "$SUPABASE_URL" ]; then
+            if [ "$TEM_SUPABASE" != "true" ]; then
               echo "- :warning: **migrations + WAHA pulados** — falta \`SUPABASE_URL\` / \`SUPABASE_SERVICE_ROLE_KEY\`"
             else
               echo "- :white_check_mark: migrations + WAHA ativos"
             fi
-            if [ -z "$CRON_SECRET" ]; then
-              echo "- :warning: **saude dos crons pulada** — falta \`CRON_SECRET\`"
-            else
-              echo "- :white_check_mark: saude dos crons ativa"
-            fi
+            echo "- Crons não são disparados pelo smoke: alguns enviam mensagens reais."
             # As DUAS, nao so o email: com uma so, o gate abaixo encerra a run
             # e este resumo estaria anunciando cobertura que nao aconteceu.
             if [ "$TEM_SANDBOX" != "true" ]; then
@@ -103,7 +98,7 @@ jobs:
       # protection silently disabled, voice-experiments endpoint silently
       # broken. Fix by applying the migration in Supabase Studio.
       - name: Audit migrations applied
-        if: env.SUPABASE_URL != ''
+        if: env.TEM_SUPABASE == 'true'
         run: npm run audit:migrations
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -115,28 +110,13 @@ jobs:
       # messages dropped. Fix: rotate WAHA_API_KEY on both Vercel + Fly.io
       # to match.
       - name: Audit WAHA pipeline health
-        if: env.SUPABASE_URL != ''
+        if: env.TEM_SUPABASE == 'true'
         run: npm run audit:waha
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
-      # Cron endpoint health — probes every cron in vercel.json with the
-      # CRON_SECRET. Catches handlers that are silently broken between
-      # schedule runs (file moved, env var missing, db query crashes,
-      # function timeout). 2026-04-28: caught compile-wiki timing out
-      # at 60s default — bumped its maxDuration to 300s.
-      - name: Audit cron endpoint health
-        if: env.CRON_SECRET != ''
-        run: npm run audit:crons
-        env:
-          PW_BASE_URL: https://seatable.one
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
-
-      # Sem as credenciais do sandbox, todo spec que faz login morre no login —
-      # e morre caro: 4 min parado no head-start delay, download do Chromium,
-      # 7 testes com 2 retries cada, gravando video e trace de cada tentativa.
-      # Cinco minutos de runner para reaprender o que ja se sabia no segundo 0.
+      # Sem credenciais o Playwright gastaria tempo em tentativas de login.
       #
       # Falha, e nao pula, de proposito: pular pintaria de VERDE uma run que nao
       # verificou producao nenhuma — o modo de falha que o passo "Cobertura desta
@@ -161,14 +141,6 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      # The smoke tests prod health, not this specific commit's deploy
-      # status. Give Vercel a 4 min head-start on push so the odds of
-      # testing a stale build are low, then proceed regardless. Skipped
-      # for schedule + manual triggers (prod is already live).
-      - name: Head-start delay (push only)
-        if: github.event_name == 'push'
-        run: sleep 240
-
       - name: Run live smoke spec
         run: npm run test:e2e:live
         env:
@@ -182,16 +154,6 @@ jobs:
         run: node scripts/test-slow-network.js
         env:
           PW_BASE_URL: https://seatable.one
-          SANDBOX_EMAIL: ${{ secrets.SANDBOX_EMAIL }}
-          SANDBOX_PASSWORD: ${{ secrets.SANDBOX_PASSWORD }}
-
-      # Admin pages + LTV + AddReservationModal + EditReservationModal smoke
-      # Requires sandbox credentials (secrets.SANDBOX_EMAIL/SANDBOX_PASSWORD).
-      # 2026-04-29: caught customer detail 500 (churn_risk/ltv_score phantom columns).
-      - name: Admin pages smoke
-        if: env.TEM_SANDBOX == 'true'
-        run: node scripts/test-admin-pages.js
-        env:
           SANDBOX_EMAIL: ${{ secrets.SANDBOX_EMAIL }}
           SANDBOX_PASSWORD: ${{ secrets.SANDBOX_PASSWORD }}
 

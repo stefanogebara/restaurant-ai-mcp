@@ -26,13 +26,12 @@ const WORKFLOW = path.join(RAIZ, '.github', 'workflows', 'live-smoke.yml');
 const PASSOS_DE_LOGIN = [
   'Run live smoke spec',
   'Slow 3G dashboard smoke',
-  'Admin pages smoke',
 ];
 
 /** Arquivos que esses passos executam, para cruzar com o que eles leem. */
 const ARQUIVOS_DE_LOGIN = [
   path.join('scripts', 'test-slow-network.js'),
-  path.join('e2e', 'analytics-fixes-live.spec.ts'),
+  path.join('e2e', 'live-sandbox.spec.ts'),
 ];
 
 const yml = () => fs.readFileSync(WORKFLOW, 'utf8');
@@ -116,7 +115,7 @@ describe('live-smoke: fiação das credenciais', () => {
       .filter(Boolean);
 
     const vazando = linhas.filter((l) =>
-      /^[A-Z0-9_]+:\s*\$\{\{\s*secrets\.(SANDBOX|SMOKE)_[A-Z0-9_]+\s*\}\}\s*$/.test(l)
+      /^[A-Z0-9_]+:\s*\$\{\{\s*secrets\.(SANDBOX|SMOKE|SUPABASE|CRON)_[A-Z0-9_]+\s*\}\}\s*$/.test(l)
     );
 
     expect(vazando).toEqual([]);
@@ -143,11 +142,16 @@ describe('live-smoke: fiação das credenciais', () => {
   test('a checagem vem antes da parte cara', () => {
     const fonte = yml();
     const guarda = fonte.indexOf('Exigir credenciais do sandbox');
-    const delay = fonte.indexOf('Head-start delay');
     const playwright = fonte.indexOf('Install Playwright browsers');
 
     expect(guarda).toBeGreaterThan(-1);
     expect(guarda).toBeLessThan(playwright);
-    expect(guarda).toBeLessThan(delay);
+    expect(fonte).not.toContain('- name: Admin pages smoke');
+  });
+
+  test('o smoke agendado nao dispara crons de producao', () => {
+    const fonte = yml();
+    expect(fonte).not.toContain('npm run audit:crons');
+    expect(fonte).not.toContain('CRON_SECRET: ${{ secrets.CRON_SECRET }}');
   });
 });

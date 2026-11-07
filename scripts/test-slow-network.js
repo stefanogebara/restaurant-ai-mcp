@@ -8,10 +8,10 @@ const path = require('path');
 const fs = require('fs');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env.local') });
 
-const EMAIL = process.env.SMOKE_EMAIL || process.env.SANDBOX_EMAIL;
-const PASSWORD = process.env.SMOKE_PASSWORD || process.env.SANDBOX_PASSWORD;
-if (!EMAIL || !PASSWORD) {
-  throw new Error('Defina SANDBOX_EMAIL e SANDBOX_PASSWORD no ambiente. As credenciais sairam do codigo em ago/2026 — ver tasks/lessons.md.');
+const EMAIL = process.env.SANDBOX_EMAIL;
+const PASSWORD = process.env.SANDBOX_PASSWORD;
+if (EMAIL !== 'ci-smoke@seatable.test' || !PASSWORD) {
+  throw new Error('Slow-network smoke requires the dedicated Seatable CI sandbox account.');
 }
 const BASE_URL = process.env.PW_BASE_URL || 'https://seatable.one';
 const HEADLESS = process.env.CI === 'true' || process.env.HEADLESS === 'true';
@@ -41,9 +41,9 @@ const HEADLESS = process.env.CI === 'true' || process.env.HEADLESS === 'true';
     await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded' });
     await page.locator('input[type="email"]').first().fill(EMAIL);
     await page.locator('input[type="password"]').first().fill(PASSWORD);
-    await page.locator('button[type="submit"], button').filter({ hasText: /entrar/i }).first().click();
-    await page.waitForTimeout(4000);
-    log(/host-dashboard/.test(page.url()), '1. Logged in at full speed');
+    await page.locator('button[type="submit"]').click();
+    await page.waitForURL(/\/host-dashboard\//, { timeout: 30_000 });
+    log(true, '1. Logged in at full speed');
 
     // Now apply Slow 3G throttling and reload
     const cdp = await page.context().newCDPSession(page);
@@ -65,7 +65,7 @@ const HEADLESS = process.env.CI === 'true' || process.env.HEADLESS === 'true';
     await navPromise.catch(() => {});
 
     // Wait for content to actually render — look for a known dashboard string
-    const contentLoaded = await page.waitForSelector('text=/MESAS OCUPADAS|RESERVAS|MAPA DE MESAS/i', { timeout: 45_000 }).then(() => true).catch(() => false);
+    const contentLoaded = await page.waitForSelector('text=/MESAS OCUPADAS|RESERVAS|RESERVACIONES|MAPA DE MESAS|OCCUPIED TABLES|RESERVATIONS|TABLE MAP/i', { timeout: 45_000 }).then(() => true).catch(() => false);
     const elapsed = Date.now() - t0;
     log(contentLoaded, `4. Real content rendered (no white screen / infinite spinner)`, `${elapsed}ms`);
 
