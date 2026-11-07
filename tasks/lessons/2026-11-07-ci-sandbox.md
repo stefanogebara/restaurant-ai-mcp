@@ -1,0 +1,3 @@
+# CI sandbox account
+
+When a live smoke fails because credentials are missing, investigate whether a dedicated identity already exists, but never recover a password from Git history. If the user authorizes a new account, create a separate Auth user and restaurant, store credentials directly as GitHub Actions secrets, and confirm login against the exact production project. Old smoke scripts may silently assume another restaurant's seeded coupons, events, or customers; replace those assertions before enabling CI. A production smoke must not create reservations or import guest records on every scheduled run.

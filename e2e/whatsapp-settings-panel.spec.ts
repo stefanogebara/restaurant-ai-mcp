@@ -26,9 +26,8 @@ async function loginAsCantina(page: Page) {
     return;
   }
 
-  // Use the same selectors that analytics-fixes-live.spec.ts proved work
-  // against seatable.one. Generic input[type=email] matches the wrong field
-  // on this app's login page, so use the placeholder text instead.
+  // Keep the explicit placeholders for this historical walkthrough; the
+  // production CI smoke now lives in live-sandbox.spec.ts.
   await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1500);
   await page.getByPlaceholder(/you@restaurant.com/i).fill(CANTINA_EMAIL);

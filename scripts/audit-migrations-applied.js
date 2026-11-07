@@ -30,9 +30,14 @@ if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
 const SKIP_TABLES = new Set([]);
 
 function* findCreateTables(sql) {
+  // Migration files can include commented rollback examples. Those are not
+  // deployed tables and must not become false-positive drift failures.
+  const executableSql = sql
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^[ \t]*--[^\n]*/gm, '');
   const re = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:([a-zA-Z_][a-zA-Z0-9_]*)\.)?([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/gi;
   let m;
-  while ((m = re.exec(sql)) !== null) {
+  while ((m = re.exec(executableSql)) !== null) {
     yield {
       schema: (m[1] || 'public').toLowerCase(),
       table: m[2].toLowerCase(),
