@@ -262,7 +262,7 @@ async function handleGetStats(req, res, user) {
     // Build query with restaurant filter (always applied)
     let query = supabaseAdmin
       .from('agent_conversations')
-      .select('id, started_at, duration_seconds, outcome, successful_booking, customer_sentiment')
+      .select('id, started_at, duration_seconds, outcome, successful_booking, customer_sentiment, language')
       .eq('restaurant_info_id', restaurant_id)
       .gte('started_at', startDate.toISOString())
       .lte('started_at', endDate.toISOString());
@@ -281,6 +281,8 @@ async function handleGetStats(req, res, user) {
     // Calculate statistics
     const totalCalls = conversations.length;
     const successfulBookings = conversations.filter(c => c.successful_booking).length;
+    const completedCalls = conversations.filter(c =>
+      ['reservation_created', 'information_only'].includes(c.outcome)).length;
     const averageDuration = conversations.reduce((sum, c) => sum + (c.duration_seconds || 0), 0) / totalCalls || 0;
 
     // Outcome breakdown
@@ -292,7 +294,8 @@ async function handleGetStats(req, res, user) {
     // Language breakdown
     const languageBreakdown = {};
     conversations.forEach(c => {
-      languageBreakdown[c.language] = (languageBreakdown[c.language] || 0) + 1;
+      const language = c.language || 'unknown';
+      languageBreakdown[language] = (languageBreakdown[language] || 0) + 1;
     });
 
     // Sentiment breakdown
@@ -304,6 +307,7 @@ async function handleGetStats(req, res, user) {
 
     // Success rate
     const successRate = totalCalls > 0 ? (successfulBookings / totalCalls * 100).toFixed(1) : 0;
+    const completionRate = totalCalls > 0 ? (completedCalls / totalCalls * 100).toFixed(1) : 0;
 
     // Daily call volume (for chart)
     const dailyVolume = {};
@@ -324,6 +328,8 @@ async function handleGetStats(req, res, user) {
           total_calls: totalCalls,
           successful_bookings: successfulBookings,
           success_rate: parseFloat(successRate),
+          completed_calls: completedCalls,
+          completion_rate: parseFloat(completionRate),
           average_duration_seconds: Math.round(averageDuration),
           average_duration_formatted: formatDuration(averageDuration)
         },

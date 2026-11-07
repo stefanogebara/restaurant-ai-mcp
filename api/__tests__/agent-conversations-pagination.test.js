@@ -84,6 +84,23 @@ test('statistics use the same exact rolling window across daylight saving change
   }
 });
 
+test('an information call counts as completed without being called a booking', async () => {
+  queryResult = { data: [
+    { id: 'info', started_at: '2026-11-07T12:00:00Z', duration_seconds: 80, outcome: 'information_only', successful_booking: false, language: 'pt', customer_sentiment: 'neutral' },
+    { id: 'booking', started_at: '2026-11-07T12:01:00Z', duration_seconds: 100, outcome: 'reservation_created', successful_booking: true, language: 'es', customer_sentiment: 'positive' },
+    { id: 'failed', started_at: '2026-11-07T12:02:00Z', duration_seconds: 10, outcome: 'error', successful_booking: false, language: 'en', customer_sentiment: null },
+  ], error: null };
+  const res = response();
+  await handler({ method: 'GET', query: { action: 'stats', period: '90d' } }, res);
+
+  expect(mockQuery.select.mock.calls[0][0]).toContain('language');
+  const body = res.json.mock.calls[0][0];
+  expect(body.stats.overview).toEqual(expect.objectContaining({
+    total_calls: 3, successful_bookings: 1, completed_calls: 2, completion_rate: 66.7,
+  }));
+  expect(body.stats.breakdowns.by_language).toEqual({ pt: 1, es: 1, en: 1 });
+});
+
 test('conversation detail can load against the deployed call schema', async () => {
   mockQuery.single.mockImplementation(async () => {
     const columns = mockQuery.select.mock.calls.at(-1)[0];
