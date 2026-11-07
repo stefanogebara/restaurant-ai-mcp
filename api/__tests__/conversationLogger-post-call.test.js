@@ -86,12 +86,34 @@ test('creates a completed call that never invoked a tool', async () => {
     .mockResolvedValueOnce({ data: null, error: null })
     .mockResolvedValueOnce({ data: null, error: null })
     .mockResolvedValueOnce({ data: mockRow, error: null });
-  await ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'agent-1', status: 'done', transcript: [] });
+  await ingestCompletedConversation({
+    conversation_id: 'conv-1', agent_id: 'agent-1', status: 'done', transcript: [],
+    metadata: {
+      start_time_unix_secs: 1793287914,
+      call_duration_secs: 7,
+      phone_call: { external_number: '+15551234567', agent_number: '+15559876543' },
+    },
+  });
   expect(mockRestaurant).toHaveBeenCalledWith('agent-1');
   expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({
     conversation_id: 'conv-1', restaurant_info_id: 'rest-1', agent_id: 'agent-1',
+    started_at: new Date(1793287914 * 1000).toISOString(),
+    caller_phone: '+15551234567', called_phone: '+15559876543',
   }));
-  expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ outcome: 'information_only' }));
+  expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
+    outcome: 'information_only',
+    started_at: new Date(1793287914 * 1000).toISOString(),
+    ended_at: new Date((1793287914 + 7) * 1000).toISOString(),
+  }));
+});
+
+test('does not overwrite a caller already captured during the conversation', async () => {
+  mockRow.caller_phone = '+15551111111';
+  await ingestCompletedConversation({
+    conversation_id: 'conv-1', agent_id: 'agent-1', status: 'done',
+    metadata: { phone_call: { external_number: '+15551234567' } },
+  });
+  expect(mockUpdate.mock.calls[0][0]).not.toHaveProperty('caller_phone');
 });
 
 test('marks a provider failed call as an error when no reservation exists', async () => {

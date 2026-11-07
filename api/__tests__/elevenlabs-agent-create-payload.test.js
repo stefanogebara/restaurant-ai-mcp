@@ -27,6 +27,7 @@
  */
 
 process.env.ELEVENLABS_API_KEY = 'sk-teste';
+process.env.ELEVENLABS_POST_CALL_WEBHOOK_ID = '009feaa21d50415bbd87da12d0379704';
 
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
@@ -136,6 +137,18 @@ describe('payload de criação do agente ElevenLabs', () => {
     expect(typeof w.transcript_enabled).toBe('boolean');
     expect(w.avatar_url).toBe('https://seatable.one/logo.png');
     expect(w.title).toBe('Cantina do Zé AI Host');
+  });
+
+  it('roteia a transcricao para o webhook exclusivo do Seatable, sem audio', async () => {
+    await createAgent(ARGS);
+    expect(corpoDoCreate().platform_settings.workspace_overrides).toEqual({
+      webhooks: {
+        post_call_webhook_id: '009feaa21d50415bbd87da12d0379704',
+        events: ['transcript'],
+        transcript_format: 'json',
+        send_audio: false,
+      },
+    });
   });
 
   it('não deixa nenhum campo do widget_config sem valor declarado', async () => {

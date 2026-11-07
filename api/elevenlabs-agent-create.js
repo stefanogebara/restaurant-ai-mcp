@@ -19,6 +19,7 @@ const { verifyAuth } = require('./_lib/auth');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { postCallWebhookOverrides } = require('./_lib/elevenlabs-post-call-config');
 const { buildPersonaPrompt } = require('./_lib/persona-prompt-builder');
 const { refreshVoiceAgentPrompt } = require('./_services/voiceAgentService');
 const { validateElevenLabsVoiceId } = require('./_lib/validation');
@@ -68,6 +69,10 @@ module.exports = async (req, res) => {
       address,
       multi_tenant_mode = false  // New parameter for multi-tenant agent
     } = req.body;
+
+    // A missing destination must not create tools or an agent that inherits
+    // the shared workspace's unrelated post-call endpoint.
+    const postCallOverrides = postCallWebhookOverrides();
 
     // Build base URL for webhooks
     const baseUrl = process.env.VERCEL_URL
@@ -137,6 +142,7 @@ module.exports = async (req, res) => {
             }
           },
           platform_settings: {
+            workspace_overrides: postCallOverrides,
             widget_config: {
               avatar_url: 'https://seatable.one/logo.png',
               title: 'Seatable Multi-Restaurant AI'
@@ -254,6 +260,7 @@ module.exports = async (req, res) => {
           }
         },
         platform_settings: {
+          workspace_overrides: postCallOverrides,
           widget_config: {
             avatar_url: 'https://seatable.one/logo.png',
             title: `${restaurant_name} AI Host`

@@ -12,6 +12,7 @@
 const crypto = require('node:crypto');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
+const { postCallWebhookOverrides } = require('../_lib/elevenlabs-post-call-config');
 const { buildPersonaPrompt } = require('../_lib/persona-prompt-builder');
 const { validateElevenLabsVoiceId } = require('../_lib/validation');
 
@@ -827,6 +828,9 @@ async function createAgent({
       return { success: false, error: voiceCheck.error };
     }
 
+    // Validate the destination before creating any external tools or agent.
+    const postCallOverrides = postCallWebhookOverrides();
+
     const baseUrl = process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
       : 'https://seatable.one';
@@ -888,6 +892,7 @@ async function createAgent({
           asr: { quality: 'high', provider: 'elevenlabs' },
         },
         platform_settings: {
+          workspace_overrides: postCallOverrides,
           // Todo campo daqui vai EXPLÍCITO, mesmo quando o valor coincide com o
           // default da ElevenLabs. Em 24/08/2026 ela virou mic_muting_enabled e
           // transcript_enabled de false para true, e como o repo não os enviava,
