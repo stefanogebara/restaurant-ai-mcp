@@ -27,6 +27,7 @@ const { supabaseAdmin } = require('./_lib/supabase');
 const { getSessionByPhone } = require('./_lib/whatsapp-sessions');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { sendConfirmationVoiceNote } = require('./_services/whatsapp/voice-note-trigger');
+const { isSharedToolAuth, readSharedContext, identifySharedRestaurant, resolveSharedRestaurant } = require('./_lib/shared-voice-binding');
 
 const logger = createSecureLogger('ElevenLabs');
 
@@ -97,6 +98,7 @@ module.exports = async (req, res) => {
   let authenticated = false;
   let authenticatedRestaurantId = null;
   const usesRestaurantSecret = authHeader.startsWith('el_whsec_');
+  const sharedAuthenticated = isSharedToolAuth(req);
 
   // Path 1: HMAC signature (standard ElevenLabs webhooks)
   if (!usesRestaurantSecret && signature && webhookSecret) {
@@ -155,6 +157,8 @@ module.exports = async (req, res) => {
     authenticated = true;
   }
 
+  if (sharedAuthenticated) authenticated = true;
+
   // Path 3 REMOVED (SEC-CRIT-01): Previously allowed unauthenticated access
   // via restaurant_id + action query params. ElevenLabs agents must use
   // HMAC signature (Path 1) or Bearer token (Path 2) instead.
@@ -164,15 +168,62 @@ module.exports = async (req, res) => {
     return res.status(403).json({ error: 'Authentication failed' });
   }
 
+  // The platform-level legacy token cannot operate the shared phone agent.
+  // It has no conversation/tenant binding and would let model-authored IDs route calls.
+  const claimedAgentIds = [req.headers['x-agent-id'], req.query?.agent_id, req.body?.agent_id];
+  if (process.env.ELEVENLABS_SHARED_AGENT_ID &&
+      claimedAgentIds.includes(process.env.ELEVENLABS_SHARED_AGENT_ID) && !sharedAuthenticated) {
+    return res.status(403).json({ error: 'Shared agent requires scoped tool authentication' });
+  }
+
+  if (sharedAuthenticated) {
+    try {
+      const context = readSharedContext(req);
+      const action = req.query?.action || req.body?.action;
+      if (action === 'identify_restaurant') {
+        const data = req.method === 'POST' ? req.body : req.query;
+        const result = await identifySharedRestaurant(context, data?.restaurant_name, data?.city);
+        return res.status(200).json(result);
+      }
+      // Caller ID alone does not prove guest ownership. Keep personal data,
+      // changes and cancellations unavailable until a verification flow exists.
+      if (!['get_current_datetime', 'check_availability', 'create_reservation', 'get_wait_time'].includes(action)) {
+        return res.status(403).json({ error: 'Guest verification required for this action' });
+      }
+      const restaurant = await resolveSharedRestaurant(context);
+      req.restaurant = restaurant;
+      authenticatedRestaurantId = restaurant.id;
+      if (action === 'create_reservation') {
+        const requestedPhones = [req.body?.phone, req.body?.customer_phone, req.query?.phone, req.query?.customer_phone].filter(Boolean);
+        if (!context.callerNumber || requestedPhones.some(phone => phone !== context.callerNumber) ||
+            req.body?.customer_email || req.query?.customer_email) {
+          return res.status(403).json({ error: 'Caller scope mismatch' });
+        }
+        const data = req.method === 'POST' ? req.body : req.query;
+        data.customer_phone = context.callerNumber;
+        data.phone = context.callerNumber;
+      }
+    } catch (error) {
+      if (error.message === 'Shared conversation is not bound') {
+        return res.status(409).json({ success: false, requires_restaurant_identification: true });
+      }
+      if (['Invalid shared voice context', 'Shared conversation binding conflict'].includes(error.message)) {
+        return res.status(403).json({ error: 'Shared voice scope mismatch' });
+      }
+      logger.error('Shared voice routing unavailable');
+      return res.status(503).json({ error: 'Shared voice routing unavailable' });
+    }
+  }
+
   // The restaurant secret is routing authority. Reject conflicting explicit IDs,
   // then resolve only its restaurant; phone, agent and session hints cannot override it.
   if (authenticatedRestaurantId) {
-    const claimedIds = [req.query.restaurantId, req.body?.restaurant_id, req.body?.restaurantId];
+    const claimedIds = [req.query.restaurant_id, req.query.restaurantId, req.body?.restaurant_id, req.body?.restaurantId];
     if (claimedIds.some(id => id !== undefined && id !== authenticatedRestaurantId)) {
       return res.status(403).json({ error: 'Restaurant scope mismatch' });
     }
     try {
-      const restaurant = await getRestaurantById(authenticatedRestaurantId);
+      const restaurant = req.restaurant || await getRestaurantById(authenticatedRestaurantId);
       if (!restaurant || restaurant.id !== authenticatedRestaurantId) {
         return res.status(503).json({ error: 'Restaurant configuration unavailable' });
       }

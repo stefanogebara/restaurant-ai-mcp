@@ -263,10 +263,135 @@ function bearerReq({ body = {}, query = {}, headers = {}, method = 'POST' } = {}
 // ---------------------------------------------------------------------------
 beforeEach(() => {
   jest.clearAllMocks();
+  mockChain.maybeSingle.mockReset().mockResolvedValue({ data: null, error: null });
+  mockSupabaseRows.mockReset().mockResolvedValue({ data: [], error: null });
   // Default: restaurant loader rejects (not found)
   mockGetRestaurantByPhone.mockRejectedValue(new Error('Not found'));
   mockGetRestaurantById.mockRejectedValue(new Error('Not found'));
   mockGetRestaurantByAgentId.mockRejectedValue(new Error('Not found'));
+});
+
+describe('Shared voice agent routing', () => {
+  const sharedSecret = 's'.repeat(40);
+  const sharedAgent = 'agent_shared_test';
+  const called = '+15551234567';
+  const caller = '+5511999990000';
+  const headers = {
+    authorization: `Bearer ${sharedSecret}`,
+    'x-agent-id': sharedAgent,
+    'x-conversation-id': 'conv-shared-1',
+    'x-called-number': called,
+    'x-caller-number': caller,
+  };
+  const bound = { id: 1, agent_id: sharedAgent, restaurant_info_id: RESTAURANT_A.id, called_phone: called, caller_phone: caller };
+
+  beforeEach(() => {
+    process.env.ELEVENLABS_SHARED_TOOL_SECRET = sharedSecret;
+    process.env.ELEVENLABS_SHARED_AGENT_ID = sharedAgent;
+    process.env.ELEVENLABS_SHARED_PHONE = called;
+    mockGetRestaurantById.mockResolvedValue({ ...RESTAURANT_A, is_demo: false, onboarding_completed: true, ai_config: { phone: { shared_routing_enabled: true } } });
+  });
+  afterAll(() => {
+    delete process.env.ELEVENLABS_SHARED_TOOL_SECRET;
+    delete process.env.ELEVENLABS_SHARED_AGENT_ID;
+    delete process.env.ELEVENLABS_SHARED_PHONE;
+  });
+
+  test('blocks unbound availability before any customer or reservation lookup', async () => {
+    const res = mockRes();
+    await handler(mockReq({ body: { action: 'check_availability', date: '2026-11-08', time: '19:00', party_size: 2 }, headers }), res);
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(mockCheckAvailability).not.toHaveBeenCalled();
+  });
+
+  test('identifies and binds an explicitly opted-in restaurant before other tools run', async () => {
+    mockSupabaseRows.mockResolvedValueOnce({ data: [{ id: RESTAURANT_A.id, restaurant_name: RESTAURANT_A.name, city: 'São Paulo', ai_config: { phone: { shared_routing_enabled: true } } }], error: null });
+    mockChain.maybeSingle
+      .mockResolvedValueOnce({ data: null, error: null })
+      .mockResolvedValueOnce({ data: bound, error: null });
+    const res = mockRes();
+    await handler(mockReq({ body: { action: 'identify_restaurant', restaurant_name: RESTAURANT_A.name, city: 'São Paulo' }, headers }), res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true, restaurant_id: RESTAURANT_A.id }));
+    expect(mockChain.insert).toHaveBeenCalledWith(expect.objectContaining({ agent_id: sharedAgent, restaurant_info_id: RESTAURANT_A.id }));
+    expect(mockCheckAvailability).not.toHaveBeenCalled();
+  });
+
+  test('routes a bound call only to its durable restaurant', async () => {
+    mockChain.maybeSingle.mockResolvedValue({ data: bound, error: null });
+    const res = mockRes();
+    await handler(mockReq({ body: { action: 'check_availability', date: '2026-11-08', time: '19:00', party_size: 2 }, headers }), res);
+    expect(mockCheckAvailability).toHaveBeenCalledWith(RESTAURANT_A.id, expect.any(Object), expect.any(Object));
+    expect(mockGetRestaurantByPhone).not.toHaveBeenCalled();
+    expect(mockGetRestaurantByAgentId).not.toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalledWith(403);
+  });
+
+  test('rejects a model-authored restaurant ID that conflicts with the binding', async () => {
+    mockChain.maybeSingle.mockResolvedValue({ data: bound, error: null });
+    const res = mockRes();
+    await handler(mockReq({ body: { action: 'check_availability', restaurant_id: RESTAURANT_B.id }, headers }), res);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(mockCheckAvailability).not.toHaveBeenCalled();
+    const queryRes = mockRes();
+    await handler(mockReq({
+      body: { action: 'check_availability' },
+      query: { restaurant_id: RESTAURANT_B.id }, headers,
+    }), queryRes);
+    expect(queryRes.status).toHaveBeenCalledWith(403);
+    expect(mockCheckAvailability).not.toHaveBeenCalled();
+  });
+
+  test('blocks customer lookup until guest identity can be verified', async () => {
+    mockChain.maybeSingle.mockResolvedValue({ data: bound, error: null });
+    const res = mockRes();
+    await handler(mockReq({ body: { action: 'get_customer_info', phone: caller }, headers }), res);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(mockFrom).not.toHaveBeenCalledWith('reservations');
+  });
+
+  test.each(['lookup_reservation', 'modify_reservation', 'cancel_reservation'])(
+    'blocks %s until guest identity can be verified', async action => {
+    mockChain.maybeSingle.mockResolvedValue({ data: bound, error: null });
+    const res = mockRes();
+    await handler(mockReq({ body: { action, reservation_id: 'RES-1' }, headers }), res);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(mockLookupReservation).not.toHaveBeenCalled();
+    expect(mockModifyReservation).not.toHaveBeenCalled();
+    expect(mockCancelReservation).not.toHaveBeenCalled();
+  });
+
+  test('a new booking cannot target a phone or email supplied by the model', async () => {
+    mockChain.maybeSingle.mockResolvedValue({ data: bound, error: null });
+    const res = mockRes();
+    await handler(mockReq({ body: { action: 'create_reservation', customer_phone: '+15557654321', customer_email: 'third@example.com' }, headers }), res);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(mockCreateReservation).not.toHaveBeenCalled();
+  });
+
+  test('a new booking uses the trusted caller number', async () => {
+    mockChain.maybeSingle.mockResolvedValue({ data: bound, error: null });
+    const res = mockRes();
+    await handler(mockReq({ body: {
+      action: 'create_reservation', date: '2026-11-08', time: '19:00', party_size: 2,
+      customer_name: 'Guest',
+    }, headers }), res);
+    expect(mockCreateReservation).toHaveBeenCalledWith(RESTAURANT_A.id, expect.any(Object),
+      expect.objectContaining({ customer_phone: caller, customer_email: undefined }));
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('rejects a legacy token claiming to be the shared agent', async () => {
+    const res = mockRes();
+    await handler(mockReq({ body: { action: 'get_current_datetime' }, headers: { ...headers, authorization: `Bearer ${CRON_SECRET}` } }), res);
+    expect(res.status).toHaveBeenCalledWith(403);
+  });
+
+  test('rejects a valid signature without the shared tool secret', async () => {
+    const res = mockRes();
+    await handler(authenticatedReq({ body: { action: 'get_current_datetime' }, headers: { 'x-agent-id': sharedAgent } }), res);
+    expect(res.status).toHaveBeenCalledWith(403);
+  });
 });
 
 // ===========================================================================
