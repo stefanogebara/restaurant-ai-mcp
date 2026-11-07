@@ -725,8 +725,8 @@ describe('demo_token carrega o conhecimento do demo (G2.1)', () => {
         chain.limit = () => Promise.resolve({ data: [], error: null });
         chain.maybeSingle = () => Promise.resolve({ data: demoRow, error: null });
         chain.single = () => Promise.resolve({ data: { id: 'config-uuid', slug: 'test' }, error: null });
-        chain.insert = (payload) => { capturedConfigWrite = payload; return chain; };
-        chain.update = (payload) => { capturedConfigWrite = payload; return chain; };
+        chain.insert = (payload) => { if ('restaurant_type' in payload) capturedConfigWrite = payload; return chain; };
+        chain.update = (payload) => { if ('restaurant_type' in payload) capturedConfigWrite = payload; return chain; };
         return chain;
       },
     }));
@@ -744,6 +744,55 @@ describe('demo_token carrega o conhecimento do demo (G2.1)', () => {
     reservation_settings: { max_party_size: 8, min_party_size: 1, allow_waitlist: true, advance_booking_days: 30 },
     menu_url: 'https://exemplo.com/cardapio.pdf',
   };
+
+  test('uses the resolved restaurant language for the agent when no voice was selected', async () => {
+    const { createAgent } = require('../_services/elevenlabsAgentService');
+    createAgent.mockResolvedValueOnce({ success: true, agent_id: 'agent-spanish' });
+    authComSub();
+    comDemo(null);
+
+    const { req, res } = mockReqRes({ ...BASE_BODY, country: 'Spain' });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(capturedConfigWrite.agent_language).toBe('es');
+    expect(capturedConfigWrite.ai_config.language).toBe('es-ES');
+    expect(capturedConfigWrite.ai_config.greeting_message).toMatch(/^¡/);
+    expect(createAgent).toHaveBeenCalledWith(expect.objectContaining({ language: 'es' }));
+  });
+
+  test('carries the demo language to the new agent when country detection falls back to English', async () => {
+    const { createAgent } = require('../_services/elevenlabsAgentService');
+    createAgent.mockResolvedValueOnce({ success: true, agent_id: 'agent-portuguese' });
+    authComSub();
+    comDemo(DEMO);
+
+    const { req, res } = mockReqRes({
+      ...BASE_BODY, country: '', phone_number: '+55 11 98765-4321', demo_token: 'tok-1',
+    });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(capturedConfigWrite.agent_language).toBe('pt');
+    expect(capturedConfigWrite.ai_config.language).toBe('pt-BR');
+    expect(capturedConfigWrite.ai_config.greeting_message).toMatch(/^Obrigado/);
+    expect(createAgent).toHaveBeenCalledWith(expect.objectContaining({ language: 'pt' }));
+  });
+
+  test('an explicit voice language wins over the country for config and agent', async () => {
+    const { createAgent } = require('../_services/elevenlabsAgentService');
+    createAgent.mockResolvedValueOnce({ success: true, agent_id: 'agent-french' });
+    authComSub();
+    comDemo(null);
+
+    const { req, res } = mockReqRes({ ...BASE_BODY, country: 'Spain', selected_voice_language: 'fr' });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(capturedConfigWrite.agent_language).toBe('fr');
+    expect(capturedConfigWrite.ai_config.language).toBe('fr-FR');
+    expect(createAgent).toHaveBeenCalledWith(expect.objectContaining({ language: 'fr' }));
+  });
 
   // ── A folha de confirmação ───────────────────────────────────────────────
   //

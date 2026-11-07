@@ -801,6 +801,18 @@ module.exports = async (req, res) => {
       }
     }
 
+    // Keep the real config, greeting, registry and provider on the same
+    // language. An explicit voice choice wins; otherwise the demo may refine
+    // the country fallback after the initial config object was assembled.
+    const finalVoiceLanguage = selected_voice_language || restaurantConfigData.agent_language || 'en';
+    restaurantConfigData.agent_language = finalVoiceLanguage;
+    restaurantConfigData.ai_config.language = finalVoiceLanguage === 'pt'
+      && (resolvedCountryIso === 'BR' || /^\+55/.test(phone_number))
+      ? 'pt-BR'
+      : languageToLocale[finalVoiceLanguage] || 'en-US';
+    restaurantConfigData.ai_config.greeting_message = greetingMessages[finalVoiceLanguage] || greetingMessages.en;
+    restaurantConfigData.ai_config.farewell_message = farewellMessages[finalVoiceLanguage] || farewellMessages.en;
+
     // If we have a user_id, add it; otherwise use service role to insert
     if (userId) {
       restaurantConfigData.user_id = userId;
@@ -904,7 +916,7 @@ module.exports = async (req, res) => {
             restaurant_name: configResult.restaurant_name,
             restaurant_aliases: restaurantAliases,
             customer_email: email || customer_email,
-            language: resolvedLanguage,
+            language: finalVoiceLanguage,
             timezone: resolvedTimezone,
             plan_name: (plan || 'starter').toLowerCase(),
             subscription_status: plan ? 'active' : 'trialing',
@@ -1011,8 +1023,8 @@ module.exports = async (req, res) => {
         createAgent({
           restaurantId: canonicalRestaurantId,
           restaurant_name,
-          voice_id: selected_voice_id || getDefaultVoiceId(selected_voice_language),
-          language: selected_voice_language || 'en',
+          voice_id: selected_voice_id || getDefaultVoiceId(finalVoiceLanguage),
+          language: finalVoiceLanguage,
           business_hours: agentBusinessHours,
           phone: phone_number,
           address: `${city}, ${country}`
@@ -1035,7 +1047,7 @@ module.exports = async (req, res) => {
             .from('restaurant_config')
             .update({
               elevenlabs_agent_id: agentId,
-              agent_language: selected_voice_language || resolvedLanguage || 'en'
+              agent_language: finalVoiceLanguage
             })
             .eq('id', canonicalRestaurantId);
 
