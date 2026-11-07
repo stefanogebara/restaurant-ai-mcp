@@ -60,6 +60,15 @@ test('does not report a local-only disconnect as a real phone deactivation', asy
   expect(mockSingle).not.toHaveBeenCalled();
 });
 
+test('does not replace a live agent tool set through the legacy repair action', async () => {
+  const req = { headers: {}, method: 'POST', query: { action: 'fix-tools' }, body: { restaurant_id: 'restaurant-a' } };
+  const res = response();
+  await handler(req, res);
+  expect(res.code).toBe(409);
+  expect(res.body.success).toBe(false);
+  expect(mockSingle).not.toHaveBeenCalled();
+});
+
 test('downgrades stale local active state and never exposes the shared number as owned', async () => {
   const req = { headers: {}, method: 'GET', query: { action: 'status' }, body: {} };
   const res = response();
