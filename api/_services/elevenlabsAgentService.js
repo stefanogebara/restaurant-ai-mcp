@@ -47,6 +47,7 @@ async function getOrCreateWebhookSecret(restaurantId) {
       logger.error('webhook secret read failed', { restaurantId, error: readError.message });
       return null;
     }
+    if (!row) return null;
     if (row?.elevenlabs_webhook_secret) return row.elevenlabs_webhook_secret;
 
     const secret = `el_whsec_${crypto.randomBytes(32).toString('hex')}`;
@@ -67,7 +68,9 @@ async function getOrCreateWebhookSecret(restaurantId) {
       .select('elevenlabs_webhook_secret')
       .eq('id', restaurantId)
       .maybeSingle();
-    return confirmed?.elevenlabs_webhook_secret || secret;
+    // An UPDATE can match zero rows after a concurrent write. Never return a
+    // locally generated secret unless the database confirms it was persisted.
+    return confirmed?.elevenlabs_webhook_secret || null;
   } catch (err) {
     logger.error('getOrCreateWebhookSecret error', { restaurantId, error: err.message });
     return null;
@@ -822,6 +825,10 @@ async function createAgent({
       return { success: false, error: 'Missing required fields: restaurant_name, voice_id' };
     }
 
+    if (!restaurantId) {
+      return { success: false, error: 'Restaurant ID required for authenticated voice tools' };
+    }
+
     // Validate voice_id format
     const voiceCheck = validateElevenLabsVoiceId(voice_id);
     if (!voiceCheck.valid) {
@@ -831,7 +838,12 @@ async function createAgent({
     // Validate the destination before creating any external tools or agent.
     const postCallOverrides = postCallWebhookOverrides();
 
-    const baseUrl = process.env.VERCEL_URL
+    // VERCEL_URL is unique to each deployment. A long-lived agent must follow
+    // the production alias so its tools receive future fixes and are not lost
+    // when an old deployment is retired or protected.
+    const baseUrl = process.env.VERCEL_ENV === 'production'
+      ? 'https://seatable.one'
+      : process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
       : 'https://seatable.one';
 
@@ -861,15 +873,16 @@ async function createAgent({
     // Create webhook tools — authenticated with a per-restaurant secret,
     // never CRON_SECRET (these headers live on ElevenLabs's servers).
     const webhookSecret = await getOrCreateWebhookSecret(restaurantId);
-    if (restaurantId && !webhookSecret) {
-      logger.warn('No webhook secret available — tools will be created without auth headers and the webhook will reject their calls', { restaurantId });
+    if (!webhookSecret) {
+      logger.error('No persisted webhook secret available; refusing agent creation', { restaurantId });
+      return { success: false, error: 'Could not secure voice tools for this restaurant' };
     }
     const toolDefs = buildToolDefinitions(baseUrl, restaurantId, webhookSecret);
     const { toolIds, errors: toolErrors } = await createToolsViaAPI(toolDefs, apiKey);
 
-    if (toolIds.length === 0) {
-      logger.error('Failed to create any tools', { toolErrors });
-      return { success: false, error: 'Failed to create agent tools', details: toolErrors };
+    if (toolIds.length !== toolDefs.length) {
+      logger.error('Failed to create complete tool set', { toolErrors });
+      return { success: false, error: 'Failed to create complete agent tools', details: toolErrors };
     }
 
     // Create agent
