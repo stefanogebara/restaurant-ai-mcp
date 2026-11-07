@@ -945,7 +945,7 @@ describe('create_reservation — confirmations', () => {
     expect(trackUsage).toHaveBeenCalledWith(RESTAURANT_A.id, 'ai_call_completed');
   });
 
-  test('logs conversation end on successful reservation with conversation_id', async () => {
+  test('records booking without ending the call before post-call delivery', async () => {
     const body = {
       action: 'create_reservation',
       restaurant_id: RESTAURANT_A.id,
@@ -972,13 +972,14 @@ describe('create_reservation — confirmations', () => {
     expect(response.success).toBe(true);
     expect(response.reservation_id).toBe('RES-001');
     // Conversation logger should have been called
-    expect(conversationLogger.endConversation).toHaveBeenCalledWith(
+    expect(conversationLogger.updateConversation).toHaveBeenCalledWith(
       'conv-456',
       expect.objectContaining({
         outcome: 'reservation_created',
         reservation_id: 'RES-001',
       })
     );
+    expect(conversationLogger.endConversation).not.toHaveBeenCalled();
   });
 
   test('handles createReservation failure gracefully', async () => {

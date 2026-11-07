@@ -8,6 +8,7 @@
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { extractMemoriesFromConversation } = require('./memoryExtractor');
+const { getRestaurantByAgentId } = require('../_lib/restaurant-loader');
 
 const logger = createSecureLogger('ConversationLogger');
 
@@ -217,6 +218,88 @@ async function endConversation(conversationId, outcomeData) {
   }
 }
 
+/** Persist a completed provider call once, whether it arrived via webhook or polling. */
+async function ingestCompletedConversation(provider, { restaurantId } = {}) {
+  const { conversation_id: conversationId, agent_id: agentId, status } = provider;
+  if (!conversationId || !agentId || !['done', 'failed'].includes(status)) {
+    throw new Error('Invalid completed conversation');
+  }
+
+  const find = () => supabaseAdmin.from('agent_conversations')
+    .select('id, restaurant_info_id, agent_id, reservation_id, outcome, summary, elevenlabs_fetched_at')
+    .eq('conversation_id', conversationId).maybeSingle();
+  let { data: existing, error: readError } = await find();
+  if (readError) throw readError;
+  if (existing?.elevenlabs_fetched_at) return { ingested: false };
+  if (existing?.agent_id && existing.agent_id !== agentId) throw new Error('Agent mismatch');
+  if (restaurantId && existing?.restaurant_info_id && restaurantId !== existing.restaurant_info_id) {
+    throw new Error('Restaurant mismatch');
+  }
+
+  // Bind every provider agent to its restaurant before writing call data.
+  const restaurant = await getRestaurantByAgentId(agentId);
+  if ((restaurantId && restaurant.id !== restaurantId) ||
+      (existing?.restaurant_info_id && existing.restaurant_info_id !== restaurant.id)) {
+    throw new Error('Agent restaurant mismatch');
+  }
+  restaurantId = restaurant.id;
+  if (!existing) {
+    const created = await startConversation({
+      conversation_id: conversationId,
+      restaurant_info_id: restaurantId,
+      agent_id: agentId,
+    });
+    if (!created) throw new Error('Conversation insert failed');
+    ({ data: existing, error: readError } = await find());
+    if (readError || !existing) throw new Error('Conversation read failed');
+  }
+
+  const transcript = Array.isArray(provider.transcript)
+    ? provider.transcript.filter(turn => ['agent', 'user'].includes(turn.role)).map(turn => ({
+      role: turn.role === 'agent' ? 'assistant' : 'user',
+      content: String(turn.message || ''),
+      timestamp: turn.time_in_call_secs ?? null,
+    }))
+    : [];
+  const duration = Number(provider.metadata?.call_duration_secs);
+  const now = new Date().toISOString();
+  const start = Number(provider.metadata?.start_time_unix_secs);
+  const endedAt = Number.isFinite(start) && start > 0 && Number.isFinite(duration) && duration >= 0
+    ? new Date((start + duration) * 1000).toISOString() : now;
+  const update = {
+    ended_at: endedAt,
+    elevenlabs_fetched_at: now,
+    updated_at: now,
+    outcome: existing.reservation_id ? 'reservation_created' : status === 'failed' ? 'error' : 'information_only',
+    successful_booking: !!existing.reservation_id,
+    agent_id: agentId,
+    restaurant_info_id: restaurantId,
+  };
+  if (Array.isArray(provider.transcript)) update.transcript = transcript;
+  if (Number.isFinite(duration) && duration >= 0) update.duration_seconds = Math.round(duration);
+  if (typeof provider.analysis?.transcript_summary === 'string') update.summary = provider.analysis.transcript_summary;
+  if (typeof provider.recording_url === 'string' && /^https:\/\//.test(provider.recording_url)) {
+    update.recording_url = provider.recording_url;
+  }
+  const { data: updated, error: updateError } = await supabaseAdmin
+    .from('agent_conversations').update(update)
+    .eq('id', existing.id).is('elevenlabs_fetched_at', null).select('id');
+  if (updateError) throw updateError;
+  if (!updated?.length) return { ingested: false };
+
+  // A duplicate webhook or poll cannot re-run this because of the conditional write.
+  let timeout;
+  try {
+    await Promise.race([
+      extractMemoriesFromConversation(conversationId).catch(() => logger.error('Memory extraction failed')),
+      new Promise(resolve => { timeout = setTimeout(resolve, 8000); }),
+    ]);
+  } finally {
+    clearTimeout(timeout);
+  }
+  return { ingested: true };
+}
+
 /**
  * Log a transcript message during the conversation
  * @param {string} conversationId - ElevenLabs conversation ID
@@ -300,5 +383,6 @@ module.exports = {
   logToolCall,
   endConversation,
   logMessage,
-  updateConversation
+  updateConversation,
+  ingestCompletedConversation,
 };

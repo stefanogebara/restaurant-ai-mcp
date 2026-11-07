@@ -1,0 +1,88 @@
+const mockExtract = jest.fn().mockResolvedValue(0);
+const mockRestaurant = jest.fn().mockResolvedValue({ id: 'rest-1' });
+let mockRow;
+let mockUpdated;
+const mockSelect = jest.fn();
+const mockUpdate = jest.fn();
+const mockInsert = jest.fn();
+const mockQuery = {
+  select: (...args) => { mockSelect(...args); return mockQuery; },
+  eq: jest.fn(() => mockQuery),
+  is: jest.fn(() => mockQuery),
+  maybeSingle: jest.fn(() => Promise.resolve({ data: mockRow, error: null })),
+  update: (...args) => { mockUpdate(...args); return mockQuery; },
+  insert: (...args) => { mockInsert(...args); return mockQuery; },
+  single: jest.fn(() => Promise.resolve({ data: { id: 1 }, error: null })),
+  then: (resolve) => Promise.resolve({ data: mockUpdated, error: null }).then(resolve),
+};
+jest.mock('../_lib/supabase', () => ({ supabaseAdmin: { from: () => mockQuery } }));
+jest.mock('../_lib/restaurant-loader', () => ({ getRestaurantByAgentId: (...args) => mockRestaurant(...args) }));
+jest.mock('../_lib/secure-logger', () => ({ createSecureLogger: () => ({ info: jest.fn(), error: jest.fn() }) }));
+jest.mock('../_services/memoryExtractor', () => ({ extractMemoriesFromConversation: (...args) => mockExtract(...args) }));
+const { ingestCompletedConversation } = require('../_services/conversationLogger');
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockRow = { id: 1, restaurant_info_id: 'rest-1', agent_id: 'agent-1', reservation_id: null, elevenlabs_fetched_at: null };
+  mockUpdated = [{ id: 1 }];
+  mockQuery.maybeSingle.mockReset().mockImplementation(() => Promise.resolve({ data: mockRow, error: null }));
+});
+
+test('finishes an information-only call and stores only transcript fields', async () => {
+  const result = await ingestCompletedConversation({
+    conversation_id: 'conv-1', agent_id: 'agent-1', status: 'done',
+    transcript: [{ role: 'user', message: 'private call content', tool_calls: [{ secret: 'do not store' }], time_in_call_secs: 3 }],
+    metadata: { call_duration_secs: 17 }, analysis: { transcript_summary: 'Asked about hours' },
+  });
+  expect(result).toEqual({ ingested: true });
+  expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
+    outcome: 'information_only', duration_seconds: 17,
+    transcript: [{ role: 'user', content: 'private call content', timestamp: 3 }],
+  }));
+  expect(mockQuery.is).toHaveBeenCalledWith('elevenlabs_fetched_at', null);
+  expect(mockExtract).toHaveBeenCalledWith('conv-1');
+});
+
+test('preserves a reservation outcome and skips a duplicate delivery', async () => {
+  mockRow.reservation_id = 'booking-1';
+  await ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'agent-1', status: 'done' });
+  expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ outcome: 'reservation_created', successful_booking: true }));
+  mockUpdate.mockClear();
+  mockExtract.mockClear();
+  mockRow.elevenlabs_fetched_at = '2026-11-07T00:00:00Z';
+  expect(await ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'agent-1', status: 'done' })).toEqual({ ingested: false });
+  expect(mockUpdate).not.toHaveBeenCalled();
+  expect(mockExtract).not.toHaveBeenCalled();
+});
+
+test('rejects agent or restaurant mismatch before writing', async () => {
+  await expect(ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'other', status: 'done' })).rejects.toThrow('Agent mismatch');
+  await expect(ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'agent-1', status: 'done' }, { restaurantId: 'other' })).rejects.toThrow('Restaurant mismatch');
+  expect(mockUpdate).not.toHaveBeenCalled();
+});
+
+test('rejects an agent that belongs to another restaurant', async () => {
+  mockRestaurant.mockResolvedValueOnce({ id: 'rest-2' });
+  await expect(ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'agent-1', status: 'done' }))
+    .rejects.toThrow('Agent restaurant mismatch');
+  expect(mockUpdate).not.toHaveBeenCalled();
+});
+
+test('a racing duplicate does not run memory extraction', async () => {
+  mockUpdated = [];
+  expect(await ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'agent-1', status: 'done' })).toEqual({ ingested: false });
+  expect(mockExtract).not.toHaveBeenCalled();
+});
+
+test('creates a completed call that never invoked a tool', async () => {
+  mockQuery.maybeSingle
+    .mockResolvedValueOnce({ data: null, error: null })
+    .mockResolvedValueOnce({ data: null, error: null })
+    .mockResolvedValueOnce({ data: mockRow, error: null });
+  await ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'agent-1', status: 'done', transcript: [] });
+  expect(mockRestaurant).toHaveBeenCalledWith('agent-1');
+  expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({
+    conversation_id: 'conv-1', restaurant_info_id: 'rest-1', agent_id: 'agent-1',
+  }));
+  expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ outcome: 'information_only' }));
+});

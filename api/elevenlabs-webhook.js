@@ -166,7 +166,6 @@ module.exports = async (req, res) => {
   // that the generic secure-logger sanitizer doesn't mask.
   logger.info('Incoming request:', {
     method: req.method,
-    url: req.url,
     action: req.query?.action || req.body?.action,
   });
 
@@ -448,7 +447,6 @@ async function handleCheckAvailability(req, res) {
 
 async function handleCreateReservation(req, res) {
   const conversationId = req.conversation_id;
-  const startTime = Date.now();
 
   const data = req.method === 'POST' ? req.body : req.query;
   // Accept both "phone" (voice agent) and "customer_phone" (WhatsApp) field names
@@ -507,8 +505,6 @@ async function handleCreateReservation(req, res) {
       date, time, party_size, customer_name, customer_phone, customer_email, special_requests
     });
 
-    const duration = Math.floor((Date.now() - startTime) / 1000);
-
     if (result.success && result.reservation_id) {
       // Log success
       if (conversationId) {
@@ -519,17 +515,16 @@ async function handleCreateReservation(req, res) {
           result: { reservation_id: result.reservation_id }
         });
 
-        await conversationLogger.endConversation(conversationId, {
+        // Booking is a tool result, not the end of the call. The post-call
+        // webhook or sync cron records the actual completion and transcript.
+        await conversationLogger.updateConversation(conversationId, {
           outcome: 'reservation_created',
           reservation_id: result.reservation_id,
-          restaurant_name: restaurantName,
           customer_name,
           party_size,
           requested_date: date,
           requested_time: time,
           successful_booking: true,
-          duration_seconds: duration,
-          summary: `Reservation at ${restaurantName} for ${customer_name}, party of ${party_size} on ${date} at ${time}`
         });
 
         // Track AI call usage for metered billing
