@@ -5,9 +5,9 @@
  * Inventory: node scripts/migrate-elevenlabs-date-tools.cjs --project-ref ckforlwdhewexyqljsaf
  * Apply:     node scripts/migrate-elevenlabs-date-tools.cjs --project-ref ckforlwdhewexyqljsaf --apply --manifest /secure/path/date-tool-rollback.jsonl
  *
- * Requires SEATABLE_ELEVENLABS_WORKSPACE_ID, SUPABASE_URL,
- * SUPABASE_SERVICE_ROLE_KEY and ELEVENLABS_API_KEY in the process environment.
- * Confirm the workspace ID independently in the Seatable ElevenLabs account.
+ * Requires SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY and ELEVENLABS_API_KEY in
+ * the process environment. The expected ElevenLabs workspace ID below was
+ * confirmed in the Seatable agent workspace, separate from Inner.
  *
  * The apply journal contains IDs and state only. Keep it until every agent is
  * verified; to roll back, replace new_tool_id with old_tool_id in the agent's
@@ -19,6 +19,7 @@ const fs = require('node:fs');
 
 const PROJECT_REF = 'ckforlwdhewexyqljsaf';
 const SUPABASE_URL = `https://${PROJECT_REF}.supabase.co`;
+const WORKSPACE_ID = '638a74e2dad648c4a0745edc358d7eae';
 const ELEVENLABS_BASE = 'https://api.elevenlabs.io/v1/convai';
 
 function assertProject(projectRef, supabaseUrl) {
@@ -270,7 +271,7 @@ async function main(argv = process.argv.slice(2), env = process.env) {
   const api = createApi(env.ELEVENLABS_API_KEY);
   // A key for the unrelated Inner workspace must never reach tool inventory,
   // even in dry-run mode. The expected ID is provisioned outside this script.
-  assertWorkspace(env.SEATABLE_ELEVENLABS_WORKSPACE_ID, await api.getWorkspaceId());
+  assertWorkspace(WORKSPACE_ID, await api.getWorkspaceId());
   // Complete all remote reads before opening a recovery journal or making a write.
   const items = await inventory({ db, api });
   for (const item of items) console.log(JSON.stringify({ row_id: item.rowId, agent_id: item.agentId, status: item.status, reason: item.reason, old_tool_id: item.oldId }));
@@ -286,4 +287,4 @@ if (require.main === module) {
   main().catch(error => { console.error(error.message); process.exitCode = 1; });
 }
 
-module.exports = { PROJECT_REF, SUPABASE_URL, assertProject, assertWorkspace, parseArgs, inspectAgent, replacementConfig, inventory, migrate, createApi, createDb, createJournal, main };
+module.exports = { PROJECT_REF, SUPABASE_URL, WORKSPACE_ID, assertProject, assertWorkspace, parseArgs, inspectAgent, replacementConfig, inventory, migrate, createApi, createDb, createJournal, main };

@@ -1,5 +1,5 @@
 const {
-  PROJECT_REF, SUPABASE_URL, assertProject, assertWorkspace, parseArgs, migrate, inventory, createApi,
+  PROJECT_REF, SUPABASE_URL, WORKSPACE_ID, assertProject, assertWorkspace, parseArgs, migrate, inventory, createApi,
 } = require('../../scripts/migrate-elevenlabs-date-tools.cjs');
 
 const row = (id = 'restaurant-1', agentId = 'agent-1') => ({
@@ -35,6 +35,8 @@ test('explicit project identity and apply journal are mandatory', () => {
 });
 
 test('ElevenLabs workspace identity must match the expected Seatable workspace', async () => {
+  expect(WORKSPACE_ID).toBe('638a74e2dad648c4a0745edc358d7eae');
+  expect(() => assertWorkspace(WORKSPACE_ID, 'inner-id')).toThrow('workspace identity mismatch');
   expect(() => assertWorkspace(undefined, 'inner-id')).toThrow('workspace identity mismatch');
   expect(() => assertWorkspace('seatable-id', 'inner-id')).toThrow('workspace identity mismatch');
   expect(() => assertWorkspace('seatable-id', 'seatable-id')).not.toThrow();
