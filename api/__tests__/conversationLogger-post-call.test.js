@@ -42,7 +42,9 @@ test('finishes an information-only call and stores only transcript fields', asyn
     transcript: [{ role: 'user', content: 'private call content', timestamp: 3 }],
   }));
   expect(mockQuery.is).toHaveBeenCalledWith('elevenlabs_fetched_at', null);
-  expect(mockUpdate).toHaveBeenCalledWith({ customer_sentiment: 'neutral' });
+  expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
+    customer_sentiment: 'neutral', post_call_analysis_done_at: expect.any(String),
+  }));
   expect(mockExtract).toHaveBeenCalledWith('conv-1');
 });
 

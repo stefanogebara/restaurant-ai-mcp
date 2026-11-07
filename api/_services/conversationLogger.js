@@ -293,6 +293,12 @@ async function ingestCompletedConversation(provider, { restaurantId } = {}) {
   if (!existing.caller_phone && externalNumber) update.caller_phone = externalNumber;
   if (!existing.called_phone && agentNumber) update.called_phone = agentNumber;
   if (Array.isArray(provider.transcript)) update.transcript = transcript;
+  if (transcript.length) {
+    // Give the inline analysis a chance to finish before the hourly retry job.
+    update.post_call_analysis_next_at = new Date(Date.now() + 5 * 60_000).toISOString();
+  } else {
+    update.post_call_analysis_done_at = now;
+  }
   if (Number.isFinite(duration) && duration >= 0) update.duration_seconds = Math.round(duration);
   if (typeof provider.analysis?.transcript_summary === 'string') update.summary = provider.analysis.transcript_summary;
   if (typeof provider.recording_url === 'string' && /^https:\/\//.test(provider.recording_url)) {
@@ -316,7 +322,10 @@ async function ingestCompletedConversation(provider, { restaurantId } = {}) {
       if (!acceptingEnrichment) return;
       const enrichment = {};
       if (!update.summary && analysis.summary) enrichment.summary = analysis.summary;
-      if (analysis.sentiment) enrichment.customer_sentiment = analysis.sentiment;
+      if (analysis.sentiment) {
+        enrichment.customer_sentiment = analysis.sentiment;
+        enrichment.post_call_analysis_done_at = new Date().toISOString();
+      }
       if (Object.keys(enrichment).length) {
         const { error } = await supabaseAdmin.from('agent_conversations')
           .update(enrichment).eq('id', existing.id);
@@ -363,6 +372,86 @@ async function analyzeTranscript(transcript) {
     logger.error('Conversation analysis failed');
     return {};
   }
+}
+
+/** Recover sentiment analysis after the webhook's four-second deadline.
+ * The conditional claim prevents concurrent cron invocations from paying for
+ * the same call. A failed or invalid model result remains eligible, at most
+ * three times. This deliberately does not repeat guest-memory extraction:
+ * its writes need a separate per-fact idempotency key first.
+ */
+async function retryPendingPostCallAnalysis() {
+  const now = new Date();
+  const { data: candidates, error } = await supabaseAdmin.from('agent_conversations')
+    .select('id, transcript, summary, post_call_analysis_attempts, post_call_analysis_next_at')
+    .not('elevenlabs_fetched_at', 'is', null)
+    .is('customer_sentiment', null)
+    .is('post_call_analysis_done_at', null)
+    .lt('post_call_analysis_attempts', 3)
+    .gte('elevenlabs_fetched_at', new Date(now.getTime() - 7 * 24 * 60 * 60_000).toISOString())
+    .order('post_call_analysis_next_at', { ascending: true, nullsFirst: true })
+    .limit(20);
+  if (error) throw error;
+
+  let attempted = 0;
+  let completed = 0;
+  let errors = 0;
+  for (const row of candidates || []) {
+    if (attempted >= 2) break;
+    if (row.post_call_analysis_next_at && new Date(row.post_call_analysis_next_at) > now) continue;
+
+    const attempt = row.post_call_analysis_attempts || 0;
+    if (attempt >= 3) continue;
+    const delay = [5, 30, 120][attempt] * 60_000;
+    let claim = supabaseAdmin.from('agent_conversations')
+      .update({
+        post_call_analysis_attempts: attempt + 1,
+        post_call_analysis_next_at: new Date(now.getTime() + delay).toISOString(),
+      })
+      .eq('id', row.id)
+      .eq('post_call_analysis_attempts', attempt)
+      .is('customer_sentiment', null)
+      .is('post_call_analysis_done_at', null);
+    claim = row.post_call_analysis_next_at
+      ? claim.eq('post_call_analysis_next_at', row.post_call_analysis_next_at)
+      : claim.is('post_call_analysis_next_at', null);
+    const { data: claimed, error: claimError } = await claim.select('id');
+    if (claimError) throw claimError;
+    if (!claimed?.length) continue;
+    attempted++;
+
+    if (!Array.isArray(row.transcript) || row.transcript.length === 0) {
+      const { error: emptyError } = await supabaseAdmin.from('agent_conversations')
+        .update({ post_call_analysis_done_at: new Date().toISOString() }).eq('id', row.id);
+      if (emptyError) throw emptyError;
+      completed++;
+      continue;
+    }
+
+    let timer;
+    try {
+      const result = await Promise.race([
+        analyzeTranscript(row.transcript),
+        new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('analysis_timeout')), 10_000); }),
+      ]);
+      if (!result.sentiment) { errors++; continue; }
+      const updates = {
+        customer_sentiment: result.sentiment,
+        post_call_analysis_done_at: new Date().toISOString(),
+      };
+      if (!row.summary && result.summary) updates.summary = result.summary;
+      const { error: writeError } = await supabaseAdmin.from('agent_conversations')
+        .update(updates).eq('id', row.id).is('customer_sentiment', null);
+      if (writeError) throw writeError;
+      completed++;
+    } catch (_) {
+      errors++;
+      logger.error('Post-call analysis retry failed');
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  return { attempted, completed, errors };
 }
 
 /**
@@ -452,6 +541,7 @@ module.exports = {
   logMessage,
   updateConversation,
   ingestCompletedConversation,
+  retryPendingPostCallAnalysis,
   forRestaurant(restaurantId) {
     if (typeof restaurantId !== 'string' || !restaurantId.trim()) throw new Error('Invalid restaurant scope');
     return {
