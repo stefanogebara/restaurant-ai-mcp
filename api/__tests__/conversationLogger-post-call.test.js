@@ -122,6 +122,29 @@ test('returns after durable completion when analysis and memory hang', async () 
   }
 });
 
+test('documents that timed-out enrichment is not retried by a duplicate delivery', async () => {
+  jest.useFakeTimers();
+  try {
+    mockCreateAnalysis.mockImplementationOnce(() => new Promise(() => {}));
+    mockExtract.mockImplementationOnce(() => new Promise(() => {}));
+    const provider = {
+      conversation_id: 'conv-1', agent_id: 'agent-1', status: 'done',
+      transcript: [{ role: 'user', message: 'question' }],
+    };
+    const first = ingestCompletedConversation(provider);
+    await jest.advanceTimersByTimeAsync(5000);
+    await expect(first).resolves.toEqual({ ingested: true });
+
+    // Model the row returned after the successful conditional completion write.
+    mockRow.elevenlabs_fetched_at = '2026-11-07T00:00:00Z';
+    await expect(ingestCompletedConversation(provider)).resolves.toEqual({ ingested: false });
+    expect(mockCreateAnalysis).toHaveBeenCalledTimes(1);
+    expect(mockExtract).toHaveBeenCalledTimes(1);
+  } finally {
+    jest.useRealTimers();
+  }
+});
+
 test('a late analysis result does not write after the webhook deadline', async () => {
   jest.useFakeTimers();
   try {

@@ -289,6 +289,9 @@ async function ingestCompletedConversation(provider, { restaurantId } = {}) {
 
   // Completion is durable before optional enrichment starts. The webhook must
   // acknowledge a completed call even if the LLM or memory service stalls.
+  // Limitation: elevenlabs_fetched_at suppresses duplicate delivery, so work
+  // that misses this deadline is best-effort and will not be retried. A durable
+  // enrichment cursor would require its own state and idempotent memory writes.
   let acceptingEnrichment = true;
   const tasks = [];
   if (transcript.length) {
