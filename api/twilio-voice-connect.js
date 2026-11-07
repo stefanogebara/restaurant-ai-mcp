@@ -131,25 +131,32 @@ module.exports = async (req, res) => {
  */
 async function lookupRestaurantByPhone(phoneNumber) {
   const normalizedPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
+  if (!/^\+[1-9]\d{7,14}$/.test(normalizedPhone)) return null;
 
   const columns = 'id, restaurant_name, phone, voice_engine, voice_engine_status, voice_ws_endpoint, elevenlabs_agent_id, ai_config';
 
   // A provisioned AI number owns the inbound call, even if another restaurant
   // lists it as a business phone. Two rows are enough to detect ambiguity.
-  const { data: aiMatches, error: aiError } = await supabaseAdmin
+  // A legacy assignment may have trailing whitespace (including a newline).
+  // Look up the E.164 prefix, then compare normalized values in memory. An
+  // exact JSON filter would miss that claim and could route via business phone.
+  const { data: aiCandidates, error: aiError } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
     .select(columns)
-    .filter('ai_config->phone->>number', 'eq', normalizedPhone)
+    .filter('ai_config->phone->>number', 'like', `${normalizedPhone}%`)
     .filter('ai_config->phone->>status', 'eq', 'active')
     .neq('ai_config->phone->>number_id', '')
     .eq('is_active', true)
-    .limit(2);
+    .limit(101);
 
-  if (aiError || !Array.isArray(aiMatches)) {
+  if (aiError || !Array.isArray(aiCandidates) || aiCandidates.length > 100) {
     logger.error('AI number lookup error:', { message: aiError?.message || 'Invalid query response' });
     return null;
   }
+  const aiMatches = aiCandidates.filter(row =>
+    typeof row.ai_config?.phone?.number === 'string' &&
+    row.ai_config.phone.number.replace(/[\s\-\(\)]/g, '') === normalizedPhone);
   if (aiMatches.length > 1) {
     logger.error('Ambiguous provisioned AI number', { phone: normalizedPhone });
     return null;
