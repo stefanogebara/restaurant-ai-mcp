@@ -42,6 +42,8 @@ export interface Stats {
     total_calls: number;
     successful_bookings: number;
     success_rate: number;
+    completed_calls: number;
+    completion_rate: number;
     average_duration_seconds: number;
     average_duration_formatted: string;
   };

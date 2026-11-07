@@ -23,13 +23,13 @@ export default function CallStatsOverview({ stats }: Props) {
       </div>
 
       <div className="py-5">
-        <div className="text-xs font-medium text-muted-stone mb-2">{t('callTracking.successRate')}</div>
+        <div className="text-xs font-medium text-muted-stone mb-2">{t('callTracking.completionRate')}</div>
         <div className="text-[32px] font-bold tracking-tight leading-none text-deep-charcoal">
-          {overview.total_calls > 0 ? `${overview.success_rate}%` : '—'}
+          {overview.total_calls > 0 ? `${overview.completion_rate}%` : '—'}
         </div>
         <div className="text-xs text-warm-stone mt-1">
           {overview.total_calls > 0
-            ? t('callTracking.callsResolved', { success: overview.successful_bookings, total: overview.total_calls })
+            ? t('callTracking.callsCompleted', { completed: overview.completed_calls, total: overview.total_calls })
             : t('callTracking.noCallsYet')}
         </div>
       </div>
