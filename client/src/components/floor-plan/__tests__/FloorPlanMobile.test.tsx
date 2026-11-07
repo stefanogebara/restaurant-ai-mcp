@@ -46,8 +46,8 @@ describe('mobile floor plan', () => {
 
     const svg = container.querySelector('svg');
     expect(svg?.parentElement?.parentElement).toHaveClass('min-w-[720px]');
-    expect(svg).toHaveStyle({ touchAction: 'auto' });
-    expect(container.querySelector('g.cursor-grab')).toHaveStyle({ touchAction: 'none' });
+    expect(svg?.style.touchAction).toBe('auto');
+    expect((container.querySelector('g.cursor-grab') as SVGGElement | null)?.style.touchAction).toBe('none');
   });
 
   it('uses a status color for saved, not the action color', () => {
