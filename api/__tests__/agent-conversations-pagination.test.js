@@ -8,6 +8,7 @@ var mockQuery = {
   lte: jest.fn().mockReturnThis(),
   order: jest.fn().mockReturnThis(),
   range: jest.fn().mockReturnThis(),
+  single: jest.fn(),
   then: jest.fn((resolve) => resolve(queryResult)),
 };
 
@@ -69,4 +70,20 @@ test('statistics use the same exact rolling window across daylight saving change
   } finally {
     jest.useRealTimers();
   }
+});
+
+test('conversation detail can load against the deployed call schema', async () => {
+  mockQuery.single.mockImplementation(async () => {
+    const columns = mockQuery.select.mock.calls.at(-1)[0];
+    if (columns.split(',').map(x => x.trim()).includes('ai_notes')) {
+      return { data: null, error: { code: '42703', message: 'column agent_conversations.ai_notes does not exist' } };
+    }
+    return { data: { id: 'call-1', transcript: [] }, error: null };
+  });
+  const res = response();
+  await handler({ method: 'GET', query: { action: 'get', id: 'call-1' } }, res);
+
+  expect(mockQuery.eq).toHaveBeenCalledWith('restaurant_info_id', 'owned');
+  expect(res.status).toHaveBeenCalledWith(200);
+  expect(res.json).toHaveBeenCalledWith({ success: true, conversation: { id: 'call-1', transcript: [] } });
 });
