@@ -78,6 +78,9 @@ function inspectAgent(row, agent, tools) {
   const dates = tools.filter(tool => tool.tool_config.name === 'get_current_datetime');
   if (dates.length !== 1) return { status: 'skip', reason: 'date_tool_count' };
   const old = dates[0];
+  // A duplicate that omits simulation mocks would silently change how this
+  // agent is tested. Leave such tools for an explicit, reviewed migration.
+  if (old.response_mocks?.length) return { status: 'skip', reason: 'date_tool_has_mocks' };
   const config = old.tool_config;
   const url = webhookUrl(config);
   if (!url || config.type !== 'webhook' || config.api_schema.method !== 'GET' ||

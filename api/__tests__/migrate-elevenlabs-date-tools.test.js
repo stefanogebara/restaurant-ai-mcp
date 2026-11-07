@@ -72,6 +72,13 @@ test('foreign and already fixed date tools are skipped', async () => {
   expect((await inventory(fixed))[0].reason).toBe('already_fixed');
 });
 
+test('does not silently drop existing response mocks from a duplicated date tool', async () => {
+  const mockedDate = { ...dateTool(), response_mocks: [{ mock_result: '2026-11-07' }] };
+  const f = fixture([row()], [mockedDate, otherTool]);
+  expect((await inventory(f))[0].reason).toBe('date_tool_has_mocks');
+  expect(f.api.createTool).not.toHaveBeenCalled();
+});
+
 test('a tool used by an agent outside the selected rows is skipped', async () => {
   const f = fixture();
   f.api.getDependentAgents.mockResolvedValue({ agents: [{ id: 'agent-1' }, { id: 'other-agent' }], branches: [], has_more: false });
