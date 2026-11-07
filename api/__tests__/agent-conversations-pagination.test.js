@@ -45,6 +45,18 @@ test('page two fetches exactly rows 50–99, not rows 50–5049', async () => {
   }));
 });
 
+test('call list returns only the fields needed for its rows', async () => {
+  const res = response();
+  await handler({ method: 'GET', query: { action: 'list' } }, res);
+
+  const columns = mockQuery.select.mock.calls[0][0].split(',').map(column => column.trim());
+  expect(columns).toEqual([
+    'id', 'conversation_id', 'caller_phone', 'called_phone', 'started_at',
+    'duration_seconds', 'language', 'outcome', 'customer_name', 'party_size',
+  ]);
+  expect(res.status).toHaveBeenCalledWith(200);
+});
+
 test.each([
   { limit: '0', offset: '0' },
   { limit: '101', offset: '0' },
