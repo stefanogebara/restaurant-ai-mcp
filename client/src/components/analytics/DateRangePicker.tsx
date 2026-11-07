@@ -9,6 +9,12 @@ export interface DateRangeValue {
   endDate: string;
 }
 
+function daysBeforeLocalDate(now: Date, days: number): string {
+  const date = new Date(now);
+  date.setDate(date.getDate() - days);
+  return formatLocalDate(date);
+}
+
 // eslint-disable-next-line react-refresh/only-export-components
 export function presetToRange(preset: DatePreset): { startDate: string; endDate: string } {
   const now = new Date();
@@ -19,11 +25,11 @@ export function presetToRange(preset: DatePreset): { startDate: string; endDate:
     case 'today':
       return { startDate: today, endDate: today };
     case '7d':
-      return { startDate: formatLocalDate(new Date(now.getTime() - 7 * 86400000)), endDate: today };
+      return { startDate: daysBeforeLocalDate(now, 7), endDate: today };
     case '30d':
-      return { startDate: formatLocalDate(new Date(now.getTime() - 30 * 86400000)), endDate: today };
+      return { startDate: daysBeforeLocalDate(now, 30), endDate: today };
     case '90d':
-      return { startDate: formatLocalDate(new Date(now.getTime() - 90 * 86400000)), endDate: today };
+      return { startDate: daysBeforeLocalDate(now, 90), endDate: today };
     case 'this_month': {
       const y = now.getFullYear(); const m = now.getMonth();
       return { startDate: formatLocalDate(new Date(y, m, 1)), endDate: today };
