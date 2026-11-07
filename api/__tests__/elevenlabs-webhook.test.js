@@ -37,6 +37,7 @@ function createChainable() {
   chain.order = jest.fn(() => chain);
   chain.limit = jest.fn(() => mockSupabaseRows());
   chain.single = jest.fn(() => Promise.resolve({ data: null, error: null }));
+  chain.maybeSingle = jest.fn(() => Promise.resolve({ data: null, error: null }));
   chain.insert = jest.fn(() => chain);
   return chain;
 }
@@ -65,12 +66,15 @@ jest.mock('../_lib/restaurant-loader', () => ({
 }));
 
 // Conversation logger mock
-jest.mock('../_services/conversationLogger', () => ({
-  startConversation: jest.fn(() => Promise.resolve()),
-  logToolCall: jest.fn(() => Promise.resolve()),
-  updateConversation: jest.fn(() => Promise.resolve()),
-  endConversation: jest.fn(() => Promise.resolve()),
-}));
+jest.mock('../_services/conversationLogger', () => {
+  const methods = {
+    startConversation: jest.fn(() => Promise.resolve({ id: 'conversation-row' })),
+    logToolCall: jest.fn(() => Promise.resolve()),
+    updateConversation: jest.fn(() => Promise.resolve()),
+    endConversation: jest.fn(() => Promise.resolve()),
+  };
+  return { ...methods, forRestaurant: jest.fn(() => methods) };
+});
 
 // Tool handlers mock
 const mockGetDateTime = jest.fn(() => ({
@@ -407,6 +411,126 @@ describe('Authentication', () => {
       // Should NOT reach auth or action logic
       expect(res.status).not.toHaveBeenCalledWith(403);
     });
+  });
+});
+
+describe('Per-restaurant secret scope', () => {
+  const secret = 'el_whsec_restaurant_a';
+  const logs = require('../_services/conversationLogger');
+
+  function scopedRequest({ action = 'create_reservation', body = {}, query = {}, headers = {} } = {}) {
+    return mockReq({
+      query: { restaurant_id: RESTAURANT_A.id, ...query },
+      body: {
+        action, date: '2026-11-10', time: '19:00', party_size: 2,
+        customer_name: 'Test Guest', ...body,
+      },
+      headers: { authorization: `Bearer ${secret}`, ...headers },
+    });
+  }
+
+  beforeEach(() => {
+    mockChain.maybeSingle.mockResolvedValue({ data: { elevenlabs_webhook_secret: secret }, error: null });
+    mockGetRestaurantById.mockResolvedValue(RESTAURANT_A);
+    mockGetRestaurantByPhone.mockResolvedValue(RESTAURANT_B);
+    mockGetRestaurantByAgentId.mockResolvedValue(RESTAURANT_B);
+  });
+
+  test('a called number for B cannot create a B booking or assign its conversation to B', async () => {
+    const req = scopedRequest({
+      body: { conversation_id: 'conversation-a' },
+      headers: { 'x-called-number': '+5511999000000' },
+    });
+    const res = mockRes();
+
+    await handler(req, res);
+
+    expect(mockCreateReservation).toHaveBeenCalledWith(RESTAURANT_A.id, RESTAURANT_A, expect.any(Object));
+    expect(mockGetRestaurantByPhone).not.toHaveBeenCalled();
+    expect(logs.updateConversation).not.toHaveBeenCalledWith('conversation-a', { restaurant_info_id: RESTAURANT_B.id });
+  });
+
+  test('a foreign agent hint cannot change the authenticated restaurant', async () => {
+    await handler(scopedRequest({ action: 'lookup_reservation', body: { agent_id: 'agent-b' } }), mockRes());
+
+    expect(mockLookupReservation).toHaveBeenCalledWith(RESTAURANT_A.id, expect.any(Object));
+    expect(mockGetRestaurantByAgentId).not.toHaveBeenCalled();
+  });
+
+  test('a confirmed session for B cannot override A when multi-tenant mode is enabled', async () => {
+    let multiTenantHandler;
+    let sessions;
+    process.env.MULTI_TENANT_MODE = 'true';
+    try {
+      jest.isolateModules(() => {
+        multiTenantHandler = require('../elevenlabs-webhook');
+        sessions = require('../_lib/whatsapp-sessions');
+      });
+    } finally {
+      process.env.MULTI_TENANT_MODE = 'false';
+    }
+    sessions.getSessionByPhone.mockResolvedValue({ restaurant_confirmed: true, restaurant: RESTAURANT_B });
+
+    await multiTenantHandler(scopedRequest({ body: { sender_phone: '+5511988888888' } }), mockRes());
+
+    expect(mockCreateReservation).toHaveBeenCalledWith(RESTAURANT_A.id, RESTAURANT_A, expect.any(Object));
+    expect(sessions.getSessionByPhone).not.toHaveBeenCalled();
+  });
+
+  test('a conflicting body restaurant ID is rejected before logging or booking', async () => {
+    const res = mockRes();
+    await handler(scopedRequest({ body: { restaurant_id: RESTAURANT_B.id, conversation_id: 'conversation-b' } }), res);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(mockCreateReservation).not.toHaveBeenCalled();
+    expect(logs.startConversation).not.toHaveBeenCalled();
+  });
+
+  test('a foreign conversation ID cannot receive tool or outcome writes', async () => {
+    logs.startConversation.mockResolvedValueOnce(null);
+    const res = mockRes();
+    await handler(scopedRequest({ body: { conversation_id: 'conversation-b', conversation_started: true } }), res);
+
+    expect(mockCreateReservation).toHaveBeenCalledWith(RESTAURANT_A.id, RESTAURANT_A, expect.any(Object));
+    expect(logs.forRestaurant).toHaveBeenCalledWith(RESTAURANT_A.id);
+    expect(logs.logToolCall).not.toHaveBeenCalled();
+    expect(logs.updateConversation).not.toHaveBeenCalled();
+  });
+
+  test('an ambiguous query restaurant ID cannot authenticate', async () => {
+    const res = mockRes();
+    await handler(scopedRequest({ query: { restaurant_id: [RESTAURANT_A.id, RESTAURANT_B.id] } }), res);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(mockChain.maybeSingle).not.toHaveBeenCalled();
+    expect(mockCreateReservation).not.toHaveBeenCalled();
+  });
+
+  test('a failed pinned restaurant lookup stops before booking', async () => {
+    mockGetRestaurantById.mockResolvedValueOnce(RESTAURANT_B);
+    const res = mockRes();
+    await handler(scopedRequest(), res);
+
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(mockCreateReservation).not.toHaveBeenCalled();
+  });
+
+  test('a scoped secret cannot run global restaurant identification', async () => {
+    const res = mockRes();
+    await handler(scopedRequest({ action: 'identify_restaurant', body: { restaurant_name: RESTAURANT_B.name } }), res);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(mockIdentifyRestaurant).not.toHaveBeenCalled();
+  });
+
+  test('a valid global signature cannot turn an A secret into global authority', async () => {
+    const req = scopedRequest({ body: { restaurant_id: RESTAURANT_B.id } });
+    req.headers['x-elevenlabs-signature'] = computeSignature(req.body);
+    const res = mockRes();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(mockCreateReservation).not.toHaveBeenCalled();
   });
 });
 
