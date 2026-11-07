@@ -35,13 +35,17 @@ global.fetch = mockFetch;
 const mockLogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() };
 jest.mock('../_lib/secure-logger', () => ({ createSecureLogger: () => mockLogger }));
 
-// createAgent com restaurantId null não toca o Supabase, mas o módulo o
-// importa no carregamento — o mock precisa existir mesmo sem ser exercido.
+// O agente real precisa de um restaurante e de um segredo persistido para
+// autenticar todas as ferramentas enviadas à ElevenLabs.
+const mockTestSecret = `el_whsec_${'a'.repeat(64)}`;
 jest.mock('../_lib/supabase', () => ({
   supabaseAdmin: {
     schema: () => ({
       from: () => ({
-        select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) }),
+        select: (fields) => ({ eq: () => ({ maybeSingle: async () => ({
+          data: fields === 'elevenlabs_webhook_secret' ? { elevenlabs_webhook_secret: mockTestSecret } : null,
+          error: null,
+        }) }) }),
         update: () => ({ eq: async () => ({ error: null }) }),
       }),
     }),
@@ -75,7 +79,7 @@ function corpoDoCreate() {
 }
 
 const ARGS = {
-  restaurantId: null,          // sem id => não consulta o Supabase
+  restaurantId: 'restaurant-1',
   restaurant_name: 'Cantina do Zé',
   voice_id: '21m00Tcm4TlvDq8ikWAM',
   language: 'pt',
