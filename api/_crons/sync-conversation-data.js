@@ -60,7 +60,7 @@ async function syncConversationData() {
     .select('id, conversation_id, restaurant_info_id')
     .is('elevenlabs_fetched_at', null)
     .gte('started_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-    .order('ended_at', { ascending: false })
+    .order('ended_at', { ascending: false, nullsFirst: false })
     .limit(MAX_CONVERSATIONS_PER_RUN);
 
   if (fetchError) {

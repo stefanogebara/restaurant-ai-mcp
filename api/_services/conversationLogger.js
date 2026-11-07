@@ -287,27 +287,35 @@ async function ingestCompletedConversation(provider, { restaurantId } = {}) {
   if (updateError) throw updateError;
   if (!updated?.length) return { ingested: false };
 
-  // Preserve the sentiment enrichment previously performed by the sync cron.
+  // Completion is durable before optional enrichment starts. The webhook must
+  // acknowledge a completed call even if the LLM or memory service stalls.
+  let acceptingEnrichment = true;
+  const tasks = [];
   if (transcript.length) {
-    const analysis = await analyzeTranscript(transcript);
-    const enrichment = {};
-    if (!update.summary && analysis.summary) enrichment.summary = analysis.summary;
-    if (analysis.sentiment) enrichment.customer_sentiment = analysis.sentiment;
-    if (Object.keys(enrichment).length) {
-      const { error } = await supabaseAdmin.from('agent_conversations')
-        .update(enrichment).eq('id', existing.id);
-      if (error) logger.error('Conversation enrichment failed');
-    }
+    tasks.push(analyzeTranscript(transcript).then(async analysis => {
+      if (!acceptingEnrichment) return;
+      const enrichment = {};
+      if (!update.summary && analysis.summary) enrichment.summary = analysis.summary;
+      if (analysis.sentiment) enrichment.customer_sentiment = analysis.sentiment;
+      if (Object.keys(enrichment).length) {
+        const { error } = await supabaseAdmin.from('agent_conversations')
+          .update(enrichment).eq('id', existing.id);
+        if (error) logger.error('Conversation enrichment failed');
+      }
+    }).catch(() => logger.error('Conversation enrichment failed')));
   }
+  tasks.push(extractMemoriesFromConversation(conversationId)
+    .catch(() => logger.error('Memory extraction failed')));
 
-  // A duplicate webhook or poll cannot re-run this because of the conditional write.
+  // The conditional write above keeps retries from repeating enrichment.
   let timeout;
   try {
     await Promise.race([
-      extractMemoriesFromConversation(conversationId).catch(() => logger.error('Memory extraction failed')),
-      new Promise(resolve => { timeout = setTimeout(resolve, 8000); }),
+      Promise.all(tasks),
+      new Promise(resolve => { timeout = setTimeout(resolve, 4000); }),
     ]);
   } finally {
+    acceptingEnrichment = false;
     clearTimeout(timeout);
   }
   return { ingested: true };

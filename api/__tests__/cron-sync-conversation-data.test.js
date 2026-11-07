@@ -38,6 +38,24 @@ test('closes an open, completed information-only call', async () => {
   expect(mockIngestCompletedConversation).toHaveBeenCalledWith(expect.objectContaining({ conversation_id: 'conv-1', status: 'done' }), { restaurantId: 'rest-1' });
 });
 
+test('fetches a completed call ahead of 20 open calls at the batch limit', async () => {
+  mockRows.mockImplementationOnce(async () => {
+    const order = mockQuery.order.mock.calls.find(([column]) => column === 'ended_at');
+    const open = Array.from({ length: 20 }, (_, index) => ({
+      id: index + 1, conversation_id: `open-${index}`, restaurant_info_id: 'rest-1', ended_at: null,
+    }));
+    const completed = { id: 21, conversation_id: 'completed-1', restaurant_info_id: 'rest-1', ended_at: '2026-11-07T01:00:00Z' };
+    return { data: order?.[1]?.nullsFirst === false ? [completed, ...open].slice(0, 20) : open, error: null };
+  });
+  global.fetch = jest.fn(async url => ({
+    ok: true, status: 200,
+    json: async () => ({ conversation_id: url.split('/').pop(), agent_id: 'agent-1', status: url.endsWith('completed-1') ? 'done' : 'processing' }),
+  }));
+  expect(await run()).toMatchObject({ synced: 1, errors: 0, total: 20 });
+  expect(mockQuery.order).toHaveBeenCalledWith('ended_at', { ascending: false, nullsFirst: false });
+  expect(mockIngestCompletedConversation).toHaveBeenCalledWith(expect.objectContaining({ conversation_id: 'completed-1' }), { restaurantId: 'rest-1' });
+});
+
 test('leaves an in-progress provider call eligible for a later run', async () => {
   global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({ conversation_id: 'conv-1', status: 'processing' }) });
   expect(await run()).toMatchObject({ synced: 0 });

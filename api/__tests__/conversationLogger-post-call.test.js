@@ -73,8 +73,12 @@ test('rejects an agent that belongs to another restaurant', async () => {
 
 test('a racing duplicate does not run memory extraction', async () => {
   mockUpdated = [];
-  expect(await ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'agent-1', status: 'done' })).toEqual({ ingested: false });
+  expect(await ingestCompletedConversation({
+    conversation_id: 'conv-1', agent_id: 'agent-1', status: 'done',
+    transcript: [{ role: 'user', message: 'question' }],
+  })).toEqual({ ingested: false });
   expect(mockExtract).not.toHaveBeenCalled();
+  expect(mockCreateAnalysis).not.toHaveBeenCalled();
 });
 
 test('creates a completed call that never invoked a tool', async () => {
@@ -88,4 +92,52 @@ test('creates a completed call that never invoked a tool', async () => {
     conversation_id: 'conv-1', restaurant_info_id: 'rest-1', agent_id: 'agent-1',
   }));
   expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ outcome: 'information_only' }));
+});
+
+test('marks a provider failed call as an error when no reservation exists', async () => {
+  await ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'agent-1', status: 'failed' });
+  expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ outcome: 'error', successful_booking: false }));
+});
+
+test('preserves a confirmed booking if the provider later marks the call failed', async () => {
+  mockRow.reservation_id = 'booking-1';
+  await ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'agent-1', status: 'failed' });
+  expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ outcome: 'reservation_created', successful_booking: true }));
+});
+
+test('returns after durable completion when analysis and memory hang', async () => {
+  jest.useFakeTimers();
+  try {
+    mockCreateAnalysis.mockImplementationOnce(() => new Promise(() => {}));
+    mockExtract.mockImplementationOnce(() => new Promise(() => {}));
+    const completion = ingestCompletedConversation({
+      conversation_id: 'conv-1', agent_id: 'agent-1', status: 'done',
+      transcript: [{ role: 'user', message: 'question' }],
+    });
+    await jest.advanceTimersByTimeAsync(5000);
+    await expect(completion).resolves.toEqual({ ingested: true });
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ elevenlabs_fetched_at: expect.any(String) }));
+  } finally {
+    jest.useRealTimers();
+  }
+});
+
+test('a late analysis result does not write after the webhook deadline', async () => {
+  jest.useFakeTimers();
+  try {
+    let finishAnalysis;
+    mockCreateAnalysis.mockImplementationOnce(() => new Promise(resolve => { finishAnalysis = resolve; }));
+    const completion = ingestCompletedConversation({
+      conversation_id: 'conv-1', agent_id: 'agent-1', status: 'done',
+      transcript: [{ role: 'user', message: 'question' }],
+    });
+    await jest.advanceTimersByTimeAsync(5000);
+    await completion;
+    finishAnalysis({ content: [{ text: '{"summary":"Late","sentiment":"neutral"}' }] });
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(mockUpdate).not.toHaveBeenCalledWith({ summary: 'Late', customer_sentiment: 'neutral' });
+  } finally {
+    jest.useRealTimers();
+  }
 });
