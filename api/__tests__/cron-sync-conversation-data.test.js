@@ -3,12 +3,16 @@ process.env.ELEVENLABS_API_KEY = 'provider-test';
 
 const mockRows = jest.fn();
 const mockIngestCompletedConversation = jest.fn().mockResolvedValue({ ingested: true });
+const mockRetryPostCallAnalysis = jest.fn().mockResolvedValue({ attempted: 0, completed: 0, errors: 0 });
 const mockQuery = {};
 for (const method of ['select', 'not', 'is', 'gte', 'order', 'eq']) mockQuery[method] = jest.fn(() => mockQuery);
 mockQuery.limit = jest.fn(() => mockRows());
 const mockFrom = jest.fn(() => mockQuery);
 jest.mock('../_lib/supabase', () => ({ supabaseAdmin: { from: (...args) => mockFrom(...args) } }));
-jest.mock('../_services/conversationLogger', () => ({ ingestCompletedConversation: (...args) => mockIngestCompletedConversation(...args) }));
+jest.mock('../_services/conversationLogger', () => ({
+  ingestCompletedConversation: (...args) => mockIngestCompletedConversation(...args),
+  retryPendingPostCallAnalysis: (...args) => mockRetryPostCallAnalysis(...args),
+}));
 jest.mock('../_lib/cron-tracker', () => ({ logCronRun: jest.fn(), logCronError: jest.fn() }));
 jest.mock('../_lib/cron-config', () => ({ isCronEnabled: jest.fn().mockResolvedValue(true) }));
 jest.mock('../_lib/secure-compare', () => ({ bearerEquals: (value, secret) => value === `Bearer ${secret}` }));
@@ -30,12 +34,22 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockRows.mockResolvedValue({ data: [{ id: 1, conversation_id: 'conv-1', restaurant_info_id: 'rest-1' }], error: null });
   mockIngestCompletedConversation.mockResolvedValue({ ingested: true });
+  mockRetryPostCallAnalysis.mockResolvedValue({ attempted: 0, completed: 0, errors: 0 });
 });
 
 test('closes an open, completed information-only call', async () => {
   global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({ conversation_id: 'conv-1', agent_id: 'agent-1', status: 'done', transcript: [] }) });
   expect(await run()).toMatchObject({ synced: 1, errors: 0 });
   expect(mockIngestCompletedConversation).toHaveBeenCalledWith(expect.objectContaining({ conversation_id: 'conv-1', status: 'done' }), { restaurantId: 'rest-1' });
+  expect(mockRetryPostCallAnalysis).toHaveBeenCalledTimes(1);
+});
+
+test('provider sync continues when optional analysis recovery fails', async () => {
+  mockRetryPostCallAnalysis.mockRejectedValueOnce(new Error('analysis database unavailable'));
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200,
+    json: async () => ({ conversation_id: 'conv-1', agent_id: 'agent-1', status: 'done', transcript: [] }) });
+  expect(await run()).toMatchObject({ synced: 1, analysis: { failed: true } });
+  expect(mockIngestCompletedConversation).toHaveBeenCalledTimes(1);
 });
 
 test('fetches a completed call ahead of 20 open calls at the batch limit', async () => {

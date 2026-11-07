@@ -14,7 +14,7 @@ const { logCronRun, logCronError } = require('../_lib/cron-tracker');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { isCronEnabled } = require('../_lib/cron-config');
 const { bearerEquals } = require('../_lib/secure-compare');
-const { ingestCompletedConversation } = require('../_services/conversationLogger');
+const { ingestCompletedConversation, retryPendingPostCallAnalysis } = require('../_services/conversationLogger');
 
 const logger = createSecureLogger('SyncConversationData');
 
@@ -37,9 +37,19 @@ module.exports = async (req, res) => {
   }
 
   try {
+    // Recovery runs first so slow provider polling cannot starve completed
+    // transcripts whose inline analysis exceeded the webhook deadline.
+    let analysis;
+    try {
+      analysis = await retryPendingPostCallAnalysis();
+    } catch (error) {
+      logger.error('[SyncConversationData] Analysis recovery failed', { message: error.message });
+      try { await logCronError(JOB_NAME, error); } catch (_) { /* keep provider sync alive */ }
+      analysis = { failed: true };
+    }
     const result = await syncConversationData();
     await logCronRun(JOB_NAME);
-    return res.status(200).json({ success: true, ...result });
+    return res.status(200).json({ success: true, ...result, analysis });
   } catch (error) {
     logger.error('[SyncConversationData] Fatal error:', error.message);
     await logCronError(JOB_NAME, error);
@@ -48,6 +58,7 @@ module.exports = async (req, res) => {
 };
 
 async function syncConversationData() {
+  const deadline = Date.now() + 30_000;
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) {
     logger.info('[SyncConversationData] No ELEVENLABS_API_KEY, skipping');
@@ -83,6 +94,7 @@ async function syncConversationData() {
   let errors = 0;
 
   for (const conv of conversations) {
+    if (Date.now() >= deadline) break;
     try {
       const provider = await fetchElevenLabsConversation(conv.conversation_id, apiKey);
       if (!provider || !['done', 'failed'].includes(provider.status)) continue;
@@ -103,6 +115,7 @@ async function syncConversationData() {
 async function fetchElevenLabsConversation(conversationId, apiKey) {
     const response = await fetch(`${ELEVENLABS_API_BASE}/convai/conversations/${encodeURIComponent(conversationId)}`, {
       headers: { 'xi-api-key': apiKey },
+      signal: AbortSignal.timeout(4000),
     });
 
     if (!response.ok) {
