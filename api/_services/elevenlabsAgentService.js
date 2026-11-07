@@ -849,13 +849,15 @@ async function createAgent({
 
     // Build system prompt — try persona-aware prompt if config exists, else basic
     let systemPrompt;
+    let restaurantConfig = null;
     if (restaurantId) {
-      const { data: restaurantConfig } = await supabaseAdmin
+      const { data: config } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
         .select('id, restaurant_name, phone, city, country, business_hours, agent_language, ai_config, agent_name, agent_greeting, voice_id, voice_engine, persona_prompt_override')
         .eq('id', restaurantId)
         .maybeSingle();
+      restaurantConfig = config;
 
       const configForPrompt = restaurantConfig || {
         restaurant_name, phone, address, business_hours, language,
@@ -869,6 +871,14 @@ async function createAgent({
     }
 
     const firstMessage = buildFirstMessage({ restaurant_name, language, custom_greeting });
+    // ElevenLabs otherwise guesses the language of its post-call summary. The
+    // agent language is a base language; Brazil needs the regional variant.
+    const country = String(restaurantConfig?.country || '').trim().toLowerCase();
+    const brazilianPortuguese = ['br', 'brazil', 'brasil'].includes(country)
+      || (!country && /^pt-br$/i.test(restaurantConfig?.ai_config?.language || language));
+    const summaryLanguage = /^pt(?:-|$)/i.test(language) && brazilianPortuguese
+      ? 'pt-br'
+      : String(language).toLowerCase().split('-')[0];
 
     // Create webhook tools — authenticated with a per-restaurant secret,
     // never CRON_SECRET (these headers live on ElevenLabs's servers).
@@ -906,6 +916,7 @@ async function createAgent({
         },
         platform_settings: {
           workspace_overrides: postCallOverrides,
+          summary_language: summaryLanguage,
           // Todo campo daqui vai EXPLÍCITO, mesmo quando o valor coincide com o
           // default da ElevenLabs. Em 24/08/2026 ela virou mic_muting_enabled e
           // transcript_enabled de false para true, e como o repo não os enviava,
