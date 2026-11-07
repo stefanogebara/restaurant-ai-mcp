@@ -57,6 +57,7 @@ function query(table) {
       const matching = rows.filter(row => conditions.every(([field, op, value]) => {
         const actual = fieldValue(row, field);
         if (op === 'eq') return actual === value;
+        if (op === 'like') return typeof actual === 'string' && actual.startsWith(value.slice(0, -1));
         if (op === 'in') return value.includes(actual);
         if (op === 'not.is') return actual !== value;
         if (op === 'neq') return actual !== null && actual !== value;
@@ -133,6 +134,25 @@ test('rejects duplicate provisioned AI numbers even when a business phone is uni
   expect(res.code).toBe(200);
   expect(res.body).toContain('<Hangup />');
   expect(res.body).not.toContain('<Stream');
+});
+
+test('rejects whitespace-suffixed duplicate AI numbers before business phone fallback', async () => {
+  rows = [
+    restaurant('business', { businessPhone: NUMBER }),
+    restaurant('ai-a', { aiPhone: `${NUMBER}\n` }),
+    restaurant('ai-b', { aiPhone: `${NUMBER}\n` }),
+  ];
+  const res = await call();
+  expect(res.body).toContain('<Hangup />');
+  expect(res.body).not.toContain('<Stream');
+  expect(res.body).not.toContain('value="business"');
+});
+
+test('rejects a malformed called number before building a LIKE lookup', async () => {
+  rows = [restaurant('business', { businessPhone: NUMBER })];
+  const res = await call('valid-signature', `${NUMBER}%`);
+  expect(res.body).toContain('<Hangup />');
+  expect(mockFrom).not.toHaveBeenCalled();
 });
 
 test('rejects duplicate business phones without an AI number match', async () => {

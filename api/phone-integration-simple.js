@@ -20,7 +20,7 @@ const { setInternalCors, handlePreflight } = require('./_lib/cors');
 // Platform Twilio credentials from environment
 const PLATFORM_TWILIO_SID = process.env.TWILIO_ACCOUNT_SID;
 const PLATFORM_TWILIO_TOKEN = process.env.TWILIO_AUTH_TOKEN;
-const PLATFORM_TWILIO_NUMBER = process.env.TWILIO_PHONE_NUMBER;
+const PLATFORM_TWILIO_NUMBER = process.env.TWILIO_PHONE_NUMBER?.trim();
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 
 module.exports = async (req, res) => {
