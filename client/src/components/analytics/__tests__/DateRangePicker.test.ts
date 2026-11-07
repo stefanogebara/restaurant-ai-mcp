@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { presetToRange } from '../DateRangePicker';
 
 describe('presetToRange', () => {
@@ -17,6 +17,22 @@ describe('presetToRange', () => {
     const { startDate, endDate } = presetToRange('30d');
     const diff = (new Date(endDate).getTime() - new Date(startDate).getTime()) / 86400000;
     expect(diff).toBe(30);
+  });
+
+  it('30d stays 30 calendar days across daylight saving time', () => {
+    const originalTimezone = process.env.TZ;
+    process.env.TZ = 'Europe/Madrid';
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-11-07T22:15:00Z'));
+      const { startDate, endDate } = presetToRange('30d');
+      expect(startDate).toBe('2026-10-08');
+      expect(endDate).toBe('2026-11-07');
+    } finally {
+      vi.useRealTimers();
+      if (originalTimezone === undefined) delete process.env.TZ;
+      else process.env.TZ = originalTimezone;
+    }
   });
 
   it('this_month: starts on day 1', () => {
