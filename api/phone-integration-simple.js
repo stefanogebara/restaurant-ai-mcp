@@ -77,7 +77,10 @@ module.exports = async (req, res) => {
       case 'diagnose':
         return await handleDiagnose(req, res);
       case 'fix-tools':
-        return await handleFixTools(req, res);
+        // This legacy path replaces the agent's entire tool_ids array with
+        // unauthenticated tools. Repair must preserve existing tools and bind
+        // each new tool to the verified restaurant before it can be exposed.
+        return res.status(409).json({ success: false, error: 'Voice tool repair requires Seatable support' });
       default:
         return res.status(400).json({
           success: false,
