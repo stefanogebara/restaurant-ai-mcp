@@ -72,6 +72,31 @@ test('foreign and already fixed date tools are skipped', async () => {
   expect((await inventory(fixed))[0].reason).toBe('already_fixed');
 });
 
+test.each([
+  ['agent_7101m0xms2rae7g8pa4t61rtxjvn', 'restaurant-ai-mf480l5ub-stefanogebaras-projects.vercel.app'],
+  ['agent_5401ktygj2xsf639dxd9ehccw3hq', 'restaurant-ai-lyo3jhqqd-stefanogebaras-projects.vercel.app'],
+])('migrates the exact legacy deployment URL for %s to the canonical domain', async (agentId, host) => {
+  const oldUrl = `https://${host}/api/elevenlabs-webhook?action=get_current_datetime`;
+  const f = fixture([row('restaurant-1', agentId)], [dateTool('date-1', oldUrl), otherTool]);
+  expect((await inventory(f))[0].status).toBe('ready');
+  const result = await migrate({ ...f, apply: true, journal: jest.fn() });
+  expect(result[0].status).toBe('verified');
+  expect(f.api.createTool.mock.calls[0][0].tool_config.api_schema.url)
+    .toBe('https://seatable.one/api/elevenlabs-webhook?action=get_current_datetime&restaurant_id=restaurant-1');
+});
+
+test('rejects a legacy deployment URL on another agent or an unlisted host', async () => {
+  const knownHost = 'restaurant-ai-mf480l5ub-stefanogebaras-projects.vercel.app';
+  const wrongAgent = fixture([row()], [dateTool('date-1', `https://${knownHost}/api/elevenlabs-webhook?action=get_current_datetime`), otherTool]);
+  expect((await inventory(wrongAgent))[0].reason).toBe('unexpected_date_tool');
+
+  const unknownHost = fixture([row('restaurant-1', 'agent_7101m0xms2rae7g8pa4t61rtxjvn')], [
+    dateTool('date-1', 'https://restaurant-ai-unknown-stefanogebaras-projects.vercel.app/api/elevenlabs-webhook?action=get_current_datetime'),
+    otherTool,
+  ]);
+  expect((await inventory(unknownHost))[0].reason).toBe('unexpected_date_tool');
+});
+
 test('does not silently drop existing response mocks from a duplicated date tool', async () => {
   const mockedDate = { ...dateTool(), response_mocks: [{ mock_result: '2026-11-07' }] };
   const f = fixture([row()], [mockedDate, otherTool]);
