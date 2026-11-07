@@ -27,13 +27,13 @@ export function callPeriodStartIso(period: string, now = new Date()): string {
   return new Date(now.getTime() - days * 86_400_000).toISOString();
 }
 
-export function useCallConversations(filter: CallFilter, restaurantId: string, page = 0) {
+export function useCallConversations(filter: CallFilter, userId: string, page = 0) {
   const outcomeParam = filter.outcome !== 'all' ? `&outcome=${filter.outcome}` : '';
   const languageParam = filter.language !== 'all' ? `&language=${filter.language}` : '';
   const sentimentParam = filter.sentiment ? `&sentiment=${filter.sentiment}` : '';
   const searchParam = filter.search ? `&search=${encodeURIComponent(filter.search)}` : '';
   return useQuery<ConversationsResult>({
-    queryKey: ['call-conversations', filter.period, filter.outcome, filter.language, filter.sentiment, filter.search, restaurantId, page],
+    queryKey: ['call-conversations', filter.period, filter.outcome, filter.language, filter.sentiment, filter.search, userId, page],
     queryFn: async () => {
       const dateFrom = encodeURIComponent(callPeriodStartIso(filter.period));
       const offset = page * CALLS_PAGE_SIZE;
@@ -55,9 +55,9 @@ export function useCallConversations(filter: CallFilter, restaurantId: string, p
   });
 }
 
-export function useCallStats(filter: CallFilter, restaurantId: string) {
+export function useCallStats(filter: CallFilter, userId: string) {
   return useQuery<Stats | null>({
-    queryKey: ['call-stats', filter.period, restaurantId],
+    queryKey: ['call-stats', filter.period, userId],
     queryFn: async () => {
       const res = await authFetch(
         `/api/agent-conversations?action=stats&period=${filter.period}`
@@ -72,9 +72,9 @@ export function useCallStats(filter: CallFilter, restaurantId: string) {
   });
 }
 
-export function usePhoneStatus(restaurantId: string) {
+export function usePhoneStatus(userId: string) {
   return useQuery<PhoneStatusData | null>({
-    queryKey: ['phone-status', restaurantId],
+    queryKey: ['phone-status', userId],
     queryFn: async () => {
       // The server resolves the owned restaurant from the authenticated user.
       // Never send mutable profile metadata as tenant scope for this endpoint.

@@ -41,23 +41,15 @@ export default function CallTrackingDashboard() {
 
   const { info: toastInfo } = useToast();
   const { user } = useAuth();
-  // Source of truth is the JWT, not localStorage. LS_RESTAURANT_ID was read in
-  // 3 places but written nowhere — every read returned empty string, which
-  // tripped the !restaurant_id guards in all 4 mutation handlers below and
-  // bailed out with a "noRestaurantId" toast before the backend ever saw the
-  // request. usePhoneStatus was also disabled (enabled: !!restaurantId).
-  //
-  // Supabase puts the value in user_metadata.restaurant_id; the backend has
-  // a JWT-bound fallback (_authRestaurantId in phone-integration-simple.js)
-  // but we still need a truthy client-side string so the React Query enabled
-  // guard and the mutation guards pass.
-  const restaurant_id = (user?.user_metadata as { restaurant_id?: string } | undefined)?.restaurant_id || '';
+  // The server resolves tenant scope from ownership or active membership.
+  // Use the immutable auth user id only to separate React Query caches.
+  const userId = user?.id || '';
 
   // ─── Queries ─────────────────────────────────────────────────────────────────
 
-  const { data: convsResult, isLoading, isError, isFetching: isFetchingConversations, refetch: refetchConversations } = useCallConversations(filter, restaurant_id, page);
-  const { data: stats, isError: statsError, refetch: refetchStats } = useCallStats(filter, restaurant_id);
-  const phoneStatusQuery = usePhoneStatus(restaurant_id);
+  const { data: convsResult, isLoading, isError, isFetching: isFetchingConversations, refetch: refetchConversations } = useCallConversations(filter, userId, page);
+  const { data: stats, isError: statsError, refetch: refetchStats } = useCallStats(filter, userId);
+  const phoneStatusQuery = usePhoneStatus(userId);
   const { data: selectedConversation } = useConversationDetail(selectedConversationId);
 
   const conversations = convsResult?.conversations ?? [];

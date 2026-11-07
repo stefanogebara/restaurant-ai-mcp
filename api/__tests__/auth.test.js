@@ -75,6 +75,7 @@ function mockRes() {
 // ── Reset mocks between tests ──
 beforeEach(() => {
   jest.clearAllMocks();
+  mockSingle.mockReset();
   // Default: Supabase session liveness check succeeds (SEC-09 liveness gate).
   // Tests that need a revoked session must override this with mockResolvedValueOnce.
   mockGetUser.mockResolvedValue({
@@ -169,6 +170,53 @@ describe('generateJWT', () => {
 // verifyJWT
 // ============================================================
 describe('verifyJWT', () => {
+  it('uses server-side ownership instead of mutable restaurant metadata', async () => {
+    const token = jwt.sign({
+      sub: 'metadata-owner',
+      user_metadata: { restaurant_id: 'somebody-elses-restaurant' },
+      restaurant_id: 'stale-top-level-restaurant',
+      role: 'owner',
+    }, TEST_SECRET, { expiresIn: '1h' });
+    mockSingle.mockResolvedValueOnce({
+      data: { id: 'owned-restaurant', timezone: 'America/Sao_Paulo' }, error: null,
+    });
+
+    const result = await verifyJWT(token);
+    expect(result.restaurant_id).toBe('owned-restaurant');
+    expect(result.timezone).toBe('America/Sao_Paulo');
+    expect(result.role).toBe('owner');
+    expect(mockFrom).toHaveBeenCalledWith('restaurant_config');
+  });
+
+  it('removes restaurant scope when the user has no active ownership or membership', async () => {
+    const token = jwt.sign({
+      sub: 'metadata-outsider', user_metadata: { restaurant_id: 'victim-restaurant' },
+      restaurant_id: 'victim-restaurant', role: 'owner',
+    }, TEST_SECRET, { expiresIn: '1h' });
+
+    const result = await verifyJWT(token);
+    expect(result.restaurant_id).toBeUndefined();
+    expect(result.role).not.toBe('owner');
+  });
+
+  it('grants a team member only the active restaurant membership', async () => {
+    const token = jwt.sign({
+      sub: 'team-member-with-stale-metadata',
+      user_metadata: { restaurant_id: 'old-restaurant' },
+    }, TEST_SECRET, { expiresIn: '1h' });
+    mockSingle
+      .mockResolvedValueOnce({ data: null, error: { code: 'PGRST116' } })
+      .mockResolvedValueOnce({
+        data: { restaurant_id: 'active-team-restaurant', role: 'host', restaurant_config: { timezone: 'Europe/Madrid' } },
+        error: null,
+      });
+
+    const result = await verifyJWT(token);
+    expect(result.restaurant_id).toBe('active-team-restaurant');
+    expect(result.role).toBe('host');
+    expect(result.timezone).toBe('Europe/Madrid');
+  });
+
   it('returns decoded payload for a valid token', async () => {
     const token = jwt.sign(
       {
@@ -187,8 +235,8 @@ describe('verifyJWT', () => {
     expect(result.sub).toBe('user-1');
     expect(result.email).toBe('test@test.com');
     expect(result.name).toBe('Test User');
-    expect(result.role).toBe('admin');
-    expect(result.restaurant_id).toBe('rest-1');
+    expect(result.role).toBe('authenticated');
+    expect(result.restaurant_id).toBeUndefined();
   });
 
   it('returns null for null/undefined/empty token', async () => {
@@ -378,6 +426,7 @@ describe('verifyJWT', () => {
 // ============================================================
 describe('authMiddleware', () => {
   it('extracts Bearer token from Authorization header and populates req.user', async () => {
+    mockSingle.mockResolvedValueOnce({ data: { id: 'mw-rest', timezone: 'UTC' }, error: null });
     const token = jwt.sign(
       { sub: 'mw-user', email: 'mw@test.com', role: 'owner', restaurant_id: 'mw-rest' },
       TEST_SECRET,
@@ -475,6 +524,7 @@ describe('authMiddleware', () => {
   });
 
   it('allows access when user role matches one of the required roles', async () => {
+    mockSingle.mockResolvedValueOnce({ data: { id: 'r', timezone: 'UTC' }, error: null });
     const token = jwt.sign(
       { sub: 'u', email: 'e', role: 'admin', restaurant_id: 'r' },
       TEST_SECRET,
@@ -489,7 +539,7 @@ describe('authMiddleware', () => {
     await middleware(req, res, next);
 
     expect(next).toHaveBeenCalled();
-    expect(req.user.role).toBe('admin');
+    expect(req.user.role).toBe('owner');
   });
 
   it('reads token from cookies when Authorization header is absent', async () => {
@@ -541,6 +591,7 @@ describe('authMiddleware', () => {
 // ============================================================
 describe('verifyAuth', () => {
   it('returns user object for a valid Bearer token', async () => {
+    mockSingle.mockResolvedValueOnce({ data: { id: 'va-rest', timezone: 'UTC' }, error: null });
     const token = jwt.sign(
       { sub: 'va-user', email: 'va@test.com', role: 'admin', restaurant_id: 'va-rest' },
       TEST_SECRET,
@@ -605,6 +656,7 @@ describe('verifyAuth', () => {
   });
 
   it('returns user when role matches allowed roles', async () => {
+    mockSingle.mockResolvedValueOnce({ data: { id: 'r', timezone: 'UTC' }, error: null });
     const token = jwt.sign(
       { sub: 'u', role: 'admin', restaurant_id: 'r' },
       TEST_SECRET,
@@ -615,7 +667,7 @@ describe('verifyAuth', () => {
     const result = await verifyAuth(req, { roles: ['admin', 'owner'] });
 
     expect(result.user).toBeDefined();
-    expect(result.user.role).toBe('admin');
+    expect(result.user.role).toBe('owner');
   });
 
   it('ignores non-Bearer authorization schemes', async () => {
@@ -775,6 +827,7 @@ describe('maskSensitiveData', () => {
 // ============================================================
 describe('generateJWT -> verifyJWT round-trip', () => {
   it('generates a token that verifyJWT can decode with all claims', async () => {
+    mockSingle.mockResolvedValueOnce({ data: { id: 'rt-rest', timezone: 'UTC' }, error: null });
     const payload = {
       sub: 'roundtrip-user',
       email: 'rt@test.com',
@@ -795,6 +848,7 @@ describe('generateJWT -> verifyJWT round-trip', () => {
   });
 
   it('generated token works with authMiddleware', async () => {
+    mockSingle.mockResolvedValueOnce({ data: { id: 'e2e-rest', timezone: 'UTC' }, error: null });
     const token = await generateJWT({
       sub: 'e2e-user',
       email: 'e2e@test.com',
@@ -815,6 +869,7 @@ describe('generateJWT -> verifyJWT round-trip', () => {
   });
 
   it('generated token works with verifyAuth', async () => {
+    mockSingle.mockResolvedValueOnce({ data: { id: 'va-e2e-rest', timezone: 'UTC' }, error: null });
     const token = await generateJWT({
       sub: 'va-e2e',
       email: 'va-e2e@test.com',

@@ -275,18 +275,16 @@ async function verificarToken(token) {
     return null;
   }
 
-  // Ensure restaurant_id, timezone, and role are present on the user object
-  // First check user_metadata (set during auth), then fall back to DB lookup
-  if (!decoded.restaurant_id && decoded.user_metadata?.restaurant_id) {
-    decoded.restaurant_id = decoded.user_metadata.restaurant_id;
-  }
-  if (!decoded.restaurant_id && decoded.sub) {
-    const restaurant = await getRestaurantIdForUser(decoded.sub);
-    if (restaurant) {
-      decoded.restaurant_id = restaurant.restaurantId;
-      decoded.timezone = restaurant.timezone;
-      decoded.role = restaurant.role || 'owner';
-    }
+  // JWT user_metadata is editable by the user, and top-level tenant claims can
+  // become stale. The service-role APIs must receive only DB-backed tenant scope.
+  const restaurant = decoded.sub ? await getRestaurantIdForUser(decoded.sub) : null;
+  delete decoded.restaurant_id;
+  delete decoded.timezone;
+  decoded.role = 'authenticated';
+  if (restaurant) {
+    decoded.restaurant_id = restaurant.restaurantId;
+    decoded.timezone = restaurant.timezone;
+    decoded.role = restaurant.role || 'owner';
   }
 
   // Cache verified token to avoid repeated verification on subsequent requests
