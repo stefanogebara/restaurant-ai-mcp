@@ -5,6 +5,7 @@
 - [x] Create a Seatable-only HMAC endpoint without changing workspace defaults.
 - [x] Set its signing secret and webhook ID in Vercel project configuration.
 - [x] Require the Seatable webhook override on both agent creation paths.
+- [x] Preserve provider call start time and caller number for webhook-only calls.
 - [x] Run API tests, frontend tests, build, and syntax checks.
 - [ ] Merge after PR checks pass and verify the production alias by exact SHA.
 - [ ] Probe the production receiver with a signed non-call event.

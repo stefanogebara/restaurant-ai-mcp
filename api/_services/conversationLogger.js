@@ -25,7 +25,8 @@ async function startConversation(conversationData) {
     language = 'en',
     agent_version,
     restaurant_info_id,
-    agent_id
+    agent_id,
+    started_at
   } = conversationData;
 
   try {
@@ -46,7 +47,7 @@ async function startConversation(conversationData) {
       caller_phone,
       called_phone,
       language,
-      started_at: new Date().toISOString(),
+      started_at: started_at || new Date().toISOString(),
       agent_version,
       transcript: [],
       tools_used: [],
@@ -226,7 +227,7 @@ async function ingestCompletedConversation(provider, { restaurantId } = {}) {
   }
 
   const find = () => supabaseAdmin.from('agent_conversations')
-    .select('id, restaurant_info_id, agent_id, reservation_id, outcome, summary, elevenlabs_fetched_at')
+    .select('id, restaurant_info_id, agent_id, reservation_id, outcome, summary, caller_phone, called_phone, elevenlabs_fetched_at')
     .eq('conversation_id', conversationId).maybeSingle();
   let { data: existing, error: readError } = await find();
   if (readError) throw readError;
@@ -243,11 +244,22 @@ async function ingestCompletedConversation(provider, { restaurantId } = {}) {
     throw new Error('Agent restaurant mismatch');
   }
   restaurantId = restaurant.id;
+  const start = Number(provider.metadata?.start_time_unix_secs);
+  const providerStartedAt = Number.isFinite(start) && start > 0 && start * 1000 <= 8.64e15
+    ? new Date(start * 1000).toISOString() : null;
+  const phoneCall = provider.metadata?.phone_call;
+  const externalNumber = typeof phoneCall?.external_number === 'string' && /^\+\d{7,15}$/.test(phoneCall.external_number)
+    ? phoneCall.external_number : null;
+  const agentNumber = typeof phoneCall?.agent_number === 'string' && /^\+\d{7,15}$/.test(phoneCall.agent_number)
+    ? phoneCall.agent_number : null;
   if (!existing) {
     const created = await startConversation({
       conversation_id: conversationId,
       restaurant_info_id: restaurantId,
       agent_id: agentId,
+      started_at: providerStartedAt,
+      caller_phone: externalNumber,
+      called_phone: agentNumber,
     });
     if (!created) throw new Error('Conversation insert failed');
     ({ data: existing, error: readError } = await find());
@@ -263,8 +275,7 @@ async function ingestCompletedConversation(provider, { restaurantId } = {}) {
     : [];
   const duration = Number(provider.metadata?.call_duration_secs);
   const now = new Date().toISOString();
-  const start = Number(provider.metadata?.start_time_unix_secs);
-  const endedAt = Number.isFinite(start) && start > 0 && Number.isFinite(duration) && duration >= 0
+  const endedAt = providerStartedAt && Number.isFinite(duration) && duration >= 0
     ? new Date((start + duration) * 1000).toISOString() : now;
   const update = {
     ended_at: endedAt,
@@ -275,6 +286,9 @@ async function ingestCompletedConversation(provider, { restaurantId } = {}) {
     agent_id: agentId,
     restaurant_info_id: restaurantId,
   };
+  if (providerStartedAt) update.started_at = providerStartedAt;
+  if (!existing.caller_phone && externalNumber) update.caller_phone = externalNumber;
+  if (!existing.called_phone && agentNumber) update.called_phone = agentNumber;
   if (Array.isArray(provider.transcript)) update.transcript = transcript;
   if (Number.isFinite(duration) && duration >= 0) update.duration_seconds = Math.round(duration);
   if (typeof provider.analysis?.transcript_summary === 'string') update.summary = provider.analysis.transcript_summary;
