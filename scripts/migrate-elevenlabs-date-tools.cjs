@@ -21,6 +21,13 @@ const PROJECT_REF = 'ckforlwdhewexyqljsaf';
 const SUPABASE_URL = `https://${PROJECT_REF}.supabase.co`;
 const WORKSPACE_ID = '638a74e2dad648c4a0745edc358d7eae';
 const ELEVENLABS_BASE = 'https://api.elevenlabs.io/v1/convai';
+// Two existing Seatable agents were created while VERCEL_URL pointed at an
+// ephemeral deployment. The old hosts are no longer found by Vercel. Pin each
+// observed host to its exact agent; no other deployment URL is accepted.
+const LEGACY_DATE_HOST_BY_AGENT = new Map([
+  ['agent_7101m0xms2rae7g8pa4t61rtxjvn', 'restaurant-ai-mf480l5ub-stefanogebaras-projects.vercel.app'],
+  ['agent_5401ktygj2xsf639dxd9ehccw3hq', 'restaurant-ai-lyo3jhqqd-stefanogebaras-projects.vercel.app'],
+]);
 
 function assertProject(projectRef, supabaseUrl) {
   if (projectRef !== PROJECT_REF || supabaseUrl !== SUPABASE_URL) {
@@ -56,10 +63,12 @@ function toolIds(agent) {
   return ids;
 }
 
-function webhookUrl(config) {
+function webhookUrl(config, agentId) {
   try {
     const url = new URL(config?.api_schema?.url);
-    if (url.origin !== 'https://seatable.one' || url.pathname !== '/api/elevenlabs-webhook') return null;
+    const legacyHost = LEGACY_DATE_HOST_BY_AGENT.get(agentId);
+    if ((url.origin !== 'https://seatable.one' && (!legacyHost || url.origin !== `https://${legacyHost}`))
+        || url.pathname !== '/api/elevenlabs-webhook') return null;
     return url;
   } catch { return null; }
 }
@@ -70,7 +79,7 @@ function inspectAgent(row, agent, tools) {
     return { status: 'skip', reason: 'incomplete_tool_inventory' };
   }
   if (tools.some(tool => {
-    const url = webhookUrl(tool.tool_config);
+    const url = webhookUrl(tool.tool_config, row.elevenlabs_agent_id);
     const id = url?.searchParams.get('restaurant_id');
     return id && id !== row.id;
   })) return { status: 'skip', reason: 'foreign_restaurant_tool' };
@@ -82,7 +91,7 @@ function inspectAgent(row, agent, tools) {
   // agent is tested. Leave such tools for an explicit, reviewed migration.
   if (old.response_mocks?.length) return { status: 'skip', reason: 'date_tool_has_mocks' };
   const config = old.tool_config;
-  const url = webhookUrl(config);
+  const url = webhookUrl(config, row.elevenlabs_agent_id);
   if (!url || config.type !== 'webhook' || config.api_schema.method !== 'GET' ||
       url.searchParams.getAll('action').length !== 1 ||
       url.searchParams.get('action') !== 'get_current_datetime' ||
@@ -103,6 +112,7 @@ function inspectAgent(row, agent, tools) {
 function replacementConfig(item) {
   const config = structuredClone(item.config);
   const url = new URL(config.api_schema.url);
+  url.host = 'seatable.one';
   url.searchParams.set('restaurant_id', item.row.id);
   config.api_schema.url = url.toString();
   config.api_schema.request_headers = {
