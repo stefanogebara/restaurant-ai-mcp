@@ -1,5 +1,6 @@
 const mockExtract = jest.fn().mockResolvedValue(0);
 const mockRestaurant = jest.fn().mockResolvedValue({ id: 'rest-1' });
+const mockRestaurantById = jest.fn().mockResolvedValue({ id: 'rest-1', is_demo: false, onboarding_completed: true });
 const mockCreateAnalysis = jest.fn().mockResolvedValue({ content: [{ text: '{"summary":"Asked about hours","sentiment":"neutral"}' }] });
 let mockRow;
 let mockUpdated;
@@ -17,7 +18,10 @@ const mockQuery = {
   then: (resolve) => Promise.resolve({ data: mockUpdated, error: null }).then(resolve),
 };
 jest.mock('../_lib/supabase', () => ({ supabaseAdmin: { from: () => mockQuery } }));
-jest.mock('../_lib/restaurant-loader', () => ({ getRestaurantByAgentId: (...args) => mockRestaurant(...args) }));
+jest.mock('../_lib/restaurant-loader', () => ({
+  getRestaurantByAgentId: (...args) => mockRestaurant(...args),
+  getRestaurantById: (...args) => mockRestaurantById(...args),
+}));
 jest.mock('../_lib/secure-logger', () => ({ createSecureLogger: () => ({ info: jest.fn(), error: jest.fn() }) }));
 jest.mock('../_services/memoryExtractor', () => ({ extractMemoriesFromConversation: (...args) => mockExtract(...args) }));
 jest.mock('../_lib/ai-client', () => ({ getAIClient: () => ({ messages: { create: (...args) => mockCreateAnalysis(...args) } }), AI_MODEL_FAST: 'test-model' }));
@@ -25,9 +29,57 @@ const { ingestCompletedConversation } = require('../_services/conversationLogger
 
 beforeEach(() => {
   jest.clearAllMocks();
+  delete process.env.ELEVENLABS_SHARED_AGENT_ID;
+  mockRestaurant.mockResolvedValue({ id: 'rest-1' });
+  mockRestaurantById.mockResolvedValue({ id: 'rest-1', is_demo: false, onboarding_completed: true });
   mockRow = { id: 1, restaurant_info_id: 'rest-1', agent_id: 'agent-1', reservation_id: null, elevenlabs_fetched_at: null };
   mockUpdated = [{ id: 1 }];
   mockQuery.maybeSingle.mockReset().mockImplementation(() => Promise.resolve({ data: mockRow, error: null }));
+});
+
+test('shared agent uses an existing conversation binding and never resolves by agent ID', async () => {
+  process.env.ELEVENLABS_SHARED_AGENT_ID = 'shared-agent';
+  mockRow.agent_id = 'shared-agent';
+  const result = await ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'shared-agent', status: 'done' });
+  expect(result).toEqual({ ingested: true });
+  expect(mockRestaurantById).toHaveBeenCalledWith('rest-1');
+  expect(mockRestaurant).not.toHaveBeenCalled();
+  expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ restaurant_info_id: 'rest-1' }));
+});
+
+test('shared agent refuses missing, unscoped or inactive conversation bindings', async () => {
+  process.env.ELEVENLABS_SHARED_AGENT_ID = 'shared-agent';
+  mockRow = null;
+  await expect(ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'shared-agent', status: 'done' }))
+    .rejects.toThrow('Shared conversation is not bound');
+  mockRow = { id: 1, agent_id: 'shared-agent', restaurant_info_id: null, elevenlabs_fetched_at: null };
+  await expect(ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'shared-agent', status: 'done' }))
+    .rejects.toThrow('Shared conversation is not bound');
+  mockRow.restaurant_info_id = 'rest-1';
+  mockRestaurantById.mockResolvedValueOnce(null);
+  await expect(ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'shared-agent', status: 'done' }))
+    .rejects.toThrow('Shared conversation restaurant unavailable');
+  expect(mockUpdate).not.toHaveBeenCalled();
+});
+
+test('shared agent refuses demo and incomplete restaurants', async () => {
+  process.env.ELEVENLABS_SHARED_AGENT_ID = 'shared-agent';
+  mockRow.agent_id = 'shared-agent';
+  mockRestaurantById.mockResolvedValueOnce({ id: 'rest-1', is_demo: true, onboarding_completed: true });
+  await expect(ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'shared-agent', status: 'done' }))
+    .rejects.toThrow('Shared conversation restaurant unavailable');
+  mockRestaurantById.mockResolvedValueOnce({ id: 'rest-1', is_demo: false, onboarding_completed: false });
+  await expect(ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'shared-agent', status: 'done' }))
+    .rejects.toThrow('Shared conversation restaurant unavailable');
+  expect(mockUpdate).not.toHaveBeenCalled();
+});
+
+test('a duplicate delivery still verifies the agent and restaurant scope', async () => {
+  mockRow.elevenlabs_fetched_at = '2026-11-07T00:00:00Z';
+  await expect(ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'other', status: 'done' }))
+    .rejects.toThrow('Agent mismatch');
+  await expect(ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'agent-1', status: 'done' }, { restaurantId: 'other' }))
+    .rejects.toThrow('Restaurant mismatch');
 });
 
 test('finishes an information-only call and stores only transcript fields', async () => {

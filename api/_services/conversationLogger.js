@@ -8,7 +8,7 @@
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { extractMemoriesFromConversation } = require('./memoryExtractor');
-const { getRestaurantByAgentId } = require('../_lib/restaurant-loader');
+const { getRestaurantByAgentId, getRestaurantById } = require('../_lib/restaurant-loader');
 
 const logger = createSecureLogger('ConversationLogger');
 
@@ -234,14 +234,27 @@ async function ingestCompletedConversation(provider, { restaurantId } = {}) {
     .eq('conversation_id', conversationId).maybeSingle();
   let { data: existing, error: readError } = await find();
   if (readError) throw readError;
-  if (existing?.elevenlabs_fetched_at) return { ingested: false };
   if (existing?.agent_id && existing.agent_id !== agentId) throw new Error('Agent mismatch');
   if (restaurantId && existing?.restaurant_info_id && restaurantId !== existing.restaurant_info_id) {
     throw new Error('Restaurant mismatch');
   }
+  const isSharedAgent = !!process.env.ELEVENLABS_SHARED_AGENT_ID &&
+    agentId === process.env.ELEVENLABS_SHARED_AGENT_ID;
+  if (isSharedAgent && (!existing?.restaurant_info_id || existing.agent_id !== agentId)) {
+    throw new Error('Shared conversation is not bound');
+  }
+  if (existing?.elevenlabs_fetched_at) return { ingested: false };
 
   // Bind every provider agent to its restaurant before writing call data.
-  const restaurant = await getRestaurantByAgentId(agentId);
+  // A shared agent has no restaurant_config row of its own. Its conversation
+  // must already have been bound by an authenticated tool call; provider
+  // metadata, phone numbers and model-authored IDs are never routing authority.
+  const restaurant = isSharedAgent
+    ? await getRestaurantById(existing.restaurant_info_id)
+    : await getRestaurantByAgentId(agentId);
+  if (isSharedAgent && (!restaurant || restaurant.is_demo !== false || restaurant.onboarding_completed !== true)) {
+    throw new Error('Shared conversation restaurant unavailable');
+  }
   if ((restaurantId && restaurant.id !== restaurantId) ||
       (existing?.restaurant_info_id && existing.restaurant_info_id !== restaurant.id)) {
     throw new Error('Agent restaurant mismatch');
