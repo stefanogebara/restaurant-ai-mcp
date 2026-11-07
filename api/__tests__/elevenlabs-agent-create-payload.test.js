@@ -38,12 +38,13 @@ jest.mock('../_lib/secure-logger', () => ({ createSecureLogger: () => mockLogger
 // O agente real precisa de um restaurante e de um segredo persistido para
 // autenticar todas as ferramentas enviadas à ElevenLabs.
 const mockTestSecret = `el_whsec_${'a'.repeat(64)}`;
+let mockRestaurantConfig = null;
 jest.mock('../_lib/supabase', () => ({
   supabaseAdmin: {
     schema: () => ({
       from: () => ({
         select: (fields) => ({ eq: () => ({ maybeSingle: async () => ({
-          data: fields === 'elevenlabs_webhook_secret' ? { elevenlabs_webhook_secret: mockTestSecret } : null,
+          data: fields === 'elevenlabs_webhook_secret' ? { elevenlabs_webhook_secret: mockTestSecret } : mockRestaurantConfig,
           error: null,
         }) }) }),
         update: () => ({ eq: async () => ({ error: null }) }),
@@ -89,7 +90,36 @@ const ARGS = {
 };
 
 describe('payload de criação do agente ElevenLabs', () => {
-  beforeEach(wireFetch);
+  beforeEach(() => { mockRestaurantConfig = null; wireFetch(); });
+
+  it('fixa o idioma do resumo como português brasileiro para um restaurante no Brasil', async () => {
+    mockRestaurantConfig = { country: 'BR', ai_config: { language: 'pt-PT' }, restaurant_name: ARGS.restaurant_name };
+    await createAgent(ARGS);
+    expect(corpoDoCreate().platform_settings.summary_language).toBe('pt-br');
+  });
+
+  it('preserva português europeu em Portugal e espanhol para agentes espanhóis', async () => {
+    mockRestaurantConfig = { country: 'PT', ai_config: { language: 'pt-PT' }, restaurant_name: ARGS.restaurant_name };
+    await createAgent(ARGS);
+    expect(corpoDoCreate().platform_settings.summary_language).toBe('pt');
+    mockRestaurantConfig = { country: 'ES', ai_config: { language: 'es-ES' }, restaurant_name: ARGS.restaurant_name };
+    wireFetch();
+    await createAgent({ ...ARGS, language: 'es' });
+    expect(corpoDoCreate().platform_settings.summary_language).toBe('es');
+  });
+
+  it('usa a variante regional quando o idioma chega como pt-BR sem país no cadastro', async () => {
+    await createAgent({ ...ARGS, language: 'pt-BR' });
+    expect(corpoDoCreate().platform_settings.summary_language).toBe('pt-br');
+  });
+
+  it('define explicitamente os resumos em inglês e italiano', async () => {
+    await createAgent({ ...ARGS, language: 'en' });
+    expect(corpoDoCreate().platform_settings.summary_language).toBe('en');
+    wireFetch();
+    await createAgent({ ...ARGS, language: 'it' });
+    expect(corpoDoCreate().platform_settings.summary_language).toBe('it');
+  });
 
   it('cria o agente e chama POST /agents/create uma vez', async () => {
     const r = await createAgent(ARGS);
