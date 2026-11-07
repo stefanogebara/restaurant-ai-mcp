@@ -2097,6 +2097,8 @@
     "language": "Language",
     "recentCalls": "Recent Calls",
     "callsInPeriod": "Calls in selected period",
+    "timesInRestaurant": "Times in {{city}}",
+    "timesOnDevice": "Times shown in your device's time zone",
     "statsUnavailable": "Call statistics are unavailable. The conversation list may still be up to date.",
     "noCallsForFilters": "No calls match these filters",
     "noCallsForFiltersHint": "Try another period or clear a filter.",

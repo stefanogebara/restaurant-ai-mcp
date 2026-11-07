@@ -3026,6 +3026,8 @@
     "language": "Idioma",
     "recentCalls": "Llamadas Recientes",
     "callsInPeriod": "Llamadas del período seleccionado",
+    "timesInRestaurant": "Horarios en {{city}}",
+    "timesOnDevice": "Horarios en la zona horaria de tu dispositivo",
     "statsUnavailable": "Las estadísticas de llamadas no están disponibles. La lista de conversaciones puede estar actualizada.",
     "noCallsForFilters": "Ninguna llamada coincide con los filtros",
     "noCallsForFiltersHint": "Prueba otro período o quita un filtro.",

@@ -6,13 +6,15 @@ import { type Conversation, formatDate, getOutcomeColor, getOutcomeLabelKey, get
 interface Props {
   conversation: Conversation;
   onClose: () => void;
+  timeZone?: string;
+  timeZoneLabel: string;
 }
 
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea, input, select, audio[controls], [tabindex]:not([tabindex="-1"])';
 
-export default function CallConversationModal({ conversation, onClose }: Props) {
-  const { t } = useTranslation();
+export default function CallConversationModal({ conversation, onClose, timeZone, timeZoneLabel }: Props) {
+  const { t, i18n } = useTranslation();
   const dialogRef = useRef<HTMLDivElement>(null);
 
   // Modal a11y: Escape to close, body-scroll lock, focus capture + Tab trap.
@@ -78,7 +80,8 @@ export default function CallConversationModal({ conversation, onClose }: Props) 
         <div className="sticky top-0 bg-glass-panel backdrop-blur-glass-nav border-b border-glass-border-dark p-6 flex items-center justify-between">
           <div>
             <h2 className="text-xl font-semibold text-deep-charcoal">{t('callTracking.conversationDetails')}</h2>
-            <p className="text-sm text-stone-gray mt-1">{formatDate(conversation.started_at)}</p>
+            <p className="text-sm text-stone-gray mt-1">{formatDate(conversation.started_at, i18n.language, timeZone)}</p>
+            <p className="text-xs text-muted-stone mt-0.5">{timeZoneLabel}</p>
           </div>
           <button
             type="button"

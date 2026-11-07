@@ -11,6 +11,7 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import { SkeletonCallTracking } from '../components/common/Skeleton';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useRestaurantSettings } from '../hooks/useRestaurantSettings';
 
 import { toCsv, downloadCsv } from '../utils/exportCsv';
 import { todayLocalISO } from '../utils/timeFormatting';
@@ -31,9 +32,10 @@ import {
 } from '../hooks/useCallTracking';
 
 import type { CallFilter } from '../components/call-tracking/callTrackingTypes';
+import { formatCallExportDate, isValidTimeZone } from '../components/call-tracking/callTrackingTypes';
 
 export default function CallTrackingDashboard() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [filter, setFilter] = useState<CallFilter>({ period: '7d', outcome: 'all', language: 'all' });
   const [page, setPage] = useState(0);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
@@ -41,6 +43,11 @@ export default function CallTrackingDashboard() {
 
   const { info: toastInfo } = useToast();
   const { user } = useAuth();
+  const { data: restaurantSettings } = useRestaurantSettings();
+  const timeZone = isValidTimeZone(restaurantSettings?.timezone) ? restaurantSettings.timezone : undefined;
+  const timeZoneLabel = timeZone
+    ? t('callTracking.timesInRestaurant', { city: restaurantSettings?.city || timeZone })
+    : t('callTracking.timesOnDevice');
   // The server resolves tenant scope from ownership or active membership.
   // Use the immutable auth user id only to separate React Query caches.
   const userId = user?.id || '';
@@ -124,7 +131,8 @@ export default function CallTrackingDashboard() {
                 onClick={() => {
                   if (!conversations.length) return;
                   const rows = conversations.map(c => ({
-                    date: c.started_at ? new Date(c.started_at).toLocaleString() : '',
+                    date: formatCallExportDate(c.started_at, i18n.language, timeZone),
+                    time_zone: timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone,
                     caller: c.caller_phone || '',
                     duration_seconds: c.duration_seconds ?? '',
                     outcome: c.outcome || '',
@@ -132,7 +140,7 @@ export default function CallTrackingDashboard() {
                     customer_name: c.customer_name || '',
                     party_size: c.party_size ?? '',
                   }));
-                  const columns = ['date', 'caller', 'duration_seconds', 'outcome', 'language', 'customer_name', 'party_size'];
+                  const columns = ['date', 'time_zone', 'caller', 'duration_seconds', 'outcome', 'language', 'customer_name', 'party_size'];
                   downloadCsv(`calls-${todayLocalISO()}-page-${page + 1}.csv`, toCsv(rows, columns));
                 }}
                 disabled={!conversations.length}
@@ -175,6 +183,8 @@ export default function CallTrackingDashboard() {
                 onOutcomeChange={(outcome) => changeFilter({ ...filter, outcome })}
                 onConversationClick={(id) => setSelectedConversationId(id)}
                 onPhoneClick={(phone) => setGuestProfilePhone(phone)}
+                timeZone={timeZone}
+                timeZoneLabel={timeZoneLabel}
               />
               {pagination && pagination.total > CALLS_PAGE_SIZE && (
                 <nav aria-label={t('callTracking.pages')} className="flex flex-wrap items-center justify-between gap-3 border-t border-glass-border-dark pt-4">
@@ -198,6 +208,8 @@ export default function CallTrackingDashboard() {
             <CallConversationModal
               conversation={selectedConversation}
               onClose={() => setSelectedConversationId(null)}
+              timeZone={timeZone}
+              timeZoneLabel={timeZoneLabel}
             />
           )}
 
