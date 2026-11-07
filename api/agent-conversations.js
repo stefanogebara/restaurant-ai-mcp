@@ -104,7 +104,9 @@ async function handleListConversations(req, res, user) {
 
     let query = supabaseAdmin
       .from('agent_conversations')
-      .select('*', { count: 'exact' })
+      // The list renders summary rows; transcript and other call details are
+      // fetched only after the owner opens one conversation.
+      .select('id, conversation_id, caller_phone, called_phone, started_at, duration_seconds, language, outcome, customer_name, party_size', { count: 'exact' })
       .eq('restaurant_info_id', restaurant_id);
 
     // Apply filters
