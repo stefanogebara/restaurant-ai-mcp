@@ -287,6 +287,19 @@ async function ingestCompletedConversation(provider, { restaurantId } = {}) {
   if (updateError) throw updateError;
   if (!updated?.length) return { ingested: false };
 
+  // Preserve the sentiment enrichment previously performed by the sync cron.
+  if (transcript.length) {
+    const analysis = await analyzeTranscript(transcript);
+    const enrichment = {};
+    if (!update.summary && analysis.summary) enrichment.summary = analysis.summary;
+    if (analysis.sentiment) enrichment.customer_sentiment = analysis.sentiment;
+    if (Object.keys(enrichment).length) {
+      const { error } = await supabaseAdmin.from('agent_conversations')
+        .update(enrichment).eq('id', existing.id);
+      if (error) logger.error('Conversation enrichment failed');
+    }
+  }
+
   // A duplicate webhook or poll cannot re-run this because of the conditional write.
   let timeout;
   try {
@@ -298,6 +311,30 @@ async function ingestCompletedConversation(provider, { restaurantId } = {}) {
     clearTimeout(timeout);
   }
   return { ingested: true };
+}
+
+async function analyzeTranscript(transcript) {
+  try {
+    const { getAIClient, AI_MODEL_FAST } = require('../_lib/ai-client');
+    const text = transcript.map(turn => `${turn.role}: ${turn.content}`).join('\n').slice(0, 2000);
+    const response = await getAIClient().messages.create({
+      model: AI_MODEL_FAST,
+      max_tokens: 200,
+      system: 'Analyze a restaurant phone call. Return JSON only with summary (2-3 sentences) and sentiment (positive, neutral, or negative).',
+      messages: [{ role: 'user', content: text }],
+    });
+    const raw = response.content?.[0]?.text || response.choices?.[0]?.message?.content || '';
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) return {};
+    const parsed = JSON.parse(match[0]);
+    return {
+      summary: typeof parsed.summary === 'string' ? parsed.summary.slice(0, 500) : null,
+      sentiment: ['positive', 'neutral', 'negative'].includes(parsed.sentiment) ? parsed.sentiment : null,
+    };
+  } catch (_) {
+    logger.error('Conversation analysis failed');
+    return {};
+  }
 }
 
 /**

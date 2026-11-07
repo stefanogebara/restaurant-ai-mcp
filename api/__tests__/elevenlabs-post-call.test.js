@@ -26,6 +26,7 @@ const payload = { type: 'post_call_transcription', data: { agent_id: 'agent-1', 
 beforeEach(() => mockIngestCompletedConversation.mockClear());
 
 test('accepts only a fresh signature over the exact raw body', async () => {
+  expect(handler.config).toEqual({ api: { bodyParser: false } });
   const res = response();
   await handler(request(payload), res);
   expect(mockIngestCompletedConversation).toHaveBeenCalledWith(payload.data);

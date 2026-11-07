@@ -1,5 +1,6 @@
 const mockExtract = jest.fn().mockResolvedValue(0);
 const mockRestaurant = jest.fn().mockResolvedValue({ id: 'rest-1' });
+const mockCreateAnalysis = jest.fn().mockResolvedValue({ content: [{ text: '{"summary":"Asked about hours","sentiment":"neutral"}' }] });
 let mockRow;
 let mockUpdated;
 const mockSelect = jest.fn();
@@ -19,6 +20,7 @@ jest.mock('../_lib/supabase', () => ({ supabaseAdmin: { from: () => mockQuery } 
 jest.mock('../_lib/restaurant-loader', () => ({ getRestaurantByAgentId: (...args) => mockRestaurant(...args) }));
 jest.mock('../_lib/secure-logger', () => ({ createSecureLogger: () => ({ info: jest.fn(), error: jest.fn() }) }));
 jest.mock('../_services/memoryExtractor', () => ({ extractMemoriesFromConversation: (...args) => mockExtract(...args) }));
+jest.mock('../_lib/ai-client', () => ({ getAIClient: () => ({ messages: { create: (...args) => mockCreateAnalysis(...args) } }), AI_MODEL_FAST: 'test-model' }));
 const { ingestCompletedConversation } = require('../_services/conversationLogger');
 
 beforeEach(() => {
@@ -40,6 +42,7 @@ test('finishes an information-only call and stores only transcript fields', asyn
     transcript: [{ role: 'user', content: 'private call content', timestamp: 3 }],
   }));
   expect(mockQuery.is).toHaveBeenCalledWith('elevenlabs_fetched_at', null);
+  expect(mockUpdate).toHaveBeenCalledWith({ customer_sentiment: 'neutral' });
   expect(mockExtract).toHaveBeenCalledWith('conv-1');
 });
 
