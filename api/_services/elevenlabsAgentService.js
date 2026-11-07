@@ -663,7 +663,7 @@ function buildToolDefinitions(baseUrl, restaurantId, webhookSecret) {
     {
       type: 'webhook', name: 'get_current_datetime',
       description: 'Get the current date and time. Use this at the start of conversations to know what "today" and "tomorrow" mean.',
-      api_schema: { url: `${baseUrl}/api/elevenlabs-webhook?action=get_current_datetime`, method: 'GET', request_headers: authHeaders },
+      api_schema: { url: `${baseUrl}/api/elevenlabs-webhook?action=get_current_datetime${rp}`, method: 'GET', request_headers: authHeaders },
     },
     {
       type: 'webhook', name: 'check_availability',
