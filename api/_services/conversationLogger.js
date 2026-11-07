@@ -12,12 +12,16 @@ const { getRestaurantByAgentId } = require('../_lib/restaurant-loader');
 
 const logger = createSecureLogger('ConversationLogger');
 
+function inRestaurant(query, restaurantId) {
+  return restaurantId === undefined ? query : query.eq('restaurant_info_id', restaurantId);
+}
+
 /**
  * Start logging a new conversation
  * @param {Object} conversationData - Initial conversation data from ElevenLabs
  * @returns {Promise<Object>} Created conversation record
  */
-async function startConversation(conversationData) {
+async function startConversation(conversationData, restaurantId) {
   const {
     conversation_id,
     caller_phone,
@@ -31,11 +35,11 @@ async function startConversation(conversationData) {
 
   try {
     // Check if conversation already exists to prevent duplicates
-    const { data: existing } = await supabaseAdmin
+    const { data: existing, error: lookupError } = await inRestaurant(supabaseAdmin
       .from('agent_conversations')
       .select('id')
-      .eq('conversation_id', conversation_id)
-      .maybeSingle();
+      .eq('conversation_id', conversation_id), restaurantId).maybeSingle();
+    if (lookupError) throw lookupError;
 
     if (existing) {
       logger.info(`[ConversationLogger] Conversation ${conversation_id} already exists, skipping insert`);
@@ -55,8 +59,8 @@ async function startConversation(conversationData) {
     };
 
     // Include restaurant_info_id if provided
-    if (restaurant_info_id) {
-      insertData.restaurant_info_id = restaurant_info_id;
+    if (restaurantId !== undefined || restaurant_info_id) {
+      insertData.restaurant_info_id = restaurantId ?? restaurant_info_id;
     }
     if (agent_id) {
       insertData.agent_id = agent_id;
@@ -88,7 +92,7 @@ async function startConversation(conversationData) {
  * @param {string} conversationId - ElevenLabs conversation ID
  * @param {Object} toolData - Tool call details
  */
-async function logToolCall(conversationId, toolData) {
+async function logToolCall(conversationId, toolData, restaurantId) {
   const {
     tool_name,
     parameters,
@@ -99,13 +103,12 @@ async function logToolCall(conversationId, toolData) {
 
   try {
     // Get existing conversation
-    const { data: conversation, error: fetchError } = await supabaseAdmin
+    const { data: conversation, error: fetchError } = await inRestaurant(supabaseAdmin
       .from('agent_conversations')
       .select('tools_used, errors_encountered')
-      .eq('conversation_id', conversationId)
-      .single();
+      .eq('conversation_id', conversationId), restaurantId).single();
 
-    if (fetchError) {
+    if (fetchError || !conversation) {
       logger.error('[ConversationLogger] Error fetching conversation for tool log:', fetchError);
       return;
     }
@@ -132,14 +135,14 @@ async function logToolCall(conversationId, toolData) {
     }
 
     // Update conversation
-    const { error: updateError } = await supabaseAdmin
+    const { error: updateError } = await inRestaurant(supabaseAdmin
       .from('agent_conversations')
       .update({
         tools_used: toolsUsed,
         errors_encountered: errorsEncountered,
         updated_at: new Date().toISOString()
       })
-      .eq('conversation_id', conversationId);
+      .eq('conversation_id', conversationId), restaurantId);
 
     if (updateError) {
       logger.error('[ConversationLogger] Error logging tool call:', updateError);
@@ -418,15 +421,17 @@ async function logMessage(conversationId, message) {
  * @param {string} conversationId - ElevenLabs conversation ID
  * @param {Object} updates - Fields to update
  */
-async function updateConversation(conversationId, updates) {
+async function updateConversation(conversationId, updates, restaurantId) {
   try {
-    const { error } = await supabaseAdmin
+    const safeUpdates = { ...updates };
+    if (restaurantId !== undefined) delete safeUpdates.restaurant_info_id;
+    const { error } = await inRestaurant(supabaseAdmin
       .from('agent_conversations')
       .update({
-        ...updates,
+        ...safeUpdates,
         updated_at: new Date().toISOString()
       })
-      .eq('conversation_id', conversationId);
+      .eq('conversation_id', conversationId), restaurantId);
 
     if (error) {
       logger.error('[ConversationLogger] Error updating conversation:', error);
@@ -447,4 +452,12 @@ module.exports = {
   logMessage,
   updateConversation,
   ingestCompletedConversation,
+  forRestaurant(restaurantId) {
+    if (typeof restaurantId !== 'string' || !restaurantId.trim()) throw new Error('Invalid restaurant scope');
+    return {
+      startConversation: data => startConversation(data, restaurantId),
+      logToolCall: (id, data) => logToolCall(id, data, restaurantId),
+      updateConversation: (id, data) => updateConversation(id, data, restaurantId),
+    };
+  },
 };

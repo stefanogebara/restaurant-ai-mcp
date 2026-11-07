@@ -95,9 +95,11 @@ module.exports = async (req, res) => {
   const authHeader = (req.headers.authorization || '').replace('Bearer ', '').trim();
 
   let authenticated = false;
+  let authenticatedRestaurantId = null;
+  const usesRestaurantSecret = authHeader.startsWith('el_whsec_');
 
   // Path 1: HMAC signature (standard ElevenLabs webhooks)
-  if (signature && webhookSecret) {
+  if (!usesRestaurantSecret && signature && webhookSecret) {
     try {
       const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
       const expectedSig = crypto.createHmac('sha256', webhookSecret).update(rawBody).digest('hex');
@@ -116,21 +118,22 @@ module.exports = async (req, res) => {
   // tenant-bound: a leaked secret can only act as its own restaurant.
   // Secrets are provisioned by elevenlabsAgentService.getOrCreateWebhookSecret
   // and embedded in the agent's tool definitions (stored at ElevenLabs).
-  if (!authenticated && authHeader && authHeader.startsWith('el_whsec_')) {
+  if (usesRestaurantSecret) {
     const claimedRestaurantId = req.query.restaurant_id;
-    if (claimedRestaurantId) {
+    if (typeof claimedRestaurantId === 'string' && claimedRestaurantId.trim()) {
       try {
-        const { data: secretRow } = await supabaseAdmin
+        const { data: secretRow, error: secretError } = await supabaseAdmin
           .schema('restaurant')
           .from('restaurant_config')
           .select('elevenlabs_webhook_secret')
           .eq('id', claimedRestaurantId)
           .maybeSingle();
         if (
-          secretRow?.elevenlabs_webhook_secret &&
+          !secretError && secretRow?.elevenlabs_webhook_secret &&
           require('./_lib/secure-compare').secureEquals(authHeader, secretRow.elevenlabs_webhook_secret)
         ) {
           authenticated = true;
+          authenticatedRestaurantId = claimedRestaurantId;
         }
       } catch (lookupError) {
         logger.warn('Per-restaurant secret lookup failed:', lookupError.message);
@@ -148,7 +151,7 @@ module.exports = async (req, res) => {
   // EE.1 — timing-safe compare. HMAC path (Path 1) is already constant-time
   // via crypto.timingSafeEqual; the Bearer fallback was a `===` compare
   // that leaked the prefix-match length through response time.
-  if (!authenticated && authHeader && cronSecret && require('./_lib/secure-compare').secureEquals(authHeader, cronSecret)) {
+  if (!usesRestaurantSecret && !authenticated && authHeader && cronSecret && require('./_lib/secure-compare').secureEquals(authHeader, cronSecret)) {
     authenticated = true;
   }
 
@@ -159,6 +162,26 @@ module.exports = async (req, res) => {
   if (!authenticated) {
     logger.error('Webhook auth failed — no valid signature or token');
     return res.status(403).json({ error: 'Authentication failed' });
+  }
+
+  // The restaurant secret is routing authority. Reject conflicting explicit IDs,
+  // then resolve only its restaurant; phone, agent and session hints cannot override it.
+  if (authenticatedRestaurantId) {
+    const claimedIds = [req.query.restaurantId, req.body?.restaurant_id, req.body?.restaurantId];
+    if (claimedIds.some(id => id !== undefined && id !== authenticatedRestaurantId)) {
+      return res.status(403).json({ error: 'Restaurant scope mismatch' });
+    }
+    try {
+      const restaurant = await getRestaurantById(authenticatedRestaurantId);
+      if (!restaurant || restaurant.id !== authenticatedRestaurantId) {
+        return res.status(503).json({ error: 'Restaurant configuration unavailable' });
+      }
+      req.restaurant = restaurant;
+      req.authenticatedRestaurantId = authenticatedRestaurantId;
+    } catch (error) {
+      logger.warn('Authenticated restaurant lookup failed:', { message: error.message });
+      return res.status(503).json({ error: 'Restaurant configuration unavailable' });
+    }
   }
 
   // Log only the action discriminator — req.body contains PII
@@ -175,19 +198,22 @@ module.exports = async (req, res) => {
 
     // ===== CONVERSATION LOGGING =====
     // Extract conversation metadata from ElevenLabs webhook
-    const conversationId = req.body?.conversation_id || req.headers['x-conversation-id'];
+    let conversationId = req.body?.conversation_id || req.headers['x-conversation-id'];
     const callerPhone = req.headers['x-caller-number'] || req.body?.caller_phone;
     const calledPhone = req.headers['x-called-number'] || req.body?.called_phone;
 
-    // Start conversation logging if this is the first action
-    if (conversationId && action && !req.body?.conversation_started) {
-      await conversationLogger.startConversation({
+    req.conversationLogger = authenticatedRestaurantId
+      ? conversationLogger.forRestaurant(authenticatedRestaurantId) : conversationLogger;
+    // A caller-supplied conversation_started flag does not prove row ownership.
+    if (conversationId && action && (authenticatedRestaurantId || !req.body?.conversation_started)) {
+      const logged = await req.conversationLogger.startConversation({
         conversation_id: conversationId,
         caller_phone: callerPhone,
         called_phone: calledPhone,
         language: req.body?.language || 'en',
         agent_version: 'v1.0'
       });
+      if (authenticatedRestaurantId && !logged) conversationId = undefined;
       // Mark as started to prevent duplicate logs
       req.body = req.body || {};
       req.body.conversation_started = true;
@@ -215,7 +241,7 @@ module.exports = async (req, res) => {
     // Actions that handle their own restaurant identification (multi-tenant mode)
     const multiTenantActions = ['identify_restaurant'];
 
-    let restaurant = null;
+    let restaurant = req.restaurant || null;
 
     // Only look up restaurant if action requires it
     if (action && actionsRequiringRestaurant.includes(action)) {
@@ -226,7 +252,7 @@ module.exports = async (req, res) => {
       const senderPhone = req.headers['x-caller-number'] || req.body?.sender_phone || req.body?.caller_phone;
 
       // Method 0: Multi-tenant session lookup (for WhatsApp)
-      if (MULTI_TENANT_MODE && senderPhone) {
+      if (!restaurant && MULTI_TENANT_MODE && senderPhone) {
         try {
           logger.debug(`Multi-tenant mode: Checking session for ${senderPhone}`);
           const session = await getSessionByPhone(senderPhone);
@@ -312,8 +338,8 @@ module.exports = async (req, res) => {
       req.restaurant = restaurant;
 
       // Update conversation log with restaurant_info_id if we have both
-      if (conversationId && restaurant && restaurant.id) {
-        await conversationLogger.updateConversation(conversationId, {
+      if (conversationId && restaurant && restaurant.id && !authenticatedRestaurantId) {
+        await req.conversationLogger.updateConversation(conversationId, {
           restaurant_info_id: restaurant.id
         }).catch(err => logger.warn('Failed to update conversation with restaurant_id:', { message: err.message }));
       }
@@ -426,7 +452,7 @@ async function handleCheckAvailability(req, res) {
 
   // Log tool call
   if (conversationId) {
-    await conversationLogger.logToolCall(conversationId, {
+    await req.conversationLogger.logToolCall(conversationId, {
       tool_name: 'check_availability',
       parameters: { date, time, party_size },
       success: null
@@ -478,7 +504,7 @@ async function handleCreateReservation(req, res) {
 
   // Log tool call start
   if (conversationId) {
-    await conversationLogger.logToolCall(conversationId, {
+    await req.conversationLogger.logToolCall(conversationId, {
       tool_name: 'create_reservation',
       parameters: { ...data, restaurant_name: restaurantName },
       success: null,
@@ -508,7 +534,7 @@ async function handleCreateReservation(req, res) {
     if (result.success && result.reservation_id) {
       // Log success
       if (conversationId) {
-        await conversationLogger.logToolCall(conversationId, {
+        await req.conversationLogger.logToolCall(conversationId, {
           tool_name: 'create_reservation',
           parameters: { ...data, restaurant_name: restaurantName },
           success: true,
@@ -517,7 +543,7 @@ async function handleCreateReservation(req, res) {
 
         // Booking is a tool result, not the end of the call. The post-call
         // webhook or sync cron records the actual completion and transcript.
-        await conversationLogger.updateConversation(conversationId, {
+        await req.conversationLogger.updateConversation(conversationId, {
           outcome: 'reservation_created',
           reservation_id: result.reservation_id,
           customer_name,
@@ -559,7 +585,7 @@ async function handleCreateReservation(req, res) {
     } else {
       // Log failure
       if (conversationId) {
-        await conversationLogger.logToolCall(conversationId, {
+        await req.conversationLogger.logToolCall(conversationId, {
           tool_name: 'create_reservation',
           parameters: data,
           success: false,
@@ -572,7 +598,7 @@ async function handleCreateReservation(req, res) {
   } catch (error) {
     logger.error('CreateReservation Error:', error);
     if (conversationId) {
-      await conversationLogger.logToolCall(conversationId, {
+      await req.conversationLogger.logToolCall(conversationId, {
         tool_name: 'create_reservation',
         parameters: req.body,
         success: false,
@@ -602,7 +628,7 @@ async function handleLookupReservation(req, res) {
 
   // Log tool call
   if (conversationId) {
-    await conversationLogger.logToolCall(conversationId, {
+    await req.conversationLogger.logToolCall(conversationId, {
       tool_name: 'lookup_reservation',
       parameters: { phone, name, reservation_id },
       success: null
@@ -613,7 +639,7 @@ async function handleLookupReservation(req, res) {
 
   // Log result
   if (conversationId) {
-    await conversationLogger.logToolCall(conversationId, {
+    await req.conversationLogger.logToolCall(conversationId, {
       tool_name: 'lookup_reservation',
       parameters: { phone, name, reservation_id },
       success: result.success,
@@ -755,6 +781,20 @@ async function handleGetCustomerInfo(req, res) {
 async function handleIdentifyRestaurant(req, res) {
   const data = req.method === 'POST' ? req.body : req.query;
   const { restaurant_name, sender_phone, conversation_id } = data;
+
+  if (req.authenticatedRestaurantId) {
+    const restaurant = req.restaurant;
+    const ownName = restaurant.restaurant_name || restaurant.name;
+    if (restaurant_name && restaurant_name.trim().toLowerCase() !== ownName?.toLowerCase()) {
+      return res.status(403).json({ error: 'Restaurant scope mismatch' });
+    }
+    return res.status(200).json({
+      success: true,
+      restaurant_identified: true,
+      restaurant_id: restaurant.id,
+      restaurant_name: ownName,
+    });
+  }
 
   // Voice agent tool calls don't have sender_phone or conversation_id
   // Fall back to direct DB search without session management
