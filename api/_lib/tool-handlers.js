@@ -22,25 +22,35 @@ const logger = createSecureLogger('ToolHandlers');
 // ============================================================================
 
 /**
- * Send a WhatsApp reservation confirmation after a voice reservation.
- * Uses the approved 'reservation_confirmed' template (pt_BR) — required for
- * outbound messages to customers who haven't messaged us first (24h window rule).
- * Fire-and-forget — caller should .catch() the promise.
+ * Send a WhatsApp reservation confirmation in the restaurant's language.
+ * Outbound messages require an approved Meta template. A missing translation
+ * may be retried with another variant of the SAME language, never a different
+ * language. Network ambiguity or any other rejection must not be retried.
  */
-async function sendVoiceReservationWhatsApp({ phone, restaurantName, restaurantId, reservationId, customerName, partySize, date, time }) {
+async function sendVoiceReservationWhatsApp({ phone, restaurantName, reservationId, partySize, date, time, language = 'pt-BR' }) {
   const { sendTemplateMessage } = require('./whatsapp-sender');
-  const { formatDate } = require('./reservation-validator');
+  const { getTemplateLanguageCandidates, isTemplateTranslationMissing } = require('./whatsapp-meta-templates');
 
-  const formattedDate = formatDate(date);
-  const formattedTime = time.substring(0, 5); // HH:MM
+  const candidates = String(language).toLowerCase() === 'pt'
+    ? ['pt_BR', 'pt'] // Existing voice confirmation template is approved in Brazilian Portuguese.
+    : getTemplateLanguageCandidates(language);
+  if (candidates.length === 0) return { success: false, error: 'Restaurant language is missing' };
 
-  return sendTemplateMessage(phone, 'reservation_confirmed', 'pt_BR', [
-    restaurantName,
-    formattedDate,
-    formattedTime,
-    String(partySize),
-    reservationId,
-  ]);
+  let formattedDate = date;
+  try {
+    formattedDate = new Intl.DateTimeFormat(String(language).replace(/_/g, '-'), {
+      day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC',
+    }).format(new Date(`${date}T12:00:00Z`));
+  } catch {
+    // Preserve the unambiguous ISO date if the configured locale is invalid.
+  }
+
+  const bodyParameters = [restaurantName, formattedDate, time.substring(0, 5), String(partySize), reservationId];
+  for (const candidate of candidates) {
+    const result = await sendTemplateMessage(phone, 'reservation_confirmed', candidate, bodyParameters);
+    if (result.success || result.ambiguo || !isTemplateTranslationMissing(result)) return result;
+  }
+  return { success: false, error: 'No approved reservation template in the restaurant language' };
 }
 
 // ============================================================================

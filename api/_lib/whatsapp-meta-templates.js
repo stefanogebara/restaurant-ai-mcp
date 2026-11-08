@@ -62,6 +62,7 @@ function getTemplateLanguageCandidates(language) {
 
 /** Erro 132001: o template existe, mas não naquele idioma. */
 function isTemplateTranslationMissing(result) {
+  if (Number(result?.errorCode) === 132001) return true;
   const errorText = String(result?.error || '').toLowerCase();
   return errorText.includes('132001') || errorText.includes('does not exist in the translation');
 }
