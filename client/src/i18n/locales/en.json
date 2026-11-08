@@ -2685,10 +2685,10 @@
         "signIn": "Already have an account? Sign in"
       },
       "badge": "Free Demo",
-      "title": "See Seatable running",
-      "titleEm": "in your restaurant",
+      "title": "See a chat become a booking",
+      "titleEm": "at your place",
       "titleSuffix": "in seconds.",
-      "subtitle": "Just tell us your restaurant name and city. We'll pull in your hours, reviews, and details automatically.",
+      "subtitle": "Already open? We'll look for your details on Google. Opening soon? Start with what you know.",
       "trust": {
         "avgResponse": "Avg Response",
         "languages": "Languages",
@@ -2696,7 +2696,7 @@
         "setupTime": "Setup Time",
         "realData": "Real Data",
         "hoursReviews": "Your Hours & Reviews",
-        "line": "Takes 30 seconds, uses your restaurant's real data, and never asks for a card."
+        "line": "No account or card needed. You can adjust the details later."
       },
       "form": {
         "sectionRestaurant": "Your Restaurant",
@@ -2727,6 +2727,10 @@
         "creating": "Creating your demo…",
         "noCreditCard": "No credit card required. Your demo is ready in seconds.",
         "findYourRestaurant": "Find your restaurant",
+        "entryPathLabel": "How would you like to start?",
+        "existingPath": "Already open",
+        "newPath": "New restaurant",
+        "nameYourRestaurant": "Name your restaurant",
         "restaurantNameSearch": "Restaurant name",
         "findIt": "Find it",
         "searching": "Searching...",
@@ -2736,9 +2740,9 @@
         "isThisYours": "Is this your restaurant?",
         "notMine": "No, change it",
         "confirmMine": "Yes, that's it — create my demo",
-        "launchManual": "Create my receptionist",
-        "manualHeading": "New restaurant? Even better.",
-        "manualSub": "Your receptionist can exist before your Google listing does. Three taps and she's ready — all optional:",
+        "launchManual": "Create receptionist",
+        "manualHeading": "Personalize before starting",
+        "manualSub": "Cuisine, hours, and vibe are optional. You can adjust everything later.",
         "qCuisine": "Cuisine",
         "qHours": "Hours",
         "qHoursOpen": "Opens at",

@@ -107,6 +107,7 @@ function StarRating({ rating }: { rating: number }) {
 export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: DemoSetupFormProps) {
   const { t, i18n } = useTranslation();
 
+  const [entryPath, setEntryPath] = useState<'search' | 'new'>('search');
   const [restaurantName, setRestaurantName] = useState('');
   const [city, setCity] = useState('');
 
@@ -126,6 +127,13 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
     setManualVibes((prev) => (prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]));
 
   const canSearch = restaurantName.trim().length >= 2 && city.trim().length >= 2;
+
+  function choosePath(path: 'search' | 'new') {
+    setEntryPath(path);
+    setSearchResults(null);
+    setSelectedResult(null);
+    setSearchError(null);
+  }
 
   async function handleSearch() {
     if (!canSearch) return;
@@ -156,7 +164,9 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
         setSearchError(data?.error || t('landing.demoSetup.form.searchFailed', 'Search failed'));
         return;
       }
-      setSearchResults(data?.results || []);
+      const results: ScrapedData[] = data?.results || [];
+      setSearchResults(results);
+      if (results.length === 0) setEntryPath('new');
       // NEVER auto-select — not even a single result. Google's Text Search
       // fuzzy-matches aggressively: "Cantinho da Vó Zilda, Pres. Prudente"
       // (nonexistent) returned "Empório Quintal da Vovó" (a real, different
@@ -176,7 +186,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
     // Gate on isSearching (not !searchResults) so the user can hit Enter to
     // re-search after a zero-result attempt. The previous version locked
     // keyboard-search after any first search, even an empty one.
-    if (e.key === 'Enter' && canSearch && !isSearching) {
+    if (e.key === 'Enter' && entryPath === 'search' && canSearch && !isSearching) {
       e.preventDefault();
       handleSearch();
     }
@@ -186,7 +196,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
   // ("meu restaurante é novo / não está no Google"). Contact capture happens
   // AFTER the aha, inside the demo, via /api/demo/attach-contact.
   function submitDemo(scrape: ScrapedData | null) {
-    if (isSubmitting) return;
+    if (isSubmitting || !canSearch) return;
     trackDemoStarted({ source: 'setup_form' });
     trackDemoFunnel({ step: scrape ? 'match_confirmed' : 'new_restaurant_path' });
     onSubmit({
@@ -206,12 +216,12 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // The form's only submit control lives inside the confirmation card, so
-    // Enter/submit without a selected result is a no-op by design.
-    if (selectedResult) submitDemo(selectedResult);
+    if (entryPath === 'new') submitDemo(null);
+    else if (selectedResult) submitDemo(selectedResult);
   }
 
   function handleSkipSearch() {
+    setEntryPath('new');
     setSearchResults([]);
     setSelectedResult(null);
     setSearchError(null);
@@ -219,16 +229,27 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
 
   return (
     <GlassPanel as="form" onSubmit={handleSubmit} className="p-7 sm:p-9 space-y-6">
-      {/* Step 1: Find your restaurant */}
+      <div role="group" aria-label={t('landing.demoSetup.form.entryPathLabel', 'How would you like to start?')} className="grid grid-cols-2 gap-1 rounded-full border border-glass-border-dark bg-soft-gray/70 p-1">
+        <button type="button" onClick={() => choosePath('search')} aria-pressed={entryPath === 'search'} className={`min-h-11 rounded-full px-2 text-[12px] sm:text-sm font-medium transition-colors ${entryPath === 'search' ? 'bg-white text-deep-charcoal border border-glass-border-dark' : 'text-stone-gray hover:text-deep-charcoal border border-transparent'}`}>
+          {t('landing.demoSetup.form.existingPath', 'Already open')}
+        </button>
+        <button type="button" onClick={() => choosePath('new')} aria-pressed={entryPath === 'new'} className={`min-h-11 rounded-full px-2 text-[12px] sm:text-sm font-medium transition-colors ${entryPath === 'new' ? 'bg-white text-deep-charcoal border border-glass-border-dark' : 'text-stone-gray hover:text-deep-charcoal border border-transparent'}`}>
+          {t('landing.demoSetup.form.newPath', 'New restaurant')}
+        </button>
+      </div>
+
       <div>
         <p className="text-[13px] font-medium text-muted-stone mb-3">
-          {t('landing.demoSetup.form.findYourRestaurant', 'Ache o seu restaurante')}
+          {entryPath === 'search'
+            ? t('landing.demoSetup.form.findYourRestaurant', 'Ache o seu restaurante')
+            : t('landing.demoSetup.form.nameYourRestaurant', 'Como vai chamar seu restaurante?')}
         </p>
         <div className="space-y-3">
           <div>
             <input
               type="text"
               value={restaurantName}
+              aria-label={t('landing.demoSetup.form.restaurantNameSearch', 'Nome do restaurante')}
               onChange={(e) => { setRestaurantName(e.target.value); setSearchResults(null); setSelectedResult(null); }}
               onKeyDown={handleKeyDown}
               placeholder={t('landing.demoSetup.form.restaurantNameSearch', 'Nome do restaurante')}
@@ -236,16 +257,17 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
               autoFocus
             />
           </div>
-          <div className="grid grid-cols-[1fr,auto] gap-3">
+          <div className={entryPath === 'search' ? 'grid grid-cols-[1fr,auto] gap-3' : ''}>
             <input
               type="text"
               value={city}
+              aria-label={t('landing.demoSetup.form.city', 'Cidade')}
               onChange={(e) => { setCity(e.target.value); setSearchResults(null); setSelectedResult(null); }}
               onKeyDown={handleKeyDown}
               placeholder={t('landing.demoSetup.form.city', 'Cidade')}
               className={inputBase}
             />
-            <button
+            {entryPath === 'search' && <button
               type="button"
               onClick={handleSearch}
               disabled={!canSearch || isSearching}
@@ -259,7 +281,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
               ) : (
                 t('landing.demoSetup.form.findIt', 'Buscar')
               )}
-            </button>
+            </button>}
           </div>
         </div>
       </div>
@@ -276,7 +298,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
 
       {/* Search results */}
       <AnimatePresence>
-        {searchResults && searchResults.length > 0 && !selectedResult && (
+        {entryPath === 'search' && searchResults && searchResults.length > 0 && !selectedResult && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
@@ -402,86 +424,19 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
                 <span>{t('landing.demoSetup.form.confirmMine', 'Sim, é esse — criar meu demo')}</span>
               )}
             </button>
-            <p className="text-center text-xs text-muted-stone mt-3">{t('landing.demoSetup.form.noCreditCard', 'Sem cartão de crédito.')}</p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Caminho "restaurante novo" (F4): sem Google, sem match — três toques
-          opcionais e a recepcionista nasce configurada pelo dono. */}
-      {searchResults && searchResults.length === 0 && !selectedResult && (
+      {/* Caminho sem Google: só nome e cidade são necessários. As escolhas
+          extras ficam disponíveis sem bloquear a ação principal. */}
+      {entryPath === 'new' && !selectedResult && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-2 space-y-5">
-          <div className="text-center">
-            <p className="text-[15px] font-semibold text-deep-charcoal">
-              {t('landing.demoSetup.form.manualHeading', 'Restaurante novo? Melhor ainda.')}
-            </p>
-            <p className="text-sm text-stone-gray mt-1">
-              {t('landing.demoSetup.form.manualSub', 'Sua recepcionista pode existir antes do seu Google. Três toques e ela está pronta — tudo opcional:')}
-            </p>
-          </div>
-
-          <div>
-            <p className="text-[12px] font-medium text-muted-stone mb-2">{t('landing.demoSetup.form.qCuisine', 'Cozinha')}</p>
-            <div className="flex flex-wrap gap-2">
-              {CUISINE_CHIPS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setManualCuisine(manualCuisine === c ? null : c)}
-                  aria-pressed={manualCuisine === c}
-                  className={`px-3 py-1.5 rounded-full text-[13px] font-medium border transition-colors ${manualCuisine === c ? 'bg-burgundy text-white border-burgundy' : 'bg-white text-stone-gray border-glass-border-dark hover:border-burgundy'}`}
-                >
-                  {rotuloDeCozinha(c, i18n.language)}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <p className="text-[12px] font-medium text-muted-stone mb-2">{t('landing.demoSetup.form.qHours', 'Horário')}</p>
-            <div className="flex items-center gap-2">
-              <select
-                value={manualOpen}
-                onChange={(e) => setManualOpen(e.target.value)}
-                aria-label={t('landing.demoSetup.form.qHoursOpen', 'Abre às')}
-                className="px-3 py-2 border border-glass-border-input rounded-xl text-sm bg-white"
-              >
-                {HOUR_OPTIONS.map((h) => <option key={h} value={h}>{h}</option>)}
-              </select>
-              <span className="text-sm text-muted-stone">{t('landing.demoSetup.form.hoursTo', 'às')}</span>
-              <select
-                value={manualClose}
-                onChange={(e) => setManualClose(e.target.value)}
-                aria-label={t('landing.demoSetup.form.qHoursClose', 'Fecha às')}
-                className="px-3 py-2 border border-glass-border-input rounded-xl text-sm bg-white"
-              >
-                {HOUR_OPTIONS.map((h) => <option key={h} value={h}>{h}</option>)}
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <p className="text-[12px] font-medium text-muted-stone mb-2">{t('landing.demoSetup.form.qVibe', 'Clima')}</p>
-            <div className="flex flex-wrap gap-2">
-              {VIBE_CHIPS.map((v) => (
-                <button
-                  key={v.value}
-                  type="button"
-                  onClick={() => toggleVibe(v.value)}
-                  aria-pressed={manualVibes.includes(v.value)}
-                  className={`px-3 py-1.5 rounded-full text-[13px] font-medium border transition-colors ${manualVibes.includes(v.value) ? 'bg-burgundy text-white border-burgundy' : 'bg-white text-stone-gray border-glass-border-dark hover:border-burgundy'}`}
-                >
-                  {t(v.labelKey, v.fallback)}
-                </button>
-              ))}
-            </div>
-          </div>
-
           <button
             type="button"
             onClick={() => submitDemo(null)}
-            disabled={isSubmitting}
-            className={`w-full flex items-center justify-center gap-3 px-8 py-4 bg-burgundy hover:bg-burgundy-dark text-white text-[16px] font-semibold rounded-full transition-colors duration-200 ${isSubmitting ? 'opacity-60 cursor-not-allowed' : ''}`}
+            disabled={isSubmitting || !canSearch}
+            className={`w-full flex items-center justify-center gap-3 px-8 py-4 bg-burgundy hover:bg-burgundy-dark text-white text-[16px] font-semibold rounded-full transition-colors duration-200 ${(isSubmitting || !canSearch) ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {isSubmitting ? (
               <>
@@ -492,7 +447,75 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
               <span>{t('landing.demoSetup.form.launchManual', 'Criar minha recepcionista')}</span>
             )}
           </button>
-          <p className="text-center text-xs text-muted-stone">{t('landing.demoSetup.form.noCreditCard', 'Sem cartão de crédito.')}</p>
+
+          <details className="border-t border-glass-border-dark pt-4">
+            <summary className="min-h-11 flex items-center text-sm font-medium text-deep-charcoal cursor-pointer">
+              {t('landing.demoSetup.form.manualHeading', 'Personalizar antes de começar')}
+            </summary>
+            <p className="text-sm text-stone-gray mt-1 mb-5">
+              {t('landing.demoSetup.form.manualSub', 'Cozinha, horário e clima são opcionais. Você poderá ajustar tudo depois.')}
+            </p>
+            <div className="space-y-5">
+
+              <div>
+                <p className="text-[12px] font-medium text-muted-stone mb-2">{t('landing.demoSetup.form.qCuisine', 'Cozinha')}</p>
+                <div className="flex flex-wrap gap-2">
+                  {CUISINE_CHIPS.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setManualCuisine(manualCuisine === c ? null : c)}
+                      aria-pressed={manualCuisine === c}
+                      className={`px-3 py-1.5 rounded-full text-[13px] font-medium border transition-colors ${manualCuisine === c ? 'bg-soft-gray text-deep-charcoal border-deep-charcoal' : 'bg-white text-stone-gray border-glass-border-dark hover:border-deep-charcoal'}`}
+                    >
+                      {rotuloDeCozinha(c, i18n.language)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[12px] font-medium text-muted-stone mb-2">{t('landing.demoSetup.form.qHours', 'Horário')}</p>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={manualOpen}
+                    onChange={(e) => setManualOpen(e.target.value)}
+                    aria-label={t('landing.demoSetup.form.qHoursOpen', 'Abre às')}
+                    className="px-3 py-2 border border-glass-border-input rounded-xl text-sm bg-white"
+                  >
+                    {HOUR_OPTIONS.map((h) => <option key={h} value={h}>{h}</option>)}
+                  </select>
+                  <span className="text-sm text-muted-stone">{t('landing.demoSetup.form.hoursTo', 'às')}</span>
+                  <select
+                    value={manualClose}
+                    onChange={(e) => setManualClose(e.target.value)}
+                    aria-label={t('landing.demoSetup.form.qHoursClose', 'Fecha às')}
+                    className="px-3 py-2 border border-glass-border-input rounded-xl text-sm bg-white"
+                  >
+                    {HOUR_OPTIONS.map((h) => <option key={h} value={h}>{h}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[12px] font-medium text-muted-stone mb-2">{t('landing.demoSetup.form.qVibe', 'Clima')}</p>
+                <div className="flex flex-wrap gap-2">
+                  {VIBE_CHIPS.map((v) => (
+                    <button
+                      key={v.value}
+                      type="button"
+                      onClick={() => toggleVibe(v.value)}
+                      aria-pressed={manualVibes.includes(v.value)}
+                      className={`px-3 py-1.5 rounded-full text-[13px] font-medium border transition-colors ${manualVibes.includes(v.value) ? 'bg-soft-gray text-deep-charcoal border-deep-charcoal' : 'bg-white text-stone-gray border-glass-border-dark hover:border-deep-charcoal'}`}
+                    >
+                      {t(v.labelKey, v.fallback)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+          </details>
         </motion.div>
       )}
 

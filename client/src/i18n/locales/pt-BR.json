@@ -2699,10 +2699,10 @@
         "signIn": "Já tem uma conta? Entrar"
       },
       "badge": "Demo Gratuito",
-      "title": "Veja o Seatable funcionando",
-      "titleEm": "no seu restaurante",
+      "title": "Veja a conversa virar reserva",
+      "titleEm": "na sua casa",
       "titleSuffix": "em segundos.",
-      "subtitle": "Basta informar o nome do seu restaurante e a cidade. Puxamos horários, avaliações e detalhes automaticamente.",
+      "subtitle": "Sua casa já funciona? Buscamos o que houver no Google. Ainda vai abrir? Comece com o que você já sabe.",
       "trust": {
         "avgResponse": "Tempo de Resposta",
         "languages": "Idiomas",
@@ -2710,7 +2710,7 @@
         "setupTime": "Tempo de Setup",
         "realData": "Dados Reais",
         "hoursReviews": "Seus Horários e Avaliações",
-        "line": "Leva 30 segundos, usa os dados reais do seu restaurante e não pede cartão."
+        "line": "Sem conta nem cartão. Você pode ajustar os detalhes depois."
       },
       "form": {
         "sectionRestaurant": "Seu Restaurante",
@@ -2741,6 +2741,10 @@
         "creating": "Criando seu demo…",
         "noCreditCard": "Sem cartão de crédito. Seu demo fica pronto em segundos.",
         "findYourRestaurant": "Encontre seu restaurante",
+        "entryPathLabel": "Como quer começar?",
+        "existingPath": "Já está aberto",
+        "newPath": "Restaurante novo",
+        "nameYourRestaurant": "Dê um nome à sua casa",
         "restaurantNameSearch": "Nome do restaurante",
         "findIt": "Buscar",
         "searching": "Buscando...",
@@ -2750,9 +2754,9 @@
         "isThisYours": "É este o seu restaurante?",
         "notMine": "Não, trocar",
         "confirmMine": "Sim, é esse — criar meu demo",
-        "launchManual": "Criar minha recepcionista",
-        "manualHeading": "Restaurante novo? Melhor ainda.",
-        "manualSub": "Sua recepcionista pode existir antes do seu Google. Três toques e ela está pronta — tudo opcional:",
+        "launchManual": "Criar recepcionista",
+        "manualHeading": "Personalizar antes de começar",
+        "manualSub": "Cozinha, horário e clima são opcionais. Você poderá ajustar tudo depois.",
         "qCuisine": "Cozinha",
         "qHours": "Horário",
         "qHoursOpen": "Abre às",
