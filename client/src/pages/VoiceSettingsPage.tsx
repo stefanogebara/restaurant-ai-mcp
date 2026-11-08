@@ -350,17 +350,19 @@ export default function VoiceSettingsPage() {
               {t('voiceSettings.pageIntro')}
             </p>
           </div>
-          <div className="flex flex-col items-end gap-1">
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={!isDirty || isSaving}
-              className="px-6 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-[13px] font-semibold rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {isSaving && <Spinner size="sm" className="border-white border-t-white/30" />}
-              {isSaving ? t('voiceSettings.saving', 'Saving...') : t('voiceSettings.saveChanges', 'Save Changes')}
-            </button>
-          </div>
+          {(isDirty || isSaving) && (
+            <div className="fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom)+env(safe-area-inset-bottom))] z-40 sm:static sm:inset-auto">
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={isSaving}
+                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-burgundy px-6 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-burgundy-dark disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+              >
+                {isSaving && <Spinner size="sm" className="border-white border-t-white/30" />}
+                {isSaving ? t('voiceSettings.saving', 'Saving...') : t('voiceSettings.saveChanges', 'Save Changes')}
+              </button>
+            </div>
+          )}
         </div>
 
         {(() => {
@@ -481,6 +483,8 @@ export default function VoiceSettingsPage() {
             </>
           );
         })()}
+
+        {(isDirty || isSaving) && <div className="h-24 sm:hidden" aria-hidden="true" />}
 
         <VoiceEngineSwitchModal isOpen={showEngineSwitchConfirm} engineSwitchTarget={engineSwitchTarget} onConfirm={confirmEngineSwitch} onClose={() => setShowEngineSwitchConfirm(false)} />
       </div>
