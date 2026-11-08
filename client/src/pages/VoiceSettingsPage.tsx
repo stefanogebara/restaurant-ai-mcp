@@ -128,7 +128,11 @@ export default function VoiceSettingsPage() {
   // ─── Handlers ─────────────────────────────────────────────────────────────────
 
   const handleSettingChange = (key: keyof VoiceSettings, value: number) => {
-    setPendingSettings({ ...currentSettings, [key]: value });
+    setPendingSettings((previous) => ({ ...(previous ?? config?.voice_settings ?? DEFAULT_VOICE_SETTINGS), [key]: value }));
+  };
+
+  const handlePresetChange = (preset: Pick<VoiceSettings, 'stability' | 'similarity_boost' | 'style'>) => {
+    setPendingSettings((previous) => ({ ...(previous ?? config?.voice_settings ?? DEFAULT_VOICE_SETTINGS), ...preset }));
   };
 
   const handleEngineSwitch = (target: VoiceEngineSettings['voice_engine']) => {
@@ -395,6 +399,7 @@ export default function VoiceSettingsPage() {
                     currentVoiceId={currentVoiceId}
                     loadingAudio={loadingAudio}
                     onSettingChange={handleSettingChange}
+                    onApplyPreset={handlePresetChange}
                     onReset={() => setPendingSettings({ ...DEFAULT_VOICE_SETTINGS })}
                     onPreview={() => handlePreviewWithSettings(toast)}
                   />

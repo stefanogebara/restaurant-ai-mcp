@@ -2893,6 +2893,8 @@
   },
   "voiceTuning": {
     "title": "How your AI sounds",
+    "custom": "Custom tuning",
+    "default": "Default tuning",
     "resetToDefaults": "Reset to defaults",
     "stability": "Stability",
     "similarityBoost": "Voice match",
@@ -2913,7 +2915,7 @@
       "calm": "Calm",
       "calmDesc": "Steady and reassuring. Best for confirming reservations.",
       "warm": "Warm",
-      "warmDesc": "Friendly neighbourhood feel. The default for most restaurants.",
+      "warmDesc": "Friendly neighbourhood feel. A good choice for most restaurants.",
       "energetic": "Energetic",
       "energeticDesc": "Lively and expressive. Best for busy spots and bars.",
       "selected": "Current"

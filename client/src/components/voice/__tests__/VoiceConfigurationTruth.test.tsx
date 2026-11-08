@@ -60,7 +60,8 @@ describe('voice configuration is distinct from a connected phone', () => {
     const { unmount } = renderWithProviders(
       <VoiceLanguagePicker currentLanguage="pt" savedLanguage="pt" onChange={vi.fn()} />,
     );
-    expect(screen.getByRole('button', { name: /português/i })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Idiomas' })).toHaveValue('pt');
+    expect(screen.getByRole('option', { name: /português/i })).toBeInTheDocument();
     expect(screen.queryByText(/🇵🇹/)).not.toBeInTheDocument();
     unmount();
 

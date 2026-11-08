@@ -60,13 +60,13 @@ export default function VoiceCurrentCard({
               {selectedBrowserVoice?.gender && (
                 <>
                   <span className="capitalize">{selectedBrowserVoice.gender}</span>
-                  <span>Â·</span>
+                  <span aria-hidden="true">·</span>
                 </>
               )}
               <span>{currentLanguage.toUpperCase()}</span>
               {selectedBrowserVoice?.accent && (
                 <>
-                  <span>Â·</span>
+                  <span aria-hidden="true">·</span>
                   <span>{selectedBrowserVoice.accent}</span>
                 </>
               )}
