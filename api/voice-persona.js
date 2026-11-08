@@ -91,11 +91,22 @@ async function handlePatch(req, res) {
       .from('restaurant_config')
       .update(updates)
       .eq('id', restaurantId)
-      .select('agent_name, agent_greeting')
+      .select('agent_name, agent_greeting, voice_engine')
       .single();
     if (error) throw new Error(error.message);
 
     logger.info('voice persona updated', { restaurantId });
+
+    // OpenAI's stream server loads this row when each call starts. There is no
+    // ElevenLabs agent to patch for an OpenAI voice selection.
+    if (data.voice_engine === 'openai_realtime') {
+      return res.json({
+        agent_name: data.agent_name,
+        agent_greeting: data.agent_greeting,
+        agent_synced: null,
+        kb_synced: null,
+      });
+    }
 
     // The DB write is already committed. Report provider and KB outcomes
     // separately so a failed sync never masquerades as a failed save.

@@ -39,7 +39,7 @@ export default function VoicePersonaPanel() {
     if (!isDirty) return;
     saveMutation.mutate(pending, {
       onSuccess: (result) => {
-        if (!result.agent_synced || !result.kb_synced) {
+        if (result.agent_synced === false || result.kb_synced === false) {
           toast.error(t('dashboard.voicePersona.savedButNotSynced', 'Saved in Seatable, but the live voice agent was not fully updated. Try Save again.'));
           return;
         }

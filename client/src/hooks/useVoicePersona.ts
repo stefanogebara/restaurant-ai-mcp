@@ -7,8 +7,8 @@ export interface VoicePersona {
 }
 
 interface SavedVoicePersona extends VoicePersona {
-  agent_synced: boolean;
-  kb_synced: boolean;
+  agent_synced: boolean | null;
+  kb_synced: boolean | null;
 }
 
 /** Thrown when the endpoint returns 403 — typically means the account lacks

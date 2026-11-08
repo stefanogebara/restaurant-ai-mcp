@@ -41,4 +41,14 @@ describe('VoicePersonaPanel live sync feedback', () => {
     expect(toastSuccess).toHaveBeenCalled();
     expect(screen.getByRole('button', { name: 'Save persona' })).toBeDisabled();
   });
+
+  it('accepts the OpenAI path where ElevenLabs sync does not apply', async () => {
+    savePersona.mockImplementation((_pending, options) => options.onSuccess({ agent_synced: null, kb_synced: null }));
+    renderWithProviders(<VoicePersonaPanel />);
+    await userEvent.type(screen.getByLabelText(/Agent name/), ' A');
+    await userEvent.click(screen.getByRole('button', { name: 'Save persona' }));
+    expect(toastSuccess).toHaveBeenCalled();
+    expect(toastError).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Save persona' })).toBeDisabled();
+  });
 });

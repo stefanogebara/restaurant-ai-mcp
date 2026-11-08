@@ -102,6 +102,18 @@ it('reports a saved persona if the prompt sync throws after the database update'
   expect(res.status).not.toHaveBeenCalledWith(500);
 });
 
+it('does not require an ElevenLabs sync when the OpenAI voice engine uses the saved config', async () => {
+  mockSupabaseAdmin.from.mockReturnValue(makeChain({
+    agent_name: 'Sofia', agent_greeting: 'Welcome!', voice_engine: 'openai_realtime',
+  }));
+  const res = mockRes();
+  await handler({ method: 'PATCH', headers: { authorization: 'Bearer tok' }, body: { agent_greeting: 'Welcome!' } }, res);
+  expect(refreshVoiceAgentPrompt).not.toHaveBeenCalled();
+  expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+    agent_synced: null, kb_synced: null,
+  }));
+});
+
 it('PATCH returns 400 when agent_name exceeds 50 chars', async () => {
   const res = mockRes();
   await handler({
