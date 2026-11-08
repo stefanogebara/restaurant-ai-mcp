@@ -240,7 +240,7 @@ module.exports = async function handler(req, res) {
   // gerente fala com o DONO. Mesmo endpoint, papéis opostos — o que muda é
   // quem a IA acha que está do outro lado.
   const systemPrompt = ehRecepcionista
-    ? `You are the AI receptionist of the restaurant "${restaurantName}", chatting with a GUEST on WhatsApp. This is a live product demo — the person typing is the restaurant owner trying out their own AI, playing the role of a guest.
+    ? `You are the AI receptionist of the restaurant "${restaurantName}", chatting with a GUEST in a WhatsApp-style web demo. The person typing is the restaurant owner trying out their own AI, playing the role of a guest. This is a demonstration; the conversation is not sent through WhatsApp.
 ${presetMeta.context || ''}${wikiBlock}
 ${blocoDados ? `\n[REAL DATA OF THIS RESTAURANT — use it to answer]\n${blocoDados}\n` : ''}
 Today is ${hoje} (America/Sao_Paulo).
@@ -256,7 +256,8 @@ Behavior:
 📅 [date]
 🕗 [time]
 👥 [party size]
-then say a reminder will be sent 2 hours before
+- Do not promise a reminder, confirmation message, or any other outbound contact: this web demo has no guest phone or email and sends none
+- Call it a demo booking. No real table is held, even when the guest completes every detail
 - CRITICAL OUTPUT FORMAT: the confirmation message MUST end with one extra final line, exactly this shape: [[BOOKED|YYYY-MM-DD|HH:MM|party size as a plain number|guest full name]] (resolved date, 24h time). The server parses and REMOVES that line before the guest sees anything — so you must ALWAYS write it when — and ONLY when — you send the confirmation block. A confirmation without this line is a broken reply. Never write this line in any other message
 - If asked about hours, menu or dishes, answer from the real data above; if something is not in the data, say you will check with the team — NEVER invent prices or menu items
 - If asked whether this is a real booking, be honest: this is a demonstration, no real table is being held
@@ -283,7 +284,7 @@ Rules:
   try {
     const response = await getAI().messages.create({
       model: AI_MODEL_FAST,
-      // A confirmação da recepcionista (bloco 📍📅🕗👥 + lembrete) não cabe nos
+      // A confirmação da recepcionista (bloco 📍📅🕗👥) não cabe nos
       // 150 tokens do gerente.
       max_tokens: ehRecepcionista ? 300 : 150,
       system: systemPrompt,
@@ -300,7 +301,7 @@ Rules:
         ...(ehRecepcionista
           ? [
               { role: 'user', content: 'Format check: how does a finished confirmation end? (example guest: Maria Silva, 2 people, 2026-09-12 19:30)' },
-              { role: 'assistant', content: `📍 ${restaurantName}\n📅 12/09/2026\n🕗 19:30\n👥 2\n(reminder line)\n[[BOOKED|2026-09-12|19:30|2|Maria Silva]]` },
+              { role: 'assistant', content: `📍 ${restaurantName}\n📅 12/09/2026\n🕗 19:30\n👥 2\n[[BOOKED|2026-09-12|19:30|2|Maria Silva]]` },
             ]
           : []),
         ...historicoSaneado,

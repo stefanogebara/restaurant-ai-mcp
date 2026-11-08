@@ -47,25 +47,25 @@ interface ChatMsg {
 
 const labels = {
   en: {
-    title: 'WhatsApp AI', subtitle: 'Booking Assistant', typing: 'typing...',
+    title: 'WhatsApp preview', subtitle: 'AI Booking Assistant', typing: 'typing...',
     placeholder: 'Type as if you were a guest...',
-    live: 'Real AI — answering with your restaurant data',
+    live: 'Real AI in a web demo — using your restaurant data',
     offline: 'AI unavailable right now — please try again in a moment.',
     greeting: (name: string) => `Hi! 👋 I'm the AI receptionist at ${name}. I can book your table — how many people and when?`,
     chips: ['Table for 4 on Friday 8pm', 'What are your opening hours?', 'Which dishes do you recommend?'],
   },
   'pt-BR': {
-    title: 'WhatsApp IA', subtitle: 'Assistente de Reservas', typing: 'digitando...',
+    title: 'Prévia do WhatsApp', subtitle: 'Recepcionista IA', typing: 'digitando...',
     placeholder: 'Digite como se fosse um cliente...',
-    live: 'IA real — respondendo com os dados do seu restaurante',
+    live: 'IA real em um demo web — com os dados do seu restaurante',
     offline: 'IA indisponível agora — tente novamente em instantes.',
     greeting: (name: string) => `Oi! 👋 Sou a recepcionista IA do ${name}. Posso reservar sua mesa — para quantas pessoas e quando?`,
     chips: ['Mesa pra 4 sexta às 20h', 'Que horas vocês abrem?', 'Qual prato vocês recomendam?'],
   },
   es: {
-    title: 'WhatsApp IA', subtitle: 'Asistente de Reservas', typing: 'escribiendo...',
+    title: 'Vista previa de WhatsApp', subtitle: 'Recepcionista IA', typing: 'escribiendo...',
     placeholder: 'Escribe como si fueras un cliente...',
-    live: 'IA real — respondiendo con los datos de tu restaurante',
+    live: 'IA real en una demo web — con los datos de tu restaurante',
     offline: 'IA no disponible ahora — inténtalo de nuevo en un momento.',
     greeting: (name: string) => `¡Hola! 👋 Soy la recepcionista IA de ${name}. Puedo reservar tu mesa — ¿para cuántas personas y cuándo?`,
     chips: ['Mesa para 4 el viernes 21h', '¿A qué hora abren?', '¿Qué platos recomiendan?'],
