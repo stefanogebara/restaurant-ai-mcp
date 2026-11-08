@@ -10,6 +10,9 @@
  *
  * Environment variables:
  *   VOICE_WS_PORT - WebSocket server port (default: 8765)
+ *   VOICE_WS_URL - Canonical external wss://host/ws URL, same on webhook and server
+ *   TWILIO_AUTH_TOKEN / TWILIO_ACCOUNT_SID - Required for signed stream ingress
+ *   UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN - Shared single-use grants (KV aliases supported)
  *   OPENAI_API_KEY - Required for OpenAI Realtime backend
  *   SUPABASE_URL - Required for restaurant config lookup
  *   SUPABASE_SERVICE_ROLE_KEY - Required for DB access
@@ -51,7 +54,7 @@ httpServer.listen(PORT, () => {
   });
 
   // Validate required environment variables
-  const required = ['OPENAI_API_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
+  const required = ['OPENAI_API_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'TWILIO_AUTH_TOKEN', 'TWILIO_ACCOUNT_SID', 'VOICE_WS_URL'];
   const missing = required.filter(key => !process.env[key]);
   if (missing.length > 0) {
     logger.warn('Missing environment variables:', { missing });

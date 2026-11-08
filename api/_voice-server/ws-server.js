@@ -15,6 +15,7 @@
  */
 
 const WebSocket = require('ws');
+const { verifyVoiceUpgrade, consumeVoiceStreamGrant } = require('../_lib/voice-stream-auth');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { getRestaurantById } = require('../_lib/restaurant-loader');
 const { buildPersonaPrompt, buildFirstMessage } = require('../_lib/persona-prompt-builder');
@@ -38,9 +39,11 @@ const PORT = process.env.VOICE_WS_PORT || 8765;
 function createVoiceServer(options = {}) {
   const wssOptions = options.server
     ? { server: options.server, path: '/ws' }
-    : { port: options.port || PORT, path: '/ws' };
+    : { port: options.port ?? PORT, path: '/ws' };
 
-  const wss = new WebSocket.Server(wssOptions);
+  const wss = new WebSocket.Server({ ...wssOptions, maxPayload: 64 * 1024,
+    verifyClient: ({ req }) => verifyVoiceUpgrade(req),
+  });
 
   logger.info(`Voice WebSocket server starting`, {
     port: wssOptions.port || 'attached to HTTP server',
@@ -72,9 +75,28 @@ function createVoiceServer(options = {}) {
  */
 function handleTwilioConnection(ws) {
   let streamSid = null;
-  let session = null;
+  let started = false;
+  let authenticated = false;
+  let processing = Promise.resolve();
+  let queuedMessages = 0;
+  let queuedBytes = 0;
+  const startTimer = setTimeout(() => ws.close(1008, 'Stream authentication required'), 10000);
+  startTimer.unref?.();
 
-  ws.on('message', async (data) => {
+  // The ws event emitter does not await async listeners. Twilio can send its
+  // first audio frame before the start grant and AI connection have finished.
+  // Process frames in arrival order, with a bounded queue during setup.
+  ws.on('message', (data) => {
+    if (ws.readyState !== WebSocket.OPEN) return;
+    const size = data.length;
+    queuedMessages += 1;
+    queuedBytes += size;
+    if (queuedMessages > 500 || queuedBytes > 1024 * 1024) {
+      ws.close(1008, 'Voice stream queue exceeded');
+      return;
+    }
+    processing = processing.then(async () => {
+      if (ws.readyState !== WebSocket.OPEN) return;
     try {
       const message = JSON.parse(data.toString());
 
@@ -86,21 +108,36 @@ function handleTwilioConnection(ws) {
           });
           break;
 
-        case 'start':
-          await handleStreamStart(ws, message);
-          streamSid = message.start?.streamSid;
-          session = getSession(streamSid);
+        case 'start': {
+          if (started) { ws.close(1008, 'Duplicate stream start'); return; }
+          started = true;
+          const identity = await consumeVoiceStreamGrant(message.start);
+          if (ws.readyState !== WebSocket.OPEN) return;
+          const candidateSid = message.start.streamSid;
+          if (message.streamSid && message.streamSid !== candidateSid) throw new Error('Stream mismatch');
+          if (getSession(candidateSid)) throw new Error('Stream already active');
+          streamSid = candidateSid;
+          authenticated = true;
+          clearTimeout(startTimer);
+          await handleStreamStart(ws, message, identity);
+          if (ws.readyState !== WebSocket.OPEN) cleanupSession(streamSid);
           break;
+        }
 
         case 'media':
+          if (!authenticated || message.streamSid !== streamSid) { ws.close(1008, 'Stream mismatch'); return; }
           await handleMediaChunk(ws, message);
           break;
 
         case 'mark':
+          if (!authenticated || message.streamSid !== streamSid) { ws.close(1008, 'Stream mismatch'); return; }
           handleMark(message);
           break;
 
         case 'stop':
+          if (!authenticated || message.streamSid !== streamSid) { ws.close(1008, 'Stream mismatch'); return; }
+          cleanupSession(streamSid);
+          ws.close(1000, 'Stream stopped');
           logger.info('Twilio Media Stream stopped', {
             streamSid: message.stop?.streamSid
           });
@@ -109,14 +146,18 @@ function handleTwilioConnection(ws) {
         default:
           logger.debug('Unknown Twilio event:', message.event);
       }
-    } catch (error) {
-      logger.error('Error processing Twilio message:', {
-        message: error.message
-      });
+    } catch {
+      ws.close(1008, 'Invalid stream request');
+      logger.warn('Rejected invalid voice stream message');
     }
+    }).finally(() => {
+      queuedMessages -= 1;
+      queuedBytes -= size;
+    });
   });
 
   ws.on('close', (code, reason) => {
+    clearTimeout(startTimer);
     logger.info('Twilio WebSocket closed', {
       code,
       reason: reason?.toString(),
@@ -138,29 +179,15 @@ function handleTwilioConnection(ws) {
  * Handle the 'start' event from Twilio Media Streams
  * This is where we load the restaurant config and connect to the AI backend
  */
-async function handleStreamStart(ws, message) {
-  const { streamSid, callSid, customParameters, tracks } = message.start || {};
+async function handleStreamStart(ws, message, identity) {
+  const { streamSid, tracks } = message.start;
+  const { callSid, restaurantId, callerNumber } = identity;
 
   logger.info('Media stream starting', {
     streamSid,
     callSid,
-    tracks,
-    customParameters
+    tracks
   });
-
-  // Extract custom parameters passed via TwiML <Parameter> elements
-  const restaurantId = customParameters?.restaurant_id;
-  const callerNumber = customParameters?.caller_number;
-
-  if (!restaurantId) {
-    logger.error('No restaurant_id in stream parameters');
-    sendTwilioMessage(ws, streamSid, {
-      event: 'media',
-      streamSid,
-      media: { payload: '' }
-    });
-    return;
-  }
 
   // Create session
   const session = createSession({
@@ -173,6 +200,7 @@ async function handleStreamStart(ws, message) {
   try {
     // Load restaurant configuration from database
     const restaurantConfig = await getRestaurantById(restaurantId);
+    if (ws.readyState !== WebSocket.OPEN) { cleanupSession(streamSid); return; }
     session.restaurantConfig = restaurantConfig;
 
     logger.info(`Restaurant loaded: ${restaurantConfig.restaurant_name}`, {
@@ -218,6 +246,7 @@ async function handleStreamStart(ws, message) {
       restaurantConfig.language
     );
 
+    if (ws.readyState !== WebSocket.OPEN) { cleanupSession(streamSid); return; }
     await backend.connect({
       systemPrompt,
       firstMessage,
@@ -238,6 +267,7 @@ async function handleStreamStart(ws, message) {
       streamSid
     });
     cleanupSession(streamSid);
+    ws.close(1011, 'Voice service unavailable');
   }
 }
 

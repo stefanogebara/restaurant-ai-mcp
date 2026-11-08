@@ -1,8 +1,10 @@
 const mockValidateRequest = jest.fn();
 const mockFrom = jest.fn();
+const mockIssueGrant = jest.fn();
 const mockLogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
 
 jest.mock('twilio', () => ({ validateRequest: (...args) => mockValidateRequest(...args) }));
+jest.mock('../_lib/voice-stream-auth', () => ({ issueVoiceStreamGrant: (...args) => mockIssueGrant(...args) }));
 jest.mock('../_lib/supabase', () => ({
   supabaseAdmin: { schema: () => ({ from: (...args) => mockFrom(...args) }) },
 }));
@@ -91,9 +93,10 @@ function response() {
 
 async function call(signature = 'valid-signature', to = NUMBER) {
   const req = {
+    method: 'POST',
     headers: { host: 'seatable.one', 'x-twilio-signature': signature },
     url: '/api/twilio-voice-connect',
-    body: { To: to, From: '+34919998877', CallSid: 'CA-test' },
+    body: { To: to, From: '+34919998877', CallSid: 'CA-test', AccountSid: 'AC-test' },
     query: {},
   };
   const res = response();
@@ -108,6 +111,7 @@ beforeEach(() => {
   lookupError = null;
   businessLookupError = null;
   mockValidateRequest.mockImplementation((_token, signature) => signature === 'valid-signature');
+  mockIssueGrant.mockResolvedValue('synthetic-stream-grant');
   mockFrom.mockImplementation(table => query(table));
 });
 
@@ -121,6 +125,8 @@ test('prefers the unique provisioned AI number over a business phone match', asy
   const res = await call();
   expect(res.code).toBe(200);
   expect(res.body).toContain('name="restaurant_id" value="ai-owner"');
+  expect(res.body).toContain('name="stream_grant" value="synthetic-stream-grant"');
+  expect(mockIssueGrant).toHaveBeenCalledWith(expect.objectContaining({ restaurantId: 'ai-owner', wsUrl: 'wss://example.test/ws' }));
   expect(res.body).not.toContain('value="business"');
 });
 
