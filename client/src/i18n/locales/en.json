@@ -2741,7 +2741,7 @@
         "notMine": "No, change it",
         "confirmMine": "Yes, that's it — create my demo",
         "launchManual": "Create receptionist",
-        "manualHeading": "Personalize before starting",
+        "manualHeading": "Personalize (optional)",
         "manualSub": "Cuisine, hours, and vibe are optional. You can adjust everything later.",
         "qCuisine": "Cuisine",
         "qHours": "Hours",

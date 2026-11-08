@@ -193,7 +193,7 @@ describe('DemoSetupForm — gate-free entry', () => {
     render(<DemoSetupForm onSubmit={onSubmit} isSubmitting={false} submitError={null} />);
     fillSearch('Brand New Place', 'Anytown');
 
-    fireEvent.click(await screen.findByText(/personalize before starting/i));
+    fireEvent.click(await screen.findByText(/personalize \(optional\)/i));
     fireEvent.click(screen.getByRole('button', { name: 'Brazilian' }));
     fireEvent.click(screen.getByRole('button', { name: 'Romantic' }));
     fireEvent.click(screen.getByRole('button', { name: 'Upscale' }));

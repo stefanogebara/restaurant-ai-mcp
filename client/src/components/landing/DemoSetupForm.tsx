@@ -448,9 +448,10 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
             )}
           </button>
 
-          <details className="border-t border-glass-border-dark pt-4">
-            <summary className="min-h-11 flex items-center text-sm font-medium text-deep-charcoal cursor-pointer">
-              {t('landing.demoSetup.form.manualHeading', 'Personalizar antes de começar')}
+          <details className="group border-t border-glass-border-dark pt-4">
+            <summary className="min-h-11 flex items-center justify-between text-sm font-medium text-deep-charcoal cursor-pointer list-none">
+              {t('landing.demoSetup.form.manualHeading', 'Personalizar (opcional)')}
+              <svg className="ml-3 h-4 w-4 shrink-0 transition-transform group-open:rotate-180" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="m3 6 5 5 5-5" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </summary>
             <p className="text-sm text-stone-gray mt-1 mb-5">
               {t('landing.demoSetup.form.manualSub', 'Cozinha, horário e clima são opcionais. Você poderá ajustar tudo depois.')}
