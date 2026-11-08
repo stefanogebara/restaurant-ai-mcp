@@ -1,5 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { getSentimentLabelKey, formatDate, formatCallTime, formatCallExportDate, formatConfiguredDate, isValidTimeZone } from '../callTrackingTypes';
+import { getOutcomeColor, getOutcomePillColor, getSentimentLabelKey, formatDate, formatCallTime, formatCallExportDate, formatConfiguredDate, isValidTimeZone } from '../callTrackingTypes';
+
+describe('completed booking status', () => {
+  it('uses the same success tone in the call list and its detail', () => {
+    expect(getOutcomePillColor('reservation_created')).toContain('text-emerald');
+    expect(getOutcomeColor('reservation_created')).toContain('text-emerald');
+    expect(getOutcomeColor('error')).toContain('text-red');
+    expect(getOutcomeColor('abandoned')).toContain('text-amber');
+  });
+});
 
 describe('getSentimentLabelKey', () => {
   it('maps known sentiments to their callTracking.* key', () => {
