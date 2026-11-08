@@ -111,6 +111,29 @@ test('does not bind an unknown or fuzzy restaurant', async () => {
   expect(mockInserted).not.toHaveBeenCalled();
 });
 
+test('accepts a configured spoken alias only with the matching city', async () => {
+  const ctx = readSharedContext(request());
+  mockRestaurants[0].ai_config.phone.shared_name_aliases = ['Seatable C1 Sandbox'];
+  mockRestaurants[0].restaurant_name = 'Seatable CI Sandbox';
+  expect(await identifySharedRestaurant(ctx, 'Seatable C1 Sandbox'))
+    .toEqual(expect.objectContaining({ success: false, needs_clarification: true }));
+  expect(mockInserted).not.toHaveBeenCalled();
+  expect(await identifySharedRestaurant(ctx, 'Seatable C1 Sandbox', 'São Paulo'))
+    .toEqual(expect.objectContaining({ success: true, restaurant_id: 'rest-1' }));
+  expect(mockInserted).toHaveBeenCalledTimes(1);
+});
+
+test('refuses an alias that collides with another restaurant name in the same city', async () => {
+  const ctx = readSharedContext(request());
+  mockRestaurants[0].ai_config.phone.shared_name_aliases = ['Seatable C1 Sandbox'];
+  mockRestaurants[0].restaurant_name = 'Seatable CI Sandbox';
+  mockRestaurants.push({ id: 'rest-3', restaurant_name: 'Seatable C1 Sandbox', city: 'São Paulo',
+    ai_config: { phone: { shared_routing_enabled: false } } });
+  expect(await identifySharedRestaurant(ctx, 'Seatable C1 Sandbox', 'São Paulo'))
+    .toEqual(expect.objectContaining({ success: false, restaurant_identified: false }));
+  expect(mockInserted).not.toHaveBeenCalled();
+});
+
 test('does not route restaurants without an explicit shared-phone opt-in', async () => {
   const ctx = readSharedContext(request());
   mockRestaurants[0].ai_config.phone.shared_routing_enabled = false;
