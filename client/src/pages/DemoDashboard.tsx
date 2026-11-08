@@ -361,7 +361,19 @@ export default function DemoDashboard() {
       <div className={`max-w-7xl mx-auto px-4 sm:px-8 py-8 pb-24 sm:pb-8 space-y-8 ${sidebarCollapsed ? 'lg:ml-[60px]' : 'lg:ml-[220px]'} transition-all duration-300 ${demoToken && tokenLoading ? 'hidden' : ''}`}>
         {/* View: Tables Grid */}
         {activeView === 'tables' && (
-          <DemoTablesGrid tables={demo.tables} lang={lang} />
+          <>
+            <div className="flex justify-end sm:hidden">
+              <button
+                type="button"
+                onClick={() => setShowWalkInModal(true)}
+                className="flex items-center gap-2 px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white rounded-full text-sm font-semibold transition-colors"
+              >
+                <ThiingsIcon name="plus" pxSize={14} />
+                {t.addWalkIn}
+              </button>
+            </div>
+            <DemoTablesGrid tables={demo.tables} lang={lang} />
+          </>
         )}
 
         {/* View: WhatsApp Simulator */}
@@ -455,8 +467,8 @@ export default function DemoDashboard() {
         {realScrapedData?.manual ? (
           /* Demo manual (restaurante novo, F4): nada de espelho vazio do
              Google — o card celebra o que o dono acabou de configurar. */
-          <div className="glass-card p-5 border-l-4 border-burgundy">
-            <p className="text-[11px] font-semibold tracking-wide uppercase text-burgundy mb-1.5">
+          <div className="glass-card p-5 border-l-4 border-emerald-600">
+            <p className="text-[11px] font-semibold tracking-wide uppercase text-emerald-700 mb-1.5">
               {t.manualCardTitle}
             </p>
             <p className="text-sm text-stone-gray leading-relaxed">{t.manualCardBody}</p>
@@ -596,7 +608,7 @@ export default function DemoDashboard() {
           type="button"
           onClick={() => setShowWalkInModal(true)}
           aria-label={t.addWalkIn}
-          className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 w-14 h-14 bg-deep-charcoal hover:bg-charcoal-dark hover:scale-105 active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
+          className="hidden sm:flex fixed bottom-6 right-6 z-50 w-14 h-14 bg-deep-charcoal hover:bg-charcoal-dark hover:scale-105 active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 items-center justify-center"
         >
           <ThiingsIcon name="plus" pxSize={24} />
         </button>
