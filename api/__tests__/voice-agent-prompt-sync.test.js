@@ -41,6 +41,15 @@ it('syncs a custom opening greeting with the current prompt when requested', asy
   expect(result).toEqual({ success: true });
 });
 
+it('loads the restaurant knowledge and policies before rebuilding the live prompt', async () => {
+  await refreshVoiceAgentPrompt('rest-1', { syncFirstMessage: true });
+  const selectedColumns = mockChain.select.mock.calls[0][0].split(',').map(column => column.trim());
+  expect(selectedColumns).toEqual(expect.arrayContaining([
+    'restaurant_profile', 'scraped_data', 'ai_strategy_doc', 'deposit_config',
+    'website', 'persona_prompt_override',
+  ]));
+});
+
 it('does not change the opening greeting when only the agent name changes', async () => {
   await refreshVoiceAgentPrompt('rest-1', { syncFirstMessage: false });
   const body = JSON.parse(global.fetch.mock.calls[0][1].body);

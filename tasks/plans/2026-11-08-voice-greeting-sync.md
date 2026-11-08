@@ -4,6 +4,7 @@ Ao salvar a saudação personalizada, `/api/voice-persona` atualiza o banco e a 
 
 1. Testar primeiro os dois caminhos: salvar saudação deve atualizar prompt e primeira fala no agente; trocar idioma deve preservar uma saudação personalizada.
 2. Compartilhar a geração da saudação padrão entre criação, troca de idioma e edição da persona.
+   Ao reconstruir o prompt, carregar também perfil, dados enriquecidos, estratégia e políticas do restaurante para não apagar contexto já aprendido.
 3. Distinguir no retorno/UI o valor salvo no Seatable do PATCH aceito pela ElevenLabs; isso ainda não prova uma chamada real. Avisar que saudação personalizada não é traduzida ao trocar idioma.
 4. Para o motor OpenAI, levar `agent_name` e `agent_greeting` do banco ao servidor de chamadas e usar a saudação salva como primeira fala. Não exigir um sync de ElevenLabs.
 5. Rodar testes, build e verificações do PR; validar publicação por SHA e alias. Não alegar chamada telefônica real sem realizá-la.
@@ -14,5 +15,6 @@ Ao salvar a saudação personalizada, `/api/voice-persona` atualiza o banco e a 
 - [x] Testes e build locais: Jest 4612 passaram (6 ignorados); Vitest 1115 passaram; build passou.
 - [x] Após o rebase e a distinção do motor OpenAI: 21 testes focados de backend e 3 de interface passaram. CI integral fará a nova varredura.
 - [x] Auditoria do servidor OpenAI encontrou persona descartada pelo loader. Regressão demonstrada primeiro; após a correção, 29 testes focados passaram (loader, primeira fala, API, sync).
+- [x] Regressão do sync mostrou que o prompt era reconstruído sem conhecimento e políticas; consulta completada com as colunas existentes no esquema.
 - [x] Prévia local Playwright em 320 e 390 px: formulário e ações visíveis, sem rolagem horizontal. Sem autenticação ou salvamento no ambiente real.
 - [ ] Checks, preview e produção por SHA.
