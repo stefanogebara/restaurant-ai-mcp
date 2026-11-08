@@ -108,6 +108,7 @@ const createReservation = async (restaurantId, fields) => {
       time: fields.time,
       special_requests: fields.special_requests,
       status: fields.status || 'pending',
+      source: fields.source || 'manual',
       table_ids: fields.table_ids || [],
       notes: fields.notes
     })

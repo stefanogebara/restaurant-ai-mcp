@@ -306,6 +306,23 @@ describe('Create functions set restaurant_id on insert', () => {
     expect(insertCall.args[0]).toHaveProperty('restaurant_id', RESTAURANT_A);
   });
 
+  test('createReservation persists an explicit voice source', async () => {
+    await db.createReservation(RESTAURANT_A, {
+      reservation_id: 'RES-VOICE-SOURCE',
+      customer_name: 'Test Seatable',
+      customer_phone: '+551150283918',
+      party_size: 2,
+      date: '2026-11-09',
+      time: '19:00',
+      status: 'confirmed',
+      source: 'voice_ai',
+    });
+
+    const insertCall = chainCalls().find((call) => call.method === 'insert');
+    expect(insertCall.args[0]).toHaveProperty('restaurant_id', RESTAURANT_A);
+    expect(insertCall.args[0]).toHaveProperty('source', 'voice_ai');
+  });
+
   test('createTable includes restaurant_id in insert payload', async () => {
     await db.createTable(RESTAURANT_A, {
       table_number: '10',

@@ -371,6 +371,7 @@ async function createReservation(restaurantId, restaurant, params) {
       customer_email: customer_email || '',
       special_requests: special_requests || '',
       status: 'confirmed',
+      source: 'voice_ai',
       notes: 'Created via AI Voice System',
       // Link the specific tables that will be used — enables real-time floor plan sync
       table_ids: accommodationCheck.table_ids || []
