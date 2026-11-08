@@ -226,8 +226,9 @@ function buildConfirmationMessage(params, restaurant, reservationId) {
 function buildVoiceConfirmation(params, restaurant, reservationId, { whatsappAccepted = false } = {}) {
   const { customer_name, party_size, date, time } = params;
   const restaurantName = restaurant.restaurant_name || 'the restaurant';
-  const configuredLang = restaurant.language || restaurant.agent_language || 'pt-BR';
-  const lang = ['pt-BR', 'es', 'en'].includes(configuredLang) ? configuredLang : 'pt-BR';
+  const configuredLang = restaurant.agent_language || restaurant.language || 'pt-BR';
+  const languagePrefix = String(configuredLang).toLowerCase().replace(/_/g, '-').split('-')[0];
+  const lang = { pt: 'pt-BR', es: 'es', it: 'it', en: 'en' }[languagePrefix] || 'pt-BR';
 
   const formattedDate = new Date(`${date}T12:00:00Z`).toLocaleDateString(lang, {
     weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC'
@@ -240,10 +241,12 @@ function buildVoiceConfirmation(params, restaurant, reservationId, { whatsappAcc
     'pt-BR': 'Solicitamos o envio dos detalhes pelo WhatsApp. Se não chegarem, sua reserva continua válida. Até logo!',
     es: 'Solicitamos el envío de los detalles por WhatsApp. Si no llegan, su reserva sigue confirmada. ¡Hasta pronto!',
     en: 'We requested your details by WhatsApp. If they do not arrive, your reservation is still confirmed. See you soon!',
+    it: "Abbiamo richiesto l'invio dei dettagli su WhatsApp. Se non arrivano, la prenotazione resta confermata. A presto!",
   } : {
     'pt-BR': 'Não consegui confirmar o envio pelo WhatsApp agora. Sua reserva está confirmada; guarde o dia e horário. Até logo!',
     es: 'No pude confirmar el envío por WhatsApp. Su reserva está confirmada; guarde la fecha y la hora. ¡Hasta pronto!',
     en: 'I could not confirm the WhatsApp message was sent. Your reservation is confirmed; please keep the date and time. See you soon!',
+    it: "Non posso confermare l'invio del messaggio WhatsApp. La prenotazione è confermata; conservi data e ora. A presto!",
   };
   const confirmations = {
     'pt-BR': `Perfeito! Sua reserva no ${restaurantName} está confirmada para ${customer_name}, ` +
@@ -255,6 +258,9 @@ function buildVoiceConfirmation(params, restaurant, reservationId, { whatsappAcc
     en: `Perfect! Your reservation at ${restaurantName} is confirmed for ${customer_name}, ` +
       `party of ${party_size}, on ${formattedDate} at ${formattedTime}. ` +
       whatsappNote.en,
+    it: `Perfetto! La prenotazione da ${restaurantName} per ${customer_name}, ` +
+      `${party_size} ${party_size > 1 ? 'persone' : 'persona'}, è confermata per ${formattedDate} alle ${formattedTime}. ` +
+      whatsappNote.it,
   };
 
   return confirmations[lang] || confirmations['pt-BR'];

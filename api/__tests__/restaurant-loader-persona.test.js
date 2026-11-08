@@ -25,3 +25,15 @@ test('loads the saved voice persona for a new OpenAI call', async () => {
     agent_name: 'Sofia', agent_greeting: 'Olá, aqui é a Sofia!',
   }));
 });
+
+
+test('loads the canonical agent language even when ai_config has a stale default', async () => {
+  mockSingle.mockResolvedValue({ data: {
+    id: 'rest-pt', restaurant_name: 'Sandbox', agent_language: 'pt',
+    ai_config: { language: 'en-US' },
+  }, error: null });
+
+  const restaurant = await getRestaurantById('rest-pt');
+  expect(mockChain.select).toHaveBeenCalledWith(expect.stringContaining('agent_language'));
+  expect(restaurant.agent_language).toBe('pt');
+});
