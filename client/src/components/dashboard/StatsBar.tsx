@@ -34,7 +34,7 @@ export default function StatsBar({
   const occupancyPercent = totalTables > 0 ? Math.min(100, Math.max(0, Math.round((occupiedTables / totalTables) * 100))) : 0;
   const seatedPercent = reservationsToday > 0 ? Math.round((seatedReservations / reservationsToday) * 100) : 0;
   const availabilityValueColor = totalTables > 0 && availableTables === 0
-    ? 'text-red-700' : totalTables > 0 && availableTables <= 2 ? 'text-amber-700' : 'text-deep-charcoal';
+    ? 'text-red-700' : totalTables > 0 && availableTables / totalTables <= 0.25 ? 'text-amber-700' : 'text-deep-charcoal';
   const availabilityDetailColor = availabilityValueColor === 'text-deep-charcoal'
     ? 'text-stone-gray' : availabilityValueColor;
   const seatedLabel = (count: number) => t(count === 1 ? 'dashboard.stats.seatedSingle' : 'dashboard.stats.seated');

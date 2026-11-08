@@ -34,6 +34,16 @@ describe('StatsBar', () => {
     expect(screen.getByText('0')).toHaveClass('text-red-700');
   });
 
+  it('keeps a fully available two-table restaurant neutral', () => {
+    render(<StatsBar {...defaultProps} totalTables={2} occupiedTables={0} />);
+    expect(screen.getByText('2')).toHaveClass('text-deep-charcoal');
+  });
+
+  it('warns when only a quarter of tables remain', () => {
+    render(<StatsBar {...defaultProps} totalTables={8} occupiedTables={6} />);
+    expect(screen.getByText('2')).toHaveClass('text-amber-700');
+  });
+
   it('does not show negative availability or over-100 capacity for inconsistent counts', () => {
     render(<StatsBar {...defaultProps} occupiedTables={12} />);
     expect(screen.getByText('0')).toHaveClass('text-red-700');
