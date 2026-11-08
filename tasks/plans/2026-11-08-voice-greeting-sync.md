@@ -13,4 +13,5 @@ Ao salvar a saudação personalizada, `/api/voice-persona` atualiza o banco e a 
 - [x] Testes de regressão antes da correção: 6 falhas esperadas.
 - [x] Testes e build locais: Jest 4612 passaram (6 ignorados); Vitest 1115 passaram; build passou.
 - [x] Após o rebase e a distinção do motor OpenAI: 21 testes focados de backend e 3 de interface passaram. CI integral fará a nova varredura.
+- [x] Prévia local Playwright em 320 e 390 px: formulário e ações visíveis, sem rolagem horizontal. Sem autenticação ou salvamento no ambiente real.
 - [ ] Checks, preview e produção por SHA.

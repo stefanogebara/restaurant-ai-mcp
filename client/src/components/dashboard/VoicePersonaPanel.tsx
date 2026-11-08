@@ -62,28 +62,7 @@ export default function VoicePersonaPanel() {
 
   return (
     <div className="py-5 border-t border-glass-border-dark mt-8 space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('dashboard.voicePersona.title', 'Agent Persona')}</h2>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => refreshMutation.mutate()}
-            disabled={refreshMutation.isPending}
-            title="Re-sync ElevenLabs agent prompt with current restaurant persona"
-            className="px-3 py-1.5 border border-glass-border-dark hover:bg-soft-gray text-warm-stone text-xs font-medium rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {refreshMutation.isPending ? t('dashboard.voicePersona.refreshing', 'Refreshing...') : t('dashboard.voicePersona.refreshPrompt', 'Refresh Agent Prompt')}
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={!isDirty || saveMutation.isPending}
-            className="px-4 py-1.5 bg-burgundy hover:bg-burgundy-dark text-white text-xs font-semibold rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {saveMutation.isPending ? t('dashboard.voicePersona.saving', 'Saving...') : t('dashboard.voicePersona.savePersona', 'Save persona')}
-          </button>
-        </div>
-      </div>
+      <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('dashboard.voicePersona.title', 'Agent Persona')}</h2>
       <div className="space-y-3">
         <div>
           <label htmlFor="agent-name" className="block text-xs font-medium text-warm-stone mb-1">
@@ -113,6 +92,24 @@ export default function VoicePersonaPanel() {
             className="w-full border border-glass-border-input rounded-lg px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
           />
         </div>
+      </div>
+      <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!isDirty || saveMutation.isPending}
+          className="w-full rounded-full bg-burgundy px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-burgundy-dark disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
+        >
+          {saveMutation.isPending ? t('dashboard.voicePersona.saving', 'Saving...') : t('dashboard.voicePersona.savePersona', 'Save persona')}
+        </button>
+        <button
+          type="button"
+          onClick={() => refreshMutation.mutate()}
+          disabled={refreshMutation.isPending}
+          className="text-xs text-muted-stone underline underline-offset-2 hover:text-deep-charcoal disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {refreshMutation.isPending ? t('dashboard.voicePersona.refreshing', 'Refreshing...') : t('dashboard.voicePersona.refreshPrompt', 'Refresh Agent Prompt')}
+        </button>
       </div>
     </div>
   );
