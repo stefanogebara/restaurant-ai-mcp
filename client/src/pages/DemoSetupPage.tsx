@@ -55,9 +55,9 @@ export default function DemoSetupPage() {
             : {}),
         }),
       });
-      const result = await response.json();
-      if (!response.ok || !result.demo_url) {
-        throw new Error(result.error || t('demo.errors.createFailed', 'Failed to create demo. Please try again.'));
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.demo_url) {
+        throw new Error(result?.error || t('demo.errors.createFailed', 'Failed to create demo. Please try again.'));
       }
 
       // Open-redirect guard: only navigate to relative same-origin paths.

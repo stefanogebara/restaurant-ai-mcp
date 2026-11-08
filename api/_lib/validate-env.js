@@ -13,6 +13,8 @@ const logger = createSecureLogger('validate-env');
 // provedor só, e o ai-client já trata a ausência corretamente — cai no
 // OpenRouter e segue. Mantê-la como crítica transformaria essa decisão num
 // crash de produção.
+// STRIPE_WEBHOOK_SECRET é exigido no próprio webhook. Um preview sem esse
+// segredo não deve impedir a criação de demos ou outros endpoints de subir.
 const CRITICAL_VARS = [
   'SUPABASE_URL',
   'SUPABASE_SERVICE_ROLE_KEY',
@@ -20,7 +22,6 @@ const CRITICAL_VARS = [
   'JWT_SECRET',
   'OPENROUTER_API_KEY',
   'STRIPE_SECRET_KEY',
-  'STRIPE_WEBHOOK_SECRET',
   'CRON_SECRET',
 ];
 

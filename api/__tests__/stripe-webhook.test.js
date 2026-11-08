@@ -9,6 +9,7 @@
 process.env.STRIPE_STARTER_PRICE_ID = 'price_starter';
 process.env.STRIPE_GROWTH_PRICE_ID = 'price_growth';
 process.env.STRIPE_SCALE_PRICE_ID = 'price_scale';
+process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test';
 
 // --- Mock dependencies ---
 const mockCustomersRetrieve = jest.fn();

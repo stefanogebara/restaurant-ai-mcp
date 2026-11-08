@@ -240,6 +240,13 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // This secret belongs to the Stripe webhook, not every endpoint importing
+  // auth. Fail this route closed and retryably if the environment is incomplete.
+  if (!endpointSecret) {
+    logger.error('Stripe webhook signing secret is not configured');
+    return res.status(503).json({ error: 'Webhook temporarily unavailable' });
+  }
+
   const sig = req.headers['stripe-signature'];
   let event;
 
