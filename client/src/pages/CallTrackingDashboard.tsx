@@ -111,12 +111,13 @@ export default function CallTrackingDashboard() {
   return (
     <DashboardLayout>
       <div className="min-h-screen p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
-        <div className="max-w-7xl mx-auto space-y-12">
+        <div className="mx-auto flex max-w-7xl flex-col gap-6 sm:gap-12">
 
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pl-12 sm:pl-0">
-            <h1 className="font-serif text-3xl sm:text-4xl text-deep-charcoal tracking-tight">
-              {t('callTracking.title')}
+            <h1 aria-label={t('callTracking.title')} className="font-serif text-3xl sm:text-4xl text-deep-charcoal tracking-tight">
+              <span className="sm:hidden">{t('callTracking.titleShort')}</span>
+              <span className="hidden sm:inline">{t('callTracking.title')}</span>
             </h1>
             <div className="flex flex-wrap items-center gap-2.5">
               <button
@@ -144,12 +145,14 @@ export default function CallTrackingDashboard() {
                   downloadCsv(`calls-${todayLocalISO()}-page-${page + 1}.csv`, toCsv(rows, columns));
                 }}
                 disabled={!conversations.length}
+                aria-label={t('callTracking.exportPage')}
                 title={!conversations.length ? t('callTracking.noCallsToExport', 'No calls to export') : ''}
                 className={`px-4 py-2 border border-glass-border-dark bg-white/50 backdrop-blur-glass-chip rounded-full text-[13px] font-medium transition-colors ${
                   conversations.length ? 'text-stone-gray hover:bg-white/80 hover:border-deep-charcoal' : 'text-muted-stone cursor-not-allowed opacity-40'
                 }`}
               >
-                {t('callTracking.exportPage')}
+                <span className="sm:hidden">{t('callTracking.exportShort')}</span>
+                <span className="hidden sm:inline">{t('callTracking.exportPage')}</span>
               </button>
             </div>
           </div>
@@ -163,20 +166,25 @@ export default function CallTrackingDashboard() {
 
           <CallFilters filter={filter} onChange={changeFilter} />
 
-          {stats && <CallStatsOverview stats={stats} />}
-          {statsError && (
-            <div role="alert" className="flex flex-wrap items-center gap-3 border-y border-red-200 py-4 text-sm text-red-700">
-              <span>{t('callTracking.statsUnavailable')}</span>
-              <button type="button" onClick={() => void refetchStats()} className="font-semibold underline underline-offset-2">
-                {t('common.retry')}
-              </button>
+          {(stats || statsError) && (
+            <div className="order-4 sm:order-3">
+              {stats && <CallStatsOverview stats={stats} />}
+              {statsError && (
+                <div role="alert" className="flex flex-wrap items-center gap-3 border-y border-red-200 py-4 text-sm text-red-700">
+                  <span>{t('callTracking.statsUnavailable')}</span>
+                  <button type="button" onClick={() => void refetchStats()} className="font-semibold underline underline-offset-2">
+                    {t('common.retry')}
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
-          {isLoading ? (
-            <div role="status" className="py-12 text-center text-sm text-stone-gray">{t('common.loading')}</div>
-          ) : (
-            <>
+          <div className="order-3 min-w-0 sm:order-4">
+            {isLoading ? (
+              <div role="status" className="py-12 text-center text-sm text-stone-gray">{t('common.loading')}</div>
+            ) : (
+              <>
               <CallConversationList
                 conversations={conversations}
                 filter={filter}
@@ -201,8 +209,9 @@ export default function CallTrackingDashboard() {
                   </div>
                 </nav>
               )}
-            </>
-          )}
+              </>
+            )}
+          </div>
 
           {selectedConversation && (
             <CallConversationModal

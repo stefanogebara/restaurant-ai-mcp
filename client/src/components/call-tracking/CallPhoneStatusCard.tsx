@@ -15,14 +15,14 @@ export default function CallPhoneStatusCard({ phoneStatus, phoneStatusLoading, p
   const needsReview = phoneStatus?.status === 'needs_review';
 
   return (
-    <section className="space-y-4 py-5 border-b border-glass-border-dark" aria-labelledby="call-phone-title">
+    <section className="space-y-3 border-b border-glass-border-dark py-4 sm:space-y-4 sm:py-5" aria-labelledby="call-phone-title">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-2">
             {t('callTracking.phoneStatus')}
           </p>
           <h2 id="call-phone-title" className="font-serif text-2xl text-deep-charcoal">
-            {t('phoneIntegration.assistedTitle')}
+            {t('callTracking.phoneSetupTitle')}
           </h2>
         </div>
         {needsReview && (
@@ -33,7 +33,7 @@ export default function CallPhoneStatusCard({ phoneStatus, phoneStatusLoading, p
         )}
       </div>
       <p className="max-w-2xl text-[15px] text-muted-stone">
-        {needsReview ? t('phoneIntegration.routingUnverified') : t('phoneIntegration.assistedDescription')}
+        {needsReview ? t('phoneIntegration.routingUnverified') : t('callTracking.phoneSetupSummary')}
       </p>
       {phoneStatusLoading && <p role="status" className="text-sm text-muted-stone">{t('phoneIntegration.loadingStatus')}</p>}
       {phoneStatusError && <p role="alert" className="text-sm text-red-700">{t('phoneIntegration.statusUnavailable')}</p>}
@@ -41,7 +41,7 @@ export default function CallPhoneStatusCard({ phoneStatus, phoneStatusLoading, p
         <Link to="/host-dashboard/voice-settings#voice-settings:phone" className="text-burgundy underline underline-offset-2 hover:text-burgundy-dark">
           {t('callTracking.openPhoneSettings')}
         </Link>
-        <button type="button" onClick={onRefreshStatus} className="text-muted-stone underline underline-offset-2 hover:text-deep-charcoal">
+        <button type="button" onClick={onRefreshStatus} className="hidden text-muted-stone underline underline-offset-2 hover:text-deep-charcoal sm:inline">
           {t('callTracking.refreshStatus')}
         </button>
       </div>
