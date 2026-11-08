@@ -376,6 +376,9 @@ export default function VoiceSettingsPage() {
           // still saves everything in one shot.
           const voiceTab = (
             <div className="space-y-6">
+              {currentEngine === 'elevenlabs' && (
+                <VoiceAgentInfo agentId={config.agent_id} updatedAt={config.agent_updated_at} createdAt={config.created_at} />
+              )}
               <VoiceEngineSelector currentEngine={currentEngine} pendingEngine={pendingEngine} engineStatus={engineConfig?.voice_engine_status} onEngineSwitch={handleEngineSwitch} />
 
               {currentEngine === 'elevenlabs' && (
@@ -450,7 +453,6 @@ export default function VoiceSettingsPage() {
                   )}
                   <VoiceLanguagePicker currentLanguage={currentLanguage} savedLanguage={config?.language} onChange={setPendingLanguage} />
                   <VoicePersonaPanel />
-                  <VoiceAgentInfo agentId={config.agent_id} updatedAt={config.agent_updated_at} createdAt={config.created_at} />
                 </>
               )}
 
