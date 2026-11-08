@@ -4,6 +4,8 @@ var queryResult;
 var mockQuery = {
   select: jest.fn().mockReturnThis(),
   eq: jest.fn().mockReturnThis(),
+  is: jest.fn().mockReturnThis(),
+  or: jest.fn().mockReturnThis(),
   gte: jest.fn().mockReturnThis(),
   lte: jest.fn().mockReturnThis(),
   order: jest.fn().mockReturnThis(),
@@ -55,6 +57,36 @@ test('call list returns only the fields needed for its rows', async () => {
     'duration_seconds', 'language', 'outcome', 'customer_name', 'party_size',
   ]);
   expect(res.status).toHaveBeenCalledWith(200);
+});
+
+test('phone history requires caller or called number evidence', async () => {
+  const res = response();
+  await handler({ method: 'GET', query: { action: 'list', channel: 'phone' } }, res);
+  expect(mockQuery.or).toHaveBeenCalledWith('caller_phone.not.is.null,called_phone.not.is.null');
+  expect(res.status).toHaveBeenCalledWith(200);
+});
+
+test('unclassified history stays accessible without being counted as phone calls', async () => {
+  const res = response();
+  await handler({ method: 'GET', query: { action: 'list', channel: 'unclassified' } }, res);
+  expect(mockQuery.is).toHaveBeenCalledWith('caller_phone', null);
+  expect(mockQuery.is).toHaveBeenCalledWith('called_phone', null);
+  expect(res.status).toHaveBeenCalledWith(200);
+});
+
+test('phone statistics use the same source filter as phone history', async () => {
+  queryResult = { data: [], error: null };
+  const res = response();
+  await handler({ method: 'GET', query: { action: 'stats', channel: 'phone' } }, res);
+  expect(mockQuery.or).toHaveBeenCalledWith('caller_phone.not.is.null,called_phone.not.is.null');
+  expect(res.status).toHaveBeenCalledWith(200);
+});
+
+test('rejects an unsupported channel filter', async () => {
+  const res = response();
+  await handler({ method: 'GET', query: { action: 'list', channel: 'other' } }, res);
+  expect(res.status).toHaveBeenCalledWith(400);
+  expect(mockQuery.range).not.toHaveBeenCalled();
 });
 
 test.each([

@@ -62,6 +62,17 @@ module.exports = async (req, res) => {
 };
 
 const ALLOWED_ORDER_COLUMNS = new Set(['started_at', 'outcome', 'language', 'duration_seconds', 'created_at', 'customer_sentiment']);
+const ALLOWED_CHANNELS = new Set(['all', 'phone', 'unclassified']);
+
+function filterByChannel(query, channel) {
+  if (channel === 'phone') {
+    return query.or('caller_phone.not.is.null,called_phone.not.is.null');
+  }
+  if (channel === 'unclassified') {
+    return query.is('caller_phone', null).is('called_phone', null);
+  }
+  return query;
+}
 
 /**
  * List all conversations with filtering and pagination
@@ -75,6 +86,7 @@ async function handleListConversations(req, res, user) {
     language,
     sentiment,
     search,
+    channel = 'all',
     limit = 50,
     offset = 0,
     order_by = 'started_at',
@@ -92,6 +104,9 @@ async function handleListConversations(req, res, user) {
         error: 'Restaurant ID required'
       });
     }
+    if (!ALLOWED_CHANNELS.has(channel)) {
+      return res.status(400).json({ success: false, error: 'Invalid channel' });
+    }
 
     // Query-string values are strings. Without numeric conversion, offset=50
     // and limit=50 concatenate to "5050" and fetch 5,000 rows on page two.
@@ -108,6 +123,7 @@ async function handleListConversations(req, res, user) {
       // fetched only after the owner opens one conversation.
       .select('id, conversation_id, caller_phone, called_phone, started_at, duration_seconds, language, outcome, customer_name, party_size', { count: 'exact' })
       .eq('restaurant_info_id', restaurant_id);
+    query = filterByChannel(query, channel);
 
     // Apply filters
     if (date_from) {
@@ -234,7 +250,7 @@ async function handleGetConversation(req, res, user) {
  * GET /api/agent-conversations?action=stats&period=7d
  */
 async function handleGetStats(req, res, user) {
-  const { period = '7d', date_from, date_to } = req.query;
+  const { period = '7d', date_from, date_to, channel = 'all' } = req.query;
 
   // SEC-H1: Use JWT-bound restaurant_id — never trust req.query for tenant scoping
   const restaurant_id = user.restaurant_id;
@@ -246,6 +262,9 @@ async function handleGetStats(req, res, user) {
         success: false,
         error: 'Restaurant ID required'
       });
+    }
+    if (!ALLOWED_CHANNELS.has(channel)) {
+      return res.status(400).json({ success: false, error: 'Invalid channel' });
     }
 
     // Calculate date range
@@ -266,6 +285,7 @@ async function handleGetStats(req, res, user) {
       .eq('restaurant_info_id', restaurant_id)
       .gte('started_at', startDate.toISOString())
       .lte('started_at', endDate.toISOString());
+    query = filterByChannel(query, channel);
 
     const { data: conversations, error } = await query;
 

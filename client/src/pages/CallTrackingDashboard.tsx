@@ -31,12 +31,13 @@ import {
   useConversationDetail,
 } from '../hooks/useCallTracking';
 
-import type { CallFilter } from '../components/call-tracking/callTrackingTypes';
+import type { CallChannel, CallFilter } from '../components/call-tracking/callTrackingTypes';
 import { formatCallExportDate, isValidTimeZone } from '../components/call-tracking/callTrackingTypes';
 
 export default function CallTrackingDashboard() {
   const { t, i18n } = useTranslation();
   const [filter, setFilter] = useState<CallFilter>({ period: '7d', outcome: 'all', language: 'all' });
+  const [channel, setChannel] = useState<CallChannel>('phone');
   const [page, setPage] = useState(0);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [guestProfilePhone, setGuestProfilePhone] = useState<string | null>(null);
@@ -54,8 +55,8 @@ export default function CallTrackingDashboard() {
 
   // ─── Queries ─────────────────────────────────────────────────────────────────
 
-  const { data: convsResult, isLoading, isError, isFetching: isFetchingConversations, refetch: refetchConversations } = useCallConversations(filter, userId, page);
-  const { data: stats, isError: statsError, refetch: refetchStats } = useCallStats(filter, userId);
+  const { data: convsResult, isLoading, isError, isFetching: isFetchingConversations, refetch: refetchConversations } = useCallConversations(filter, userId, page, channel);
+  const { data: stats, isError: statsError, refetch: refetchStats } = useCallStats(filter, userId, channel);
   const phoneStatusQuery = usePhoneStatus(userId);
   const { data: selectedConversation } = useConversationDetail(selectedConversationId);
 
@@ -67,7 +68,7 @@ export default function CallTrackingDashboard() {
   }, []);
   const refreshAll = () => {
     void refetchConversations();
-    void refetchStats();
+    if (channel === 'phone') void refetchStats();
     void phoneStatusQuery.refetch();
   };
 
@@ -142,7 +143,7 @@ export default function CallTrackingDashboard() {
                     party_size: c.party_size ?? '',
                   }));
                   const columns = ['date', 'time_zone', 'caller', 'duration_seconds', 'outcome', 'language', 'customer_name', 'party_size'];
-                  downloadCsv(`calls-${todayLocalISO()}-page-${page + 1}.csv`, toCsv(rows, columns));
+                  downloadCsv(`${channel === 'phone' ? 'calls' : 'agent-conversations'}-${todayLocalISO()}-page-${page + 1}.csv`, toCsv(rows, columns));
                 }}
                 disabled={!conversations.length}
                 aria-label={t('callTracking.exportPage')}
@@ -164,9 +165,25 @@ export default function CallTrackingDashboard() {
             onRefreshStatus={() => { phoneStatusQuery.refetch(); toastInfo(t('callTracking.refreshingStatus')); }}
           />
 
+          <div role="group" className="space-y-2" aria-label={t('callTracking.channelFilter')}>
+            <div className="flex flex-wrap gap-2">
+              {(['phone', 'unclassified'] as const).map((value) => (
+                <button key={value} type="button" aria-pressed={channel === value}
+                  onClick={() => { setChannel(value); setPage(0); setFilter(prev => ({ ...prev, outcome: 'all' })); }}
+                  className={`rounded-full px-4 py-2 text-sm transition-colors ${channel === value
+                    ? 'bg-deep-charcoal text-white' : 'border border-glass-border-dark text-stone-gray hover:text-deep-charcoal'}`}>
+                  {t(value === 'phone' ? 'callTracking.phoneCallsTab' : 'callTracking.otherConversationsTab')}
+                </button>
+              ))}
+            </div>
+            {channel === 'unclassified' && (
+              <p className="max-w-2xl text-sm text-muted-stone">{t('callTracking.unclassifiedExplanation')}</p>
+            )}
+          </div>
+
           <CallFilters filter={filter} onChange={changeFilter} />
 
-          {(stats || statsError) && (
+          {channel === 'phone' && (stats || statsError) && (
             <div className="order-4 sm:order-3">
               {stats && <CallStatsOverview stats={stats} />}
               {statsError && (
@@ -187,6 +204,7 @@ export default function CallTrackingDashboard() {
               <>
               <CallConversationList
                 conversations={conversations}
+                channel={channel}
                 filter={filter}
                 onOutcomeChange={(outcome) => changeFilter({ ...filter, outcome })}
                 onConversationClick={(id) => setSelectedConversationId(id)}
@@ -197,7 +215,7 @@ export default function CallTrackingDashboard() {
               {pagination && pagination.total > CALLS_PAGE_SIZE && (
                 <nav aria-label={t('callTracking.pages')} className="flex flex-wrap items-center justify-between gap-3 border-t border-glass-border-dark pt-4">
                   <span className="text-xs text-muted-stone">
-                    {t('callTracking.showingCalls', {
+                    {t(channel === 'phone' ? 'callTracking.showingCalls' : 'callTracking.showingConversations', {
                       from: pagination.offset + 1,
                       to: Math.min(pagination.offset + conversations.length, pagination.total),
                       total: pagination.total,
