@@ -2064,6 +2064,11 @@
     "generating": "Gerando..."
   },
   "callTracking": {
+    "titleShort": "Chamadas",
+    "moreFilters": "Mais filtros",
+    "phoneSetupTitle": "Verifique o roteamento",
+    "phoneSetupSummary": "O número é compartilhado. Confirme o roteamento antes de divulgar o número ou encaminhar sua linha.",
+    "exportShort": "Exportar",
     "routingNeedsReview": "Roteamento não verificado",
     "openPhoneSettings": "Ver configuração do telefone",
     "title": "Histórico de Chamadas",

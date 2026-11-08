@@ -2058,6 +2058,11 @@
     "generating": "Generating..."
   },
   "callTracking": {
+    "titleShort": "Calls",
+    "moreFilters": "More filters",
+    "phoneSetupTitle": "Verify call routing",
+    "phoneSetupSummary": "The number is shared. Confirm routing before publishing the number or forwarding your line.",
+    "exportShort": "Export",
     "routingNeedsReview": "Routing not verified",
     "openPhoneSettings": "View phone setup",
     "title": "Call History",

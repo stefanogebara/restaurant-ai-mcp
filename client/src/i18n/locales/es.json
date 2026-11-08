@@ -2987,6 +2987,11 @@
     "generating": "Generando..."
   },
   "callTracking": {
+    "titleShort": "Llamadas",
+    "moreFilters": "Más filtros",
+    "phoneSetupTitle": "Verifica el enrutamiento",
+    "phoneSetupSummary": "El número es compartido. Confirma el enrutamiento antes de publicar el número o desviar tu línea.",
+    "exportShort": "Exportar",
     "routingNeedsReview": "Enrutamiento sin verificar",
     "openPhoneSettings": "Ver configuración del teléfono",
     "title": "Historial de Llamadas",

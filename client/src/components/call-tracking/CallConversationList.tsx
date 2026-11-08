@@ -88,7 +88,7 @@ export default function CallConversationList({
             return (
               <div
                 key={conv.id}
-                className="flex items-center py-5 border-b border-glass-border-dark gap-3 sm:gap-4 cursor-pointer hover:bg-soft-gray/60 transition-colors"
+                className="flex items-start gap-3 border-b border-glass-border-dark py-4 transition-colors hover:bg-soft-gray/60 sm:items-center sm:gap-4 sm:py-5 cursor-pointer"
                 onClick={() => onConversationClick(conv.id)}
               >
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${callIconStyle(conv.outcome)}`}>
@@ -112,9 +112,12 @@ export default function CallConversationList({
                     {conv.party_size ? ` · ${t('callTracking.partyOf', { size: conv.party_size })}` : ''}
                     {conv.language ? ` · ${conv.language.toUpperCase()}` : ''}
                   </div>
+                  <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold sm:hidden ${getOutcomePillColor(conv.outcome)}`}>
+                    {t(getOutcomeLabelKey(conv.outcome))}
+                  </span>
                 </div>
 
-                <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ${getOutcomePillColor(conv.outcome)}`}>
+                <span className={`hidden flex-shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold sm:inline-flex ${getOutcomePillColor(conv.outcome)}`}>
                   {t(getOutcomeLabelKey(conv.outcome))}
                 </span>
 
