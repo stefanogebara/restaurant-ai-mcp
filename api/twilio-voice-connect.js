@@ -12,6 +12,7 @@
  */
 
 const twilio = require('twilio');
+const { issueVoiceStreamGrant } = require('./_lib/voice-stream-auth');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setWebhookCors, handlePreflight } = require('./_lib/cors');
@@ -19,13 +20,18 @@ const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 const logger = createSecureLogger('TwilioVoiceConnect');
 
 // WebSocket server URL for the voice pipeline
-const VOICE_WS_URL = process.env.VOICE_WS_URL || 'wss://seatable-voice.fly.dev/ws';
+const VOICE_WS_URL = process.env.VOICE_WS_URL;
 
 module.exports = async (req, res) => {
   setWebhookCors(req, res);
   res.setHeader('Content-Type', 'text/xml');
 
   if (handlePreflight(req, res)) return;
+
+  if (req.method !== 'POST') {
+    res.status(405).send(buildErrorTwiml('Method not allowed'));
+    return;
+  }
 
   // Validate Twilio webhook signature
   const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -36,7 +42,11 @@ module.exports = async (req, res) => {
   }
   const signature = req.headers['x-twilio-signature'];
   const url = `https://${req.headers.host}${req.url}`;
-  const sigValid = signature && twilio.validateRequest(authToken, signature, url, req.body || {});
+  let sigValid = false;
+  try {
+    sigValid = typeof signature === 'string' && signature.length <= 128 &&
+      twilio.validateRequest(authToken, signature, url, req.body || {});
+  } catch { /* Malformed headers fail closed before any restaurant/provider work. */ }
   if (!sigValid) {
     logger.warn('TwilioVoiceConnect: Signature mismatch — rejecting (SEC-CRIT-03)', {
       host: req.headers.host,
@@ -49,9 +59,9 @@ module.exports = async (req, res) => {
 
   try {
     // Extract call details from Twilio's webhook
-    const calledNumber = req.body?.To || req.query?.To;
-    const callerNumber = req.body?.From || req.query?.From;
-    const callSid = req.body?.CallSid || req.query?.CallSid;
+    const calledNumber = req.body?.To;
+    const callerNumber = req.body?.From;
+    const callSid = req.body?.CallSid;
 
     logger.info('Incoming voice call', {
       to: calledNumber,
@@ -96,11 +106,15 @@ module.exports = async (req, res) => {
           restaurantId: restaurant.id
         });
 
+        const grant = await issueVoiceStreamGrant({
+          restaurantId: restaurant.id, callerNumber, callSid, accountSid: req.body?.AccountSid, wsUrl,
+        });
         res.status(200).send(buildStreamTwiml(
           wsUrl,
           restaurant.id,
           callerNumber,
-          callSid
+          callSid,
+          grant
         ));
         break;
       }
@@ -253,7 +267,7 @@ async function resolveVoiceEngine(restaurant) {
 /**
  * Build TwiML that connects to our voice pipeline via Media Streams
  */
-function buildStreamTwiml(wsUrl, restaurantId, callerNumber, callSid) {
+function buildStreamTwiml(wsUrl, restaurantId, callerNumber, callSid, grant) {
   // Escape XML entities
   const escXml = (str) => String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -264,6 +278,7 @@ function buildStreamTwiml(wsUrl, restaurantId, callerNumber, callSid) {
       <Parameter name="restaurant_id" value="${escXml(restaurantId)}" />
       <Parameter name="caller_number" value="${escXml(callerNumber)}" />
       <Parameter name="call_sid" value="${escXml(callSid)}" />
+      <Parameter name="stream_grant" value="${escXml(grant)}" />
     </Stream>
   </Connect>
 </Response>`;
