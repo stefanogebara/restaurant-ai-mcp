@@ -6,7 +6,7 @@
  * because Vercel doesn't support persistent WebSocket connections.
  *
  * Usage:
- *   node api/voice-server/index.js
+ *   node api/_voice-server/index.js
  *
  * Environment variables:
  *   VOICE_WS_PORT - WebSocket server port (default: 8765)
