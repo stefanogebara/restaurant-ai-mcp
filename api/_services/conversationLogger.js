@@ -240,6 +240,13 @@ async function ingestCompletedConversation(provider, { restaurantId } = {}) {
   }
   const isSharedAgent = !!process.env.ELEVENLABS_SHARED_AGENT_ID &&
     agentId === process.env.ELEVENLABS_SHARED_AGENT_ID;
+  // Text previews have no called number, so the shared agent cannot bind them
+  // to a restaurant. Acknowledge these events instead of making ElevenLabs
+  // retry an unattributable transcript. Telephone calls still fail closed so
+  // a late binding can be retried.
+  if (isSharedAgent && !existing && !restaurantId && !provider.metadata?.phone_call) {
+    return { ingested: false, reason: 'unbound_non_telephony' };
+  }
   if (isSharedAgent && (!existing?.restaurant_info_id || existing.agent_id !== agentId)) {
     throw new Error('Shared conversation is not bound');
   }
