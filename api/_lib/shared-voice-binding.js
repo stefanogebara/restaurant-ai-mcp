@@ -43,6 +43,13 @@ function normalizedName(value) {
     : '';
 }
 
+function matchesSpokenName(row, name) {
+  if (normalizedName(row.restaurant_name) === name) return true;
+  const aliases = row.ai_config?.phone?.shared_name_aliases;
+  return Array.isArray(aliases) && aliases.slice(0, 10)
+    .some(alias => normalizedName(alias) === name);
+}
+
 async function readBinding(conversationId) {
   const { data, error } = await supabaseAdmin.from('agent_conversations')
     .select('id, agent_id, restaurant_info_id, called_phone, caller_phone')
@@ -106,7 +113,7 @@ async function identifySharedRestaurant(ctx, restaurantName, city) {
   // A truncated list could hide a second restaurant with the same name.
   if (data?.length >= 1000) throw new Error('Shared restaurant directory is incomplete');
   const byName = (data || []).filter(row => row.ai_config?.phone?.shared_routing_enabled === true &&
-    normalizedName(row.restaurant_name) === name);
+    matchesSpokenName(row, name));
   const matches = cityName ? byName.filter(row => normalizedName(row.city) === cityName) : byName;
   if (matches.length !== 1) {
     return matches.length > 1 || (byName.length > 1 && !cityName)
@@ -114,6 +121,19 @@ async function identifySharedRestaurant(ctx, restaurantName, city) {
         message: 'I found more than one restaurant with that name. Which city is it in?',
         cities: [...new Set(byName.map(row => row.city).filter(Boolean))].slice(0, 5) }
       : { success: false, restaurant_identified: false, message: 'I could not find that restaurant. Please repeat its full name and city.' };
+  }
+  // A spoken alias is explicit configuration, but still requires a city. It
+  // cannot claim another active restaurant's official name or alias there,
+  // even when that other restaurant has not opted into shared routing.
+  if (!cityName && normalizedName(matches[0].restaurant_name) !== name) {
+    return { success: false, restaurant_identified: false, needs_clarification: true,
+      message: 'Which city is the restaurant in?' };
+  }
+  const sameCityOwners = (data || []).filter(row =>
+    matchesSpokenName(row, name) && normalizedName(row.city) === normalizedName(matches[0].city));
+  if (sameCityOwners.length !== 1) {
+    return { success: false, restaurant_identified: false,
+      message: 'I found another restaurant with that name. Please say the exact full restaurant name and city.' };
   }
   const restaurant = await loadRealRestaurant(matches[0].id);
   await bindConversation(ctx, restaurant.id);
