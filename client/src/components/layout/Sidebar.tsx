@@ -514,13 +514,14 @@ export default function Sidebar() {
             { path: '/host-dashboard/simple', label: t('navigation.dashboard', 'Dashboard'), icon: 'layout-dashboard' },
             { path: '/host-dashboard/floor-plan', label: t('navigation.tables', 'Tables'), icon: 'table' },
             { path: '/host-dashboard/manager-ai', label: 'AI', icon: 'message-circle' },
-            { path: '/host-dashboard/settings', label: t('navigation.restaurantSettings', 'Settings'), icon: 'settings' },
+            { path: '/host-dashboard/settings', label: t('navigation.mobileSettings', 'Settings'), icon: 'settings' },
           ] as const).map((item) => {
             const active = isActive(item.path);
             return (
               <Link
                 key={item.path}
                 to={item.path}
+                aria-label={item.path === '/host-dashboard/settings' ? t('navigation.restaurantSettings', 'Restaurant Settings') : undefined}
                 className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg transition-colors min-w-[60px] ${
                   active
                     ? 'text-white'
