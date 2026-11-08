@@ -218,6 +218,7 @@
       "guests": "Guests Expected",
       "aiCalls": "Active Parties",
       "seated": "seated",
+      "seatedSingle": "seated",
       "capacity": "capacity",
       "waiting": "on waitlist",
       "predictedRevenue": "Predicted Revenue",
