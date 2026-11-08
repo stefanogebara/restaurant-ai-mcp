@@ -2125,6 +2125,8 @@
     "statsUnavailable": "Os números das chamadas não estão disponíveis. A lista de conversas pode estar atualizada.",
     "noCallsForFilters": "Nenhuma chamada corresponde aos filtros",
     "noCallsForFiltersHint": "Tente outro período ou remova um filtro.",
+    "noCallsWithoutLine": "Nenhuma chamada telefônica neste período",
+    "noCallsWithoutLineHint": "Este restaurante ainda não tem uma linha atribuída. Peça a configuração em Voz antes de divulgar um número.",
     "pages": "Páginas de chamadas",
     "showingCalls": "Exibindo {{from}}–{{to}} de {{total}} chamadas",
     "exportPage": "Exportar esta página",

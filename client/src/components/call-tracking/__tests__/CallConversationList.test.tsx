@@ -4,6 +4,24 @@ import { renderWithProviders as render } from '../../../test/renderWithProviders
 import CallConversationList from '../CallConversationList';
 import CallConversationModal from '../CallConversationModal';
 
+it('explains an empty phone history when no line is assigned, but keeps filter feedback when filters are active', () => {
+  const baseProps = {
+    channel: 'phone' as const,
+    phoneNotConfigured: true,
+    conversations: [],
+    onOutcomeChange: () => {},
+    onConversationClick: () => {},
+    timeZoneLabel: 'Times in restaurant',
+  };
+  const view = render(<CallConversationList {...baseProps} filter={{ period: '7d', outcome: 'all', language: 'all' }} />);
+  expect(screen.getByText('No phone calls in this period')).toBeVisible();
+  expect(screen.getByText(/no assigned phone line/i)).toBeVisible();
+
+  view.rerender(<CallConversationList {...baseProps} filter={{ period: '7d', outcome: 'error', language: 'all' }} />);
+  expect(screen.getByText('No calls match these filters')).toBeVisible();
+  expect(screen.queryByText('No phone calls in this period')).not.toBeInTheDocument();
+});
+
 it('labels system errors as errors and a completed zero-second call as 0:00', () => {
   const onOutcomeChange = vi.fn();
   render(<CallConversationList

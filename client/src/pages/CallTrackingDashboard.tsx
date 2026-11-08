@@ -205,6 +205,7 @@ export default function CallTrackingDashboard() {
               <CallConversationList
                 conversations={conversations}
                 channel={channel}
+                phoneNotConfigured={phoneStatusQuery.data?.status === 'not_configured'}
                 filter={filter}
                 onOutcomeChange={(outcome) => changeFilter({ ...filter, outcome })}
                 onConversationClick={(id) => setSelectedConversationId(id)}

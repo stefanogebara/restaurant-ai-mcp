@@ -15,6 +15,7 @@ function callIconStyle(outcome?: string): string {
 interface Props {
   conversations: Conversation[];
   channel: CallChannel;
+  phoneNotConfigured?: boolean;
   filter: CallFilter;
   onOutcomeChange: (outcome: string) => void;
   onConversationClick: (id: string) => void;
@@ -26,6 +27,7 @@ interface Props {
 export default function CallConversationList({
   conversations,
   channel,
+  phoneNotConfigured = false,
   filter,
   onOutcomeChange,
   onConversationClick,
@@ -40,6 +42,12 @@ export default function CallConversationList({
     { value: 'reservation_created',  label: t('callTracking.outcomeBooked') },
     { value: 'error',                label: t('callTracking.outcomeError') },
   ] as const;
+  const showUnconnectedEmptyState = channel === 'phone' && phoneNotConfigured
+    && filter.outcome === 'all' && filter.language === 'all'
+    && (!filter.sentiment || filter.sentiment === 'all') && !filter.search;
+  const emptyTitleKey = showUnconnectedEmptyState ? 'callTracking.noCallsWithoutLine'
+    : channel === 'phone' ? 'callTracking.noCallsForFilters' : 'callTracking.noUnclassifiedForFilters';
+  const emptyHintKey = showUnconnectedEmptyState ? 'callTracking.noCallsWithoutLineHint' : 'callTracking.noCallsForFiltersHint';
 
   return (
     <div className="overflow-hidden">
@@ -75,10 +83,10 @@ export default function CallConversationList({
             <ThiingsIcon name={channel === 'phone' ? 'phone' : 'chat'} pxSize={24} />
           </div>
           <p className="text-sm font-semibold text-deep-charcoal mb-1">
-            {t(channel === 'phone' ? 'callTracking.noCallsForFilters' : 'callTracking.noUnclassifiedForFilters')}
+            {t(emptyTitleKey)}
           </p>
           <p className="text-xs text-muted-stone">
-            {t('callTracking.noCallsForFiltersHint')}
+            {t(emptyHintKey)}
           </p>
         </div>
       ) : (
