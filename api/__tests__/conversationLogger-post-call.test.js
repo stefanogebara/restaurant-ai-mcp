@@ -7,6 +7,7 @@ let mockUpdated;
 const mockSelect = jest.fn();
 const mockUpdate = jest.fn();
 const mockInsert = jest.fn();
+const mockWarn = jest.fn();
 const mockQuery = {
   select: (...args) => { mockSelect(...args); return mockQuery; },
   eq: jest.fn(() => mockQuery),
@@ -22,7 +23,7 @@ jest.mock('../_lib/restaurant-loader', () => ({
   getRestaurantByAgentId: (...args) => mockRestaurant(...args),
   getRestaurantById: (...args) => mockRestaurantById(...args),
 }));
-jest.mock('../_lib/secure-logger', () => ({ createSecureLogger: () => ({ info: jest.fn(), error: jest.fn() }) }));
+jest.mock('../_lib/secure-logger', () => ({ createSecureLogger: () => ({ info: jest.fn(), warn: (...args) => mockWarn(...args), error: jest.fn() }) }));
 jest.mock('../_services/memoryExtractor', () => ({ extractMemoriesFromConversation: (...args) => mockExtract(...args) }));
 jest.mock('../_lib/ai-client', () => ({ getAIClient: () => ({ messages: { create: (...args) => mockCreateAnalysis(...args) } }), AI_MODEL_FAST: 'test-model' }));
 const { ingestCompletedConversation } = require('../_services/conversationLogger');
@@ -60,32 +61,36 @@ test('unbound shared-agent text previews are acknowledged without a restaurant o
   expect(mockInsert).not.toHaveBeenCalled();
 });
 
-test('unbound shared-agent calls without explicit text-only metadata still fail closed', async () => {
+test('unbound shared-agent calls without a restaurant are acknowledged without a write', async () => {
   process.env.ELEVENLABS_SHARED_AGENT_ID = 'shared-agent';
   mockRow = null;
   await expect(ingestCompletedConversation({
     conversation_id: 'conv-unknown', agent_id: 'shared-agent', status: 'done',
     metadata: { phone_call: null },
-  })).rejects.toThrow('Shared conversation is not bound');
+  })).resolves.toEqual({ ingested: false, reason: 'unbound_shared_call' });
   expect(mockInsert).not.toHaveBeenCalled();
+  expect(mockWarn).toHaveBeenCalledWith('Shared conversation ended without restaurant identification',
+    { conversation_id: 'conv-unknown' });
 });
 
-test('phone-call metadata takes precedence over a text-only flag', async () => {
+test('an unbound shared telephone event is acknowledged, then a late binding can be ingested', async () => {
   process.env.ELEVENLABS_SHARED_AGENT_ID = 'shared-agent';
   mockRow = null;
-  await expect(ingestCompletedConversation({
+  const provider = {
     conversation_id: 'conv-phone', agent_id: 'shared-agent', status: 'done',
     metadata: { text_only: true, phone_call: { agent_number: '+551150289356' } },
-  })).rejects.toThrow('Shared conversation is not bound');
+  };
+  await expect(ingestCompletedConversation(provider))
+    .resolves.toEqual({ ingested: false, reason: 'unbound_shared_call' });
   expect(mockInsert).not.toHaveBeenCalled();
+  mockRow = { id: 1, restaurant_info_id: 'rest-1', agent_id: 'shared-agent',
+    reservation_id: null, elevenlabs_fetched_at: null };
+  await expect(ingestCompletedConversation(provider)).resolves.toEqual({ ingested: true });
+  expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ restaurant_info_id: 'rest-1' }));
 });
 
-test('shared agent refuses missing, unscoped or inactive conversation bindings', async () => {
+test('shared agent still refuses unscoped or inactive existing bindings', async () => {
   process.env.ELEVENLABS_SHARED_AGENT_ID = 'shared-agent';
-  mockRow = null;
-  await expect(ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'shared-agent', status: 'done',
-    metadata: { phone_call: { agent_number: '+551150289356' } } }))
-    .rejects.toThrow('Shared conversation is not bound');
   mockRow = { id: 1, agent_id: 'shared-agent', restaurant_info_id: null, elevenlabs_fetched_at: null };
   await expect(ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'shared-agent', status: 'done' }))
     .rejects.toThrow('Shared conversation is not bound');
