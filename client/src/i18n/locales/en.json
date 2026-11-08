@@ -3013,6 +3013,14 @@
     "noChanges": "No overrides configured"
   },
   "phoneIntegration": {
+    "notConnectedTitle": "Phone not connected",
+    "notConnectedDescription": "No number has been assigned to this restaurant. Ask us to set up and test the line before sharing a number or forwarding calls.",
+    "pendingTitle": "Phone setup in progress",
+    "pendingDescription": "Seatable is preparing this restaurant's line. Wait for routing confirmation before sharing a number or forwarding calls.",
+    "setupErrorTitle": "Phone connection needs attention",
+    "setupErrorDescription": "We couldn't confirm this restaurant's connection. Ask Seatable for help before forwarding calls.",
+    "unavailableTitle": "Phone status unavailable",
+    "requestSetup": "Ask Seatable to connect the phone",
     "assistedTitle": "Phone setup needs a routing check",
     "assistedDescription": "Seatable's voice number is shared. We must confirm which AI receptionist receives calls before you forward your restaurant's line or invite guests to call it.",
     "routingUnverified": "An older setup is saved, but we have not verified that calls reach this restaurant's AI receptionist. Do not forward your line yet.",
