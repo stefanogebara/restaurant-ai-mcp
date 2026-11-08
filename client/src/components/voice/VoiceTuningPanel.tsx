@@ -78,7 +78,7 @@ export default function VoiceTuningPanel({
     {
       key: 'warm',
       title: t('voiceTuning.preset.warm', 'Warm'),
-      desc: t('voiceTuning.preset.warmDesc', 'Friendly neighbourhood feel. The default for most restaurants.'),
+      desc: t('voiceTuning.preset.warmDesc', 'Friendly neighbourhood feel. A good choice for most restaurants.'),
     },
     {
       key: 'energetic',
