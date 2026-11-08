@@ -2534,6 +2534,8 @@
   },
   "voiceTuning": {
     "title": "Cómo suena tu IA",
+    "custom": "Ajuste personalizado",
+    "default": "Configuración predeterminada",
     "resetToDefaults": "Restaurar valores predeterminados",
     "stability": "Estabilidad",
     "similarityBoost": "Coincidencia de voz",

@@ -2893,6 +2893,8 @@
   },
   "voiceTuning": {
     "title": "How your AI sounds",
+    "custom": "Custom tuning",
+    "default": "Default tuning",
     "resetToDefaults": "Reset to defaults",
     "stability": "Stability",
     "similarityBoost": "Voice match",

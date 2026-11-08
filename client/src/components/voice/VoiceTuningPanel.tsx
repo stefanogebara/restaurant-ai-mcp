@@ -3,13 +3,14 @@ import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import Spinner from '../common/Spinner';
 import VoiceSlider from './VoiceSlider';
-import type { VoiceSettings } from './voiceTypes';
+import { DEFAULT_VOICE_SETTINGS, type VoiceSettings } from './voiceTypes';
 
 interface Props {
   settings: VoiceSettings;
   currentVoiceId: string;
   loadingAudio: string | null;
   onSettingChange: (key: keyof VoiceSettings, value: number) => void;
+  onApplyPreset: (preset: Pick<VoiceSettings, 'stability' | 'similarity_boost' | 'style'>) => void;
   onReset: () => void;
   onPreview: () => void;
 }
@@ -53,18 +54,19 @@ export default function VoiceTuningPanel({
   currentVoiceId,
   loadingAudio,
   onSettingChange,
+  onApplyPreset,
   onReset,
   onPreview,
 }: Props) {
   const { t } = useTranslation();
   const detectedPreset = useMemo(() => detectPreset(settings), [settings]);
-  const [showAdvanced, setShowAdvanced] = useState(detectedPreset === null);
+  const isDefault = settings.stability === DEFAULT_VOICE_SETTINGS.stability
+    && settings.similarity_boost === DEFAULT_VOICE_SETTINGS.similarity_boost
+    && settings.style === DEFAULT_VOICE_SETTINGS.style;
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const applyPreset = (key: PresetKey) => {
-    const p = TUNING_PRESETS[key];
-    onSettingChange('stability', p.stability);
-    onSettingChange('similarity_boost', p.similarity_boost);
-    onSettingChange('style', p.style);
+    onApplyPreset(TUNING_PRESETS[key]);
   };
 
   const presetCards: Array<{ key: PresetKey; title: string; desc: string }> = [
@@ -95,33 +97,34 @@ export default function VoiceTuningPanel({
       </div>
 
       <div className="p-6 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {presetCards.map(({ key, title, desc }) => {
+        <div className="grid grid-cols-3 gap-2" role="group" aria-label={t('voiceTuning.title', 'How your AI sounds')}>
+          {presetCards.map(({ key, title }) => {
             const isSelected = detectedPreset === key;
             return (
               <button
                 key={key}
                 type="button"
                 onClick={() => applyPreset(key)}
-                className={`text-left p-4 rounded-2xl border-2 transition-all ${
+                aria-pressed={isSelected}
+                className={`min-h-11 rounded-full border px-2 py-2 text-center text-xs font-medium transition-colors sm:text-sm ${
                   isSelected
-                    ? 'border-burgundy bg-burgundy/5'
+                    ? 'border-deep-charcoal bg-soft-gray text-deep-charcoal'
                     : 'border-glass-border-dark hover:border-muted-stone'
                 }`}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-semibold text-deep-charcoal">{title}</span>
-                  {isSelected && (
-                    <span className="text-[10px] font-medium text-burgundy bg-burgundy/10 px-2 py-0.5 rounded-full">
-                      {t('voiceTuning.preset.selected', 'Current')}
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-stone-gray">{desc}</p>
+                {title}
               </button>
             );
           })}
         </div>
+
+        <p className="text-sm text-muted-stone">
+          {detectedPreset === null
+            ? isDefault
+              ? t('voiceTuning.default', 'Default tuning')
+              : t('voiceTuning.custom', 'Custom tuning')
+            : presetCards.find((preset) => preset.key === detectedPreset)?.desc}
+        </p>
 
         {/* Speed always-visible — only slider with an obvious mental model. */}
         <div className="max-w-md">
@@ -138,6 +141,7 @@ export default function VoiceTuningPanel({
         <button
           type="button"
           onClick={() => setShowAdvanced((v) => !v)}
+          aria-expanded={showAdvanced}
           className="text-xs text-muted-stone hover:text-deep-charcoal underline underline-offset-2"
         >
           {showAdvanced

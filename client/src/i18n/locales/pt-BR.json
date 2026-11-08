@@ -2907,6 +2907,8 @@
   },
   "voiceTuning": {
     "title": "Como sua IA soa",
+    "custom": "Ajuste personalizado",
+    "default": "Configuração padrão",
     "resetToDefaults": "Restaurar padrões",
     "stability": "Estabilidade",
     "similarityBoost": "Semelhança da voz",
