@@ -90,7 +90,9 @@ function buildPersonaPrompt(restaurantConfig, options = {}) {
     || restaurantConfig.ai_config?.language
     || restaurantConfig.language
     || 'en';
-  const lang = LANGUAGE_CONFIG[language] || LANGUAGE_CONFIG.en;
+  const baseLanguage = String(language).toLowerCase().split('-')[0];
+  const lang = LANGUAGE_CONFIG[baseLanguage] || LANGUAGE_CONFIG.en;
+  const fallbackLanguage = new Intl.DisplayNames(['en'], { type: 'language' }).of(baseLanguage) || 'English';
   // Restaurant name flows through onboarding's 255-char trim; sanitise again
   // here in case the column ever gets edited from another path.
   const restaurantName = sanitisePromptInput(
@@ -123,9 +125,8 @@ function buildPersonaPrompt(restaurantConfig, options = {}) {
   // Language detection — respond in the caller's language automatically
   prompt += `Language rule: Detect the language the caller is speaking and respond entirely in that language. `;
   prompt += `If they speak English, respond in English. If they speak Spanish, respond in Spanish. If they speak French, respond in French. `;
-  prompt += `You are fluent in Portuguese, English, Spanish, French, Italian, and German. `;
   prompt += `Never force the caller to speak a language they're not comfortable with. `;
-  prompt += `If unsure, default to Portuguese since this restaurant is in Brazil.\n\n`;
+  prompt += `If unsure, default to ${fallbackLanguage}.\n\n`;
 
   // 1b. Restaurant Identity (from restaurant learning profile)
   const identitySection = buildRestaurantIdentitySection(restaurantConfig);
@@ -192,8 +193,8 @@ function buildPersonaPrompt(restaurantConfig, options = {}) {
     const minParty = dep.min_party_size || 1;
     const amount = dep.amount;
     const type = dep.type === 'per_person' ? 'per person' : 'flat';
-    const isPT = language === 'pt' || language === 'pt-BR';
-    const isES = language === 'es';
+    const isPT = baseLanguage === 'pt';
+    const isES = baseLanguage === 'es';
     if (isPT) {
       const t = type === 'per person' ? `R$${amount} por pessoa` : `R$${amount} fixo`;
       policyLines.push(`- Depósito: para grupos de ${minParty}+ pedimos um depósito de ${t} no momento da reserva. É retido (não cobrado) e devolvido se você comparecer.`);
@@ -211,8 +212,8 @@ function buildPersonaPrompt(restaurantConfig, options = {}) {
     || restaurantConfig.reservation_settings?.cancellation_policy
     || null;
   if (cancelPolicy && typeof cancelPolicy === 'string' && cancelPolicy.trim().length > 0) {
-    const isPT = language === 'pt' || language === 'pt-BR';
-    const isES = language === 'es';
+    const isPT = baseLanguage === 'pt';
+    const isES = baseLanguage === 'es';
     const label = isPT ? 'Política de cancelamento' : isES ? 'Política de cancelación' : 'Cancellation policy';
     policyLines.push(`- ${label}: ${cancelPolicy.trim()}`);
   }

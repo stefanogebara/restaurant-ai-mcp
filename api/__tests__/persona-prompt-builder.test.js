@@ -32,6 +32,19 @@ describe('buildFirstMessage — saved persona', () => {
   });
 });
 
+describe('buildPersonaPrompt — configured language', () => {
+  test.each([
+    ['pt-BR', 'anfitriao', 'Portuguese'],
+    ['es-ES', 'anfitrion', 'Spanish'],
+    ['en-US', 'host', 'English'],
+  ])('%s uses its localised role and fallback language', (language, role, fallback) => {
+    const prompt = buildPersonaPrompt({ restaurant_name: 'Bistro', agent_language: language });
+    expect(prompt).toContain(`friendly ${role} at Bistro`);
+    expect(prompt).toContain(`If unsure, default to ${fallback}`);
+    expect(prompt).not.toContain('since this restaurant is in Brazil');
+  });
+});
+
 describe('sanitisePromptInput', () => {
   test('returns empty string for non-strings', () => {
     expect(sanitisePromptInput(null)).toBe('');
