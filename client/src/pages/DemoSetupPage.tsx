@@ -40,6 +40,7 @@ export default function DemoSetupPage() {
           restaurant_name: data.restaurant_name,
           city: data.city,
           demo_language: i18n.language,
+          demo_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           cuisine_type:
             data.manual?.cuisine_type ??
             (data.scraped_data as Record<string, string> | null)?.cuisine_type ??

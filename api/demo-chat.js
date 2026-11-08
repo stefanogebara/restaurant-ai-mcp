@@ -3,6 +3,7 @@ const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors } = require('./_lib/cors');
 const { supabaseAdmin } = require('./_lib/supabase');
+const { getLocalDate } = require('./_lib/timezone');
 const logger = createSecureLogger('DemoChat');
 
 // Known preset demos — bypass DB validation for these (no DB record exists)
@@ -109,6 +110,7 @@ module.exports = async function handler(req, res) {
   // Dados reais do restaurante (horários, pratos, resumo) para a persona
   // recepcionista responder com o restaurante DELE, não com generalidades.
   let dadosDoBanco = null;
+  let fusoDoBanco = null;
 
   if (!isPresetDemo) {
     // Validate token-based demo restaurant against DB
@@ -119,7 +121,7 @@ module.exports = async function handler(req, res) {
       const { data: restaurant, error } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
-        .select('id, restaurant_name, scraped_data')
+        .select('id, restaurant_name, scraped_data, timezone')
         .eq('id', restaurant_id)
         .eq('is_demo', true)
         .maybeSingle();
@@ -129,6 +131,7 @@ module.exports = async function handler(req, res) {
       }
       nomeDoBanco = restaurant.restaurant_name || null;
       dadosDoBanco = restaurant.scraped_data || null;
+      fusoDoBanco = restaurant.timezone || null;
     } catch (err) {
       logger.error('Demo restaurant validation error:', err.message);
       return res.status(500).json({ error: 'Validation failed' });
@@ -219,8 +222,13 @@ module.exports = async function handler(req, res) {
   // sabe resolver "sexta" e devolve a pergunta — verificado na primeira
   // conversa real em produção (28/jul): "Qual é a data da sexta-feira que
   // você prefere?" depois de o cliente já ter dito "sexta às 20h".
-  const hoje = new Intl.DateTimeFormat('pt-BR', {
-    timeZone: 'America/Sao_Paulo',
+  const fusoDoRestaurante = fusoDoBanco || (preset_key === 'makoto' ? 'Europe/Madrid' : 'America/Sao_Paulo');
+  const localeDia = lang === 'es' ? 'es-ES' : lang === 'en' ? 'en-US' : 'pt-BR';
+  const hojeRotulo = lang === 'es' ? 'hoy' : lang === 'en' ? 'today' : 'hoje';
+  const amanhaRotulo = lang === 'es' ? 'mañana' : lang === 'en' ? 'tomorrow' : 'amanhã';
+  const exemploDia = lang === 'es' ? 'viernes' : lang === 'en' ? 'Friday' : 'sexta';
+  const hoje = new Intl.DateTimeFormat(localeDia, {
+    timeZone: fusoDoRestaurante,
     weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric',
   }).format(new Date());
 
@@ -228,12 +236,14 @@ module.exports = async function handler(req, res) {
   // próxima ocorrência" no prompt deixava o MODELO calcular a data — e no E2E
   // de 24/ago ele resolveu "sexta" para 31/01/2025 (uma sexta... do ano
   // errado, no passado). Com a tabela ele só consulta, não calcula.
-  const fmtDia = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'long' });
-  const fmtIso = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' });
+  const fmtDia = new Intl.DateTimeFormat(localeDia, { timeZone: 'UTC', weekday: 'long' });
+  const dataLocal = getLocalDate(fusoDoRestaurante);
   const proximosDias = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(Date.now() + i * 86400000);
-    const rotulo = i === 0 ? 'hoje' : i === 1 ? 'amanhã' : fmtDia.format(d);
-    return `${rotulo}=${fmtIso.format(d)}`;
+    // Calendar days in the restaurant's timezone. Adding 24h to "now" can
+    // repeat or skip a local date at the daylight-saving boundary.
+    const d = new Date(Date.parse(`${dataLocal}T12:00:00Z`) + i * 86400000);
+    const rotulo = i === 0 ? hojeRotulo : i === 1 ? amanhaRotulo : fmtDia.format(d);
+    return `${rotulo}=${d.toISOString().slice(0, 10)}`;
   }).join(', ');
 
   // A recepcionista fala com o CLIENTE (o dono se passando por cliente); o
@@ -243,14 +253,14 @@ module.exports = async function handler(req, res) {
     ? `You are the AI receptionist of the restaurant "${restaurantName}", chatting with a GUEST in a WhatsApp-style web demo. The person typing is the restaurant owner trying out their own AI, playing the role of a guest. This is a demonstration; the conversation is not sent through WhatsApp.
 ${presetMeta.context || ''}${wikiBlock}
 ${blocoDados ? `\n[REAL DATA OF THIS RESTAURANT — use it to answer]\n${blocoDados}\n` : ''}
-Today is ${hoje} (America/Sao_Paulo).
+Today is ${hoje} (${fusoDoRestaurante}).
 Weekday-to-date lookup for the NEXT 7 days (use this table — never compute dates yourself): ${proximosDias}
 
 Behavior:
 - Respond in ${respondIn}
 - WhatsApp style: short messages, warm and professional, at most ONE question per message
 - Goal: complete a reservation. Collect, in this order, whatever is missing: party size, date, time, and the guest's full name
-- When the guest names a weekday without a date ("sexta"), resolve it with the lookup table above (the NEXT occurrence) and state the resolved date in your confirmation — do NOT ask which one, and NEVER use a date that is not in the table for weekday-only requests
+- When the guest names a weekday without a date ("${exemploDia}"), resolve it with the lookup table above (the NEXT occurrence) and state the resolved date in your confirmation — do NOT ask which one, and NEVER use a date that is not in the table for weekday-only requests
 - When you have all four, confirm with this exact format (translated to ${respondIn}):
 📍 ${restaurantName}
 📅 [date]

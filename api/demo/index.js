@@ -142,6 +142,7 @@ async function handleCreate(req, res) {
     scraped_data, // Optional: Google Places data from /api/scrape-restaurant
     vibe_tags,    // Optional: manual path (F4) — owner-picked vibe chips
     demo_language, // UI language fallback when a new restaurant has no country yet
+    demo_timezone, // browser's IANA timezone hint for a new restaurant without a country
   } = req.body || {};
 
   // With scraped_data, only restaurant_name + city + contact_email are required
@@ -312,11 +313,20 @@ async function handleCreate(req, res) {
   // 4 reservas hoje; o demo manual criado no mesmo minuto mandou as três para
   // amanhã 19:30/20:00/20:30 — os fallbackTimes — e abriu vazio.
   //
-  // Nenhum restaurante opera em UTC: 'UTC' aqui significa "não descobrimos
-  // onde fica", não um fuso. Cair no mercado principal do funil é
-  // estritamente melhor que cair 3h à frente do dono.
+  // 'UTC' aqui significa "não descobrimos onde fica". Para restaurantes
+  // novos, o fuso do navegador é uma pista melhor do que assumir São Paulo;
+  // país/telefone confirmado ainda tem precedência.
   const fusoSugerido = suggestTimezone(resolvedCountry || effectiveCountry, city);
-  const fusoDoDemo = (!fusoSugerido || fusoSugerido === 'UTC') ? 'America/Sao_Paulo' : fusoSugerido;
+  let fusoDoNavegador = null;
+  if (typeof demo_timezone === 'string' && demo_timezone.length <= 64) {
+    try {
+      new Intl.DateTimeFormat('en-US', { timeZone: demo_timezone });
+      fusoDoNavegador = demo_timezone;
+    } catch { /* Ignore invalid client-provided timezones. */ }
+  }
+  const fusoDoDemo = fusoSugerido && fusoSugerido !== 'UTC'
+    ? fusoSugerido
+    : (fusoDoNavegador && fusoDoNavegador !== 'UTC' ? fusoDoNavegador : 'America/Sao_Paulo');
 
   const insertPayload = {
     user_id: demoUserId,
