@@ -3027,6 +3027,14 @@
     "noChanges": "Sem alterações configuradas"
   },
   "phoneIntegration": {
+    "notConnectedTitle": "Telefone não conectado",
+    "notConnectedDescription": "Nenhum número foi atribuído a este restaurante. Peça a configuração e o teste da linha antes de divulgar um número ou encaminhar chamadas.",
+    "pendingTitle": "Configuração em andamento",
+    "pendingDescription": "O Seatable está preparando a linha deste restaurante. Aguarde a confirmação do roteamento antes de divulgar um número ou encaminhar chamadas.",
+    "setupErrorTitle": "Conexão do telefone precisa de atenção",
+    "setupErrorDescription": "Não conseguimos confirmar a conexão deste restaurante. Peça ajuda ao Seatable antes de encaminhar chamadas.",
+    "unavailableTitle": "Status do telefone indisponível",
+    "requestSetup": "Pedir conexão do telefone ao Seatable",
     "assistedTitle": "O telefone precisa de uma verificação de roteamento",
     "assistedDescription": "O número de voz do Seatable é compartilhado. Precisamos confirmar qual recepcionista IA recebe as ligações antes de você encaminhar a linha do restaurante ou divulgar o número.",
     "routingUnverified": "Existe uma configuração antiga salva, mas não verificamos se as ligações chegam à recepcionista IA deste restaurante. Não encaminhe sua linha ainda.",

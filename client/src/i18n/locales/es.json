@@ -2654,6 +2654,14 @@
     "noChanges": "Sin cambios configurados"
   },
   "phoneIntegration": {
+    "notConnectedTitle": "Teléfono sin conectar",
+    "notConnectedDescription": "Este restaurante no tiene un número asignado. Pide que configuremos y probemos la línea antes de compartir un número o desviar llamadas.",
+    "pendingTitle": "Configuración en curso",
+    "pendingDescription": "Seatable está preparando la línea de este restaurante. Espera la confirmación del enrutamiento antes de compartir un número o desviar llamadas.",
+    "setupErrorTitle": "La conexión del teléfono necesita atención",
+    "setupErrorDescription": "No pudimos confirmar la conexión de este restaurante. Pide ayuda a Seatable antes de desviar llamadas.",
+    "unavailableTitle": "Estado del teléfono no disponible",
+    "requestSetup": "Pedir a Seatable que conecte el teléfono",
     "assistedTitle": "El teléfono necesita una verificación de enrutamiento",
     "assistedDescription": "El número de voz de Seatable es compartido. Debemos confirmar qué recepcionista IA recibe las llamadas antes de que desvíes la línea de tu restaurante o difundas el número.",
     "routingUnverified": "Hay una configuración anterior guardada, pero no verificamos si las llamadas llegan a la recepcionista IA de este restaurante. No desvíes tu línea todavía.",

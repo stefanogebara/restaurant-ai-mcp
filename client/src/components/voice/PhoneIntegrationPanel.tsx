@@ -2,11 +2,23 @@
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { usePhoneIntegration } from '../../hooks/usePhoneIntegration';
+import { resolvePhoneSetupState } from '../../lib/phoneSetupState';
 
 export default function PhoneIntegrationPanel() {
   const { t } = useTranslation();
   const { status, isLoading, isError } = usePhoneIntegration();
-  const needsReview = status?.restaurant?.status === 'needs_review';
+  const state = resolvePhoneSetupState(status?.restaurant?.status, { failed: isError });
+  const needsReview = state === 'needs_review';
+  const titleKey = state === 'not_configured' ? 'phoneIntegration.notConnectedTitle'
+    : state === 'pending' ? 'phoneIntegration.pendingTitle'
+    : state === 'error' ? 'phoneIntegration.setupErrorTitle'
+    : state === 'unavailable' ? 'phoneIntegration.unavailableTitle'
+    : 'phoneIntegration.assistedTitle';
+  const descriptionKey = state === 'not_configured' ? 'phoneIntegration.notConnectedDescription'
+    : state === 'pending' ? 'phoneIntegration.pendingDescription'
+    : state === 'error' ? 'phoneIntegration.setupErrorDescription'
+    : state === 'unavailable' ? 'phoneIntegration.statusUnavailable'
+    : 'phoneIntegration.assistedDescription';
 
   if (isLoading) {
     return <p role="status" className="py-5 text-[15px] text-muted-stone">{t('phoneIntegration.loadingStatus')}</p>;
@@ -19,10 +31,11 @@ export default function PhoneIntegrationPanel() {
           {t('phoneIntegration.title')}
         </p>
         <h2 id="phone-setup-title" className="font-serif text-2xl text-deep-charcoal">
-          {t('phoneIntegration.assistedTitle')}
+          {t(titleKey)}
         </h2>
-        <p className="mt-2 max-w-2xl text-[15px] text-muted-stone">
-          {t('phoneIntegration.assistedDescription')}
+        <p role={state === 'unavailable' || state === 'error' ? 'alert' : undefined}
+          className={`mt-2 max-w-2xl text-[15px] ${state === 'unavailable' || state === 'error' ? 'text-red-700' : 'text-muted-stone'}`}>
+          {t(descriptionKey)}
         </p>
       </div>
 
@@ -33,7 +46,6 @@ export default function PhoneIntegrationPanel() {
         </div>
       )}
 
-      {isError && <p role="alert" className="text-sm text-red-700">{t('phoneIntegration.statusUnavailable')}</p>}
       {!status?.restaurant?.has_agent && !isError && (
         <p className="text-sm text-muted-stone">{t('phoneIntegration.noAgentWarning')}</p>
       )}
@@ -42,7 +54,7 @@ export default function PhoneIntegrationPanel() {
         href="mailto:hello@seatable.one?subject=Voice%20phone%20setup"
         className="inline-flex items-center gap-2 text-sm font-medium text-burgundy underline underline-offset-2 hover:text-burgundy-dark"
       >
-        {t('phoneIntegration.requestHelp')}
+        {t(state === 'not_configured' ? 'phoneIntegration.requestSetup' : 'phoneIntegration.requestHelp')}
       </a>
     </section>
   );
