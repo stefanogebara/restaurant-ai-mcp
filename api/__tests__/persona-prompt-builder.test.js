@@ -13,8 +13,24 @@
 
 const {
   buildPersonaPrompt,
+  buildFirstMessage,
   sanitisePromptInput,
 } = require('../_lib/persona-prompt-builder');
+
+describe('buildFirstMessage — saved persona', () => {
+  test('uses the saved opening greeting before the legacy ai_config greeting', () => {
+    expect(buildFirstMessage({
+      restaurant_name: 'Bistro',
+      agent_greeting: 'Olá, aqui é a Sofia!',
+      ai_config: { greeting_message: 'Old greeting' },
+    }, 'pt-BR')).toBe('Olá, aqui é a Sofia!');
+  });
+
+  test('uses the correct language when a custom greeting is cleared', () => {
+    expect(buildFirstMessage({ restaurant_name: 'Bistro', agent_greeting: '' }, 'pt-BR'))
+      .toMatch(/ligar.*Bistro/i);
+  });
+});
 
 describe('sanitisePromptInput', () => {
   test('returns empty string for non-strings', () => {

@@ -29,7 +29,7 @@ async function getRestaurantByPhone(phoneNumber) {
     const result = await query
       .schema('restaurant')
       .from('restaurant_config')
-      .select('id, restaurant_name, city, country, phone, email, website, voice_id, voice_engine, voice_engine_status, openai_voice_id, persona_prompt_override, voice_ws_endpoint, ai_config, business_hours, timezone, average_dining_duration_minutes, table_configuration, reservation_settings, team_members')
+      .select('id, restaurant_name, city, country, phone, email, website, voice_id, voice_engine, voice_engine_status, openai_voice_id, persona_prompt_override, voice_ws_endpoint, agent_name, agent_greeting, ai_config, business_hours, timezone, average_dining_duration_minutes, table_configuration, reservation_settings, team_members')
       .eq('phone', phoneNumber)
       .eq('is_active', true)
       .eq('onboarding_completed', true)
@@ -64,6 +64,8 @@ async function getRestaurantByPhone(phoneNumber) {
       openai_voice_id: restaurant.openai_voice_id || 'alloy',
       persona_prompt_override: restaurant.persona_prompt_override || null,
       voice_ws_endpoint: restaurant.voice_ws_endpoint || null,
+      agent_name: restaurant.agent_name,
+      agent_greeting: restaurant.agent_greeting,
 
       // AI configuration
       ai_config: restaurant.ai_config,
@@ -104,7 +106,7 @@ async function getRestaurantById(restaurantId) {
     const result = await query
       .schema('restaurant')
       .from('restaurant_config')
-      .select('id, restaurant_name, city, country, phone, email, website, voice_id, voice_engine, voice_engine_status, openai_voice_id, persona_prompt_override, voice_ws_endpoint, ai_config, business_hours, timezone, average_dining_duration_minutes, table_configuration, reservation_settings, team_members, is_demo, onboarding_completed')
+      .select('id, restaurant_name, city, country, phone, email, website, voice_id, voice_engine, voice_engine_status, openai_voice_id, persona_prompt_override, voice_ws_endpoint, agent_name, agent_greeting, ai_config, business_hours, timezone, average_dining_duration_minutes, table_configuration, reservation_settings, team_members, is_demo, onboarding_completed')
       .eq('id', restaurantId)
       .eq('is_active', true)
       .single();
@@ -130,6 +132,8 @@ async function getRestaurantById(restaurantId) {
         openai_voice_id: restaurant.openai_voice_id || 'alloy',
         persona_prompt_override: restaurant.persona_prompt_override || null,
         voice_ws_endpoint: restaurant.voice_ws_endpoint || null,
+        agent_name: restaurant.agent_name,
+        agent_greeting: restaurant.agent_greeting,
         ai_config: restaurant.ai_config,
         language: restaurant.ai_config?.language || 'en-US',
         greeting_message: restaurant.ai_config?.greeting_message,
@@ -212,7 +216,7 @@ async function getRestaurantByAgentId(agentId) {
     const result = await query
       .schema('restaurant')
       .from('restaurant_config')
-      .select('id, restaurant_name, city, country, phone, email, website, voice_id, voice_engine, voice_engine_status, openai_voice_id, persona_prompt_override, voice_ws_endpoint, ai_config, business_hours, timezone, average_dining_duration_minutes, table_configuration, reservation_settings, team_members, elevenlabs_agent_id')
+      .select('id, restaurant_name, city, country, phone, email, website, voice_id, voice_engine, voice_engine_status, openai_voice_id, persona_prompt_override, voice_ws_endpoint, agent_name, agent_greeting, ai_config, business_hours, timezone, average_dining_duration_minutes, table_configuration, reservation_settings, team_members, elevenlabs_agent_id')
       .eq('elevenlabs_agent_id', agentId)
       .eq('is_active', true)
       .single();
@@ -239,6 +243,8 @@ async function getRestaurantByAgentId(agentId) {
       openai_voice_id: restaurant.openai_voice_id || 'alloy',
       persona_prompt_override: restaurant.persona_prompt_override || null,
       voice_ws_endpoint: restaurant.voice_ws_endpoint || null,
+      agent_name: restaurant.agent_name,
+      agent_greeting: restaurant.agent_greeting,
       ai_config: restaurant.ai_config,
       language: restaurant.ai_config?.language || 'en-US',
       greeting_message: restaurant.ai_config?.greeting_message,
