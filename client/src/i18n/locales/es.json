@@ -318,6 +318,8 @@
       "skipped": "Omitido: {{reason}}",
       "noAgentConfigured": "ningún agente configurado",
       "saved": "Persona del agente guardada",
+      "savePersona": "Guardar persona",
+      "savedButNotSynced": "Guardado en Seatable, pero el agente de voz no se actualizó por completo. Intenta guardar de nuevo.",
       "saveFailed": "Error al guardar persona"
     },
     "aiPersonality": {
@@ -2507,7 +2509,7 @@
     "waSetupStep3": "Vuelve aquí — cambia a \"Conectado\" en aproximadamente un minuto.",
     "waSetupHelp": "¿Atascado?",
     "languages": "Idiomas",
-    "languageChangeWarning": "Cambiar el idioma actualizará el mensaje de bienvenida de tu agente. La voz hablará en el idioma seleccionado usando sus capacidades multilingües.",
+    "languageChangeWarning": "Cambiar el idioma actualiza el saludo predeterminado. Un saludo personalizado permanece igual; edítalo abajo si es necesario.",
     "changeSettingsHint": "Cambia una configuración arriba para habilitar el guardado",
     "voiceLoadError": "No se pudieron cargar las voces",
     "voiceLoadErrorHint": "El servicio de voz puede estar temporalmente no disponible. Inténtalo de nuevo.",

@@ -23,6 +23,9 @@ jest.mock('../_lib/subscription-middleware', () => ({
 jest.mock('../_lib/kb-sync-trigger', () => ({
   triggerKbSync: jest.fn().mockResolvedValue({ success: true, durationMs: 0 }),
 }));
+jest.mock('../_services/voiceAgentService', () => ({
+  refreshVoiceAgentPrompt: jest.fn().mockResolvedValue({ success: true }),
+}));
 
 function makeChain(data) {
   const chain = {
@@ -45,6 +48,7 @@ function mockRes() {
 }
 
 const handler = require('../voice-persona');
+const { refreshVoiceAgentPrompt } = require('../_services/voiceAgentService');
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -70,7 +74,44 @@ it('PATCH updates agent_name and agent_greeting (and reports kb_synced)', async 
     agent_name: 'Sofia',
     agent_greeting: 'Welcome!',
     kb_synced: true,
+    agent_synced: true,
   });
+  expect(refreshVoiceAgentPrompt).toHaveBeenCalledWith('rest-1', { syncFirstMessage: true });
+});
+
+it('PATCH of only the agent name refreshes the prompt without replacing the opening greeting', async () => {
+  const res = mockRes();
+  await handler({ method: 'PATCH', headers: { authorization: 'Bearer tok' }, body: { agent_name: 'Marco' } }, res);
+  expect(refreshVoiceAgentPrompt).toHaveBeenCalledWith('rest-1', { syncFirstMessage: false });
+});
+
+it('reports a saved persona separately from a failed live-agent sync', async () => {
+  refreshVoiceAgentPrompt.mockResolvedValueOnce({ success: false, error: 'provider_failed' });
+  const res = mockRes();
+  await handler({ method: 'PATCH', headers: { authorization: 'Bearer tok' }, body: { agent_greeting: 'Olá!' } }, res);
+  expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+    agent_greeting: 'Welcome!', kb_synced: true, agent_synced: false,
+  }));
+});
+
+it('reports a saved persona if the prompt sync throws after the database update', async () => {
+  refreshVoiceAgentPrompt.mockRejectedValueOnce(new Error('network timeout'));
+  const res = mockRes();
+  await handler({ method: 'PATCH', headers: { authorization: 'Bearer tok' }, body: { agent_greeting: 'Olá!' } }, res);
+  expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ agent_synced: false, kb_synced: true }));
+  expect(res.status).not.toHaveBeenCalledWith(500);
+});
+
+it('does not require an ElevenLabs sync when the OpenAI voice engine uses the saved config', async () => {
+  mockSupabaseAdmin.from.mockReturnValue(makeChain({
+    agent_name: 'Sofia', agent_greeting: 'Welcome!', voice_engine: 'openai_realtime',
+  }));
+  const res = mockRes();
+  await handler({ method: 'PATCH', headers: { authorization: 'Bearer tok' }, body: { agent_greeting: 'Welcome!' } }, res);
+  expect(refreshVoiceAgentPrompt).not.toHaveBeenCalled();
+  expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+    agent_synced: null, kb_synced: null,
+  }));
 });
 
 it('PATCH returns 400 when agent_name exceeds 50 chars', async () => {

@@ -353,6 +353,8 @@
       "skipped": "Skipped: {{reason}}",
       "noAgentConfigured": "no agent configured",
       "saved": "Agent persona saved",
+      "savePersona": "Save persona",
+      "savedButNotSynced": "Saved in Seatable, but the live voice agent was not fully updated. Try Save again.",
       "saveFailed": "Failed to save persona"
     },
     "aiPersonality": {
@@ -2866,7 +2868,7 @@
     "waSetupStep3": "Come back here — it flips to \"Connected\" in about a minute.",
     "waSetupHelp": "Stuck?",
     "languages": "Languages",
-    "languageChangeWarning": "Changing the language will update your agent's greeting message. The voice will speak in the selected language using its multilingual capabilities.",
+    "languageChangeWarning": "Changing the language updates the default greeting. A custom greeting stays as written; edit it below if needed.",
     "changeSettingsHint": "Change a setting above to enable saving",
     "voiceLoadError": "Could not load voices",
     "voiceLoadErrorHint": "The voice service may be temporarily unavailable. Please try again.",

@@ -6,6 +6,11 @@ export interface VoicePersona {
   agent_greeting: string | null;
 }
 
+interface SavedVoicePersona extends VoicePersona {
+  agent_synced: boolean | null;
+  kb_synced: boolean | null;
+}
+
 /** Thrown when the endpoint returns 403 — typically means the account lacks
  *  an active subscription with the `voice_ai` feature. The page can detect
  *  this via `error instanceof VoicePersonaForbiddenError` and show an upsell
@@ -32,14 +37,14 @@ async function fetchPersona(): Promise<VoicePersona> {
   return res.json() as Promise<VoicePersona>;
 }
 
-async function patchPersona(updates: Partial<VoicePersona>): Promise<VoicePersona> {
+async function patchPersona(updates: Partial<VoicePersona>): Promise<SavedVoicePersona> {
   const res = await authFetch('/api/voice-persona', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updates),
   });
   if (!res.ok) throw new Error('Failed to save voice persona');
-  return res.json() as Promise<VoicePersona>;
+  return res.json() as Promise<SavedVoicePersona>;
 }
 
 export function useVoicePersona() {
@@ -50,6 +55,11 @@ export function useSaveVoicePersona() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: patchPersona,
-    onSuccess: (updated) => { queryClient.setQueryData(['voice-persona'], updated); },
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['voice-persona'], {
+        agent_name: updated.agent_name,
+        agent_greeting: updated.agent_greeting,
+      });
+    },
   });
 }

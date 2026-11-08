@@ -208,6 +208,22 @@ describe('ElevenLabs Voice Settings degradation', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
+  test('PATCH preserves a custom opening greeting when the owner changes language', async () => {
+    process.env.ELEVENLABS_API_KEY = 'test-key';
+    mockMaybeSingle.mockResolvedValueOnce({ data: {
+      id: 'rest-1', restaurant_name: 'Bistro', elevenlabs_agent_id: 'agent-123',
+      agent_language: 'pt', agent_greeting: 'Bem-vindo ao nosso bistrô!',
+    }, error: null });
+    mockAwaitQueue.push({ data: null, error: null });
+    global.fetch.mockResolvedValueOnce({ ok: true });
+
+    const { req, res } = createMockReqRes({ method: 'PATCH', body: { language: 'es' } });
+    await handler(req, res);
+    const providerBody = JSON.parse(global.fetch.mock.calls[0][1].body);
+    expect(providerBody.conversation_config.agent.first_message).toBe('Bem-vindo ao nosso bistrô!');
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
   test('PATCH reports partial failure if provider saved but database failed', async () => {
     process.env.ELEVENLABS_API_KEY = 'test-key';
     mockMaybeSingle.mockResolvedValueOnce({ data: { id: 'rest-1', restaurant_name: 'Bistro', elevenlabs_agent_id: 'agent-123', agent_language: 'pt' }, error: null });

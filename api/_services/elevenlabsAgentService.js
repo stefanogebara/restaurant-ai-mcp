@@ -14,6 +14,7 @@ const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { postCallWebhookOverrides } = require('../_lib/elevenlabs-post-call-config');
 const { buildPersonaPrompt } = require('../_lib/persona-prompt-builder');
+const { buildFirstMessage } = require('../_lib/voice-first-message');
 const { validateElevenLabsVoiceId } = require('../_lib/validation');
 
 const logger = createSecureLogger('ElevenLabsAgentService');
@@ -624,24 +625,6 @@ async function getBranchConversationCount(agentId, branchId, sinceDate) {
 // ---------------------------------------------------------------------------
 // Agent Creation — core logic (no HTTP/subscription guards)
 // ---------------------------------------------------------------------------
-
-/**
- * Build first message based on language and optional custom greeting.
- * @param {{ restaurant_name: string, language?: string, custom_greeting?: string }} opts
- * @returns {string}
- */
-function buildFirstMessage({ restaurant_name, language = 'en', custom_greeting }) {
-  if (custom_greeting) return custom_greeting;
-
-  const greetings = {
-    en: `Thank you for calling ${restaurant_name}. How may I help you today?`,
-    es: `Gracias por llamar a ${restaurant_name}. ¿En qué puedo ayudarle hoy?`,
-    fr: `Merci d'avoir appelé ${restaurant_name}. Comment puis-je vous aider aujourd'hui?`,
-    it: `Grazie per aver chiamato ${restaurant_name}. Come posso aiutarla oggi?`,
-    pt: `Obrigado por ligar para ${restaurant_name}. Como posso ajudá-lo hoje?`,
-  };
-  return greetings[language] || greetings.en;
-}
 
 /**
  * Build webhook tool definitions for a single-tenant agent.

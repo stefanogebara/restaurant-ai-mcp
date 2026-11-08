@@ -12,6 +12,7 @@
 
 const { supabaseAdmin } = require('../_lib/supabase');
 const { buildPersonaPrompt } = require('../_lib/persona-prompt-builder');
+const { buildFirstMessage } = require('../_lib/voice-first-message');
 const { createSecureLogger } = require('../_lib/secure-logger');
 
 const logger = createSecureLogger('VoiceAgentService');
@@ -23,7 +24,7 @@ const logger = createSecureLogger('VoiceAgentService');
  * @param {string} restaurantId - UUID from restaurant.restaurant_config
  * @returns {Promise<{success: boolean, skipped?: boolean, error?: string}>}
  */
-async function refreshVoiceAgentPrompt(restaurantId) {
+async function refreshVoiceAgentPrompt(restaurantId, { syncFirstMessage = false } = {}) {
   if (!restaurantId) {
     return { skipped: true, reason: 'no_restaurant_id' };
   }
@@ -36,7 +37,7 @@ async function refreshVoiceAgentPrompt(restaurantId) {
   const { data: config, error: dbError } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('id, restaurant_name, restaurant_type, phone, email, city, country, business_hours, average_dining_duration_minutes, timezone, agent_language, reservation_settings, elevenlabs_agent_id, agent_name, agent_greeting, ai_config, metric_profile')
+    .select('id, restaurant_name, restaurant_type, phone, email, website, city, country, business_hours, average_dining_duration_minutes, timezone, agent_language, reservation_settings, deposit_config, elevenlabs_agent_id, agent_name, agent_greeting, ai_config, metric_profile, restaurant_profile, scraped_data, ai_strategy_doc, persona_prompt_override')
     .eq('id', restaurantId)
     .single();
 
@@ -50,24 +51,33 @@ async function refreshVoiceAgentPrompt(restaurantId) {
   }
 
   const systemPrompt = buildPersonaPrompt(config, { channel: 'voice' });
+  const agent = { prompt: { prompt: systemPrompt } };
+  if (syncFirstMessage) {
+    agent.first_message = buildFirstMessage({
+      restaurant_name: config.restaurant_name,
+      language: config.agent_language,
+      custom_greeting: config.agent_greeting,
+    });
+  }
 
-  const response = await fetch(
-    `https://api.elevenlabs.io/v1/convai/agents/${config.elevenlabs_agent_id}`,
-    {
-      method: 'PATCH',
-      headers: {
-        'xi-api-key': process.env.ELEVENLABS_API_KEY,
-        'Content-Type': 'application/json'
+  let response;
+  try {
+    response = await fetch(
+      `https://api.elevenlabs.io/v1/convai/agents/${config.elevenlabs_agent_id}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'xi-api-key': process.env.ELEVENLABS_API_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ conversation_config: { agent } }),
+        signal: AbortSignal.timeout(10_000),
       },
-      body: JSON.stringify({
-        conversation_config: {
-          agent: {
-            prompt: { prompt: systemPrompt }
-          }
-        }
-      })
-    }
-  );
+    );
+  } catch (error) {
+    logger.error('[VoiceAgentService] ElevenLabs PATCH exception:', error);
+    return { success: false, error: 'provider_unavailable' };
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
