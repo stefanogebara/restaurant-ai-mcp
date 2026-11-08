@@ -834,26 +834,34 @@ async function createAgent({
     let systemPrompt;
     let restaurantConfig = null;
     if (restaurantId) {
-      const { data: config } = await supabaseAdmin
+      const { data: config, error: configError } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
-        .select('id, restaurant_name, phone, city, country, business_hours, agent_language, ai_config, agent_name, agent_greeting, voice_id, voice_engine, persona_prompt_override')
+        .select('id, restaurant_name, phone, email, website, city, country, business_hours, agent_language, ai_config, agent_name, agent_greeting, voice_id, voice_engine, persona_prompt_override, restaurant_profile, scraped_data, ai_strategy_doc, deposit_config, reservation_settings')
         .eq('id', restaurantId)
         .maybeSingle();
+      if (configError) {
+        logger.error('Could not load restaurant context for agent creation', { restaurantId, error: configError.message });
+        return { success: false, error: 'Could not load restaurant context' };
+      }
       restaurantConfig = config;
 
-      const configForPrompt = restaurantConfig || {
-        restaurant_name, phone, address, business_hours, language,
-      };
-      systemPrompt = buildPersonaPrompt(configForPrompt, { channel: 'voice' });
+      const configForPrompt = restaurantConfig
+        ? { ...restaurantConfig, address, language }
+        : { restaurant_name, phone, address, business_hours, language };
+      systemPrompt = buildPersonaPrompt(configForPrompt, { channel: 'voice', language });
     } else {
       systemPrompt = buildPersonaPrompt(
         { restaurant_name, phone, address, business_hours, language },
-        { channel: 'voice' },
+        { channel: 'voice', language },
       );
     }
 
-    const firstMessage = buildFirstMessage({ restaurant_name, language, custom_greeting });
+    const firstMessage = buildFirstMessage({
+      restaurant_name,
+      language,
+      custom_greeting: custom_greeting ?? restaurantConfig?.agent_greeting,
+    });
     // ElevenLabs otherwise guesses the language of its post-call summary. The
     // agent language is a base language; Brazil needs the regional variant.
     const country = String(restaurantConfig?.country || '').trim().toLowerCase();
