@@ -52,11 +52,31 @@ test('unbound shared-agent text previews are acknowledged without a restaurant o
   mockRow = null;
   await expect(ingestCompletedConversation({
     conversation_id: 'conv-preview', agent_id: 'shared-agent', status: 'done',
-    metadata: { call_duration_secs: 12 },
+    metadata: { call_duration_secs: 12, text_only: true, phone_call: null },
   })).resolves.toEqual({ ingested: false, reason: 'unbound_non_telephony' });
   expect(mockRestaurantById).not.toHaveBeenCalled();
   expect(mockRestaurant).not.toHaveBeenCalled();
   expect(mockUpdate).not.toHaveBeenCalled();
+  expect(mockInsert).not.toHaveBeenCalled();
+});
+
+test('unbound shared-agent calls without explicit text-only metadata still fail closed', async () => {
+  process.env.ELEVENLABS_SHARED_AGENT_ID = 'shared-agent';
+  mockRow = null;
+  await expect(ingestCompletedConversation({
+    conversation_id: 'conv-unknown', agent_id: 'shared-agent', status: 'done',
+    metadata: { phone_call: null },
+  })).rejects.toThrow('Shared conversation is not bound');
+  expect(mockInsert).not.toHaveBeenCalled();
+});
+
+test('phone-call metadata takes precedence over a text-only flag', async () => {
+  process.env.ELEVENLABS_SHARED_AGENT_ID = 'shared-agent';
+  mockRow = null;
+  await expect(ingestCompletedConversation({
+    conversation_id: 'conv-phone', agent_id: 'shared-agent', status: 'done',
+    metadata: { text_only: true, phone_call: { agent_number: '+551150289356' } },
+  })).rejects.toThrow('Shared conversation is not bound');
   expect(mockInsert).not.toHaveBeenCalled();
 });
 
