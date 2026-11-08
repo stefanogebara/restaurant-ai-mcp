@@ -59,7 +59,7 @@ export default function CallConversationModal({ conversation, onClose, timeZone,
     };
   }, [onClose]);
 
-  const durationText = conversation.duration_seconds
+  const durationText = conversation.duration_seconds != null
     ? `${Math.floor(conversation.duration_seconds / 60)}m ${conversation.duration_seconds % 60}s`
     : t('callTracking.durationUnknown');
 
