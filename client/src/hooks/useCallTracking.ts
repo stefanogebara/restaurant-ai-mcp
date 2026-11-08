@@ -6,6 +6,7 @@ import type {
   Stats,
   PhoneStatusData,
   CallFilter,
+  CallChannel,
 } from '../components/call-tracking/callTrackingTypes';
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
@@ -27,18 +28,18 @@ export function callPeriodStartIso(period: string, now = new Date()): string {
   return new Date(now.getTime() - days * 86_400_000).toISOString();
 }
 
-export function useCallConversations(filter: CallFilter, userId: string, page = 0) {
+export function useCallConversations(filter: CallFilter, userId: string, page = 0, channel: CallChannel = 'phone') {
   const outcomeParam = filter.outcome !== 'all' ? `&outcome=${filter.outcome}` : '';
   const languageParam = filter.language !== 'all' ? `&language=${filter.language}` : '';
   const sentimentParam = filter.sentiment ? `&sentiment=${filter.sentiment}` : '';
   const searchParam = filter.search ? `&search=${encodeURIComponent(filter.search)}` : '';
   return useQuery<ConversationsResult>({
-    queryKey: ['call-conversations', filter.period, filter.outcome, filter.language, filter.sentiment, filter.search, userId, page],
+    queryKey: ['call-conversations', channel, filter.period, filter.outcome, filter.language, filter.sentiment, filter.search, userId, page],
     queryFn: async () => {
       const dateFrom = encodeURIComponent(callPeriodStartIso(filter.period));
       const offset = page * CALLS_PAGE_SIZE;
       const res = await authFetch(
-        `/api/agent-conversations?action=list&limit=${CALLS_PAGE_SIZE}&offset=${offset}&date_from=${dateFrom}${outcomeParam}${languageParam}${sentimentParam}${searchParam}`
+        `/api/agent-conversations?action=list&limit=${CALLS_PAGE_SIZE}&offset=${offset}&date_from=${dateFrom}&channel=${channel}${outcomeParam}${languageParam}${sentimentParam}${searchParam}`
       );
       if (!res.ok) throw new Error('Failed to fetch conversations');
       const data = await res.json();
@@ -55,12 +56,12 @@ export function useCallConversations(filter: CallFilter, userId: string, page = 
   });
 }
 
-export function useCallStats(filter: CallFilter, userId: string) {
+export function useCallStats(filter: CallFilter, userId: string, channel: CallChannel = 'phone') {
   return useQuery<Stats | null>({
-    queryKey: ['call-stats', filter.period, userId],
+    queryKey: ['call-stats', channel, filter.period, userId],
     queryFn: async () => {
       const res = await authFetch(
-        `/api/agent-conversations?action=stats&period=${filter.period}`
+        `/api/agent-conversations?action=stats&period=${filter.period}&channel=${channel}`
       );
       if (!res.ok) throw new Error('Failed to fetch stats');
       const data = await res.json();
@@ -69,6 +70,7 @@ export function useCallStats(filter: CallFilter, userId: string) {
     },
     staleTime: ANALYTICS_STALE_TIME,
     refetchInterval: ANALYTICS_POLL_INTERVAL,
+    enabled: channel === 'phone',
   });
 }
 

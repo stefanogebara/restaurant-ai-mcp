@@ -88,6 +88,8 @@ export interface CallFilter {
   search?: string;
 }
 
+export type CallChannel = 'phone' | 'unclassified';
+
 // ─── Helper functions ──────────────────────────────────────────────────────────
 
 export function isValidTimeZone(timeZone: string | null | undefined): timeZone is string {

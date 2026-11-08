@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
-import { type Conversation, type CallFilter, formatCallTime, getOutcomeLabelKey, getOutcomePillColor } from './callTrackingTypes';
+import { type Conversation, type CallChannel, type CallFilter, formatCallTime, getOutcomeLabelKey, getOutcomePillColor } from './callTrackingTypes';
 
 function callIconStyle(outcome?: string): string {
   switch (outcome) {
@@ -14,6 +14,7 @@ function callIconStyle(outcome?: string): string {
 
 interface Props {
   conversations: Conversation[];
+  channel: CallChannel;
   filter: CallFilter;
   onOutcomeChange: (outcome: string) => void;
   onConversationClick: (id: string) => void;
@@ -24,6 +25,7 @@ interface Props {
 
 export default function CallConversationList({
   conversations,
+  channel,
   filter,
   onOutcomeChange,
   onConversationClick,
@@ -36,7 +38,7 @@ export default function CallConversationList({
   const OUTCOME_TABS = [
     { value: 'all',                  label: t('callTracking.outcomeAll') },
     { value: 'reservation_created',  label: t('callTracking.outcomeBooked') },
-    { value: 'error',                label: t('callTracking.outcomeMissed') },
+    { value: 'error',                label: t('callTracking.outcomeError') },
   ] as const;
 
   return (
@@ -44,7 +46,9 @@ export default function CallConversationList({
       {/* Header + tabs */}
       <div className="flex flex-col items-start gap-3 py-5 border-b border-glass-border-dark sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('callTracking.callsInPeriod')}</span>
+          <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">
+            {t(channel === 'phone' ? 'callTracking.callsInPeriod' : 'callTracking.unclassifiedInPeriod')}
+          </span>
           <p className="text-xs text-muted-stone mt-1">{timeZoneLabel}</p>
         </div>
         <div className="flex flex-wrap gap-0">
@@ -68,9 +72,11 @@ export default function CallConversationList({
       {conversations.length === 0 ? (
         <div className="p-12 text-center">
           <div className="w-14 h-14 mx-auto mb-4 bg-soft-gray rounded-2xl flex items-center justify-center">
-            <ThiingsIcon name="phone" pxSize={24} />
+            <ThiingsIcon name={channel === 'phone' ? 'phone' : 'chat'} pxSize={24} />
           </div>
-          <p className="text-sm font-semibold text-deep-charcoal mb-1">{t('callTracking.noCallsForFilters')}</p>
+          <p className="text-sm font-semibold text-deep-charcoal mb-1">
+            {t(channel === 'phone' ? 'callTracking.noCallsForFilters' : 'callTracking.noUnclassifiedForFilters')}
+          </p>
           <p className="text-xs text-muted-stone">
             {t('callTracking.noCallsForFiltersHint')}
           </p>
@@ -81,7 +87,7 @@ export default function CallConversationList({
             // started_at is typed string but the payload is untrusted — an
             // invalid/missing value would otherwise render "Invalid Date".
             const startTime = formatCallTime(conv.started_at, i18n.language, timeZone);
-            const duration = conv.duration_seconds
+            const duration = conv.duration_seconds != null
               ? `${Math.floor(conv.duration_seconds / 60)}:${String(conv.duration_seconds % 60).padStart(2, '0')}`
               : t('common.live', 'Live');
 
@@ -92,12 +98,12 @@ export default function CallConversationList({
                 onClick={() => onConversationClick(conv.id)}
               >
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${callIconStyle(conv.outcome)}`}>
-                  <ThiingsIcon name="phone-call" size="sm" />
+                  <ThiingsIcon name={channel === 'phone' ? 'phone-call' : 'chat'} size="sm" />
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold text-deep-charcoal tracking-[-0.2px] truncate">
-                    {conv.customer_name || t('callTracking.unknownCaller')}
+                    {conv.customer_name || t(channel === 'phone' ? 'callTracking.unknownCaller' : 'callTracking.agentConversation')}
                   </div>
                   <div className="text-xs text-muted-stone mt-0.5 truncate">
                     {conv.caller_phone ? (
