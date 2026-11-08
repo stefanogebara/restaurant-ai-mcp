@@ -74,10 +74,10 @@ export default function CallConversationModal({ conversation, onClose, timeZone,
         aria-modal="true"
         aria-label={t('callTracking.conversationDetails')}
         tabIndex={-1}
-        className="glass-panel shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto focus:outline-none"
+        className="glass-modal max-w-4xl w-full max-h-[90vh] overflow-y-auto focus:outline-none"
       >
         {/* Header */}
-        <div className="sticky top-0 bg-glass-panel backdrop-blur-glass-nav border-b border-glass-border-dark p-6 flex items-center justify-between">
+        <div className="sticky top-0 bg-warm-white/95 backdrop-blur-glass-nav border-b border-glass-border-dark p-6 flex items-center justify-between">
           <div>
             <h2 className="text-xl font-semibold text-deep-charcoal">{t('callTracking.conversationDetails')}</h2>
             <p className="text-sm text-stone-gray mt-1">{formatDate(conversation.started_at, i18n.language, timeZone)}</p>
@@ -94,7 +94,7 @@ export default function CallConversationModal({ conversation, onClose, timeZone,
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
+        <div className="bg-warm-white/95 p-6 space-y-6">
           {/* Summary */}
           {conversation.summary && (
             <div className="bg-stone-500/10 border border-stone-500/20 rounded-xl p-4">
@@ -182,7 +182,7 @@ export default function CallConversationModal({ conversation, onClose, timeZone,
                     className={`p-3 rounded-xl ${
                       message.role === 'user'
                         ? 'bg-stone-500/10 ml-4 sm:ml-8'
-                        : 'bg-rose-500/10 mr-4 sm:mr-8'
+                        : 'bg-soft-gray mr-4 sm:mr-8'
                     }`}
                   >
                     <p className="text-xs text-stone-gray mb-1">
@@ -214,7 +214,7 @@ export default function CallConversationModal({ conversation, onClose, timeZone,
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 bg-glass-panel backdrop-blur-glass-nav border-t border-glass-border-dark p-4">
+        <div className="sticky bottom-0 bg-warm-white/95 backdrop-blur-glass-nav border-t border-glass-border-dark p-4">
           <button
             type="button"
             onClick={onClose}
