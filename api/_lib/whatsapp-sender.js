@@ -246,7 +246,7 @@ async function sendTemplateMessage(to, templateName, languageCode = 'en', bodyPa
 
     if (!response.ok) {
       logger.error('Template send error:', data);
-      return { success: false, error: data.error?.message || 'Failed to send template' };
+      return { success: false, error: data.error?.message || 'Failed to send template', errorCode: data.error?.code };
     }
 
     logger.info(`Template '${templateName}' sent to ${to}, messageId: ${data.messages?.[0]?.id}`);

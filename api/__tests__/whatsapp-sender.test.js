@@ -198,6 +198,16 @@ describe('sendTemplateMessage', () => {
     expect(body.template.components[0].parameters[1].text).toBe('true');
   });
 
+  test('preserves Meta translation error code for same-language fallback', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      json: async () => ({ error: { code: 132001, message: 'Template translation missing' } }),
+    });
+
+    const result = await sendTemplateMessage('+5511999999999', 'reservation_confirmed', 'es', []);
+    expect(result).toEqual(expect.objectContaining({ success: false, errorCode: 132001 }));
+  });
+
   test('returns error on API failure', async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: false,
