@@ -164,6 +164,7 @@
       "guests": "Comensales Esperados",
       "aiCalls": "Grupos Activos",
       "seated": "sentados",
+      "seatedSingle": "sentado",
       "capacity": "capacidad",
       "waiting": "en espera",
       "predictedRevenue": "Ingresos Estimados",

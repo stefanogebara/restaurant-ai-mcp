@@ -30,9 +30,14 @@ export default function StatsBar({
   isLoading,
 }: StatsBarProps) {
   const { t } = useTranslation();
-  const availableTables = totalTables - occupiedTables;
-  const occupancyPercent = totalTables > 0 ? Math.round((occupiedTables / totalTables) * 100) : 0;
+  const availableTables = Math.max(0, totalTables - occupiedTables);
+  const occupancyPercent = totalTables > 0 ? Math.min(100, Math.max(0, Math.round((occupiedTables / totalTables) * 100))) : 0;
   const seatedPercent = reservationsToday > 0 ? Math.round((seatedReservations / reservationsToday) * 100) : 0;
+  const availabilityValueColor = totalTables > 0 && availableTables === 0
+    ? 'text-red-700' : totalTables > 0 && availableTables <= 2 ? 'text-amber-700' : 'text-deep-charcoal';
+  const availabilityDetailColor = availabilityValueColor === 'text-deep-charcoal'
+    ? 'text-stone-gray' : availabilityValueColor;
+  const seatedLabel = (count: number) => t(count === 1 ? 'dashboard.stats.seatedSingle' : 'dashboard.stats.seated');
 
   if (isLoading) {
     return (
@@ -56,10 +61,10 @@ export default function StatsBar({
       <StatCard
         label={t('dashboard.stats.reservations')}
         value={String(reservationsToday)}
-        change={reservationsToday > 0 ? `${seatedReservations} ${t('dashboard.stats.seated')}` : ''}
-        changeColor="text-rose-600"
+        change={reservationsToday > 0 ? `${seatedReservations} ${seatedLabel(seatedReservations)}` : ''}
+        changeColor="text-stone-gray"
         barPercent={seatedPercent}
-        barColor="#9F1239"
+        barColor={colors.emerald}
         icon={<ThiingsIcon name="calendar-days" pxSize={16} className="text-muted-stone" />}
       />
 
@@ -68,11 +73,11 @@ export default function StatsBar({
         label={t('dashboard.stats.tables')}
         value={String(availableTables)}
         valueSuffix={` / ${totalTables}`}
-        valueColor="text-[#9F1239]"
+        valueColor={availabilityValueColor}
         change={`${occupancyPercent}% ${t('dashboard.stats.capacity')}`}
-        changeColor={occupancyPercent >= 80 ? 'text-red-600' : occupancyPercent >= 50 ? 'text-amber-600' : 'text-rose-600'}
+        changeColor={availabilityDetailColor}
         barPercent={occupancyPercent}
-        barColor={occupancyPercent >= 80 ? '#ef4444' : occupancyPercent >= 50 ? '#d97706' : '#16a34a'}
+        barColor={availabilityValueColor === 'text-red-700' ? colors.red : availabilityValueColor === 'text-amber-700' ? colors.amber : colors.emerald}
         icon={<ThiingsIcon name="layout-grid" pxSize={16} className="text-muted-stone" />}
       />
 
@@ -94,24 +99,24 @@ export default function StatsBar({
         <StatCard
           label={t('dashboard.stats.predictedRevenue', 'Predicted Revenue')}
           value={formatCurrency(predictedRevenue)}
-          change={`${activeParties} ${t('dashboard.stats.activeParties', 'active')} · ${totalGuests} ${t('dashboard.stats.seated', 'seated')}`}
-          changeColor="text-rose-600"
+          change={`${activeParties} ${t('dashboard.stats.activeParties', 'active')} · ${totalGuests} ${seatedLabel(totalGuests)}`}
+          changeColor="text-stone-gray"
           // Previously: barPercent={Math.round((predictedRevenue / Math.max(predictedRevenue * 1.3, 1)) * 100)}
           //   — a self-referential fraction that ALWAYS resolved to ~77%.
           // Carla (and her boss) read "this bar is 3/4 full" as a real
           // signal, which it wasn't. Until we have a meaningful denominator
           // (yesterday's actual revenue or a target), skip the bar entirely.
-          barColor="#10b981"
+          barColor={colors.emerald}
           icon={<ThiingsIcon name="trending-up" pxSize={16} className="text-muted-stone" />}
         />
       ) : (
         <StatCard
           label={t('dashboard.stats.activeParties', 'Active Parties')}
           value={String(activeParties)}
-          change={totalGuests > 0 ? `${totalGuests} ${t('dashboard.stats.seated', 'seated')}` : ''}
+          change={totalGuests > 0 ? `${totalGuests} ${seatedLabel(totalGuests)}` : ''}
           changeColor="text-stone-gray"
           barPercent={totalTables > 0 ? Math.round((activeParties / totalTables) * 100) : 0}
-          barColor="#d97706"
+          barColor={colors.stoneGray}
           icon={<ThiingsIcon name="utensils-crossed" pxSize={16} className="text-muted-stone" />}
         />
       )}

@@ -218,6 +218,7 @@
       "guests": "Clientes Esperados",
       "aiCalls": "Mesas Ocupadas",
       "seated": "sentados",
+      "seatedSingle": "sentado",
       "capacity": "Capacidade",
       "waiting": "na fila",
       "predictedRevenue": "Receita Prevista",

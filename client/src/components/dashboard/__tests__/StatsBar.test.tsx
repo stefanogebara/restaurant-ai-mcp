@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import StatsBar from '../StatsBar';
+import i18n from '../../../i18n/config';
 
 const defaultProps = {
   occupiedTables: 6,
@@ -25,6 +26,18 @@ describe('StatsBar', () => {
     // Available tables = totalTables - occupiedTables = 4
     expect(screen.getByText('4')).toBeInTheDocument();
     expect(screen.getByText('Tables Available')).toBeInTheDocument();
+    expect(screen.getByText('4')).toHaveClass('text-deep-charcoal');
+  });
+
+  it('marks only exhausted availability as critical', () => {
+    render(<StatsBar {...defaultProps} occupiedTables={10} />);
+    expect(screen.getByText('0')).toHaveClass('text-red-700');
+  });
+
+  it('does not show negative availability or over-100 capacity for inconsistent counts', () => {
+    render(<StatsBar {...defaultProps} occupiedTables={12} />);
+    expect(screen.getByText('0')).toHaveClass('text-red-700');
+    expect(screen.getByText('100% capacity')).toBeInTheDocument();
   });
 
   it('displays occupancy percentage as capacity', () => {
@@ -37,6 +50,17 @@ describe('StatsBar', () => {
     expect(screen.getByText('12')).toBeInTheDocument();
     expect(screen.getByText("Today's Reservations")).toBeInTheDocument();
     expect(screen.getByText('8 seated')).toBeInTheDocument();
+  });
+
+  it('uses the singular seated label in Portuguese', async () => {
+    await act(async () => { await i18n.changeLanguage('pt-BR'); });
+    try {
+      const { unmount } = render(<StatsBar {...defaultProps} seatedReservations={1} totalGuests={1} />);
+      expect(screen.getAllByText('1 sentado')).toHaveLength(2);
+      unmount();
+    } finally {
+      await act(async () => { await i18n.changeLanguage('en'); });
+    }
   });
 
   it('displays waitlist count and estimated wait time', () => {
