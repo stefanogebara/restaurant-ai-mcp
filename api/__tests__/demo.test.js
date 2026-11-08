@@ -274,6 +274,25 @@ describe('POST ?action=create', () => {
     expect(mockInsert.mock.calls[0][0].timezone).toBe('Europe/Rome');
   });
 
+  test('restaurante novo sem país usa o fuso do navegador quando válido', async () => {
+    const req = {
+      method: 'POST', query: { action: 'create' }, headers: {},
+      body: { ...VALID_CREATE_BODY, city: 'Madrid', demo_timezone: 'Europe/Madrid' },
+    };
+    await handler(req, makeRes());
+    expect(mockInsert.mock.calls[0][0].timezone).toBe('Europe/Madrid');
+  });
+
+  test('país conhecido prevalece e fuso inválido é ignorado', async () => {
+    await handler({ method: 'POST', query: { action: 'create' }, headers: {},
+      body: { ...VALID_CREATE_BODY, city: 'Roma', country: 'IT', demo_timezone: 'America/Sao_Paulo' } }, makeRes());
+    expect(mockInsert.mock.calls[0][0].timezone).toBe('Europe/Rome');
+    mockInsert.mockClear();
+    await handler({ method: 'POST', query: { action: 'create' }, headers: {},
+      body: { ...VALID_CREATE_BODY, city: 'Cidade Inventada', demo_timezone: 'not/a-timezone' } }, makeRes());
+    expect(mockInsert.mock.calls[0][0].timezone).toBe('America/Sao_Paulo');
+  });
+
   // O caminho "restaurante novo" (F4) chega SEM país — não tem ficha no
   // Google. suggestTimezone devolve 'UTC' nesse caso, que é truthy, então o
   // guarda `|| 'America/Sao_Paulo'` nunca disparava. Em produção (25/ago,

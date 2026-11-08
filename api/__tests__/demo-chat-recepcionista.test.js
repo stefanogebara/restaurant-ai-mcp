@@ -30,6 +30,7 @@ jest.mock('../_lib/rate-limit', () => ({ checkAndApplyRateLimit: jest.fn().mockR
 const LINHA_DEMO = {
   id: 'rest-demo-1',
   restaurant_name: 'Mocotó Bar e Restaurante',
+  timezone: 'America/Sao_Paulo',
   scraped_data: {
     hours_text: ['segunda-feira: 12:00 – 22:00', 'terça-feira: 12:00 – 22:00'],
     address: 'Av. Nossa Sra. do Loreto, 1100 - São Paulo',
@@ -355,6 +356,31 @@ describe('demo manual (restaurante novo, F4) — a recepcionista responde com o 
 });
 
 describe('tabela de datas — o modelo consulta, não calcula', () => {
+  test('usa o fuso salvo no restaurante, inclusive perto da meia-noite', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-11-08T23:30:00Z'));
+    try {
+      global.__linhaDemo = { ...LINHA_DEMO, timezone: 'Europe/Madrid' };
+      await handler(req({ message: 'Mesa sexta', restaurant_id: 'rest-demo-1', lang: 'es', persona: 'recepcionista' }), res());
+      const sys = chamada().system;
+      expect(sys).toContain('Europe/Madrid');
+      expect(sys).toContain('hoy=2026-11-09');
+      expect(sys).toContain('viernes=2026-11-13');
+      expect(sys).not.toContain('Today is domingo');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  test('a tabela avança dias civis durante a mudança para horário de inverno', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-10-24T22:30:00Z'));
+    try {
+      global.__linhaDemo = { ...LINHA_DEMO, timezone: 'Europe/Madrid' };
+      await handler(req({ message: 'Mesa amanhã', restaurant_id: 'rest-demo-1', lang: 'es', persona: 'recepcionista' }), res());
+      expect(chamada().system).toContain('hoy=2026-10-25, mañana=2026-10-26');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
   test('o prompt carrega o lookup dos próximos 7 dias com as datas certas', async () => {
     // E2E de 24/ago: sem tabela, o modelo resolveu "sexta" para 31/01/2025
     // (uma sexta do ano errado, no passado). A tabela é determinística.
