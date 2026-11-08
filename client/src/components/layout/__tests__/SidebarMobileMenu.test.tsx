@@ -19,6 +19,19 @@ vi.mock('../../../hooks/useRestaurantSettings', () => ({
 }));
 
 describe('mobile sidebar navigation', () => {
+  it('keeps the mobile settings label short while naming its destination fully', () => {
+    render(
+      <SidebarProvider>
+        <MemoryRouter><Sidebar /></MemoryRouter>
+      </SidebarProvider>,
+    );
+
+    const mobileNavigation = screen.getByRole('navigation', { name: 'Mobile navigation' });
+    const settingsLink = mobileNavigation.querySelector('a[href="/host-dashboard/settings"]');
+    expect(settingsLink?.textContent?.trim()).toBe('Settings');
+    expect(settingsLink).toHaveAccessibleName('Restaurant Settings');
+  });
+
   it('opens only from the bottom bar and closes inside the drawer', async () => {
     const user = userEvent.setup();
     const { container } = render(
