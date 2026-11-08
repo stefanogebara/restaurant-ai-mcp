@@ -47,10 +47,24 @@ test('shared agent uses an existing conversation binding and never resolves by a
   expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ restaurant_info_id: 'rest-1' }));
 });
 
+test('unbound shared-agent text previews are acknowledged without a restaurant or call write', async () => {
+  process.env.ELEVENLABS_SHARED_AGENT_ID = 'shared-agent';
+  mockRow = null;
+  await expect(ingestCompletedConversation({
+    conversation_id: 'conv-preview', agent_id: 'shared-agent', status: 'done',
+    metadata: { call_duration_secs: 12 },
+  })).resolves.toEqual({ ingested: false, reason: 'unbound_non_telephony' });
+  expect(mockRestaurantById).not.toHaveBeenCalled();
+  expect(mockRestaurant).not.toHaveBeenCalled();
+  expect(mockUpdate).not.toHaveBeenCalled();
+  expect(mockInsert).not.toHaveBeenCalled();
+});
+
 test('shared agent refuses missing, unscoped or inactive conversation bindings', async () => {
   process.env.ELEVENLABS_SHARED_AGENT_ID = 'shared-agent';
   mockRow = null;
-  await expect(ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'shared-agent', status: 'done' }))
+  await expect(ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'shared-agent', status: 'done',
+    metadata: { phone_call: { agent_number: '+551150289356' } } }))
     .rejects.toThrow('Shared conversation is not bound');
   mockRow = { id: 1, agent_id: 'shared-agent', restaurant_info_id: null, elevenlabs_fetched_at: null };
   await expect(ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'shared-agent', status: 'done' }))
