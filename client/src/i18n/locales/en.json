@@ -2065,7 +2065,7 @@
     "titleShort": "Calls",
     "moreFilters": "More filters",
     "phoneSetupTitle": "Verify call routing",
-    "phoneSetupSummary": "The number is shared. Confirm routing before publishing the number or forwarding your line.",
+    "phoneSetupSummary": "Shared number. Confirm routing before publishing it or forwarding your line.",
     "exportShort": "Export",
     "routingNeedsReview": "Routing not verified",
     "openPhoneSettings": "View phone setup",

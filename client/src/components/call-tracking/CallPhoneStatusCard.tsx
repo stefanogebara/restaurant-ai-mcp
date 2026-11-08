@@ -15,35 +15,37 @@ export default function CallPhoneStatusCard({ phoneStatus, phoneStatusLoading, p
   const needsReview = phoneStatus?.status === 'needs_review';
 
   return (
-    <section className="space-y-3 border-b border-glass-border-dark py-4 sm:space-y-4 sm:py-5" aria-labelledby="call-phone-title">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-2">
+    <section className="border-b border-glass-border-dark py-3 sm:py-5" aria-labelledby="call-phone-title">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+        <div className="min-w-0">
+          <p className="mb-1 hidden text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone sm:block">
             {t('callTracking.phoneStatus')}
           </p>
-          <h2 id="call-phone-title" className="font-serif text-2xl text-deep-charcoal">
-            {t('callTracking.phoneSetupTitle')}
-          </h2>
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 id="call-phone-title" className="font-serif text-xl text-deep-charcoal sm:text-2xl">
+              {t('callTracking.phoneSetupTitle')}
+            </h2>
+            {needsReview && (
+              <span className="inline-flex items-center gap-1 rounded-[100px] bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+                <ThiingsIcon name="alert-triangle" size="xs" />
+                {t('callTracking.routingNeedsReview')}
+              </span>
+            )}
+          </div>
+          <p className="mt-1 max-w-2xl text-sm text-muted-stone">
+            {needsReview ? t('phoneIntegration.routingUnverified') : t('callTracking.phoneSetupSummary')}
+          </p>
+          {phoneStatusLoading && <p role="status" className="mt-1 text-sm text-muted-stone">{t('phoneIntegration.loadingStatus')}</p>}
+          {phoneStatusError && <p role="alert" className="mt-1 text-sm text-red-700">{t('phoneIntegration.statusUnavailable')}</p>}
         </div>
-        {needsReview && (
-          <span className="inline-flex items-center gap-2 rounded-[100px] bg-amber-100 px-3 py-1 text-xs font-medium text-amber-900">
-            <ThiingsIcon name="alert-triangle" size="xs" />
-            {t('callTracking.routingNeedsReview')}
-          </span>
-        )}
-      </div>
-      <p className="max-w-2xl text-[15px] text-muted-stone">
-        {needsReview ? t('phoneIntegration.routingUnverified') : t('callTracking.phoneSetupSummary')}
-      </p>
-      {phoneStatusLoading && <p role="status" className="text-sm text-muted-stone">{t('phoneIntegration.loadingStatus')}</p>}
-      {phoneStatusError && <p role="alert" className="text-sm text-red-700">{t('phoneIntegration.statusUnavailable')}</p>}
-      <div className="flex flex-wrap items-center gap-5 text-sm">
-        <Link to="/host-dashboard/voice-settings#voice-settings:phone" className="text-burgundy underline underline-offset-2 hover:text-burgundy-dark">
-          {t('callTracking.openPhoneSettings')}
-        </Link>
-        <button type="button" onClick={onRefreshStatus} className="hidden text-muted-stone underline underline-offset-2 hover:text-deep-charcoal sm:inline">
-          {t('callTracking.refreshStatus')}
-        </button>
+        <div className="flex shrink-0 flex-wrap items-center gap-4 text-sm">
+          <Link to="/host-dashboard/voice-settings#voice-settings:phone" className="text-burgundy underline underline-offset-2 hover:text-burgundy-dark">
+            {t('callTracking.openPhoneSettings')}
+          </Link>
+          <button type="button" onClick={onRefreshStatus} className="hidden text-muted-stone underline underline-offset-2 hover:text-deep-charcoal sm:inline">
+            {t('callTracking.refreshStatus')}
+          </button>
+        </div>
       </div>
     </section>
   );
