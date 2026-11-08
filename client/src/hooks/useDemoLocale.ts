@@ -264,17 +264,20 @@ export function useDemoLocale() {
 
   // Read restaurant identity from URL params (set by demo creation API or preset)
   const urlParams = new URLSearchParams(window.location.search);
+  const requestedLang = urlParams.get('lang');
+  const urlLang: DemoLang | null = requestedLang === 'pt' || requestedLang === 'pt-BR'
+    ? 'pt-BR' : requestedLang === 'es' || requestedLang === 'en' ? requestedLang : null;
   const presetKey = urlParams.get('preset');
   const preset = presetKey ? DEMO_PRESETS[presetKey] : undefined;
   const urlName = preset?.name || urlParams.get('name');
   const urlCuisine = preset?.cuisine || urlParams.get('cuisine');
   const urlCity = preset?.neighborhood || urlParams.get('city');
 
-  // Spanish presets (e.g. makoto) always default to Spanish.
-  // Non-preset demo always defaults to PT-BR (it's the Brazilian demo).
+  // A personalised demo starts in the language chosen during creation.
+  // Without an explicit choice, use the app's detected or saved language.
   const currentI18nLang: DemoLang = i18n.language?.startsWith('pt') ? 'pt-BR' : i18n.language?.startsWith('es') ? 'es' : 'en';
-  const defaultLang: DemoLang = presetKey && SPANISH_PRESETS.has(presetKey) ? 'es' : (preset ? currentI18nLang : 'pt-BR');
-  const [showLangPopup, setShowLangPopup] = useState(!stored && !preset && !browserLang.startsWith('pt') && currentI18nLang !== 'pt-BR');
+  const defaultLang: DemoLang = presetKey && SPANISH_PRESETS.has(presetKey) ? 'es' : currentI18nLang;
+  const [showLangPopup, setShowLangPopup] = useState(!stored && !preset && !urlLang && browserLang === 'en' && defaultLang === 'pt-BR');
   // Spanish presets always override localStorage — visitor may have 'pt-BR' stored from the
   // Brazilian demo, but Makoto expects Spanish. We also clear the stored value so the next
   // visit to a non-Spanish preset isn't forced into Spanish.
@@ -283,14 +286,14 @@ export function useDemoLocale() {
     // Remove the stale stored preference so it doesn't bleed back on next visit
     try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
   }
-  const initialLang = forcedLang ?? stored ?? defaultLang;
+  const initialLang = forcedLang ?? urlLang ?? stored ?? defaultLang;
   const [lang, setLangState] = useState<DemoLang>(initialLang);
 
   // Sync i18next with demo locale on mount, restore original on unmount.
   // Uses changeDemoLanguage to avoid corrupting the user's saved language.
   const originalLngRef = useRef(i18n.language);
   useEffect(() => {
-    const target = forcedLang ?? stored ?? defaultLang;
+    const target = forcedLang ?? urlLang ?? stored ?? defaultLang;
     if (i18n.language !== target) {
       changeDemoLanguage(target);
     }
@@ -305,6 +308,9 @@ export function useDemoLocale() {
 
   const setLang = useCallback((newLang: DemoLang) => {
     localStorage.setItem(STORAGE_KEY, newLang);
+    const params = new URLSearchParams(window.location.search);
+    params.set('lang', newLang);
+    window.history.replaceState(window.history.state, '', `${window.location.pathname}?${params}`);
     setLangState(newLang);
     setShowLangPopup(false);
     // Sync i18next so shared components (StatsBar etc.) update too
