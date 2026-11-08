@@ -152,13 +152,7 @@ export function formatConfiguredDate(dateString: string | null): string {
 }
 
 export function getOutcomeColor(outcome?: string): string {
-  switch (outcome) {
-    case 'reservation_created': return 'bg-rose-500/10 text-rose-600';
-    case 'information_only':    return 'bg-stone-500/10 text-stone-600';
-    case 'error':               return 'bg-red-600/10 text-red-600';
-    case 'abandoned':           return 'bg-warm-stone/10 text-stone-gray';
-    default:                    return 'bg-warm-stone/10 text-stone-gray';
-  }
+  return getOutcomePillColor(outcome);
 }
 
 /** Returns an i18n key under callTracking.* — caller must pass through t() */
