@@ -51,4 +51,10 @@ describe('VoicePersonaPanel live sync feedback', () => {
     expect(toastError).not.toHaveBeenCalled();
     expect(screen.getByRole('button', { name: 'Save persona' })).toBeDisabled();
   });
+
+  it('does not offer an ElevenLabs-only refresh in the OpenAI tab', () => {
+    renderWithProviders(<VoicePersonaPanel showProviderRefresh={false} />);
+    expect(screen.queryByRole('button', { name: 'Refresh Agent Prompt' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save persona' })).toBeInTheDocument();
+  });
 });

@@ -6,7 +6,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { useMutation } from '@tanstack/react-query';
 import { authFetch } from '../../services/api';
 
-export default function VoicePersonaPanel() {
+export default function VoicePersonaPanel({ showProviderRefresh = true }: { showProviderRefresh?: boolean }) {
   const { t } = useTranslation();
   const toast = useToast();
   const { data: persona, isLoading } = useVoicePersona();
@@ -102,14 +102,14 @@ export default function VoicePersonaPanel() {
         >
           {saveMutation.isPending ? t('dashboard.voicePersona.saving', 'Saving...') : t('dashboard.voicePersona.savePersona', 'Save persona')}
         </button>
-        <button
+        {showProviderRefresh && <button
           type="button"
           onClick={() => refreshMutation.mutate()}
           disabled={refreshMutation.isPending}
           className="text-xs text-muted-stone underline underline-offset-2 hover:text-deep-charcoal disabled:cursor-not-allowed disabled:opacity-40"
         >
           {refreshMutation.isPending ? t('dashboard.voicePersona.refreshing', 'Refreshing...') : t('dashboard.voicePersona.refreshPrompt', 'Refresh Agent Prompt')}
-        </button>
+        </button>}
       </div>
     </div>
   );

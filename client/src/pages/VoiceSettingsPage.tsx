@@ -457,7 +457,7 @@ export default function VoiceSettingsPage() {
               {currentEngine === 'openai_realtime' && (
                 <>
                   <OpenAIVoicePicker currentOpenAIVoice={currentOpenAIVoice} savedOpenAIVoice={engineConfig?.openai_voice_id} onSelect={setPendingOpenAIVoice} />
-                  <VoicePersonaPanel />
+                  <VoicePersonaPanel showProviderRefresh={false} />
                   <OpenAIEngineInfo engineStatus={engineConfig?.voice_engine_status} currentOpenAIVoice={currentOpenAIVoice} />
                 </>
               )}
