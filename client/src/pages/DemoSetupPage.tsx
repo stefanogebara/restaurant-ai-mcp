@@ -1,7 +1,7 @@
 /**
  * DemoSetupPage
- * Streamlined 2-step flow: Search restaurant → Enter email → Launch demo.
- * Google Places auto-scrapes hours, cuisine, phone, reviews.
+ * Two visible paths: search an existing restaurant or create a new one.
+ * Contact is requested only after the demo payoff.
  */
 
 import { useState } from 'react';
@@ -104,10 +104,10 @@ export default function DemoSetupPage() {
           <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, ease: [0.23, 1, 0.32, 1] }} className="text-center mb-10">
             <h1 className="font-serif text-[38px] sm:text-[52px] leading-[1.05] tracking-tight text-deep-charcoal text-balance">
               {t('landing.demoSetup.title', 'Veja a sua IA atendendo o WhatsApp')}{' '}
-              <span className="text-burgundy">{t('landing.demoSetup.titleEm', 'do seu restaurante')}</span>.
+              <em>{t('landing.demoSetup.titleEm', 'na sua casa')}</em>.
             </h1>
             <p className="text-[17px] text-warm-stone leading-[1.65] max-w-[440px] mx-auto mt-5 text-pretty">
-              {t('landing.demoSetup.subtitle', 'Digite o nome e a cidade. A gente puxa seus horários, avaliações e cardápio do Google — e monta seu painel na hora.')}
+              {t('landing.demoSetup.subtitle', 'Sua casa já funciona? Buscamos o que houver no Google. Ainda vai abrir? Comece com o que você já sabe.')}
             </p>
           </motion.div>
 
@@ -123,7 +123,7 @@ export default function DemoSetupPage() {
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.4 }}
             className="mt-6 text-center text-[13px] text-muted-stone"
           >
-            {t('landing.demoSetup.trust.line', 'Leva 30 segundos, usa os dados reais do seu restaurante e não pede cartão.')}
+            {t('landing.demoSetup.trust.line', 'Sem conta nem cartão. Você pode ajustar os detalhes depois.')}
           </motion.p>
         </div>
       </main>

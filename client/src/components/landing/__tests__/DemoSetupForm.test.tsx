@@ -82,6 +82,52 @@ describe('DemoSetupForm — gate-free entry', () => {
     expect(document.querySelector('input[type="email"]')).toBeNull();
   });
 
+  it('offers a new restaurant before any Google search and waits for name and city', async () => {
+    render(<DemoSetupForm onSubmit={onSubmit} isSubmitting={false} submitError={null} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /new restaurant/i }));
+    const create = screen.getByRole('button', { name: /create receptionist/i });
+    expect(create).toBeDisabled();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByPlaceholderText(/restaurant name/i), { target: { value: 'New House' } });
+    fireEvent.change(screen.getByPlaceholderText(/city/i), { target: { value: 'Madrid' } });
+    expect(create).toBeEnabled();
+    fireEvent.click(create);
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledWith({
+      restaurant_name: 'New House', city: 'Madrid', scraped_data: null,
+      manual: { cuisine_type: null, open_time: '12:00', close_time: '23:00', vibe_tags: [] },
+    }));
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it('keeps typed identity when switching between the two paths', () => {
+    render(<DemoSetupForm onSubmit={onSubmit} isSubmitting={false} submitError={null} />);
+    fireEvent.change(screen.getByPlaceholderText(/restaurant name/i), { target: { value: 'Casa Nova' } });
+    fireEvent.change(screen.getByPlaceholderText(/city/i), { target: { value: 'Lisbon' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /new restaurant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /already open/i }));
+
+    expect(screen.getByPlaceholderText(/restaurant name/i)).toHaveValue('Casa Nova');
+    expect(screen.getByPlaceholderText(/city/i)).toHaveValue('Lisbon');
+    expect(screen.getByRole('button', { name: /find it/i })).toBeEnabled();
+  });
+
+  it('submits the new restaurant with Enter after its required fields are filled', async () => {
+    render(<DemoSetupForm onSubmit={onSubmit} isSubmitting={false} submitError={null} />);
+    fireEvent.click(screen.getByRole('button', { name: /new restaurant/i }));
+    fireEvent.change(screen.getByPlaceholderText(/restaurant name/i), { target: { value: 'Casa Nova' } });
+    fireEvent.change(screen.getByPlaceholderText(/city/i), { target: { value: 'Lisbon' } });
+
+    fireEvent.submit(screen.getByRole('button', { name: /create receptionist/i }).closest('form')!);
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
+      restaurant_name: 'Casa Nova', city: 'Lisbon', scraped_data: null,
+    })));
+  });
+
   it('does NOT auto-select a single result; confirmation requires an explicit tap', async () => {
     (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
@@ -125,7 +171,7 @@ describe('DemoSetupForm — gate-free entry', () => {
 
     // Everything in the 3-question step is optional — the submit works
     // immediately with defaults.
-    fireEvent.click(await screen.findByRole('button', { name: /create my receptionist/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /create receptionist/i }));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
     expect(onSubmit).toHaveBeenCalledWith({
@@ -147,11 +193,11 @@ describe('DemoSetupForm — gate-free entry', () => {
     render(<DemoSetupForm onSubmit={onSubmit} isSubmitting={false} submitError={null} />);
     fillSearch('Brand New Place', 'Anytown');
 
-    await screen.findByText(/new restaurant\? even better/i);
+    fireEvent.click(await screen.findByText(/personalize \(optional\)/i));
     fireEvent.click(screen.getByRole('button', { name: 'Brazilian' }));
     fireEvent.click(screen.getByRole('button', { name: 'Romantic' }));
     fireEvent.click(screen.getByRole('button', { name: 'Upscale' }));
-    fireEvent.click(screen.getByRole('button', { name: /create my receptionist/i }));
+    fireEvent.click(screen.getByRole('button', { name: /create receptionist/i }));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
     expect(onSubmit).toHaveBeenCalledWith({
