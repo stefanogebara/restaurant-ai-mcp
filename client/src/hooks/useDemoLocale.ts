@@ -26,6 +26,7 @@ function changeDemoLanguage(lng: string): void {
 const strings = {
   'en': {
     banner: 'Interactive demo — bookings and activity are examples; no guests are contacted',
+    bannerMobile: 'Example bookings and activity',
     backToHome: 'Back to home',
     restaurantName: 'La Bella Vista',
     cuisine: 'Italian',
@@ -96,6 +97,7 @@ const strings = {
   },
   'pt-BR': {
     banner: 'Demo interativa — reservas e movimento são exemplos; nenhum cliente recebe mensagens',
+    bannerMobile: 'Reservas e movimento de exemplo',
     backToHome: 'Voltar ao início',
     restaurantName: 'Cantina da Praça',
     cuisine: 'Brasileira',
@@ -169,6 +171,7 @@ const strings = {
   },
   'es': {
     banner: 'Demo interactiva — reservas y actividad son ejemplos; ningún cliente recibe mensajes',
+    bannerMobile: 'Reservas y actividad de ejemplo',
     backToHome: 'Volver al inicio',
     restaurantName: 'Makoto',
     cuisine: 'Alta Cocina Japonesa',

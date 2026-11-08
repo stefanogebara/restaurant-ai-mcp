@@ -258,14 +258,16 @@ export default function DemoSidebar({ lang, activeView = 'dashboard', onNavigate
   return (
     <>
       {/* Mobile hamburger */}
-      <button
-        onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="lg:hidden fixed top-[60px] left-4 z-50 p-2.5 bg-deep-charcoal rounded-xl shadow-lg border border-charcoal-dark text-white focus:outline-none focus:ring-2 focus:ring-burgundy"
-        aria-label={isMobileOpen ? aria.closeNav : aria.openNav}
-        aria-expanded={isMobileOpen}
-      >
-        <ThiingsIcon name="menu" pxSize={20} />
-      </button>
+      {!isMobileOpen && (
+        <button
+          onClick={() => setIsMobileOpen(true)}
+          className="lg:hidden fixed top-3 left-4 z-50 p-2.5 bg-deep-charcoal rounded-xl shadow-lg border border-charcoal-dark text-white focus:outline-none focus:ring-2 focus:ring-burgundy"
+          aria-label={aria.openNav}
+          aria-expanded={false}
+        >
+          <ThiingsIcon name="menu" pxSize={20} />
+        </button>
+      )}
 
       {/* Mobile overlay */}
       {isMobileOpen && (

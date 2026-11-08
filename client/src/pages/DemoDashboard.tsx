@@ -284,20 +284,21 @@ export default function DemoDashboard() {
 
       {/* Demo Banner — hidden in embed mode */}
       {!isEmbed && (
-        <div className={`bg-burgundy text-white ${sidebarCollapsed ? 'lg:ml-[60px]' : 'lg:ml-[220px]'} transition-all duration-300`}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+        <div className={`bg-stone-gray text-white ${sidebarCollapsed ? 'lg:ml-[60px]' : 'lg:ml-[220px]'} transition-all duration-300`}>
+          <div className="max-w-7xl mx-auto pl-16 pr-4 sm:px-6 md:px-8 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0 flex items-center gap-3">
+              <div className="hidden sm:flex w-6 h-6 rounded-full bg-white/20 items-center justify-center">
                 <ThiingsIcon name="sparkles" pxSize={12} className="text-white" />
               </div>
-              <p className="text-sm font-medium">
-                {t.banner}
+              <p className="text-xs sm:text-sm leading-relaxed font-medium">
+                <span className="sm:hidden">{t.bannerMobile}</span>
+                <span className="hidden sm:inline">{t.banner}</span>
                 {/* Urgência honesta (F3): daysLeft vem da API de sessão e
                     nunca foi mostrado — o DemoBanner que faria isso era dead
                     code. O CTA carrega o token (prefill do onboarding). */}
                 {typeof tokenSession?.daysLeft === 'number' && tokenSession.daysLeft > 0 && (
-                  <span className="text-white/80">
-                    {' · '}{tokenSession.daysLeft} {t.daysLeftSuffix}{' · '}
+                  <span className="block sm:inline text-white/80">
+                    <span className="hidden sm:inline">{' · '}</span>{tokenSession.daysLeft} {t.daysLeftSuffix}{' · '}
                     <Link to={conversionHref} onClick={stashDemoToken} className="underline underline-offset-2 hover:text-white">
                       {t.keepData}
                     </Link>
@@ -305,7 +306,7 @@ export default function DemoDashboard() {
                 )}
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-end gap-4 sm:gap-3">
               <button
                 type="button"
                 onClick={() => setLang(lang === 'en' ? 'es' : lang === 'es' ? 'pt-BR' : 'en')}
@@ -317,7 +318,7 @@ export default function DemoDashboard() {
               </button>
               <Link
                 to="/"
-                className="text-xs font-semibold text-white/80 hover:text-white underline underline-offset-2 transition-colors"
+                className="whitespace-nowrap text-xs font-semibold text-white/80 hover:text-white underline underline-offset-2 transition-colors"
               >
                 {t.backToHome}
               </Link>
