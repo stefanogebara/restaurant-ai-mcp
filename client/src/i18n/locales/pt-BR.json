@@ -353,6 +353,8 @@
       "skipped": "Ignorado: {{reason}}",
       "noAgentConfigured": "nenhum agente configurado",
       "saved": "Persona do agente salva",
+      "savePersona": "Salvar persona",
+      "savedButNotSynced": "Salvo no Seatable, mas o agente de voz não foi atualizado por completo. Tente salvar novamente.",
       "saveFailed": "Falha ao salvar persona"
     },
     "aiPersonality": {
@@ -2880,7 +2882,7 @@
     "waSetupStep3": "Volte aqui — vira \"Conectado\" em cerca de um minuto.",
     "waSetupHelp": "Travado?",
     "languages": "Idiomas",
-    "languageChangeWarning": "Alterar o idioma atualizará a mensagem de boas-vindas do seu agente. A voz falará no idioma selecionado usando suas capacidades multilíngues.",
+    "languageChangeWarning": "Alterar o idioma atualiza a saudação padrão. Uma saudação personalizada permanece como está; edite-a abaixo se precisar.",
     "changeSettingsHint": "Altere uma configuração acima para habilitar o salvamento",
     "voiceLoadError": "Não foi possível carregar as vozes",
     "voiceLoadErrorHint": "O serviço de voz pode estar temporariamente indisponível. Tente novamente.",

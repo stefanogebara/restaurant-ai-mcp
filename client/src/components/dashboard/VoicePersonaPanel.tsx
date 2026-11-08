@@ -38,7 +38,14 @@ export default function VoicePersonaPanel() {
   const handleSave = () => {
     if (!isDirty) return;
     saveMutation.mutate(pending, {
-      onSuccess: () => { toast.success(t('dashboard.voicePersona.saved', 'Agent persona saved')); setPending({}); },
+      onSuccess: (result) => {
+        if (!result.agent_synced || !result.kb_synced) {
+          toast.error(t('dashboard.voicePersona.savedButNotSynced', 'Saved in Seatable, but the live voice agent was not fully updated. Try Save again.'));
+          return;
+        }
+        toast.success(t('dashboard.voicePersona.saved', 'Agent persona saved'));
+        setPending({});
+      },
       onError: () => toast.error(t('dashboard.voicePersona.saveFailed', 'Failed to save persona')),
     });
   };
@@ -73,7 +80,7 @@ export default function VoicePersonaPanel() {
             disabled={!isDirty || saveMutation.isPending}
             className="px-4 py-1.5 bg-burgundy hover:bg-burgundy-dark text-white text-xs font-semibold rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {saveMutation.isPending ? t('dashboard.voicePersona.saving', 'Saving...') : t('common.save', 'Save')}
+            {saveMutation.isPending ? t('dashboard.voicePersona.saving', 'Saving...') : t('dashboard.voicePersona.savePersona', 'Save persona')}
           </button>
         </div>
       </div>

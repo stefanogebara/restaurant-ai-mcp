@@ -4,6 +4,7 @@ const { createSecureLogger } = require('./_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { inlineRequireFeature, checkSubscriptionByRestaurantId } = require('./_lib/subscription-middleware');
 const { triggerKbSync } = require('./_lib/kb-sync-trigger');
+const { refreshVoiceAgentPrompt } = require('./_services/voiceAgentService');
 
 const logger = createSecureLogger('voice-persona');
 
@@ -96,15 +97,22 @@ async function handlePatch(req, res) {
 
     logger.info('voice persona updated', { restaurantId });
 
-    // Push the change to the live ElevenLabs voice agent so callers hear the
-    // new persona on the next call. Awaited (bounded) so stale-KB drift is
-    // impossible by design — see api/_lib/kb-sync-trigger.js for rationale.
+    // The DB write is already committed. Report provider and KB outcomes
+    // separately so a failed sync never masquerades as a failed save.
+    let agentSync;
+    try {
+      agentSync = await refreshVoiceAgentPrompt(restaurantId, { syncFirstMessage: agent_greeting !== undefined });
+    } catch (syncError) {
+      logger.error('voice persona agent sync failed after database save', { restaurantId, error: syncError.message });
+      agentSync = { success: false };
+    }
     const kbSync = await triggerKbSync(restaurantId, { reason: 'voice_persona' });
 
     return res.json({
       agent_name: data.agent_name,
       agent_greeting: data.agent_greeting,
       kb_synced: kbSync.success,
+      agent_synced: agentSync.success === true,
     });
   } catch (err) {
     if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Authentication required' });

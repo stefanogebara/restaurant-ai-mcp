@@ -12,6 +12,7 @@
 
 const { supabaseAdmin } = require('../_lib/supabase');
 const { buildPersonaPrompt } = require('../_lib/persona-prompt-builder');
+const { buildFirstMessage } = require('../_lib/voice-first-message');
 const { createSecureLogger } = require('../_lib/secure-logger');
 
 const logger = createSecureLogger('VoiceAgentService');
@@ -23,7 +24,7 @@ const logger = createSecureLogger('VoiceAgentService');
  * @param {string} restaurantId - UUID from restaurant.restaurant_config
  * @returns {Promise<{success: boolean, skipped?: boolean, error?: string}>}
  */
-async function refreshVoiceAgentPrompt(restaurantId) {
+async function refreshVoiceAgentPrompt(restaurantId, { syncFirstMessage = false } = {}) {
   if (!restaurantId) {
     return { skipped: true, reason: 'no_restaurant_id' };
   }
@@ -50,24 +51,33 @@ async function refreshVoiceAgentPrompt(restaurantId) {
   }
 
   const systemPrompt = buildPersonaPrompt(config, { channel: 'voice' });
+  const agent = { prompt: { prompt: systemPrompt } };
+  if (syncFirstMessage) {
+    agent.first_message = buildFirstMessage({
+      restaurant_name: config.restaurant_name,
+      language: config.agent_language,
+      custom_greeting: config.agent_greeting,
+    });
+  }
 
-  const response = await fetch(
-    `https://api.elevenlabs.io/v1/convai/agents/${config.elevenlabs_agent_id}`,
-    {
-      method: 'PATCH',
-      headers: {
-        'xi-api-key': process.env.ELEVENLABS_API_KEY,
-        'Content-Type': 'application/json'
+  let response;
+  try {
+    response = await fetch(
+      `https://api.elevenlabs.io/v1/convai/agents/${config.elevenlabs_agent_id}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'xi-api-key': process.env.ELEVENLABS_API_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ conversation_config: { agent } }),
+        signal: AbortSignal.timeout(10_000),
       },
-      body: JSON.stringify({
-        conversation_config: {
-          agent: {
-            prompt: { prompt: systemPrompt }
-          }
-        }
-      })
-    }
-  );
+    );
+  } catch (error) {
+    logger.error('[VoiceAgentService] ElevenLabs PATCH exception:', error);
+    return { success: false, error: 'provider_unavailable' };
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
