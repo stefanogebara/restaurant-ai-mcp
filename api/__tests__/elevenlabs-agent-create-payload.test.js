@@ -39,14 +39,21 @@ jest.mock('../_lib/secure-logger', () => ({ createSecureLogger: () => mockLogger
 // autenticar todas as ferramentas enviadas à ElevenLabs.
 const mockTestSecret = `el_whsec_${'a'.repeat(64)}`;
 let mockRestaurantConfig = null;
+let mockConfigReadError = null;
+const mockSelectFields = jest.fn();
 jest.mock('../_lib/supabase', () => ({
   supabaseAdmin: {
     schema: () => ({
       from: () => ({
-        select: (fields) => ({ eq: () => ({ maybeSingle: async () => ({
-          data: fields === 'elevenlabs_webhook_secret' ? { elevenlabs_webhook_secret: mockTestSecret } : mockRestaurantConfig,
-          error: null,
-        }) }) }),
+        select: (fields) => {
+          mockSelectFields(fields);
+          return { eq: () => ({ maybeSingle: async () => ({
+            data: fields === 'elevenlabs_webhook_secret'
+              ? { elevenlabs_webhook_secret: mockTestSecret }
+              : mockRestaurantConfig,
+            error: fields === 'elevenlabs_webhook_secret' ? null : mockConfigReadError,
+          }) }) };
+        },
         update: () => ({ eq: async () => ({ error: null }) }),
       }),
     }),
@@ -90,7 +97,62 @@ const ARGS = {
 };
 
 describe('payload de criação do agente ElevenLabs', () => {
-  beforeEach(() => { mockRestaurantConfig = null; wireFetch(); });
+  beforeEach(() => {
+    mockRestaurantConfig = null;
+    mockConfigReadError = null;
+    mockSelectFields.mockClear();
+    wireFetch();
+  });
+
+  it('não cria um agente genérico quando a leitura da configuração falha', async () => {
+    mockConfigReadError = { message: 'database unavailable' };
+    const result = await createAgent(ARGS);
+    expect(result.success).toBe(false);
+    expect(mockFetch.mock.calls.some(([url]) => String(url).includes('/agents/create'))).toBe(false);
+  });
+
+  it('nasce com a persona, conhecimento, políticas e saudação já salvos', async () => {
+    mockRestaurantConfig = {
+      restaurant_name: ARGS.restaurant_name,
+      agent_name: 'Sofia',
+      agent_greeting: 'Olá, aqui é a Sofia!',
+      restaurant_profile: { signature_dishes: [{ name: 'Baião da casa' }] },
+      scraped_data: { menu: { popular_dishes: ['Moqueca especial'] } },
+      ai_strategy_doc: 'Priorize reservas para o almoço.',
+      deposit_config: { enabled: true, amount: 40, min_party_size: 6, type: 'flat' },
+    };
+
+    await createAgent(ARGS);
+    const columns = mockSelectFields.mock.calls.find(([fields]) => fields.includes('restaurant_name'))[0]
+      .split(',').map(column => column.trim());
+    expect(columns).toEqual(expect.arrayContaining([
+      'agent_name', 'agent_greeting', 'restaurant_profile', 'scraped_data',
+      'ai_strategy_doc', 'deposit_config', 'reservation_settings',
+    ]));
+
+    const agent = corpoDoCreate().conversation_config.agent;
+    expect(agent.first_message).toBe('Olá, aqui é a Sofia!');
+    expect(agent.prompt.prompt).toContain('You are Sofia');
+    expect(agent.prompt.prompt).toContain('Baião da casa');
+    expect(agent.prompt.prompt).toContain('Moqueca especial');
+    expect(agent.prompt.prompt).toContain('Priorize reservas para o almoço.');
+    expect(agent.prompt.prompt).toContain('Rua Augusta, 100');
+    expect(agent.prompt.prompt).toContain('R$40');
+  });
+
+  it('mantém prioridade de uma saudação explícita ao criar o agente', async () => {
+    mockRestaurantConfig = { restaurant_name: ARGS.restaurant_name, agent_greeting: 'Saudação salva' };
+    await createAgent({ ...ARGS, custom_greeting: 'Saudação desta criação' });
+    expect(corpoDoCreate().conversation_config.agent.first_message).toBe('Saudação desta criação');
+  });
+
+  it('usa o idioma solicitado para o prompt mesmo se o cadastro ainda estiver no idioma antigo', async () => {
+    mockRestaurantConfig = { restaurant_name: ARGS.restaurant_name, agent_language: 'en' };
+    await createAgent({ ...ARGS, language: 'pt-BR' });
+    const agent = corpoDoCreate().conversation_config.agent;
+    expect(agent.language).toBe('pt-BR');
+    expect(agent.prompt.prompt).toContain('If unsure, default to Portuguese');
+  });
 
   it('fixa o idioma do resumo como português brasileiro para um restaurante no Brasil', async () => {
     mockRestaurantConfig = { country: 'BR', ai_config: { language: 'pt-PT' }, restaurant_name: ARGS.restaurant_name };
