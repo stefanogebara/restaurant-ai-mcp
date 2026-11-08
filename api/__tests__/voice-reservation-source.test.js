@@ -156,3 +156,31 @@ test('ambiguous Meta send outcome is never retried', async () => {
   expect(result.success).toBe(true);
   expect(mockSendTemplateMessage.mock.calls.map(call => call[2])).toEqual(['en']);
 });
+
+
+test('voice confirmation prioritizes agent language over stale ai_config language', async () => {
+  const result = await createReservation(
+    'sandbox-restaurant',
+    { restaurant_name: 'Seatable CI Sandbox', language: 'en-US', agent_language: 'pt' },
+    { date: '2026-11-09', time: '19:00', party_size: 2, customer_name: 'Test Seatable', customer_phone: '+551150283918' },
+  );
+
+  expect(result.success).toBe(true);
+  expect(mockSendTemplateMessage.mock.calls.map(call => call[2])).toEqual(['pt_BR']);
+  expect(result.message).toMatch(/reserva.*confirmada/i);
+  expect(result.message).toMatch(/9 de novembro de 2026/);
+});
+
+
+test('Italian voice booking keeps both WhatsApp template and spoken confirmation in Italian', async () => {
+  const result = await createReservation(
+    'sandbox-restaurant',
+    { restaurant_name: 'Trattoria', language: 'en-US', agent_language: 'it' },
+    { date: '2026-11-09', time: '19:00', party_size: 2, customer_name: 'Mario Rossi', customer_phone: '+551150283918' },
+  );
+
+  expect(result.success).toBe(true);
+  expect(mockSendTemplateMessage.mock.calls.map(call => call[2])).toEqual(['it']);
+  expect(result.message).toMatch(/prenotazione.*confermata/i);
+  expect(result.message).toMatch(/9 novembre 2026/);
+});

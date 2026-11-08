@@ -419,7 +419,7 @@ async function createReservation(restaurantId, restaurant, params) {
         partySize: party_size,
         date,
         time,
-        language: restaurant.language || restaurant.agent_language || 'pt-BR'
+        language: restaurant.agent_language || restaurant.language || 'pt-BR'
       }).catch(err => {
         logger.warn('WhatsApp confirmation failed (non-fatal):', err.message);
         return { success: false };
