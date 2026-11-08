@@ -275,7 +275,7 @@ export default function RestaurantSettingsPage() {
           </p>
         </div>
 
-        <nav aria-label={t('settings.sectionNavigation')} className="mb-8 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+        <nav aria-label={t('settings.sectionNavigation')} className="mb-8 -mx-4 px-4 flex gap-x-5 overflow-x-auto whitespace-nowrap pb-2 text-sm scrollbar-hide sm:mx-0 sm:px-0 sm:flex-wrap sm:gap-y-2 sm:overflow-visible sm:whitespace-normal sm:pb-0">
           {([
             ['restaurant-info', 'restaurantInfo'],
             ['business-hours', 'businessHours'],
