@@ -2119,6 +2119,8 @@
     "statsUnavailable": "Call statistics are unavailable. The conversation list may still be up to date.",
     "noCallsForFilters": "No calls match these filters",
     "noCallsForFiltersHint": "Try another period or clear a filter.",
+    "noCallsWithoutLine": "No phone calls in this period",
+    "noCallsWithoutLineHint": "This restaurant has no assigned phone line. Request setup in Voice settings before sharing a number.",
     "pages": "Call pages",
     "showingCalls": "Showing {{from}}–{{to}} of {{total}} calls",
     "exportPage": "Export this page",

@@ -3062,6 +3062,8 @@
     "statsUnavailable": "Las estadísticas de llamadas no están disponibles. La lista de conversaciones puede estar actualizada.",
     "noCallsForFilters": "Ninguna llamada coincide con los filtros",
     "noCallsForFiltersHint": "Prueba otro período o quita un filtro.",
+    "noCallsWithoutLine": "Ninguna llamada telefónica en este período",
+    "noCallsWithoutLineHint": "Este restaurante no tiene una línea asignada. Solicita la configuración en Voz antes de compartir un número.",
     "pages": "Páginas de llamadas",
     "showingCalls": "Mostrando {{from}}–{{to}} de {{total}} llamadas",
     "exportPage": "Exportar esta página",
