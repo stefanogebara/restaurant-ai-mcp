@@ -22,7 +22,7 @@ The packaging fix in PR #258 is already deployed to Fly as release v5. This auth
 
 ## Evidence and limitations
 
-Focused tests exercise actual local WebSocket upgrades using Twilio SDK signatures, mocked Redis and mocked AI (no provider calls). They verify unsigned ingress, missing/replayed/tampered grants, shared-store failures, valid initialization/audio, duplicate starts and stream-ID collision isolation. Redis Lua behavior is modeled in the tests, not exercised against a live Redis instance. A staging Twilio call and real shared-store integration remain rollout gates.
+Focused tests exercise actual local WebSocket upgrades using Twilio SDK signatures, mocked Redis and mocked AI (no provider calls). They verify unsigned ingress, missing/replayed/tampered grants, shared-store failures, valid initialization/audio, duplicate starts and stream-ID collision isolation. On 2026-11-08, a synthetic grant against the live shared Upstash instance passed issuance, consumption, webhook retry, and replay rejection. The configured Twilio account credentials were verified read-only against its active account. No real telephone call has been tested for this change.
 
 Primary sources:
 - [Twilio Media Streams security requirements](https://www.twilio.com/docs/voice/media-streams)

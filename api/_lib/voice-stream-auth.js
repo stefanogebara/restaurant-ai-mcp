@@ -85,7 +85,7 @@ async function consumeVoiceStreamGrant(start) {
   if (!grant || !Number.isFinite(grant.expiresAt) || grant.expiresAt <= Date.now() ||
       typeof grant.restaurantId !== 'string' || !UUID.test(grant.restaurantId) || grant.wsUrl !== configured.url ||
       grant.callSid !== start.callSid || grant.accountSid !== start.accountSid ||
-      grant.restaurantId !== params.restaurant_id || grant.callerNumber !== params.caller_number ||
+      grant.restaurantId !== params.restaurant_id || grant.callerNumber !== (params.caller_number ?? '') ||
       grant.callSid !== params.call_sid) throw denied();
   return { restaurantId: grant.restaurantId, callerNumber: grant.callerNumber, callSid: grant.callSid };
 }

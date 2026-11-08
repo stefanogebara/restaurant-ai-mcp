@@ -48,10 +48,11 @@ it('issues an opaque bounded grant, consumes it once and binds trusted identity'
   await expect(auth.consumeVoiceStreamGrant(start(token))).resolves.toEqual({ restaurantId, callerNumber: '+15555550123', callSid });
   await expect(auth.consumeVoiceStreamGrant(start(token))).rejects.toThrow('VOICE_STREAM_UNAUTHORIZED');
 });
-it('allows a call with withheld caller ID while retaining the call and tenant binding', async () => {
+it.each(['empty', 'omitted'])('allows a call with withheld caller ID when the stream parameter is %s', async form => {
   const token = await auth.issueVoiceStreamGrant({ ...input(), callerNumber: undefined });
   const message = start(token);
-  message.customParameters.caller_number = '';
+  if (form === 'empty') message.customParameters.caller_number = '';
+  else delete message.customParameters.caller_number;
   await expect(auth.consumeVoiceStreamGrant(message)).resolves.toEqual({
     restaurantId, callerNumber: '', callSid,
   });
