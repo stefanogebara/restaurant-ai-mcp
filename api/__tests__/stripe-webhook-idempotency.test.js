@@ -90,6 +90,20 @@ describe('POST /api/stripe-webhook — event idempotency', () => {
     mockConstructEvent.mockReset();
   });
 
+  it('returns a retryable failure when its own signing secret is absent', async () => {
+    delete process.env.STRIPE_WEBHOOK_SECRET;
+    try {
+      jest.resetModules();
+      const handler = require('../stripe-webhook');
+      const res = createRes();
+      await handler(createReq(), res);
+      expect(res.statusCode).toBe(503);
+      expect(mockConstructEvent).not.toHaveBeenCalled();
+    } finally {
+      process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test';
+    }
+  });
+
   it('inserts every event into the dedup table BEFORE processing', async () => {
     mockConstructEvent.mockReturnValue({
       id: 'evt_fresh_001',
