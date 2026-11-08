@@ -120,6 +120,14 @@ describe('persona recepcionista — fala com o CLIENTE, com os dados do restaura
     expect(chamada().system).toMatch(/demonstration/i);
   });
 
+  test('a recepcionista não promete lembrete nem mensagem real sem contato', async () => {
+    await handler(req(corpo), res());
+    expect(chamada().system).toMatch(/do not promise.*reminder/i);
+    expect(chamada().system).toMatch(/WhatsApp-style web demo/i);
+    expect(chamada().system).toMatch(/Call it a demo booking/);
+    expect(chamada().messages[1].content).not.toMatch(/reminder line/i);
+  });
+
   test('sem scraped_data o prompt não quebra — só omite o bloco de dados', async () => {
     global.__linhaDemo = { ...LINHA_DEMO, scraped_data: null };
     const r = res();

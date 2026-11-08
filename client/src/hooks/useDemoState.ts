@@ -434,8 +434,8 @@ export function useDemoState(presetKey?: string, overrideData?: DemoOverrideData
 
   /**
    * Reserva fechada pela recepcionista IA na conversa do demo (F2).
-   * source: 'whatsapp' faz a ReservationsList renderizar o badge verde
-   * "WhatsApp" — o payoff do Ato 1 é ver ESTA linha cair no painel.
+   * A conversa ocorre no navegador; o source deve refletir o canal real da
+   * simulação, sem mostrar um badge de mensagem WhatsApp que nunca foi enviada.
    */
   const addChatReservation = useCallback(
     (b: { date: string; time: string; party_size: number; name: string }) => {
@@ -449,7 +449,7 @@ export function useDemoState(presetKey?: string, overrideData?: DemoOverrideData
         reservation_time: `${b.date}T${b.time}:00`,
         checked_in: false,
         status: 'confirmed',
-        source: 'whatsapp',
+        source: 'demo',
       };
       setReservations((prev) => [nova, ...prev]);
       return nova;
