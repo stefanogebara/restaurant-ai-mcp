@@ -38,7 +38,7 @@ export default function CallConversationList({
   const OUTCOME_TABS = [
     { value: 'all',                  label: t('callTracking.outcomeAll') },
     { value: 'reservation_created',  label: t('callTracking.outcomeBooked') },
-    { value: 'error',                label: t('callTracking.outcomeMissed') },
+    { value: 'error',                label: t('callTracking.outcomeError') },
   ] as const;
 
   return (
@@ -87,7 +87,7 @@ export default function CallConversationList({
             // started_at is typed string but the payload is untrusted — an
             // invalid/missing value would otherwise render "Invalid Date".
             const startTime = formatCallTime(conv.started_at, i18n.language, timeZone);
-            const duration = conv.duration_seconds
+            const duration = conv.duration_seconds != null
               ? `${Math.floor(conv.duration_seconds / 60)}:${String(conv.duration_seconds % 60).padStart(2, '0')}`
               : t('common.live', 'Live');
 
