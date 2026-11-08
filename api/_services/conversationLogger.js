@@ -240,12 +240,18 @@ async function ingestCompletedConversation(provider, { restaurantId } = {}) {
   }
   const isSharedAgent = !!process.env.ELEVENLABS_SHARED_AGENT_ID &&
     agentId === process.env.ELEVENLABS_SHARED_AGENT_ID;
-  // ElevenLabs marks dashboard text previews explicitly. They have no called
-  // number and cannot bind to a restaurant. Missing phone metadata alone is
-  // not proof of a preview: an incomplete telephone event must still retry.
-  if (isSharedAgent && !existing && !restaurantId &&
-      provider.metadata?.text_only === true && !provider.metadata?.phone_call) {
-    return { ingested: false, reason: 'unbound_non_telephony' };
+  // Without a durable binding there is no restaurant to own this transcript.
+  // Acknowledge the provider event without writing it to another tenant. If
+  // the identification tool completes late, the hourly sync picks up its new
+  // conversation row and fetches the provider transcript again. Repeated 5xx
+  // for an unidentified call can disable ElevenLabs post-call delivery.
+  if (isSharedAgent && !existing && !restaurantId) {
+    if (provider.metadata?.text_only === true && !provider.metadata?.phone_call) {
+      return { ingested: false, reason: 'unbound_non_telephony' };
+    }
+    logger.warn('Shared conversation ended without restaurant identification',
+      { conversation_id: conversationId });
+    return { ingested: false, reason: 'unbound_shared_call' };
   }
   if (isSharedAgent && (!existing?.restaurant_info_id || existing.agent_id !== agentId)) {
     throw new Error('Shared conversation is not bound');
