@@ -141,6 +141,7 @@ async function handleCreate(req, res) {
     custom_policy,
     scraped_data, // Optional: Google Places data from /api/scrape-restaurant
     vibe_tags,    // Optional: manual path (F4) — owner-picked vibe chips
+    demo_language, // UI language fallback when a new restaurant has no country yet
   } = req.body || {};
 
   // With scraped_data, only restaurant_name + city + contact_email are required
@@ -288,7 +289,11 @@ async function handleCreate(req, res) {
     (effectiveCountry && effectiveCountry !== 'Unknown' && effectiveCountry.toUpperCase()) ||
     countryFromPhone(effectivePhone) ||
     null;
-  const inferredLanguage = COUNTRY_LANGUAGE_MAP[resolvedCountry] || 'en';
+  const requestedLanguage = typeof demo_language === 'string' ? demo_language.toLowerCase() : '';
+  const uiLanguage = requestedLanguage.startsWith('pt') ? 'pt'
+    : requestedLanguage.startsWith('es') ? 'es'
+      : requestedLanguage.startsWith('en') ? 'en' : null;
+  const inferredLanguage = COUNTRY_LANGUAGE_MAP[resolvedCountry] || uiLanguage || 'en';
 
   // Insert demo restaurant config — uses scraped data when available
   // Fuso do RESTAURANTE, resolvido pelo país/cidade (mesmo helper do
@@ -443,7 +448,7 @@ async function handleCreate(req, res) {
   // Email needs an absolute URL; the frontend redirect guard requires a
   // relative same-origin path (fb840e4d). Send the absolute URL only to the
   // mailer and return the relative path to the browser.
-  const demoPath = `/demo/${demo_token}`;
+  const demoPath = `/demo/${demo_token}${uiLanguage ? `?lang=${uiLanguage === 'pt' ? 'pt-BR' : uiLanguage}` : ''}`;
   const demoUrlAbsolute = `${BASE_URL}${demoPath}`;
 
   // Welcome email AGUARDADO com teto de 5s — fire-and-forget é inseguro na

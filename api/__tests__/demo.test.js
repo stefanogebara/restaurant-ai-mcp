@@ -199,6 +199,26 @@ describe('POST ?action=create', () => {
     );
   });
 
+  test('restaurante novo sem país usa o idioma da interface para a recepcionista e o teste WhatsApp', async () => {
+    const req = {
+      method: 'POST', query: { action: 'create' }, headers: {},
+      body: { restaurant_name: 'Casa Nova Madrid', city: 'Madrid', cuisine_type: 'Restaurant', demo_language: 'es' },
+    };
+    const response = makeRes();
+    await handler(req, response);
+    expect(mockInsert.mock.calls[0][0].agent_language).toBe('es');
+    expect(response.json.mock.calls[0][0].demo_url).toMatch(/\?lang=es$/);
+  });
+
+  test('país conhecido mantém precedência sobre o idioma da interface', async () => {
+    const req = {
+      method: 'POST', query: { action: 'create' }, headers: {},
+      body: { restaurant_name: 'Casa Nova São Paulo', city: 'São Paulo', country: 'BR', cuisine_type: 'Restaurant', demo_language: 'en' },
+    };
+    await handler(req, makeRes());
+    expect(mockInsert.mock.calls[0][0].agent_language).toBe('pt');
+  });
+
   test('provided contact_email is still validated and stored', async () => {
     const req = {
       method: 'POST',

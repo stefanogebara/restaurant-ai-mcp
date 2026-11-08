@@ -13,7 +13,7 @@ import { trackDemoCompleted } from '../lib/analytics';
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
 export default function DemoSetupPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -39,6 +39,7 @@ export default function DemoSetupPage() {
         body: JSON.stringify({
           restaurant_name: data.restaurant_name,
           city: data.city,
+          demo_language: i18n.language,
           cuisine_type:
             data.manual?.cuisine_type ??
             (data.scraped_data as Record<string, string> | null)?.cuisine_type ??
