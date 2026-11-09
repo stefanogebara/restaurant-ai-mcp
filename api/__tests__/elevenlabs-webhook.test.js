@@ -93,6 +93,10 @@ const mockCreateReservation = jest.fn(() => Promise.resolve({
   reservation_id: 'RES-001',
   message: 'Reservation confirmed',
 }));
+const mockEnsureLinked = jest.fn(async () => {});
+jest.mock('../_lib/voice-booking-idempotency', () => ({
+  ensureVoiceBookingLinked: (...args) => mockEnsureLinked(...args),
+}));
 const mockLookupReservation = jest.fn(() => Promise.resolve({
   success: true,
   found: true,
@@ -377,8 +381,37 @@ describe('Shared voice agent routing', () => {
       customer_name: 'Guest',
     }, headers }), res);
     expect(mockCreateReservation).toHaveBeenCalledWith(RESTAURANT_A.id, expect.any(Object),
-      expect.objectContaining({ customer_phone: caller, customer_email: undefined }));
+      expect.objectContaining({ customer_phone: caller, customer_email: undefined }),
+      { conversationId: headers['x-conversation-id'] });
     expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('a repeated booking result does not repeat billing, booking updates or email', async () => {
+    mockChain.maybeSingle.mockResolvedValue({ data: bound, error: null });
+    mockCreateReservation.mockResolvedValueOnce({ success: true, reused: true, reservation_id: 'RES-ONCE' });
+    const res = mockRes();
+    await handler(mockReq({ body: {
+      action: 'create_reservation', date: '2026-11-08', time: '19:00', party_size: 2,
+      customer_name: 'Guest', conversation_started: true,
+    }, headers }), res);
+    expect(require('../_lib/usage-tracking').trackUsage).not.toHaveBeenCalled();
+    expect(mockEnsureLinked).toHaveBeenCalledWith(RESTAURANT_A.id, headers['x-conversation-id'], caller, 'RES-ONCE');
+    expect(require('../_services/conversationLogger').updateConversation).not.toHaveBeenCalled();
+    expect(require('../_lib/email').sendReservationConfirmationEmail).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true, reused: true, reservation_id: 'RES-ONCE' }));
+  });
+
+  test('a failed replay link repair is not reported as completed or billed', async () => {
+    mockChain.maybeSingle.mockResolvedValue({ data: bound, error: null });
+    mockCreateReservation.mockResolvedValueOnce({ success: true, reused: true, reservation_id: 'RES-ONCE' });
+    mockEnsureLinked.mockRejectedValueOnce(new Error('Link unavailable'));
+    const res = mockRes();
+    await handler(mockReq({ body: {
+      action: 'create_reservation', date: '2026-11-08', time: '19:00', party_size: 2,
+      customer_name: 'Guest', conversation_started: true,
+    }, headers }), res);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false }));
+    expect(require('../_lib/usage-tracking').trackUsage).not.toHaveBeenCalled();
   });
 
   test('rejects a legacy token claiming to be the shared agent', async () => {

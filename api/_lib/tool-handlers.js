@@ -309,7 +309,7 @@ async function checkAvailability(restaurantId, restaurant, { date, time, party_s
  * @param {object} params - { date, time, party_size, customer_name, customer_phone, customer_email, special_requests }
  * @returns {object} Reservation result
  */
-async function createReservation(restaurantId, restaurant, params) {
+async function createReservation(restaurantId, restaurant, params, trustedContext = {}) {
   const { validateReservation, buildVoiceConfirmation } = require('./reservation-validator');
   const { checkTimeSlotAvailability } = require('./availability-calculator');
   const {
@@ -334,10 +334,23 @@ async function createReservation(restaurantId, restaurant, params) {
   }
 
   try {
+    // Repeated confirmation must reuse the first booking, even if it filled
+    // the last table. The unique external-ID index also protects insert races.
+    const { voiceBookingKey, getVoiceBooking, replayVoiceBooking } = require('./voice-booking-idempotency');
+    const bookingKey = trustedContext.conversationId === undefined ? null : voiceBookingKey(trustedContext.conversationId);
+    const replayCommittedBooking = async () => {
+      if (!bookingKey) return null;
+      const existing = await getVoiceBooking(restaurantId, bookingKey, customer_phone);
+      return existing ? replayVoiceBooking(existing, params, restaurant) : null;
+    };
+    const replay = await replayCommittedBooking();
+    if (replay) return replay;
     // Validate reservation against restaurant configuration
     const validation = validateReservation({ date, time, party_size }, restaurant);
 
     if (!validation.valid) {
+      const committed = await replayCommittedBooking();
+      if (committed) return committed;
       logger.info(`CreateReservation: Validation failed:`, validation.errors);
       return {
         success: false,
@@ -363,6 +376,8 @@ async function createReservation(restaurantId, restaurant, params) {
       { date, time, durationMinutes }
     );
     if (!accommodationCheck.can_accommodate) {
+      const committed = await replayCommittedBooking();
+      if (committed) return committed;
       const maxCap = accommodationCheck.max_capacity;
       const capacityMsg = maxCap
         ? `The largest party we can seat is ${maxCap} guests.`
@@ -396,7 +411,14 @@ async function createReservation(restaurantId, restaurant, params) {
       table_ids: accommodationCheck.table_ids || []
     };
 
-    const createResult = await dbCreateReservation(restaurantId, fields);
+    const createResult = bookingKey
+      ? await dbCreateReservation(restaurantId, fields, { externalId: bookingKey })
+      : await dbCreateReservation(restaurantId, fields);
+
+    if (!createResult.success && bookingKey && createResult.code === '23505') {
+      const committed = await replayCommittedBooking();
+      if (committed) return committed;
+    }
 
     if (!createResult.success) {
       logger.error('CreateReservation: DB insert failed:', createResult);

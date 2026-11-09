@@ -92,6 +92,7 @@ async function bindConversation(ctx, restaurantId) {
     language: 'en',
     started_at: new Date().toISOString(),
     transcript: [], tools_used: [], errors_encountered: [],
+    metadata: { voice_booking_guard: 'external_id_v1' },
   });
   // UNIQUE(conversation_id) makes concurrent identification safe. A duplicate
   // can only win if its durable binding matches this agent, number and owner.
