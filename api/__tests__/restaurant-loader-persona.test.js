@@ -37,3 +37,9 @@ test('loads the canonical agent language even when ai_config has a stale default
   expect(mockChain.select).toHaveBeenCalledWith(expect.stringContaining('agent_language'));
   expect(restaurant.agent_language).toBe('pt');
 });
+
+test('a shared platform phone cannot be resolved through the legacy restaurant loader', async () => {
+ const previous=process.env.ELEVENLABS_SHARED_PHONE;process.env.ELEVENLABS_SHARED_PHONE='+551150289356';mockChain.schema.mockClear();
+ try {const {getRestaurantByPhone}=require('../_lib/restaurant-loader');expect(await getRestaurantByPhone('+55 (11) 5028-9356')).toBeNull();expect(mockChain.schema).not.toHaveBeenCalled();}
+ finally{if(previous===undefined)delete process.env.ELEVENLABS_SHARED_PHONE;else process.env.ELEVENLABS_SHARED_PHONE=previous;}
+});

@@ -226,3 +226,12 @@ test('rejects an invalid signature before any database lookup', async () => {
   expect(res.body).toContain('<Hangup />');
   expect(mockFrom).not.toHaveBeenCalled();
 });
+
+test.each(['legacy-ai','business-only'])('a platform shared number never becomes a dedicated %s route', async mode => {
+  const previous=process.env.ELEVENLABS_SHARED_PHONE;process.env.ELEVENLABS_SHARED_PHONE=NUMBER;
+  try {
+    rows=[restaurant('wrong-owner',mode==='legacy-ai'?{aiPhone:NUMBER}:{businessPhone:NUMBER})];
+    const res=await call();expect(res.body).toContain('<Hangup />');expect(res.body).not.toContain('<Stream');
+    expect(mockFrom).not.toHaveBeenCalled();expect(mockIssueGrant).not.toHaveBeenCalled();
+  } finally {if(previous===undefined)delete process.env.ELEVENLABS_SHARED_PHONE;else process.env.ELEVENLABS_SHARED_PHONE=previous;}
+});

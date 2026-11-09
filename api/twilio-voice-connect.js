@@ -12,6 +12,7 @@
  */
 
 const twilio = require('twilio');
+const { isSharedPlatformPhone } = require('./_lib/platform-phone-policy');
 const { issueVoiceStreamGrant } = require('./_lib/voice-stream-auth');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
@@ -144,6 +145,10 @@ module.exports = async (req, res) => {
  * Returns the raw DB record with voice_engine columns
  */
 async function lookupRestaurantByPhone(phoneNumber) {
+  if (isSharedPlatformPhone(phoneNumber)) {
+    logger.warn('Shared platform line rejected by dedicated routing');
+    return null;
+  }
   const normalizedPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
   if (!/^\+[1-9]\d{7,14}$/.test(normalizedPhone)) return null;
 
