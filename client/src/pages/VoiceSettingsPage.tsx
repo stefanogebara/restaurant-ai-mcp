@@ -23,6 +23,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import SettingsTabs, { type SettingsTabDef } from '../components/common/SettingsTabs';
 import VoiceEngineSelector from '../components/voice/VoiceEngineSelector';
+import VoiceDraftActions from '../components/voice/VoiceDraftActions';
 import VoiceCurrentCard from '../components/voice/VoiceCurrentCard';
 import VoiceTuningPanel from '../components/voice/VoiceTuningPanel';
 import VoiceLanguagePicker from '../components/voice/VoiceLanguagePicker';
@@ -52,7 +53,7 @@ export default function VoiceSettingsPage() {
 
   const { data: config, isLoading: isLoadingConfig, isError: isConfigError, refetch: refetchConfig } = useVoiceSettings({ enabled: canLoadVoiceData });
   const saveMutation = useSaveVoiceSettings();
-  const { data: engineConfig } = useVoiceEngineSettings({ enabled: canLoadVoiceData });
+  const { data: engineConfig, isLoading: isLoadingEngine, isError: isEngineError, refetch: refetchEngine } = useVoiceEngineSettings({ enabled: canLoadVoiceData });
   const saveEngineMutation = useSaveVoiceEngine();
   const queryClient = useQueryClient();
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -156,6 +157,13 @@ export default function VoiceSettingsPage() {
     setEngineSwitchTarget(null);
   };
 
+  const handleDiscardVoice = () => {
+    stopPlayback();
+    setPendingVoiceId(null); setPendingSettings(null); setPendingLanguage(null);
+    setPendingEngine(null); setPendingOpenAIVoice(null);
+    setShowEngineSwitchConfirm(false); setEngineSwitchTarget(null); setIsBrowserOpen(false);
+  };
+
   const handleSave = () => {
     const hasElevenLabsChanges = pendingVoiceId !== null || pendingSettings !== null || pendingLanguage !== null;
     const hasEngineChanges = pendingEngine !== null || pendingOpenAIVoice !== null;
@@ -183,9 +191,9 @@ export default function VoiceSettingsPage() {
       saveMutation.mutate(body, {
         onSuccess: (result) => {
           // Clear this half's pending state regardless of the other half.
-          setPendingVoiceId(null);
-          setPendingSettings(null);
-          setPendingLanguage(null);
+          setPendingVoiceId(current => current === pendingVoiceId ? null : current);
+          setPendingSettings(current => current === pendingSettings ? null : current);
+          setPendingLanguage(current => current === pendingLanguage ? null : current);
           if (result?.sync_warning) {
             toast.info(t('voice.savedWithSyncWarning', 'Settings saved locally. Agent sync will apply on next refresh.'));
           }
@@ -201,8 +209,8 @@ export default function VoiceSettingsPage() {
       if (pendingOpenAIVoice) engineBody.openai_voice_id = pendingOpenAIVoice;
       saveEngineMutation.mutate(engineBody, {
         onSuccess: () => {
-          setPendingEngine(null);
-          setPendingOpenAIVoice(null);
+          setPendingEngine(current => current === pendingEngine ? null : current);
+          setPendingOpenAIVoice(current => current === pendingOpenAIVoice ? null : current);
           onAllComplete();
         },
         onError: (error) => toast.error(error instanceof Error ? error.message : t('voice.saveEngineFailed', 'Failed to save engine settings')),
@@ -247,7 +255,7 @@ export default function VoiceSettingsPage() {
     );
   }
 
-  if (isLoadingConfig || isLoadingAccess) {
+  if (isLoadingConfig || isLoadingAccess || isLoadingEngine) {
     return (
       <DashboardLayout>
         <div className="p-6 mt-14 lg:mt-0 lg:p-8 max-w-5xl" role="status" aria-label={t('voiceSettings.loadingAriaLabel', 'Loading voice settings')}>
@@ -283,7 +291,7 @@ export default function VoiceSettingsPage() {
   // branch below — that would tell a restaurant with a fully-working agent that
   // they have "No agent configured" and push them back to /onboarding. Surface
   // the fetch failure explicitly with a retry instead.
-  if (isConfigError) {
+  if (isConfigError || isEngineError) {
     return (
       <DashboardLayout>
         <div className="p-6 mt-14 lg:mt-0 lg:p-8 max-w-5xl">
@@ -294,7 +302,7 @@ export default function VoiceSettingsPage() {
               <p className="text-[15px] text-muted-stone mb-6">{t('errors.serverError')}</p>
               <button
                 type="button"
-                onClick={() => refetchConfig()}
+                onClick={() => { void refetchConfig(); void refetchEngine(); }}
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors"
               >
                 <ThiingsIcon name="refresh" size="xs" />
@@ -369,7 +377,7 @@ export default function VoiceSettingsPage() {
   return (
     <DashboardLayout>
       <div className="p-6 mt-14 lg:mt-0 lg:p-8 max-w-5xl">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between mb-8">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between mb-8">
           <div>
             <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-2">
               {t('voiceSettings.pageEyebrow')}
@@ -389,19 +397,7 @@ export default function VoiceSettingsPage() {
               <ThiingsIcon name="phone-call" size="sm" />
               {t('navigation.callHistory')}
             </Link>
-            {(isDirty || isSaving) && (
-              <div className="fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom)+env(safe-area-inset-bottom))] z-40 sm:static sm:inset-auto">
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-burgundy px-6 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-burgundy-dark disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-                >
-                  {isSaving && <Spinner size="sm" className="border-white border-t-white/30" />}
-                  {isSaving ? t('voiceSettings.saving', 'Saving...') : t('voiceSettings.saveChanges', 'Save Changes')}
-                </button>
-              </div>
-            )}
+            {(isDirty || isSaving) && <VoiceDraftActions isSaving={isSaving} onSave={handleSave} onDiscard={handleDiscardVoice} />}
           </div>
         </div>
 
@@ -489,17 +485,16 @@ export default function VoiceSettingsPage() {
                     </section>
                   )}
                   <VoiceLanguagePicker currentLanguage={currentLanguage} savedLanguage={config?.language} onChange={setPendingLanguage} />
-                  <VoicePersonaPanel />
                 </>
               )}
 
               {currentEngine === 'openai_realtime' && (
                 <>
-                  <OpenAIVoicePicker currentOpenAIVoice={currentOpenAIVoice} savedOpenAIVoice={engineConfig?.openai_voice_id} onSelect={setPendingOpenAIVoice} />
-                  <VoicePersonaPanel showProviderRefresh={false} />
-                  <OpenAIEngineInfo engineStatus={engineConfig?.voice_engine_status} currentOpenAIVoice={currentOpenAIVoice} />
+                  <OpenAIVoicePicker currentOpenAIVoice={currentOpenAIVoice} onSelect={setPendingOpenAIVoice} />
                 </>
               )}
+              <VoicePersonaPanel showProviderRefresh={currentEngine === 'elevenlabs'} />
+              {currentEngine === 'openai_realtime' && pendingEngine === null && <OpenAIEngineInfo engineStatus={engineConfig?.voice_engine_status} currentOpenAIVoice={engineConfig?.openai_voice_id || 'alloy'} />}
             </div>
           );
 

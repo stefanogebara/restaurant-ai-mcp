@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Modal from '../Modal';
 
 describe('Modal', () => {
@@ -12,6 +12,38 @@ describe('Modal', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it('retains dialog focus when a completed retry removes the focused action', async () => {
+    const { rerender } = render(<Modal {...defaultProps}><button>Retry details</button></Modal>);
+    screen.getByRole('button', { name: 'Retry details' }).focus();
+    rerender(<Modal {...defaultProps}><p>Loaded transcript</p></Modal>);
+    await waitFor(() => expect(screen.getByRole('dialog')).toHaveFocus());
+  });
+
+
+  it('captures focus, traps Tab and restores the opener', () => {
+    const opener = document.createElement('button');
+    document.body.append(opener); opener.focus();
+    const { rerender, unmount } = render(<Modal {...defaultProps}><button>Last action</button></Modal>);
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveFocus();
+    const last = screen.getByRole('button', { name: 'Last action' });
+    for (const element of [last, screen.getByLabelText('Close')]) Object.defineProperty(element, 'offsetParent', { value: document.body });
+    last.focus();
+    fireEvent.keyDown(document, { key: 'Tab' });
+    expect(screen.getByLabelText('Close')).toHaveFocus();
+    rerender(<Modal {...defaultProps} onClose={() => {}}><button>Last action</button></Modal>);
+    expect(screen.getByLabelText('Close')).toHaveFocus();
+    unmount(); expect(opener).toHaveFocus(); opener.remove();
+  });
+
+  it('restores the previous scroll lock rather than clearing another dialog lock', () => {
+    document.body.style.overflow = 'hidden';
+    const { unmount } = render(<Modal {...defaultProps} />);
+    unmount();
+    expect(document.body.style.overflow).toBe('hidden');
+    document.body.style.overflow = '';
   });
 
   it('renders when isOpen is true', () => {

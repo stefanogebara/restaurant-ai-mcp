@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useCallDialogLifecycle } from './useCallDialogLifecycle';
+import { useDialogLifecycle } from '../../hooks/useDialogLifecycle';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { type Conversation, formatDate, getOutcomeColor, getOutcomeLabelKey, getSentimentColor, getSentimentLabelKey } from './callTrackingTypes';
 
@@ -32,7 +32,7 @@ export default function CallConversationModal({ conversation, onClose, timeZone,
   const { t, i18n } = useTranslation();
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  useCallDialogLifecycle(dialogRef, onClose);
+  useDialogLifecycle(dialogRef, onClose);
 
   const durationText = conversation?.duration_seconds != null
     ? `${Math.floor(conversation.duration_seconds / 60)}m ${conversation.duration_seconds % 60}s`

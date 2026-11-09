@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { useCallDialogLifecycle } from './useCallDialogLifecycle';
+import { useDialogLifecycle } from '../../hooks/useDialogLifecycle';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
@@ -58,7 +58,7 @@ interface GuestProfile {
 export default function GuestProfilePanel({ phone, onClose }: Props) {
   const { t, i18n } = useTranslation();
   const dialogRef = useRef<HTMLDivElement>(null);
-  useCallDialogLifecycle(dialogRef, onClose);
+  useDialogLifecycle(dialogRef, onClose);
   const dateLocale = i18n.language.startsWith('pt') ? 'pt-BR' : i18n.language.startsWith('es') ? 'es-ES' : 'en-US';
 
   const { data: profile, isLoading, isError, refetch } = useQuery<GuestProfile | null>({

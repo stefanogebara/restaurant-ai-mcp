@@ -1,4 +1,6 @@
-import { useEffect, useCallback, type ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useDialogLifecycle } from '../../hooks/useDialogLifecycle';
 import ThiingsIcon from './ThiingsIcon';
 
 interface ModalProps {
@@ -27,24 +29,9 @@ export default function Modal({
   size = 'md',
   mobileSheet = false,
 }: ModalProps) {
-  // Close on Escape key
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    },
-    [onClose]
-  );
-
-  useEffect(() => {
-    if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'hidden';
-    }
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
-    };
-  }, [isOpen, handleKeyDown]);
+  const { t } = useTranslation();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogLifecycle(dialogRef, onClose, isOpen);
 
   if (!isOpen) return null;
 
@@ -56,11 +43,13 @@ export default function Modal({
       }}
     >
       <div
+        ref={dialogRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={title}
         className={`
-          glass-modal w-full max-h-[90vh] overflow-y-auto
+          glass-modal w-full max-h-[90vh] overflow-y-auto focus:outline-none
           ${mobileSheet ? 'rounded-t-2xl sm:rounded-2xl' : ''}
           ${sizeClasses[size]}
         `}
@@ -77,9 +66,10 @@ export default function Modal({
               )}
             </div>
             <button
+              type="button"
               onClick={onClose}
-              aria-label="Close"
-              className="text-muted-stone hover:text-stone-gray transition-colors p-1.5 rounded-xl hover:bg-white/40"
+              aria-label={t('common.close', 'Close')}
+              className="text-muted-stone hover:text-stone-gray transition-colors min-h-11 min-w-11 flex items-center justify-center rounded-full hover:bg-white/40"
             >
               <ThiingsIcon name="close" pxSize={20} />
             </button>

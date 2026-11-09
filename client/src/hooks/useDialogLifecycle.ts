@@ -1,14 +1,21 @@
 import { useEffect, useRef, type RefObject } from 'react';
 
 const FOCUSABLE_SELECTOR =
-  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), audio[controls], [tabindex]:not([tabindex="-1"]):not([disabled])';
+  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), summary, audio[controls], [tabindex]:not([tabindex="-1"]):not([disabled])';
 
 /** Keep the open dialog stable across query updates and inline callbacks. */
-export function useCallDialogLifecycle(dialogRef: RefObject<HTMLDivElement | null>, onClose: () => void) {
+export function useDialogLifecycle(dialogRef: RefObject<HTMLDivElement | null>, onClose: () => void, isOpen = true) {
   const closeRef = useRef(onClose);
   useEffect(() => { closeRef.current = onClose; }, [onClose]);
 
+  // A retry/loading transition can remove the focused button. Preserve focus
+  // inside the dialog without resetting a control that remains mounted.
   useEffect(() => {
+    if (isOpen && document.activeElement === document.body) dialogRef.current?.focus();
+  });
+
+  useEffect(() => {
+    if (!isOpen) return;
     const previouslyFocused = document.activeElement as HTMLElement | null;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -23,7 +30,7 @@ export function useCallDialogLifecycle(dialogRef: RefObject<HTMLDivElement | nul
       const dialog = dialogRef.current;
       if (event.key !== 'Tab' || !dialog) return;
       const focusables = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR))
-        .filter(element => element.offsetParent !== null);
+        .filter(element => element.offsetParent !== null || getComputedStyle(element).position === 'fixed');
       if (!focusables.length) {
         event.preventDefault();
         dialog.focus();
@@ -47,5 +54,5 @@ export function useCallDialogLifecycle(dialogRef: RefObject<HTMLDivElement | nul
       document.body.style.overflow = previousOverflow;
       if (previouslyFocused?.isConnected) previouslyFocused.focus();
     };
-  }, [dialogRef]);
+  }, [dialogRef, isOpen]);
 }
