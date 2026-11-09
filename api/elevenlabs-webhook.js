@@ -200,6 +200,7 @@ module.exports = async (req, res) => {
       const restaurant = await resolveSharedRestaurant(context);
       req.restaurant = restaurant;
       authenticatedRestaurantId = restaurant.id;
+      req.voiceBookingContext = { conversationId: context.conversationId };
       if (action === 'create_reservation') {
         const requestedPhones = [req.body?.phone, req.body?.customer_phone, req.query?.phone, req.query?.customer_phone].filter(Boolean);
         if (!context.callerNumber || requestedPhones.some(phone => phone !== context.callerNumber) ||
@@ -561,7 +562,7 @@ async function handleCreateReservation(req, res) {
       const { data: rc } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
-        .select('id, restaurant_name, business_hours, timezone, agent_language, average_dining_duration_minutes')
+        .select('id, restaurant_name, business_hours, timezone, agent_language, average_dining_duration_minutes, whatsapp_enabled')
         .eq('id', rid)
         .single();
       restaurant = rc || { id: rid, restaurant_name: 'the restaurant' };
@@ -596,9 +597,22 @@ async function handleCreateReservation(req, res) {
   }
 
   try {
-    const result = await toolHandlers.createReservation(restaurant.id || restaurant.id, restaurant, {
+    const bookingArgs = [restaurant.id, restaurant, {
       date, time, party_size, customer_name, customer_phone, customer_email, special_requests
-    });
+    }];
+    if (req.voiceBookingContext) bookingArgs.push(req.voiceBookingContext);
+    const result = await toolHandlers.createReservation(...bookingArgs);
+
+    if (result.success && result.reused) {
+      const { ensureVoiceBookingLinked } = require('./_lib/voice-booking-idempotency');
+      await ensureVoiceBookingLinked(restaurant.id, req.voiceBookingContext?.conversationId, customer_phone, result.reservation_id);
+      if (conversationId) await req.conversationLogger.logToolCall(conversationId, {
+        tool_name: 'create_reservation', parameters: { ...data, restaurant_name: restaurantName },
+        success: true, result: { reservation_id: result.reservation_id, reused: true },
+      });
+      // A replay does not repeat booking updates, metered usage or email sends.
+      return res.status(200).json(result);
+    }
 
     if (result.success && result.reservation_id) {
       // Log success

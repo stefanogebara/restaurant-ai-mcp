@@ -86,3 +86,59 @@ test('does not expose platform inventory or pretend a test call was placed', asy
     expect([403, 409]).toContain(res.code);
   }
 });
+
+
+function storedStatus(overrides = {}) {
+  const row = {
+    id: 'restaurant-a', restaurant_name: 'Cantina A', elevenlabs_agent_id: null,
+    is_active: true, onboarding_completed: true, is_demo: false,
+    ai_config: { phone: { shared_routing_enabled: true } }, ...overrides,
+  };
+  // Only selected columns exist in the actual Data API response.
+  mockSingle.mockImplementationOnce(async () => {
+    const columns = mockQuery.select.mock.calls.at(-1)[0].split(',').map(column => column.trim());
+    return { data: Object.fromEntries(columns.filter(column => column in row).map(column => [column, row[column]])), error: null };
+  });
+}
+
+test('reports eligible shared setup without claiming an assigned or verified phone', async () => {
+  storedStatus();
+  const res = response();
+  await handler({ headers: {}, method: 'GET', query: { action: 'status' }, body: {} }, res);
+  expect(res.code).toBe(200);
+  expect(mockQuery.eq).toHaveBeenCalledWith('user_id', 'owner-a');
+  expect(mockQuery.eq).toHaveBeenCalledWith('id', 'restaurant-a');
+  expect(res.body.restaurant).toEqual(expect.objectContaining({
+    shared_routing_enabled: true, status: 'not_configured', has_agent: false,
+    phone_number: null, phone_number_id: null,
+  }));
+  expect(res.body.platform).toEqual({ activation_mode: 'assisted', routing_verified: false });
+});
+
+test.each([
+  { ai_config: { phone: { shared_routing_enabled: false } } },
+  { ai_config: { phone: { shared_routing_enabled: 'true' } } },
+  { ai_config: {} },
+  { is_active: false },
+  { is_active: undefined },
+  { onboarding_completed: false },
+  { onboarding_completed: undefined },
+  { is_demo: true },
+  { is_demo: undefined },
+])('does not expose an eligible shared setup for an invalid saved configuration: %p', async overrides => {
+  storedStatus(overrides);
+  const res = response();
+  await handler({ headers: {}, method: 'GET', query: { action: 'status' }, body: {} }, res);
+  expect(res.code).toBe(200);
+  expect(res.body.restaurant.shared_routing_enabled).toBe(false);
+  expect(res.body.platform.routing_verified).toBe(false);
+  expect(res.body.restaurant.phone_number).toBeNull();
+});
+
+test('does not accept a request-supplied shared-routing opt-in', async () => {
+  storedStatus({ ai_config: { phone: {} } });
+  const res = response();
+  await handler({ headers: {}, method: 'GET', query: { action: 'status', shared_routing_enabled: true }, body: { shared_routing_enabled: true } }, res);
+  expect(res.code).toBe(200);
+  expect(res.body.restaurant.shared_routing_enabled).toBe(false);
+});

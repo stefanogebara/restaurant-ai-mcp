@@ -2734,6 +2734,8 @@
     "noChanges": "Sin cambios configurados"
   },
   "phoneIntegration": {
+    "sharedConfiguredTitle": "Enrutamiento compartido configurado",
+    "sharedConfiguredDescription": "Configuración guardada en Seatable. Esta página no verifica si la línea compartida está disponible ahora.",
     "notConnectedTitle": "Teléfono sin conectar",
     "notConnectedDescription": "Este restaurante no tiene un número asignado. Pide que configuremos y probemos la línea antes de compartir un número o desviar llamadas.",
     "pendingTitle": "Configuración en curso",

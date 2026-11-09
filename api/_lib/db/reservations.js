@@ -94,7 +94,7 @@ const getReservationById = async (restaurantId, reservationId) => {
   };
 };
 
-const createReservation = async (restaurantId, fields) => {
+const createReservation = async (restaurantId, fields, options = {}) => {
   const { data, error } = await supabase
     .from('reservations')
     .insert({
@@ -109,13 +109,17 @@ const createReservation = async (restaurantId, fields) => {
       special_requests: fields.special_requests,
       status: fields.status || 'pending',
       source: fields.source || 'manual',
+      ...(options.externalId ? { external_id: options.externalId } : {}),
       table_ids: fields.table_ids || [],
       notes: fields.notes
     })
     .select()
     .single();
 
-  if (error) return handleSupabaseResponse(null, error, 'CREATE reservation');
+  if (error) {
+    const result = handleSupabaseResponse(null, error, 'CREATE reservation');
+    return options.externalId ? { ...result, code: error.code } : result;
+  }
 
   return {
     success: true,

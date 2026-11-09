@@ -16,6 +16,7 @@ const call = {
 };
 const listState = vi.hoisted(() => ({ populated: false, total: 0, fetching: false }));
 const observedPages = vi.hoisted(() => [] as number[]);
+const phoneState = vi.hoisted(() => ({ enabled: false, shared: false }));
 
 vi.mock('../../contexts/AuthContext', () => ({ useAuth: () => ({ user: { user_metadata: { restaurant_id: 'owned' } } }) }));
 vi.mock('../../components/layout/DashboardLayout', () => ({ default: ({ children }: { children: ReactNode }) => <div>{children}</div> }));
@@ -33,11 +34,16 @@ vi.mock('../../hooks/useCallTracking', () => ({
     refetch: refetchConversations,
   }); },
   useCallStats: () => ({ data: null, isError: false, refetch: refetchStats }),
-  usePhoneStatus: () => ({ data: null, isLoading: false, isError: false, refetch: refetchPhoneStatus }),
+  usePhoneStatus: () => ({ data: phoneState.enabled ? {
+    name: 'Sandbox', has_agent: false, agent_id: null, phone_number: null, phone_number_id: null,
+    status: 'not_configured', shared_routing_enabled: phoneState.shared, error: null, configured_at: null,
+  } : null, isLoading: false, isError: false, refetch: refetchPhoneStatus }),
   useConversationDetail: () => detailState,
 }));
 
 beforeEach(() => {
+  phoneState.enabled = false;
+  phoneState.shared = false;
   listState.populated = false;
   listState.total = 0;
   listState.fetching = false;
@@ -165,4 +171,13 @@ it('resets pagination when the period or conversation channel changes', () => {
   fireEvent.click(screen.getByRole('button', { name: 'Other conversations' }));
   expect(observedPages.at(-1)).toBe(0);
   expect(observedChannels.at(-1)).toBe('unclassified');
+});
+
+
+it('does not explain an empty shared-call history as an unassigned phone line', () => {
+  phoneState.enabled = true;
+  phoneState.shared = true;
+  renderWithProviders(<CallTrackingDashboard />);
+  expect(screen.getByText('No calls match these filters')).toBeVisible();
+  expect(screen.queryByText(/This restaurant has no assigned phone line/)).not.toBeInTheDocument();
 });

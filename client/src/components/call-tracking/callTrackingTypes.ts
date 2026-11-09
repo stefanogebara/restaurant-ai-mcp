@@ -56,6 +56,8 @@ export interface Stats {
 }
 
 export interface PhoneStatusData {
+  /** Eligible saved shared setup; never proof of a live phone route. */
+  shared_routing_enabled?: boolean;
   name: string;
   has_agent: boolean;
   agent_id: string | null;
