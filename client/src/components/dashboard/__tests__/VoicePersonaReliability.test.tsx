@@ -19,6 +19,9 @@ function setup() {
   return userEvent.setup();
 }
 async function loaded() { await screen.findByDisplayValue('Sofia'); }
+async function openDetails(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByText('Saved agent settings', { selector: 'summary' }));
+}
 async function rename(user: ReturnType<typeof userEvent.setup>) {
   await user.clear(screen.getByLabelText(/Agent name/));
   await user.type(screen.getByLabelText(/Agent name/), 'Marco');
@@ -31,6 +34,21 @@ function deferred<T>() {
 
 describe('Voice persona save and recovery contract', () => {
   beforeEach(() => { vi.clearAllMocks(); api.mockResolvedValue(response(saved)); });
+
+  it('keeps optional saved-agent controls collapsed by default', async () => {
+    const user = setup(); await loaded();
+    const summary = screen.getByText('Saved agent settings', { selector: 'summary' });
+    const details = summary.closest('details');
+    expect(details).not.toHaveAttribute('open');
+    expect(screen.getByText('Reapply saved greeting')).not.toBeVisible();
+    expect(screen.getByText(/Reapplies the saved agent instructions/)).not.toBeVisible();
+    await openDetails(user);
+    expect(details).toHaveAttribute('open');
+    expect(refreshButton()).toBeVisible();
+    expect(screen.getByText(/Reapplies the saved agent instructions/)).toBeVisible();
+    await user.click(summary);
+    expect(details).not.toHaveAttribute('open');
+  });
 
   it('blocks editing after GET fails and offers a safe retry', async () => {
     api.mockResolvedValueOnce(response({}, false)).mockResolvedValueOnce(response(saved));
@@ -53,7 +71,7 @@ describe('Voice persona save and recovery contract', () => {
   it('locks fields and refresh during a save, then displays the saved response', async () => {
     const request = deferred<Response>();
     api.mockResolvedValueOnce(response(saved)).mockReturnValueOnce(request.promise);
-    const user = setup(); await loaded(); await rename(user); await user.click(saveButton());
+    const user = setup(); await loaded(); await rename(user); await openDetails(user); await user.click(saveButton());
     await waitFor(() => expect(screen.getByLabelText(/Agent name/)).toBeDisabled());
     expect(screen.getByLabelText(/Opening greeting/)).toBeDisabled();
     expect(refreshButton()).toBeDisabled();
@@ -82,6 +100,8 @@ describe('Voice persona save and recovery contract', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('The voice agent did not update.');
     expect(screen.getByRole('alert')).toHaveTextContent('The menu and restaurant information did not update on the voice agent.');
     expect(saveButton()).toBeDisabled();
+    expect(screen.getByText('Saved agent settings', { selector: 'summary' }).closest('details')).not.toHaveAttribute('open');
+    expect(retryButton()).toBeVisible();
     await user.click(retryButton());
     await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
     expect(JSON.parse(String(api.mock.calls[2][1]?.body))).toEqual({ agent_name: 'Marco' });
@@ -93,7 +113,7 @@ describe('Voice persona save and recovery contract', () => {
       .mockResolvedValueOnce(response({ ...saved, agent_name: 'Marco', agent_synced: false, kb_synced: false }))
       .mockResolvedValueOnce(response({ success: true }));
     const user = setup(); await loaded(); await rename(user); await user.click(saveButton());
-    await screen.findByRole('alert'); await user.click(refreshButton());
+    await screen.findByRole('alert'); await openDetails(user); await user.click(refreshButton());
     await waitFor(() => expect(screen.getByRole('alert')).not.toHaveTextContent('The voice agent did not update.'));
     expect(screen.getByRole('alert')).toHaveTextContent('The menu and restaurant information did not update on the voice agent.');
     expect(retryButton()).toBeEnabled();
@@ -101,7 +121,7 @@ describe('Voice persona save and recovery contract', () => {
   });
 
   it('blocks refresh with unsaved edits and explains what refresh covers', async () => {
-    const user = setup(); await loaded();
+    const user = setup(); await loaded(); await openDetails(user);
     expect(refreshButton()).toBeEnabled();
     expect(screen.getByText('Reapplies the saved agent instructions and opening greeting. Does not update the menu or restaurant information.')).toBeInTheDocument();
     await rename(user);
@@ -122,21 +142,23 @@ describe('Voice persona save and recovery contract', () => {
       .mockResolvedValueOnce(response({ ...saved, agent_name: 'Marco', agent_synced: false, kb_synced: true }))
       .mockResolvedValueOnce(response({ success: true, skipped: true, reason: 'no_agent' }));
     const user = setup(); await loaded(); await rename(user); await user.click(saveButton());
-    await screen.findByRole('alert'); await user.click(refreshButton());
+    await screen.findByRole('alert'); await openDetails(user); await user.click(refreshButton());
     expect(await screen.findByText('The saved settings were not applied to a voice agent. Check the agent connection before retrying.')).toBeInTheDocument();
     expect(screen.getByRole('alert')).toHaveTextContent('The voice agent did not update.');
   });
 
   it('rejects non-OK refresh responses even if the response claims success', async () => {
     api.mockResolvedValueOnce(response(saved)).mockResolvedValueOnce(response({ success: true }, false));
-    const user = setup(); await loaded(); await user.click(refreshButton());
+    const user = setup(); await loaded(); await openDetails(user); await user.click(refreshButton());
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not reapply the saved settings. Try again.');
+    await user.click(screen.getByText('Saved agent settings', { selector: 'summary' }));
+    expect(screen.getByRole('alert')).toBeVisible();
   });
 
   it('blocks editing and saving while a saved greeting is being reapplied', async () => {
     const request = deferred<Response>();
     api.mockResolvedValueOnce(response(saved)).mockReturnValueOnce(request.promise);
-    const user = setup(); await loaded(); await user.click(refreshButton());
+    const user = setup(); await loaded(); await openDetails(user); await user.click(refreshButton());
     await waitFor(() => expect(screen.getByLabelText(/Agent name/)).toBeDisabled());
     expect(screen.getByLabelText(/Opening greeting/)).toBeDisabled();
     expect(saveButton()).toBeDisabled();

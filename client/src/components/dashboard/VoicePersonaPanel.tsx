@@ -151,16 +151,24 @@ export default function VoicePersonaPanel({ showProviderRefresh = true }: { show
           {t('dashboard.voicePersona.retrySavedUpdate', 'Retry saved update')}
         </button>}
       </div>
-      {showProviderRefresh && <div className="space-y-2 border-t border-glass-border-dark pt-4">
-        <button type="button" onClick={() => { if (!isDirty && !busy) { setRefreshFeedback(null); refreshMutation.mutate(); } }}
-          disabled={isDirty || busy} aria-describedby="persona-refresh-scope" className={secondaryButton}>
-          {refreshMutation.isPending ? t('dashboard.voicePersona.reapplying', 'Reapplying...') : t('dashboard.voicePersona.reapplySavedGreeting', 'Reapply saved greeting')}
-        </button>
-        <p id="persona-refresh-scope" className="text-sm leading-relaxed text-muted-stone">
-          {t('dashboard.voicePersona.reapplyScope', 'Reapplies the saved agent instructions and opening greeting. Does not update the menu or restaurant information.')}
-        </p>
-      </div>}
-      {isDirty && (showProviderRefresh || hasSyncFailure) && <p className="text-sm text-muted-stone">
+      {showProviderRefresh && <details className="border-t border-glass-border-dark pt-4">
+        <summary className="min-h-11 cursor-pointer rounded-lg py-3 text-sm font-medium text-deep-charcoal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-burgundy/30">
+          {t('dashboard.voicePersona.advancedSync', 'Saved agent settings')}
+        </summary>
+        <div className="space-y-2 pt-2">
+          <button type="button" onClick={() => { if (!isDirty && !busy) { setRefreshFeedback(null); refreshMutation.mutate(); } }}
+            disabled={isDirty || busy} aria-describedby="persona-refresh-scope" className={secondaryButton}>
+            {refreshMutation.isPending ? t('dashboard.voicePersona.reapplying', 'Reapplying...') : t('dashboard.voicePersona.reapplySavedGreeting', 'Reapply saved greeting')}
+          </button>
+          <p id="persona-refresh-scope" className="text-sm leading-relaxed text-muted-stone">
+            {t('dashboard.voicePersona.reapplyScope', 'Reapplies the saved agent instructions and opening greeting. Does not update the menu or restaurant information.')}
+          </p>
+          {isDirty && !hasSyncFailure && <p className="text-sm text-muted-stone">
+            {t('dashboard.voicePersona.saveBeforeRecovery', 'Save your edits before reapplying saved settings or retrying an update.')}
+          </p>}
+        </div>
+      </details>}
+      {isDirty && hasSyncFailure && <p className="text-sm text-muted-stone">
         {t('dashboard.voicePersona.saveBeforeRecovery', 'Save your edits before reapplying saved settings or retrying an update.')}
       </p>}
       {refreshFeedback && <p role={refreshFeedback === 'failed' ? 'alert' : 'status'} className={`text-sm leading-relaxed ${refreshFeedback === 'failed' ? 'text-red-700' : 'text-stone-gray'}`}>

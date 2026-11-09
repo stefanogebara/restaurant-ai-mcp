@@ -55,6 +55,7 @@ describe('VoicePersonaPanel live sync feedback', () => {
   it('does not offer an ElevenLabs-only refresh in the OpenAI tab', () => {
     renderWithProviders(<VoicePersonaPanel showProviderRefresh={false} />);
     expect(screen.queryByRole('button', { name: 'Reapply saved greeting' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Saved agent settings', { selector: 'summary' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Save name and greeting' })).toBeInTheDocument();
   });
 });
