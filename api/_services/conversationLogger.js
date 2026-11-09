@@ -318,8 +318,6 @@ async function ingestCompletedConversation(provider, { restaurantId } = {}) {
     ended_at: endedAt,
     elevenlabs_fetched_at: now,
     updated_at: now,
-    outcome: existing.reservation_id ? 'reservation_created' : status === 'failed' ? 'error' : 'information_only',
-    successful_booking: !!existing.reservation_id,
     agent_id: agentId,
     restaurant_info_id: restaurantId,
   };
@@ -345,11 +343,42 @@ async function ingestCompletedConversation(provider, { restaurantId } = {}) {
   if (typeof provider.recording_url === 'string' && /^https:\/\//.test(provider.recording_url)) {
     update.recording_url = provider.recording_url;
   }
-  const { data: updated, error: updateError } = await supabaseAdmin
-    .from('agent_conversations').update(update)
-    .eq('id', existing.id).is('elevenlabs_fetched_at', null).select('id');
-  if (updateError) throw updateError;
-  if (!updated?.length) return { ingested: false };
+  // A booking can be linked after the read above. Commit its outcome and the
+  // completed metadata together only while that snapshot still owns the row.
+  // A changed booking/binding gets one fresh attempt; a completed rival wins.
+  const guardedFields = ['reservation_id', 'restaurant_info_id', 'agent_id'];
+  let completed = false;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    let completion = supabaseAdmin.from('agent_conversations').update({
+      ...update,
+      outcome: existing.reservation_id ? 'reservation_created' : status === 'failed' ? 'error' : 'information_only',
+      successful_booking: !!existing.reservation_id,
+    }).eq('id', existing.id).is('elevenlabs_fetched_at', null);
+    for (const field of guardedFields) {
+      completion = existing[field] == null
+        ? completion.is(field, null) : completion.eq(field, existing[field]);
+    }
+    const { data: updated, error: updateError } = await completion.select('id');
+    if (updateError) throw updateError;
+    if (updated?.length) { completed = true; break; }
+
+    const { data: latest, error: latestError } = await find();
+    if (latestError) throw latestError;
+    if (!latest) return { ingested: false };
+    if ((latest.agent_id && latest.agent_id !== agentId) || (existing.agent_id && !latest.agent_id)) {
+      throw new Error('Agent mismatch');
+    }
+    if ((latest.restaurant_info_id && latest.restaurant_info_id !== restaurantId) ||
+        (existing.restaurant_info_id && !latest.restaurant_info_id)) {
+      throw new Error('Restaurant mismatch');
+    }
+    if (latest.elevenlabs_fetched_at) return { ingested: false };
+    if (['id', ...guardedFields].every(field => (latest[field] ?? null) === (existing[field] ?? null))) {
+      return { ingested: false };
+    }
+    existing = latest;
+  }
+  if (!completed) throw new Error('Conversation changed during completion; retry required');
 
   // Completion is durable before optional enrichment starts. The webhook must
   // acknowledge a completed call even if the LLM or memory service stalls.
