@@ -1,17 +1,19 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useCallDialogLifecycle } from './useCallDialogLifecycle';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { type Conversation, formatDate, getOutcomeColor, getOutcomeLabelKey, getSentimentColor, getSentimentLabelKey } from './callTrackingTypes';
 
 interface Props {
-  conversation: Conversation;
+  conversation: Conversation | null;
+  isLoading?: boolean;
+  isError?: boolean;
+  isFetching?: boolean;
+  onRetry?: () => void;
   onClose: () => void;
   timeZone?: string;
   timeZoneLabel: string;
 }
-
-const FOCUSABLE_SELECTOR =
-  'a[href], button:not([disabled]), textarea, input, select, audio[controls], [tabindex]:not([tabindex="-1"])';
 
 const SECTION_TITLE = 'font-sans text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-3';
 const TOOL_LABEL_KEYS = new Map([
@@ -26,57 +28,17 @@ const TOOL_LABEL_KEYS = new Map([
   ['cancel_reservation', 'callTracking.toolNames.cancelReservation'],
 ]);
 
-export default function CallConversationModal({ conversation, onClose, timeZone, timeZoneLabel }: Props) {
+export default function CallConversationModal({ conversation, onClose, timeZone, timeZoneLabel, isLoading = false, isError = false, isFetching = false, onRetry }: Props) {
   const { t, i18n } = useTranslation();
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  // Modal a11y: Escape to close, body-scroll lock, focus capture + Tab trap.
-  // The audit flagged all four as missing — keyboard/screen-reader users were
-  // trapped behind the overlay with no way out.
-  useEffect(() => {
-    const previouslyFocused = document.activeElement as HTMLElement | null;
-    document.body.style.overflow = 'hidden';
-    // Move focus into the dialog so the keyboard context is the modal.
-    dialogRef.current?.focus();
+  useCallDialogLifecycle(dialogRef, onClose);
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-        return;
-      }
-      if (e.key !== 'Tab' || !dialogRef.current) return;
-      const focusables = Array.from(
-        dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
-      ).filter((el) => el.offsetParent !== null);
-      if (focusables.length === 0) {
-        e.preventDefault();
-        return;
-      }
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-      const active = document.activeElement;
-      if (e.shiftKey && (active === first || active === dialogRef.current)) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && active === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
-      previouslyFocused?.focus?.();
-    };
-  }, [onClose]);
-
-  const durationText = conversation.duration_seconds != null
+  const durationText = conversation?.duration_seconds != null
     ? `${Math.floor(conversation.duration_seconds / 60)}m ${conversation.duration_seconds % 60}s`
-    : t(conversation.ended_at ? 'callTracking.durationUnknown' : 'callTracking.pendingDuration');
-  const awaitingFinalData = !conversation.ended_at;
-  const transcript = conversation.transcript?.filter(message => typeof message?.content === 'string' && message.content.trim()) ?? [];
+    : t(conversation?.ended_at ? 'callTracking.durationUnknown' : 'callTracking.pendingDuration');
+  const awaitingFinalData = !conversation?.ended_at;
+  const transcript = conversation?.transcript?.filter(message => typeof message?.content === 'string' && message.content.trim()) ?? [];
   const toolLabel = (name: string) => {
     const key = TOOL_LABEL_KEYS.get(name);
     return key ? t(key) : name;
@@ -93,13 +55,13 @@ export default function CallConversationModal({ conversation, onClose, timeZone,
         aria-modal="true"
         aria-label={t('callTracking.conversationDetails')}
         tabIndex={-1}
-        className="glass-modal max-w-4xl w-full max-h-[90vh] overflow-y-auto focus:outline-none"
+        className="glass-modal max-w-4xl w-full max-h-[90dvh] overflow-y-auto overscroll-contain focus:outline-none"
       >
         {/* Header */}
         <div className="sticky top-0 bg-warm-white/95 backdrop-blur-glass-nav border-b border-glass-border-dark p-6 flex items-center justify-between gap-3">
           <div>
             <h2 className="font-serif text-2xl text-deep-charcoal">{t('callTracking.conversationDetails')}</h2>
-            <p className="text-sm text-stone-gray mt-1">{formatDate(conversation.started_at, i18n.language, timeZone)}</p>
+            {conversation && <p className="text-sm text-stone-gray mt-1">{formatDate(conversation.started_at, i18n.language, timeZone)}</p>}
             <p className="text-xs text-muted-stone mt-0.5">{timeZoneLabel}</p>
           </div>
           <button
@@ -114,114 +76,131 @@ export default function CallConversationModal({ conversation, onClose, timeZone,
 
         {/* Content */}
         <div className="bg-warm-white/95 p-6 space-y-6">
-          {/* Summary */}
-          {conversation.summary && (
-            <section className="pb-6 border-b border-glass-border-dark">
-              <h3 className={SECTION_TITLE}>{t('callTracking.summary')}</h3>
-              <p className="text-[15px] leading-relaxed text-deep-charcoal break-words">{conversation.summary}</p>
-            </section>
-          )}
+          {!conversation ? (
+            isLoading ? (
+              <p role="status" className="py-10 text-center text-sm text-stone-gray">{t('callTracking.loadingDetails', 'Loading call details…')}</p>
+            ) : (
+              <div role="alert" className="py-8 text-center">
+                <p className="text-[15px] text-stone-gray">{isError
+                  ? t('callTracking.detailsLoadFailed', "We couldn't load this call. Try again.")
+                  : t('callTracking.detailsUnavailable', 'This call is no longer available.')}</p>
+                {onRetry && <button type="button" onClick={onRetry} disabled={isFetching} className="mt-4 min-h-11 rounded-full border border-glass-border-dark px-5 text-sm text-burgundy hover:bg-soft-gray disabled:opacity-50">{t('common.retry')}</button>}
+              </div>
+            )
+          ) : <>
+            {isError && <div role="alert" className="flex flex-wrap items-center gap-3 text-sm text-red-700">
+              <p>{t('callTracking.detailsRefreshFailed', "We couldn't update these call details. The last loaded version is shown.")}</p>
+              {onRetry && <button type="button" disabled={isFetching} onClick={onRetry} className="min-h-11 underline underline-offset-2 disabled:opacity-50">{t('common.retry')}</button>}
+            </div>}
+            {/* Summary */}
+            {conversation.summary && (
+              <section className="pb-6 border-b border-glass-border-dark">
+                <h3 className={SECTION_TITLE}>{t('callTracking.summary')}</h3>
+                <p className="text-[15px] leading-relaxed text-deep-charcoal break-words">{conversation.summary}</p>
+              </section>
+            )}
 
-          {/* Recording */}
-          {conversation.recording_url && (
-            <div className="bg-soft-gray/50 rounded-xl p-4">
-              <h3 className={SECTION_TITLE}>{t('callTracking.recording', 'Recording')}</h3>
-              <audio controls className="w-full" preload="metadata">
-                <source src={conversation.recording_url} />
-              </audio>
-            </div>
-          )}
+            {/* Recording */}
+            {conversation.recording_url && (
+              <div className="bg-soft-gray/50 rounded-xl p-4">
+                <h3 className={SECTION_TITLE}>{t('callTracking.recording', 'Recording')}</h3>
+                <audio controls className="w-full" preload="metadata">
+                  <source src={conversation.recording_url} />
+                </audio>
+              </div>
+            )}
 
-          {/* Metadata */}
-          <div className="grid grid-cols-2 gap-x-4 gap-y-5">
-            <div>
-              <p className="text-sm text-stone-gray">{t('callTracking.outcome')}</p>
-              <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${getOutcomeColor(conversation.outcome)}`}>
-                {t(!conversation.outcome && awaitingFinalData ? 'callTracking.pendingResult' : getOutcomeLabelKey(conversation.outcome))}
-              </span>
-            </div>
-            <div>
-              <p className="text-sm text-stone-gray">{t('callTracking.duration')}</p>
-              <p className="text-sm font-medium text-deep-charcoal mt-1">{durationText}</p>
-            </div>
-            <div>
-              <p className="text-sm text-stone-gray">{t('callTracking.language')}</p>
-              <p className={`text-sm font-medium text-deep-charcoal mt-1 ${awaitingFinalData ? '' : 'uppercase'}`}>
-                {awaitingFinalData ? t('callTracking.pendingLanguage') : conversation.language || t('callTracking.durationUnknown')}
-              </p>
-            </div>
-            {conversation.customer_sentiment && (
+            {/* Metadata */}
+            <div className="grid grid-cols-2 gap-x-4 gap-y-5">
               <div>
-                <p className="text-sm text-stone-gray">{t('callTracking.sentiment', 'Sentiment')}</p>
-                <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${getSentimentColor(conversation.customer_sentiment)}`}>
-                  {t(getSentimentLabelKey(conversation.customer_sentiment))}
+                <p className="text-sm text-stone-gray">{t('callTracking.outcome')}</p>
+                <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${getOutcomeColor(conversation.outcome)}`}>
+                  {t(!conversation.outcome && awaitingFinalData ? 'callTracking.pendingResult' : getOutcomeLabelKey(conversation.outcome))}
                 </span>
               </div>
-            )}
-            {conversation.reservation_id && (
-              <div className="col-span-2">
-                <p className="text-sm text-stone-gray">{t('callTracking.reservationId')}</p>
-                <p className="text-sm font-medium text-deep-charcoal mt-1 break-all">{conversation.reservation_id}</p>
-              </div>
-            )}
-          </div>
-
-          {/* Tools Used */}
-          {conversation.tools_used && conversation.tools_used.length > 0 && (
-            <div>
-              <h3 className={SECTION_TITLE}>{t('callTracking.toolsUsed')}</h3>
               <div>
-                {conversation.tools_used.map((tool, idx) => (
-                  <div key={idx} className="border-b border-glass-border-dark py-3 last:border-0">
-                    <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                      <span className="text-sm font-medium text-deep-charcoal break-words">{toolLabel(tool.tool_name)}</span>
-                      <span className={`inline-flex items-center gap-1.5 text-xs ${tool.success === true ? 'text-emerald-700' : tool.success === false ? 'text-red-700' : 'text-muted-stone'}`}>
-                        <ThiingsIcon name={tool.success === true ? 'check-circle' : tool.success === false ? 'x-circle' : 'info'} size="xs" />
-                        {t(tool.success === true ? 'callTracking.toolResultSuccess' : tool.success === false ? 'callTracking.toolResultFailure' : 'callTracking.toolResultUnknown')}
-                      </span>
+                <p className="text-sm text-stone-gray">{t('callTracking.duration')}</p>
+                <p className="text-sm font-medium text-deep-charcoal mt-1">{durationText}</p>
+              </div>
+              <div>
+                <p className="text-sm text-stone-gray">{t('callTracking.language')}</p>
+                <p className={`text-sm font-medium text-deep-charcoal mt-1 ${awaitingFinalData ? '' : 'uppercase'}`}>
+                  {awaitingFinalData ? t('callTracking.pendingLanguage') : conversation.language || t('callTracking.durationUnknown')}
+                </p>
+              </div>
+              {conversation.customer_sentiment && (
+                <div>
+                  <p className="text-sm text-stone-gray">{t('callTracking.sentiment', 'Sentiment')}</p>
+                  <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${getSentimentColor(conversation.customer_sentiment)}`}>
+                    {t(getSentimentLabelKey(conversation.customer_sentiment))}
+                  </span>
+                </div>
+              )}
+              {conversation.reservation_id && (
+                <div className="col-span-2">
+                  <p className="text-sm text-stone-gray">{t('callTracking.reservationId')}</p>
+                  <p className="text-sm font-medium text-deep-charcoal mt-1 break-all">{conversation.reservation_id}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Tools Used */}
+            {conversation.tools_used && conversation.tools_used.length > 0 && (
+              <div>
+                <h3 className={SECTION_TITLE}>{t('callTracking.toolsUsed')}</h3>
+                <div>
+                  {conversation.tools_used.map((tool, idx) => (
+                    <div key={idx} className="border-b border-glass-border-dark py-3 last:border-0">
+                      <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                        <span className="text-sm font-medium text-deep-charcoal break-words">{toolLabel(tool.tool_name)}</span>
+                        <span className={`inline-flex items-center gap-1.5 text-xs ${tool.success === true ? 'text-emerald-700' : tool.success === false ? 'text-red-700' : 'text-muted-stone'}`}>
+                          <ThiingsIcon name={tool.success === true ? 'check-circle' : tool.success === false ? 'x-circle' : 'info'} size="xs" />
+                          {t(tool.success === true ? 'callTracking.toolResultSuccess' : tool.success === false ? 'callTracking.toolResultFailure' : 'callTracking.toolResultUnknown')}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-
-          {/* Transcript */}
-          <div>
-            <h3 className={SECTION_TITLE}>{t('callTracking.transcript')}</h3>
-            {transcript.length > 0 ? (
-              <div>
-                {transcript.map((message, idx) => (
-                  <div
-                    key={idx}
-                    className="py-4 border-b border-glass-border-dark first:pt-0 last:border-0"
-                  >
-                    <p className="text-xs text-stone-gray mb-1">
-                      {message.role === 'user' ? t('callTracking.customer') : t('callTracking.agent')}
-                    </p>
-                    <p className="text-[15px] leading-relaxed text-deep-charcoal whitespace-pre-wrap break-words">{message.content}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-stone">{t(awaitingFinalData ? 'callTracking.pendingTranscript' : 'callTracking.noTranscriptAvailable')}</p>
             )}
-          </div>
 
-          {/* Errors */}
-          {conversation.errors_encountered && conversation.errors_encountered.length > 0 && (
+            {/* Transcript */}
             <div>
-              <h3 className="font-semibold text-red-600 mb-3">{t('callTracking.errorsEncountered')}</h3>
-              <div className="space-y-2">
-                {conversation.errors_encountered.map((error, idx) => (
-                  <div key={idx} className="bg-red-600/10 border border-red-600/20 rounded-xl p-3">
-                    <p className="text-sm font-medium text-deep-charcoal">{error.error_type}</p>
-                    <p className="text-xs text-stone-gray mt-1">{error.message}</p>
-                  </div>
-                ))}
-              </div>
+              <h3 className={SECTION_TITLE}>{t('callTracking.transcript')}</h3>
+              {transcript.length > 0 ? (
+                <div>
+                  {transcript.map((message, idx) => (
+                    <div
+                      key={idx}
+                      className="py-4 border-b border-glass-border-dark first:pt-0 last:border-0"
+                    >
+                      <p className="text-xs text-stone-gray mb-1">
+                        {message.role === 'user' ? t('callTracking.customer') : t('callTracking.agent')}
+                      </p>
+                      <p className="text-[15px] leading-relaxed text-deep-charcoal whitespace-pre-wrap break-words">{message.content}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-stone">{t(awaitingFinalData ? 'callTracking.pendingTranscript' : 'callTracking.noTranscriptAvailable')}</p>
+              )}
             </div>
-          )}
+
+            {/* Errors */}
+            {conversation.errors_encountered && conversation.errors_encountered.length > 0 && (
+              <div>
+                <h3 className="font-semibold text-red-600 mb-3">{t('callTracking.errorsEncountered')}</h3>
+                <div className="space-y-2">
+                  {conversation.errors_encountered.map((error, idx) => (
+                    <div key={idx} className="bg-red-600/10 border border-red-600/20 rounded-xl p-3">
+                      <p className="text-sm font-medium text-deep-charcoal">{error.error_type}</p>
+                      <p className="text-xs text-stone-gray mt-1">{error.message}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>}
         </div>
 
         {/* Footer */}

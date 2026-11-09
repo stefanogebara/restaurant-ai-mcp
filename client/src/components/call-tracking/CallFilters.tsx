@@ -24,6 +24,9 @@ export default function CallFilters({ filter, onChange }: Props) {
   const filterRef = useRef(filter);
   filterRef.current = filter;
 
+  // An external reset/replacement owns the value and cancels pending input.
+  useEffect(() => { setSearchInput(filter.search || ""); }, [filter.search]);
+
   // Debounce search input (300ms)
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -32,7 +35,7 @@ export default function CallFilters({ filter, onChange }: Props) {
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchInput, onChange]);
+  }, [searchInput, onChange, filter.search]);
 
   const PERIOD_OPTIONS = [
     { value: "1d", label: t("callTracking.twentyFourHours") },
@@ -54,7 +57,7 @@ export default function CallFilters({ filter, onChange }: Props) {
               key={opt.value}
               onClick={() => onChange({ ...filter, period: opt.value })}
               aria-pressed={filter.period === opt.value}
-              className={`rounded-xl px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 ${
+              className={`min-h-11 rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 ${
                 filter.period === opt.value
                   ? "bg-soft-gray text-deep-charcoal"
                   : "text-muted-stone hover:text-stone-gray"
@@ -82,7 +85,7 @@ export default function CallFilters({ filter, onChange }: Props) {
             showMore ? "flex" : "hidden"
           } flex-wrap items-center gap-4 pb-2 sm:flex sm:gap-6 sm:pb-0`}
         >
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
             <input
               type="text"
               placeholder={t(
@@ -95,12 +98,25 @@ export default function CallFilters({ filter, onChange }: Props) {
               )}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="text-xs font-medium px-3 py-1.5 bg-soft-gray border-0 rounded-xl text-deep-charcoal placeholder-muted-stone w-40 focus:outline-none focus:ring-2 focus:ring-burgundy/20"
+              className="min-h-11 text-xs font-medium px-3 py-1.5 bg-soft-gray border-0 rounded-xl text-deep-charcoal placeholder-muted-stone w-40 focus:outline-none focus:ring-2 focus:ring-burgundy/20"
             />
           </div>
 
+          {(activeMoreCount > 0 || searchInput) && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchInput("");
+                onChange({ ...filter, search: undefined, outcome: "all", sentiment: undefined, language: "all" });
+              }}
+              className="min-h-11 rounded-full px-3 text-xs font-medium text-burgundy hover:bg-soft-gray focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-burgundy/60"
+            >
+              {t("callTracking.clearFilters", "Clear filters")}
+            </button>
+          )}
+
           {/* Outcome */}
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
             <span className="text-xs font-medium text-muted-stone">
               {t("callTracking.outcome")}
             </span>
@@ -108,7 +124,7 @@ export default function CallFilters({ filter, onChange }: Props) {
               aria-label={t("callTracking.outcome")}
               value={filter.outcome}
               onChange={(e) => onChange({ ...filter, outcome: e.target.value })}
-              className="text-xs font-medium px-3 py-1.5 bg-soft-gray border-0 rounded-xl text-deep-charcoal cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy/20"
+              className="min-h-11 text-xs font-medium px-3 py-1.5 bg-soft-gray border-0 rounded-xl text-deep-charcoal cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy/20"
             >
               <option value="all">{t("callTracking.outcomeAll")}</option>
               <option value="reservation_created">
@@ -125,7 +141,7 @@ export default function CallFilters({ filter, onChange }: Props) {
           </div>
 
           {/* Sentiment */}
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
             <span className="text-xs font-medium text-muted-stone">
               {t("callTracking.sentiment", "Sentiment")}
             </span>
@@ -139,7 +155,7 @@ export default function CallFilters({ filter, onChange }: Props) {
                     e.target.value === "all" ? undefined : e.target.value,
                 })
               }
-              className="text-xs font-medium px-3 py-1.5 bg-soft-gray border-0 rounded-xl text-deep-charcoal cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy/20"
+              className="min-h-11 text-xs font-medium px-3 py-1.5 bg-soft-gray border-0 rounded-xl text-deep-charcoal cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy/20"
             >
               <option value="all">{t("callTracking.outcomeAll")}</option>
               <option value="positive">
@@ -155,7 +171,7 @@ export default function CallFilters({ filter, onChange }: Props) {
           </div>
 
           {/* Language */}
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
             <span className="text-xs font-medium text-muted-stone">
               {t("callTracking.language")}
             </span>
@@ -165,7 +181,7 @@ export default function CallFilters({ filter, onChange }: Props) {
               onChange={(e) =>
                 onChange({ ...filter, language: e.target.value })
               }
-              className="text-xs font-medium px-3 py-1.5 bg-soft-gray border-0 rounded-xl text-deep-charcoal cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy/20"
+              className="min-h-11 text-xs font-medium px-3 py-1.5 bg-soft-gray border-0 rounded-xl text-deep-charcoal cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy/20"
             >
               <option value="all">{t("callTracking.outcomeAll")}</option>
               <option value="en">EN</option>

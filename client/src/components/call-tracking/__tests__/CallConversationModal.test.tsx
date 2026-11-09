@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import i18n from 'i18next';
 import CallConversationModal from '../CallConversationModal';
 import type { Conversation } from '../callTrackingTypes';
@@ -98,5 +98,40 @@ describe('Call tool result status', () => {
     await i18n.changeLanguage(language);
     renderTool(null);
     expect(screen.getByText(label)).toBeVisible();
+  });
+});
+
+
+describe('Call detail dialog lifecycle', () => {
+  const conversation = {
+    id: 'call-row', conversation_id: 'provider-call', caller_phone: '+551150283918',
+    called_phone: '+551150289356', started_at: '2026-11-09T13:00:32Z', language: 'pt', transcript: [],
+  } as Conversation;
+
+  it('keeps keyboard focus in place when polling refreshes data and the inline close callback changes', () => {
+    const firstClose = vi.fn();
+    const latestClose = vi.fn();
+    const { rerender } = render(<CallConversationModal conversation={conversation} onClose={firstClose} timeZoneLabel="São Paulo" />);
+    const close = screen.getAllByRole('button', { name: 'Close' })[0];
+    close.focus();
+    rerender(<CallConversationModal conversation={{ ...conversation, summary: 'Updated summary' }} onClose={latestClose} timeZoneLabel="São Paulo" />);
+    expect(close).toHaveFocus();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(firstClose).not.toHaveBeenCalled();
+    expect(latestClose).toHaveBeenCalledOnce();
+  });
+
+  it('restores the previous scroll lock and trigger focus only when closed', () => {
+    const trigger = document.createElement('button');
+    document.body.append(trigger);
+    trigger.focus();
+    document.body.style.overflow = 'clip';
+    const { unmount } = render(<CallConversationModal conversation={conversation} onClose={vi.fn()} timeZoneLabel="São Paulo" />);
+    expect(document.body.style.overflow).toBe('hidden');
+    unmount();
+    expect(document.body.style.overflow).toBe('clip');
+    expect(trigger).toHaveFocus();
+    trigger.remove();
+    document.body.style.overflow = '';
   });
 });
