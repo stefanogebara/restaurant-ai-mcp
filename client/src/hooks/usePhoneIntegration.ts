@@ -5,6 +5,8 @@ import { SETTINGS_STALE_TIME } from '../config/constants';
 export interface PhoneIntegrationStatus {
   success: boolean;
   restaurant: {
+    /** Eligible saved shared setup; never proof of a live phone route. */
+    shared_routing_enabled?: boolean;
     name: string;
     has_agent: boolean;
     agent_id: string | null;

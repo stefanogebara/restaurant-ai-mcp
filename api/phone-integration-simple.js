@@ -428,7 +428,7 @@ async function handleStatus(req, res) {
   const { data: restaurant, error: fetchError } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('id, restaurant_name, elevenlabs_agent_id, ai_config')
+    .select('id, restaurant_name, elevenlabs_agent_id, ai_config, is_active, onboarding_completed, is_demo')
     .eq('id', restaurant_id)
     .single();
 
@@ -441,10 +441,14 @@ async function handleStatus(req, res) {
   }
 
   const phoneInfo = restaurant.ai_config?.phone || {};
+  // Saved opt-in and eligibility describe setup only, never current provider routing.
+  const sharedRoutingEnabled = phoneInfo.shared_routing_enabled === true &&
+    restaurant.is_active === true && restaurant.onboarding_completed === true && restaurant.is_demo === false;
   return res.status(200).json({
     success: true,
     restaurant: {
       name: restaurant.restaurant_name,
+      shared_routing_enabled: sharedRoutingEnabled,
       has_agent: !!restaurant.elevenlabs_agent_id,
       agent_id: restaurant.elevenlabs_agent_id,
       // Local "active" is not proof of which agent currently owns the shared

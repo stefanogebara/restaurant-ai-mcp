@@ -3129,6 +3129,8 @@
     "noChanges": "No overrides configured"
   },
   "phoneIntegration": {
+    "sharedConfiguredTitle": "Shared routing configured",
+    "sharedConfiguredDescription": "Setup saved in Seatable. This page does not check whether the shared phone line is available now.",
     "notConnectedTitle": "Phone not connected",
     "notConnectedDescription": "No number has been assigned to this restaurant. Ask us to set up and test the line before sharing a number or forwarding calls.",
     "pendingTitle": "Phone setup in progress",

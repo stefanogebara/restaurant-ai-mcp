@@ -7,14 +7,16 @@ import { resolvePhoneSetupState } from '../../lib/phoneSetupState';
 export default function PhoneIntegrationPanel() {
   const { t } = useTranslation();
   const { status, isLoading, isError } = usePhoneIntegration();
-  const state = resolvePhoneSetupState(status?.restaurant?.status, { failed: isError });
+  const state = resolvePhoneSetupState(status?.restaurant?.status, { failed: isError, sharedRoutingEnabled: status?.restaurant?.shared_routing_enabled });
   const needsReview = state === 'needs_review';
-  const titleKey = state === 'not_configured' ? 'phoneIntegration.notConnectedTitle'
+  const titleKey = state === 'shared_configured' ? 'phoneIntegration.sharedConfiguredTitle'
+    : state === 'not_configured' ? 'phoneIntegration.notConnectedTitle'
     : state === 'pending' ? 'phoneIntegration.pendingTitle'
     : state === 'error' ? 'phoneIntegration.setupErrorTitle'
     : state === 'unavailable' ? 'phoneIntegration.unavailableTitle'
     : 'phoneIntegration.assistedTitle';
-  const descriptionKey = state === 'not_configured' ? 'phoneIntegration.notConnectedDescription'
+  const descriptionKey = state === 'shared_configured' ? 'phoneIntegration.sharedConfiguredDescription'
+    : state === 'not_configured' ? 'phoneIntegration.notConnectedDescription'
     : state === 'pending' ? 'phoneIntegration.pendingDescription'
     : state === 'error' ? 'phoneIntegration.setupErrorDescription'
     : state === 'unavailable' ? 'phoneIntegration.statusUnavailable'
@@ -46,7 +48,7 @@ export default function PhoneIntegrationPanel() {
         </div>
       )}
 
-      {!status?.restaurant?.has_agent && !isError && (
+      {!status?.restaurant?.has_agent && status?.restaurant?.shared_routing_enabled !== true && !isError && (
         <p className="text-sm text-muted-stone">{t('phoneIntegration.noAgentWarning')}</p>
       )}
 

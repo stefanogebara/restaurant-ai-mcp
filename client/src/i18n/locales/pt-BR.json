@@ -3143,6 +3143,8 @@
     "noChanges": "Sem alterações configuradas"
   },
   "phoneIntegration": {
+    "sharedConfiguredTitle": "Roteamento compartilhado configurado",
+    "sharedConfiguredDescription": "Configuração salva no Seatable. Esta tela não verifica se a linha compartilhada está disponível agora.",
     "notConnectedTitle": "Telefone não conectado",
     "notConnectedDescription": "Nenhum número foi atribuído a este restaurante. Peça a configuração e o teste da linha antes de divulgar um número ou encaminhar chamadas.",
     "pendingTitle": "Configuração em andamento",

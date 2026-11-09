@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import { renderWithProviders as render } from '../../../test/renderWithProviders';
+import i18n from 'i18next';
 import CallPhoneStatusCard from '../CallPhoneStatusCard';
 
 describe('CallPhoneStatusCard', () => {
@@ -47,4 +48,33 @@ describe('CallPhoneStatusCard', () => {
     /></MemoryRouter>);
     expect(screen.getByText('Routing not verified')).toBeVisible();
   });
+});
+
+
+afterEach(async () => { await act(async () => { await i18n.changeLanguage('en'); }); });
+
+it.each([
+  ['en', 'Shared routing configured'],
+  ['pt-BR', 'Roteamento compartilhado configurado'],
+  ['es', 'Enrutamiento compartido configurado'],
+])('distinguishes an eligible shared setup from a disconnected phone in %s', async (language, title) => {
+  await act(async () => { await i18n.changeLanguage(language); });
+  render(<MemoryRouter><CallPhoneStatusCard phoneStatus={{
+    name: 'Sandbox', has_agent: false, agent_id: null, phone_number: null, phone_number_id: null,
+    status: 'not_configured', shared_routing_enabled: true, error: null, configured_at: null,
+  }} phoneStatusLoading={false} phoneStatusError={false} onRefreshStatus={() => {}} /></MemoryRouter>);
+  expect(screen.getByRole('heading', { name: title })).toBeVisible();
+  expect(screen.getByText(i18n.t('phoneIntegration.sharedConfiguredDescription'))).toBeVisible();
+  expect(screen.queryByText(i18n.t('phoneIntegration.notConnectedTitle'))).not.toBeInTheDocument();
+  expect(screen.queryByText(i18n.t('phoneIntegration.notConnectedDescription'))).not.toBeInTheDocument();
+  expect(screen.queryByText(/5028-9356/)).not.toBeInTheDocument();
+});
+
+it('does not hide a failed status request behind cached shared setup', () => {
+  render(<MemoryRouter><CallPhoneStatusCard phoneStatus={{
+    name: 'Sandbox', has_agent: false, agent_id: null, phone_number: null, phone_number_id: null,
+    status: 'not_configured', shared_routing_enabled: true, error: null, configured_at: null,
+  }} phoneStatusLoading={false} phoneStatusError={true} onRefreshStatus={() => {}} /></MemoryRouter>);
+  expect(screen.getByRole('alert')).toBeVisible();
+  expect(screen.queryByRole('heading', { name: 'Shared routing configured' })).not.toBeInTheDocument();
 });

@@ -14,6 +14,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useRestaurantSettings } from '../hooks/useRestaurantSettings';
 
 import { toCsv, downloadCsv } from '../utils/exportCsv';
+import { resolvePhoneSetupState } from '../lib/phoneSetupState';
 import { todayLocalISO } from '../utils/timeFormatting';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import CallPhoneStatusCard from '../components/call-tracking/CallPhoneStatusCard';
@@ -58,6 +59,10 @@ export default function CallTrackingDashboard() {
   const { data: convsResult, isLoading, isError, isFetching: isFetchingConversations, refetch: refetchConversations } = useCallConversations(filter, userId, page, channel);
   const { data: stats, isError: statsError, refetch: refetchStats } = useCallStats(filter, userId, channel);
   const phoneStatusQuery = usePhoneStatus(userId);
+  const phoneSetupState = resolvePhoneSetupState(phoneStatusQuery.data?.status, {
+    loading: phoneStatusQuery.isLoading, failed: phoneStatusQuery.isError,
+    sharedRoutingEnabled: phoneStatusQuery.data?.shared_routing_enabled,
+  });
   const conversationDetail = useConversationDetail(selectedConversationId);
   const selectedConversation = conversationDetail.data;
 
@@ -215,7 +220,7 @@ export default function CallTrackingDashboard() {
               <CallConversationList
                 conversations={conversations}
                 channel={channel}
-                phoneNotConfigured={phoneStatusQuery.data?.status === 'not_configured'}
+                phoneNotConfigured={phoneSetupState === 'not_configured'}
                 filter={filter}
                 onOutcomeChange={(outcome) => changeFilter({ ...filter, outcome })}
                 onConversationClick={(id) => setSelectedConversationId(id)}

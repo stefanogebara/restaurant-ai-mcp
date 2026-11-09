@@ -13,15 +13,17 @@ interface Props {
 
 export default function CallPhoneStatusCard({ phoneStatus, phoneStatusLoading, phoneStatusError, onRefreshStatus }: Props) {
   const { t } = useTranslation();
-  const state = resolvePhoneSetupState(phoneStatus?.status, { loading: phoneStatusLoading, failed: phoneStatusError });
+  const state = resolvePhoneSetupState(phoneStatus?.status, { loading: phoneStatusLoading, failed: phoneStatusError, sharedRoutingEnabled: phoneStatus?.shared_routing_enabled });
   const needsReview = state === 'needs_review';
-  const titleKey = state === 'needs_review' ? 'callTracking.phoneSetupTitle'
+  const titleKey = state === 'shared_configured' ? 'phoneIntegration.sharedConfiguredTitle'
+    : state === 'needs_review' ? 'callTracking.phoneSetupTitle'
     : state === 'loading' ? 'callTracking.phoneStatus'
     : state === 'not_configured' ? 'phoneIntegration.notConnectedTitle'
     : state === 'pending' ? 'phoneIntegration.pendingTitle'
     : state === 'error' ? 'phoneIntegration.setupErrorTitle'
     : 'phoneIntegration.unavailableTitle';
-  const descriptionKey = state === 'needs_review' ? 'phoneIntegration.routingUnverified'
+  const descriptionKey = state === 'shared_configured' ? 'phoneIntegration.sharedConfiguredDescription'
+    : state === 'needs_review' ? 'phoneIntegration.routingUnverified'
     : state === 'loading' ? 'phoneIntegration.loadingStatus'
     : state === 'not_configured' ? 'phoneIntegration.notConnectedDescription'
     : state === 'pending' ? 'phoneIntegration.pendingDescription'
