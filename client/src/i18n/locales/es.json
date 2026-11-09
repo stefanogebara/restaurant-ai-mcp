@@ -56,6 +56,7 @@
     "discard": "Descartar",
     "dismiss": "Cerrar",
     "live": "En vivo",
+    "updatesAutomatically": "Se actualiza automáticamente",
     "nDays": "{{count}} días",
     "select": "Seleccionar",
     "all": "Todos",

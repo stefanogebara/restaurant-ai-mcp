@@ -36,6 +36,7 @@ interface ReservationsListProps {
   byPartySize?: PartySizeRevenue[];
   language?: 'en' | 'es' | 'pt-BR';
   isLoading?: boolean;
+  refreshMode?: 'live' | 'periodic';
   tables?: Table[];
 }
 
@@ -55,6 +56,7 @@ export default function ReservationsList({
   byPartySize,
   language = 'en',
   isLoading,
+  refreshMode = 'live',
   tables = [],
 }: ReservationsListProps) {
   // Build id→table_number lookup once for all rows
@@ -142,12 +144,16 @@ export default function ReservationsList({
       {/* Panel Header */}
       <div className="px-3 sm:px-6 py-4 sm:py-5 border-b border-glass-border-dark">
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 max-w-full">
             <span className="text-[12px] sm:text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{tl('upcoming')}</span>
             <span className="text-[11px] font-semibold bg-[#9F1239]/[8%] text-[#9F1239] px-2.5 py-0.5 rounded-full">
               {displayed.length}
             </span>
-            {displayed.length > 0 && dayFilter === 'today' && (
+            {refreshMode === 'periodic' ? (
+              <span className="text-[11px] font-medium text-muted-stone">
+                {t('common.updatesAutomatically')}
+              </span>
+            ) : displayed.length > 0 && dayFilter === 'today' && (
               <span className="flex items-center gap-1 text-[10px] font-medium text-rose-600">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />

@@ -16,8 +16,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
-import { hostAPI } from '../services/api';
+import { useDashboardData } from '../hooks/useDashboardData';
 import { useRealtimeDashboard } from '../hooks/useRealtimeSubscription';
 import { useWaitlistEntries, countActiveWaitlist } from '../hooks/useWaitlistEntries';
 import { useCompleteService } from '../hooks/useCompleteService';
@@ -107,17 +106,8 @@ export default function Dashboard() {
   const [showInsightsWidgets, setShowInsightsWidgets] = useState(false);
 
   // ---- Data fetching ----
-  // BB.2: dropped from 30s → 5min poll. Supabase Realtime now invalidates
-  // the cache on every reservations / tables / waitlist / service_records
-  // change (see useRealtimeDashboard below), so the 30s safety net was
-  // costing ~120 function calls/hour per open tab for nothing. Keep a
-  // 5-minute heartbeat as belt-and-suspenders in case the realtime
-  // channel drops mid-session.
-  const { data: dashboardData, refetch, isLoading, isError } = useQuery({
-    queryKey: ['dashboard'],
-    queryFn: hostAPI.getDashboard,
-    refetchInterval: 5 * 60 * 1000,
-  });
+  // Foreground polling remains reliable even when Realtime is unavailable.
+  const { data: dashboardData, refetch, isLoading, isError } = useDashboardData();
   const waitlistQuery = useWaitlistEntries();
 
   // ---- Data extraction ----
@@ -128,10 +118,8 @@ export default function Dashboard() {
   const restaurantId: string | undefined = dashboardData?.data?.restaurant_id;
   const restaurantTimezone: string | undefined = dashboardData?.data?.timezone;
 
-  // BB.2: subscribe to live changes the moment we know which tenant we are.
-  // Each INSERT/UPDATE/DELETE on reservations, tables, waitlist, or
-  // service_records triggers a dashboard refetch — sub-second perceived
-  // latency vs the old 30s poll. Cleans itself up on unmount.
+  // Realtime accelerates refresh when the database publishes tenant-safe events.
+  // The polling fallback above does not depend on this subscription.
   useRealtimeDashboard(restaurantId);
 
   // Local timezone — see todayLocalISO docs. Anti-pattern toISOString().split('T')[0]
@@ -460,6 +448,7 @@ export default function Dashboard() {
               convidados sentados); à noite as ocupadas brilham. */}
           <section className="glass-panel mb-8 sm:mb-10">
             <TableLayoutPanel
+              refreshMode="periodic"
               tables={tables}
               activeParties={activeParties}
               onRefresh={refetch}
@@ -481,6 +470,7 @@ export default function Dashboard() {
           {/* ---- Reservations Section ---- */}
           <section className="mb-12 sm:mb-20">
             <ReservationsList
+              refreshMode="periodic"
               todayReservations={todayReservations}
               tomorrowReservations={tomorrowReservations}
               weekReservations={weekReservations}
