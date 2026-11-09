@@ -109,6 +109,7 @@ export interface UpcomingReservation {
   whatsapp_confirmation?: {
     status: 'requested' | 'accepted' | 'sent' | 'delivered' | 'read' | 'failed' | 'unknown';
     status_updated_at: string;
+    requested_at?: string;
   } | null;
   // ML Prediction fields (from Supabase reservations table)
   ml_risk_score?: number;  // 0-100 percentage

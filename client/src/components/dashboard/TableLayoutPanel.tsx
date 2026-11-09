@@ -15,6 +15,7 @@ interface TableLayoutPanelProps {
   onRefresh: () => void;
   onToast?: (message: string, type: 'success' | 'error') => void;
   isLoading?: boolean;
+  refreshMode?: 'live' | 'periodic';
   /** Modo Serviço — repassa o tema noturno para a planta do salão. */
   night?: boolean;
 }
@@ -25,6 +26,7 @@ export default function TableLayoutPanel({
   onRefresh,
   onToast,
   isLoading,
+  refreshMode = 'live',
   night = false,
 }: TableLayoutPanelProps) {
   const { t } = useTranslation();
@@ -82,15 +84,21 @@ export default function TableLayoutPanel({
       <div className="overflow-hidden">
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-5 border-b border-glass-border-dark">
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 max-w-full">
             <span className="text-[13px] font-semibold uppercase tracking-widest text-deep-charcoal whitespace-nowrap">{t('tableLayout.title')}</span>
-            <span className="relative flex items-center gap-1.5 text-xs font-semibold text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full">
-              <span className="relative flex h-2 w-2 flex-shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+            {refreshMode === 'periodic' ? (
+              <span className="text-[11px] font-medium text-muted-stone">
+                {t('common.updatesAutomatically')}
               </span>
-              {t('dashboard.live')}
-            </span>
+            ) : (
+              <span className="relative flex items-center gap-1.5 text-xs font-semibold text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full">
+                <span className="relative flex h-2 w-2 flex-shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+                </span>
+                {t('dashboard.live')}
+              </span>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center justify-end gap-2">
