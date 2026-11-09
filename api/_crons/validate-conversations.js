@@ -122,11 +122,11 @@ function analyzeConversation(conv) {
 
   // Rule 1: Reservation created without availability check
   if (conv.outcome === 'reservation_created') {
-    const hasAvailabilityCheck = toolsUsed.some(t =>
-      t.tool_name === 'check_availability' && t.success
-    );
+    // A logged invocation proves an attempt even when its result is missing.
+    // Known failures are evaluated separately below; unknown is not failure.
+    const hasAvailabilityCheck = toolsUsed.some(t => t.tool_name === 'check_availability');
     const hasCreateReservation = toolsUsed.some(t =>
-      t.tool_name === 'create_reservation' && t.success
+      t.tool_name === 'create_reservation' && t.success === true
     );
 
     if (hasCreateReservation && !hasAvailabilityCheck) {
@@ -148,7 +148,7 @@ function analyzeConversation(conv) {
   }
 
   // Rule 3: Multiple tool failures in one conversation
-  const failedTools = toolsUsed.filter(t => !t.success);
+  const failedTools = toolsUsed.filter(t => t.success === false);
   if (failedTools.length >= 3) {
     flags.push({
       type: 'multiple_tool_failures',
@@ -163,7 +163,7 @@ function analyzeConversation(conv) {
 
   // Rule 4: Tool errors followed by booking (unreliable booking)
   if (conv.outcome === 'reservation_created' && failedTools.length > 0) {
-    const createIdx = toolsUsed.findIndex(t => t.tool_name === 'create_reservation' && t.success);
+    const createIdx = toolsUsed.findIndex(t => t.tool_name === 'create_reservation' && t.success === true);
     const errorBeforeCreate = failedTools.some(t => {
       const errIdx = toolsUsed.indexOf(t);
       return errIdx < createIdx;

@@ -108,13 +108,18 @@ export function useWhatsAppTestMessageStatus() {
       return result.data ?? null;
     },
     staleTime: 5 * 1000,
-    // Poll only while a real delivery is pending, bounded to ten minutes.
+    // Delivery may still advance to read. Observe it at a slower cadence,
+    // bounded by the original request time, never by the latest callback.
     // An idle settings page must not invoke a serverless function forever.
+    refetchIntervalInBackground: false,
     refetchInterval: (query) => {
       const message = query.state.data;
-      if (!message || !['accepted', 'sent', 'queued'].includes(message.status)) return false;
+      if (!message || !['accepted', 'sent', 'queued', 'delivered'].includes(message.status)) return false;
       const requested = Date.parse(message.requested_at);
-      return Number.isFinite(requested) && Date.now() - requested < 10 * 60 * 1000 ? 15 * 1000 : false;
+      const age = Date.now() - requested;
+      const remaining = 10 * 60 * 1000 - age;
+      if (!Number.isFinite(requested) || age < 0 || remaining <= 0) return false;
+      return Math.min(message.status === 'delivered' ? 60 * 1000 : 15 * 1000, remaining);
     },
   });
 }

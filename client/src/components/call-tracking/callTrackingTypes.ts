@@ -2,7 +2,7 @@
 
 export interface ToolUsed {
   tool_name: string;
-  success: boolean;
+  success?: boolean | null;
 }
 
 export interface ConversationError {
