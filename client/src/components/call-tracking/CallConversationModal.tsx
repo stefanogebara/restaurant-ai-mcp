@@ -96,7 +96,7 @@ export default function CallConversationModal({ conversation, onClose, timeZone,
         className="glass-modal max-w-4xl w-full max-h-[90vh] overflow-y-auto focus:outline-none"
       >
         {/* Header */}
-        <div className="sticky top-0 bg-warm-white/95 backdrop-blur-glass-nav border-b border-glass-border-dark p-6 flex items-center justify-between">
+        <div className="sticky top-0 bg-warm-white/95 backdrop-blur-glass-nav border-b border-glass-border-dark p-6 flex items-center justify-between gap-3">
           <div>
             <h2 className="font-serif text-2xl text-deep-charcoal">{t('callTracking.conversationDetails')}</h2>
             <p className="text-sm text-stone-gray mt-1">{formatDate(conversation.started_at, i18n.language, timeZone)}</p>
@@ -106,7 +106,7 @@ export default function CallConversationModal({ conversation, onClose, timeZone,
             type="button"
             onClick={onClose}
             aria-label={t('common.close')}
-            className="p-2 hover:bg-soft-gray rounded-xl transition-colors"
+            className="min-h-11 min-w-11 shrink-0 flex items-center justify-center hover:bg-soft-gray rounded-full transition-colors"
           >
             <ThiingsIcon name="close" size="sm" />
           </button>

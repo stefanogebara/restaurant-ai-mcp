@@ -111,32 +111,32 @@ export default function CallConversationList({
                   aria-label={t('callTracking.openCall', { name: conv.customer_name || conv.caller_phone || t('callTracking.unknownCaller'), time: startTime })}
                   className="flex flex-1 min-w-0 items-start gap-3 py-4 text-left rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-burgundy/60 sm:items-center sm:gap-4 sm:py-5"
                 >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${callIconStyle(conv.outcome)}`}>
-                  <ThiingsIcon name={channel === 'phone' ? 'phone-call' : 'chat'} size="sm" />
-                </div>
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${callIconStyle(conv.outcome)}`}>
+                    <ThiingsIcon name={channel === 'phone' ? 'phone-call' : 'chat'} size="sm" />
+                  </div>
 
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-deep-charcoal tracking-[-0.2px] truncate">
-                    {conv.customer_name || t(channel === 'phone' ? 'callTracking.unknownCaller' : 'callTracking.agentConversation')}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-deep-charcoal tracking-[-0.2px] truncate">
+                      {conv.customer_name || t(channel === 'phone' ? 'callTracking.unknownCaller' : 'callTracking.agentConversation')}
+                    </div>
+                    <div className="text-xs text-muted-stone mt-0.5 truncate">
+                      {conv.caller_phone || t('callTracking.noNumber')}
+                      {conv.party_size ? ` · ${t('callTracking.partyOf', { size: conv.party_size })}` : ''}
+                      {conv.language && conv.ended_at ? ` · ${conv.language.toUpperCase()}` : ''}
+                    </div>
+                    <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold sm:hidden ${getOutcomePillColor(conv.outcome)}`}>
+                      {outcomeLabel}
+                    </span>
                   </div>
-                  <div className="text-xs text-muted-stone mt-0.5 truncate">
-                    {conv.caller_phone || t('callTracking.noNumber')}
-                    {conv.party_size ? ` · ${t('callTracking.partyOf', { size: conv.party_size })}` : ''}
-                    {conv.language && conv.ended_at ? ` · ${conv.language.toUpperCase()}` : ''}
-                  </div>
-                  <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold sm:hidden ${getOutcomePillColor(conv.outcome)}`}>
+
+                  <span className={`hidden flex-shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold sm:inline-flex ${getOutcomePillColor(conv.outcome)}`}>
                     {outcomeLabel}
                   </span>
-                </div>
 
-                <span className={`hidden flex-shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold sm:inline-flex ${getOutcomePillColor(conv.outcome)}`}>
-                  {outcomeLabel}
-                </span>
-
-                <div className="text-right flex-shrink-0 ml-2 max-w-20 break-words">
-                  <div className="text-[13px] font-medium text-stone-gray">{startTime}</div>
-                  <div className="text-[11px] text-muted-stone mt-0.5">{duration}</div>
-                </div>
+                  <div className="text-right flex-shrink-0 ml-2 max-w-20 break-words">
+                    <div className="text-[13px] font-medium text-stone-gray">{startTime}</div>
+                    <div className="text-[11px] text-muted-stone mt-0.5">{duration}</div>
+                  </div>
                 </button>
                 {conv.caller_phone && onPhoneClick && (
                   <button

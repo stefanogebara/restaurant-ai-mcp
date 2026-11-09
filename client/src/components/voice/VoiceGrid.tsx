@@ -2,7 +2,7 @@
  * Scrollable voice grid with pagination, skeleton loading, and keyboard navigation.
  */
 
-import { useState, useRef, useCallback } from 'react';
+import { useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import VoiceCard from './VoiceCard';
 import VoiceCardSkeleton from './VoiceCardSkeleton';
@@ -37,13 +37,15 @@ export default function VoiceGrid({
   source,
 }: VoiceGridProps) {
   const { t } = useTranslation();
-  const [focusedIndex, setFocusedIndex] = useState(-1);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const handleGridKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (voices.length === 0) return;
-
+      // Arrow keys belong to the focused option, not its nested preview control.
+      const focusedIndex = cardRefs.current.indexOf(e.target as HTMLDivElement);
+      if (focusedIndex < 0 || voices.length === 0) return;
+      const tracks = getComputedStyle(e.currentTarget).gridTemplateColumns;
+      const columns = tracks && tracks !== 'none' ? tracks.split(/\s+/).length : 1;
       let nextIndex = focusedIndex;
 
       switch (e.key) {
@@ -57,20 +59,19 @@ export default function VoiceGrid({
           break;
         case 'ArrowDown':
           e.preventDefault();
-          nextIndex = Math.min(focusedIndex + 3, voices.length - 1);
+          nextIndex = Math.min(focusedIndex + columns, voices.length - 1);
           break;
         case 'ArrowUp':
           e.preventDefault();
-          nextIndex = Math.max(focusedIndex - 3, 0);
+          nextIndex = Math.max(focusedIndex - columns, 0);
           break;
         default:
           return;
       }
 
-      setFocusedIndex(nextIndex);
       cardRefs.current[nextIndex]?.focus();
     },
-    [focusedIndex, voices.length],
+    [voices.length],
   );
 
   if (isLoading) {
@@ -119,10 +120,7 @@ export default function VoiceGrid({
             isSelected={selectedVoiceId === voice.id}
             isPlaying={playingVoiceId === voice.id}
             isLoading={loadingAudioId === voice.id}
-            onSelect={(id) => {
-              setFocusedIndex(index);
-              onSelectVoice(id);
-            }}
+            onSelect={onSelectVoice}
             onPlay={onPlayVoice}
           />
         ))}

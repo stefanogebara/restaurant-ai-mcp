@@ -27,6 +27,24 @@ describe('auditioning is separate from selecting a voice', () => {
     expect(onSelect).toHaveBeenCalledWith('voice-1');
   });
 
+  it('moves from actual keyboard focus using the rendered number of columns', async () => {
+    const onSelectVoice = vi.fn();
+    const voices = Array.from({ length: 5 }, (_, index) => ({ ...voice, id: `voice-${index}`, name: `Voice ${index}` }));
+    render(<VoiceGrid voices={voices} selectedVoiceId="voice-0" playingVoiceId={null} loadingAudioId={null} hasMore={false} isLoadingMore={false} onSelectVoice={onSelectVoice} onPlayVoice={vi.fn()} onLoadMore={vi.fn()} />);
+    const cards = screen.getAllByRole('radio');
+    const grid = screen.getByRole('radiogroup');
+    grid.style.gridTemplateColumns = '300px 300px';
+    cards[1].focus();
+    await userEvent.keyboard('{ArrowDown}');
+    expect(cards[3]).toHaveFocus();
+    await userEvent.keyboard('{ArrowLeft}');
+    expect(cards[2]).toHaveFocus();
+    grid.style.gridTemplateColumns = '300px';
+    await userEvent.keyboard('{ArrowDown}');
+    expect(cards[3]).toHaveFocus();
+    expect(onSelectVoice).not.toHaveBeenCalled();
+  });
+
   it.each([
     ['pt-BR', 'Nenhuma voz encontrada', 'Tente outro idioma ou ajuste os filtros.'],
     ['es', 'No se encontraron voces', 'Prueba otro idioma o ajusta los filtros.'],
