@@ -10,6 +10,7 @@ const { checkSubscription, requireFeature } = require('./_lib/subscription-middl
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { validateElevenLabsVoiceId } = require('./_lib/validation');
 const { buildFirstMessage } = require('./_lib/voice-first-message');
+const { compatibleTtsModel, summaryLanguageFor } = require('./_lib/elevenlabs-voice-config');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const logger = createSecureLogger('VoiceSettings');
@@ -77,7 +78,7 @@ module.exports = async (req, res) => {
 };
 
 /**
- * POST ?action=refresh_prompt — Re-sync ElevenLabs agent prompt with current restaurant persona.
+ * POST ?action=refresh_prompt — Repair the saved persona, including its opening line.
  */
 async function handleRefreshPrompt(req, res) {
   try {
@@ -90,7 +91,7 @@ async function handleRefreshPrompt(req, res) {
     }
 
     const { refreshVoiceAgentPrompt } = require('./_services/voiceAgentService');
-    const result = await refreshVoiceAgentPrompt(req.user?.restaurant_id);
+    const result = await refreshVoiceAgentPrompt(req.user?.restaurant_id, { syncFirstMessage: true });
     return res.status(200).json({ success: true, ...result });
   } catch (error) {
     logger.error('[VoiceSettings] refresh_prompt error:', error);
@@ -217,7 +218,7 @@ async function handlePatch(req, res) {
     const { data: restaurant, error: dbError } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('id, restaurant_name, elevenlabs_agent_id, agent_language, agent_greeting')
+      .select('id, restaurant_name, elevenlabs_agent_id, agent_language, agent_greeting, country, ai_config')
       .eq('id', restaurantId)
       .maybeSingle();
 
@@ -256,13 +257,41 @@ async function handlePatch(req, res) {
       conversation_config: {}
     };
 
+    let effectiveModel = tts_model_id;
+    if (language) {
+      // Read the current model rather than replacing an already compatible
+      // selection. A language and its required model must land in one PATCH.
+      let currentAgent;
+      try {
+        const currentResponse = await fetch(
+          `https://api.elevenlabs.io/v1/convai/agents/${restaurant.elevenlabs_agent_id}`,
+          { method: 'GET', headers: { 'xi-api-key': process.env.ELEVENLABS_API_KEY }, signal: AbortSignal.timeout(10_000) }
+        );
+        if (!currentResponse.ok) throw new Error('Agent configuration unavailable');
+        currentAgent = await currentResponse.json();
+        const currentModel = currentAgent.conversation_config?.tts?.model_id;
+        if (!effectiveModel && (typeof currentModel !== 'string' || !currentModel)) {
+          throw new Error('Agent TTS model missing');
+        }
+        const chosenModel = effectiveModel || currentModel;
+        const compatibleModel = compatibleTtsModel(language, chosenModel);
+        if (compatibleModel !== chosenModel) effectiveModel = compatibleModel;
+      } catch (readError) {
+        logger.error('[VoiceSettings PATCH] Failed to read current agent:', readError);
+        return res.status(502).json({ success: false, error: 'Could not read the current voice configuration. Please retry.' });
+      }
+      patchPayload.platform_settings = {
+        summary_language: summaryLanguageFor(language, currentAgent.platform_settings?.summary_language, restaurant),
+      };
+    }
+
     // Update TTS settings
     const ttsUpdates = {};
     if (voice_id) {
       ttsUpdates.voice_id = voice_id;
     }
-    if (tts_model_id) {
-      ttsUpdates.model_id = tts_model_id;
+    if (effectiveModel) {
+      ttsUpdates.model_id = effectiveModel;
     }
     if (voice_settings) {
       if (voice_settings.stability !== undefined) ttsUpdates.stability = voice_settings.stability;
@@ -335,7 +364,7 @@ async function handlePatch(req, res) {
         voice_id: voice_id || null,
         language: language || null,
         voice_settings: voice_settings || null,
-        tts_model_id: tts_model_id || null,
+        tts_model_id: effectiveModel || null,
         agent_updated_at: dbUpdates.updated_at
       }
     });

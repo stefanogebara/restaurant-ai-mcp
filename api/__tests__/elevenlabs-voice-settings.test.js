@@ -86,6 +86,10 @@ function createMockReqRes(overrides = {}) {
 }
 
 const originalElevenLabsKey = process.env.ELEVENLABS_API_KEY;
+const liveAgentResponse = () => ({ ok: true, json: async () => ({
+  conversation_config: { tts: { model_id: 'eleven_flash_v2_5' } },
+  platform_settings: { summary_language: 'pt-br' },
+}) });
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -94,6 +98,101 @@ beforeEach(() => {
   global.fetch = jest.fn();
   verifyAuth.mockResolvedValue({
     user: { restaurant_id: 'rest-1', email: 'owner@test.com' },
+  });
+});
+
+describe('language saves keep the live TTS and summary configuration compatible', () => {
+  function arrange({ model = 'eleven_flash_v2', summary = 'en', country = 'BR', currentLanguage = 'en' } = {}) {
+    process.env.ELEVENLABS_API_KEY = 'test-key';
+    mockMaybeSingle.mockResolvedValueOnce({ data: {
+      id: 'rest-1', restaurant_name: 'Bistro', elevenlabs_agent_id: 'agent-123',
+      agent_language: currentLanguage, agent_greeting: 'Owner opening', country,
+    }, error: null });
+    global.fetch.mockImplementation(async (_url, options) => options.method === 'GET'
+      ? { ok: true, json: async () => ({
+        conversation_config: { tts: { model_id: model, voice_id: 'keep-live-voice', stability: 0.8 } },
+        platform_settings: { summary_language: summary },
+      }) }
+      : { ok: true });
+  }
+
+  function savedPayload() {
+    const call = global.fetch.mock.calls.find(([, options]) => options.method === 'PATCH');
+    return JSON.parse(call[1].body);
+  }
+
+  test.each([
+    ['eleven_flash_v2', 'eleven_flash_v2_5'],
+    ['eleven_turbo_v2', 'eleven_turbo_v2_5'],
+  ])('pairs %s with a multilingual model in the same language update', async (model, expected) => {
+    arrange({ model });
+    const { req, res } = createMockReqRes({ method: 'PATCH', body: { language: 'pt', voice_settings: { speed: 1.1 } } });
+    await handler(req, res);
+    const payload = savedPayload();
+    expect(payload.conversation_config.tts).toEqual({ model_id: expected, speed: 1.1 });
+    expect(payload.conversation_config.agent).toEqual({ language: 'pt', first_message: 'Owner opening' });
+    expect(payload.platform_settings).toEqual({ summary_language: 'pt_BR' });
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test.each(['eleven_flash_v2_5', 'eleven_turbo_v2_5', 'eleven_v3_conversational'])('preserves the compatible live model %s and Brazilian summary locale', async model => {
+    arrange({ model, summary: 'pt_BR' });
+    const { req, res } = createMockReqRes({ method: 'PATCH', body: { language: 'pt', voice_id: 'new-voice' } });
+    await handler(req, res);
+    expect(savedPayload().conversation_config.tts).toEqual({ voice_id: 'new-voice' });
+    expect(savedPayload().platform_settings).toEqual({ summary_language: 'pt_BR' });
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test.each([
+    ['pt', 'PT', 'pt_PT', 'pt_PT'],
+    ['pt-BR', 'BR', 'pt_BR', 'pt_BR'],
+    ['pt-PT', 'BR', 'pt_BR', 'pt'],
+    ['pt-BR', 'PT', 'pt_PT', 'pt_BR'],
+    ['es', 'BR', 'pt_BR', 'es'],
+    ['en-GB', 'GB', 'en', 'en'],
+  ])('keeps summary language aligned with %s in %s', async (language, country, summary, expected) => {
+    arrange({ country, summary });
+    const { req, res } = createMockReqRes({ method: 'PATCH', body: { language } });
+    await handler(req, res);
+    expect(savedPayload().platform_settings).toEqual({ summary_language: expected });
+    if (language === 'en-GB') expect(savedPayload().conversation_config.tts).toBeUndefined();
+  });
+
+  test('uses an explicitly selected compatible model without replacing it', async () => {
+    arrange();
+    const { req, res } = createMockReqRes({ method: 'PATCH', body: { language: 'pt', tts_model_id: 'eleven_v3_conversational' } });
+    await handler(req, res);
+    expect(savedPayload().conversation_config.tts.model_id).toBe('eleven_v3_conversational');
+  });
+
+  test('fails closed before any write when the current model cannot be read', async () => {
+    arrange();
+    global.fetch.mockResolvedValue({ ok: false, status: 503, text: async () => 'unavailable' });
+    const { req, res } = createMockReqRes({ method: 'PATCH', body: { language: 'pt' } });
+    await handler(req, res);
+    expect(global.fetch.mock.calls.some(([, options]) => options.method === 'PATCH')).toBe(false);
+    expect(mockUpdate).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(502);
+  });
+
+  test('does not invent a current model when the provider response is incomplete', async () => {
+    arrange();
+    global.fetch.mockResolvedValue({ ok: true, json: async () => ({ conversation_config: { tts: {} } }) });
+    const { req, res } = createMockReqRes({ method: 'PATCH', body: { language: 'pt' } });
+    await handler(req, res);
+    expect(global.fetch.mock.calls.some(([, options]) => options.method === 'PATCH')).toBe(false);
+    expect(mockUpdate).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(502);
+  });
+
+  test('a tuning-only save neither reads nor changes language, model, or summary', async () => {
+    arrange();
+    const { req, res } = createMockReqRes({ method: 'PATCH', body: { voice_settings: { stability: 0.6 } } });
+    await handler(req, res);
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(savedPayload()).toEqual({ conversation_config: { tts: { stability: 0.6 } } });
+    expect(res.status).toHaveBeenCalledWith(200);
   });
 });
 
@@ -185,7 +284,7 @@ describe('ElevenLabs Voice Settings degradation', () => {
   test('PATCH rejects provider failure without writing the local config', async () => {
     process.env.ELEVENLABS_API_KEY = 'test-key';
     mockMaybeSingle.mockResolvedValueOnce({ data: { id: 'rest-1', restaurant_name: 'Bistro', elevenlabs_agent_id: 'agent-123', agent_language: 'pt' }, error: null });
-    global.fetch.mockResolvedValueOnce({ ok: false, status: 503, text: async () => 'upstream unavailable' });
+    global.fetch.mockResolvedValueOnce(liveAgentResponse()).mockResolvedValueOnce({ ok: false, status: 503, text: async () => 'upstream unavailable' });
 
     const { req, res } = createMockReqRes({ method: 'PATCH', body: { language: 'es' } });
     await handler(req, res);
@@ -197,11 +296,11 @@ describe('ElevenLabs Voice Settings degradation', () => {
     process.env.ELEVENLABS_API_KEY = 'test-key';
     mockMaybeSingle.mockResolvedValueOnce({ data: { id: 'rest-1', restaurant_name: 'Bistro', elevenlabs_agent_id: 'agent-123', agent_language: 'pt' }, error: null });
     mockAwaitQueue.push({ data: null, error: null });
-    global.fetch.mockResolvedValueOnce({ ok: true });
+    global.fetch.mockResolvedValueOnce(liveAgentResponse()).mockResolvedValueOnce({ ok: true });
 
     const { req, res } = createMockReqRes({ method: 'PATCH', body: { language: 'es', voice_id: 'voice-456' } });
     await handler(req, res);
-    const providerBody = JSON.parse(global.fetch.mock.calls[0][1].body);
+    const providerBody = JSON.parse(global.fetch.mock.calls.find(([, options]) => options.method === 'PATCH')[1].body);
     expect(providerBody.conversation_config.agent.language).toBe('es');
     expect(providerBody.conversation_config.language).toBeUndefined();
     expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ voice_id: 'voice-456', agent_language: 'es' }));
@@ -215,11 +314,11 @@ describe('ElevenLabs Voice Settings degradation', () => {
       agent_language: 'pt', agent_greeting: 'Bem-vindo ao nosso bistrô!',
     }, error: null });
     mockAwaitQueue.push({ data: null, error: null });
-    global.fetch.mockResolvedValueOnce({ ok: true });
+    global.fetch.mockResolvedValueOnce(liveAgentResponse()).mockResolvedValueOnce({ ok: true });
 
     const { req, res } = createMockReqRes({ method: 'PATCH', body: { language: 'es' } });
     await handler(req, res);
-    const providerBody = JSON.parse(global.fetch.mock.calls[0][1].body);
+    const providerBody = JSON.parse(global.fetch.mock.calls.find(([, options]) => options.method === 'PATCH')[1].body);
     expect(providerBody.conversation_config.agent.first_message).toBe('Bem-vindo ao nosso bistrô!');
     expect(res.status).toHaveBeenCalledWith(200);
   });
@@ -228,7 +327,7 @@ describe('ElevenLabs Voice Settings degradation', () => {
     process.env.ELEVENLABS_API_KEY = 'test-key';
     mockMaybeSingle.mockResolvedValueOnce({ data: { id: 'rest-1', restaurant_name: 'Bistro', elevenlabs_agent_id: 'agent-123', agent_language: 'pt' }, error: null });
     mockAwaitQueue.push({ data: null, error: { message: 'database unavailable' } });
-    global.fetch.mockResolvedValueOnce({ ok: true });
+    global.fetch.mockResolvedValueOnce(liveAgentResponse()).mockResolvedValueOnce({ ok: true });
 
     const { req, res } = createMockReqRes({ method: 'PATCH', body: { language: 'es' } });
     await handler(req, res);
