@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 
 /**
  * Reusable horizontal tab bar for split-pane settings pages. Designed to break
@@ -30,10 +30,12 @@ interface SettingsTabsProps {
   lazyMount?: boolean;
   /** Optional storage key for the URL hash — useful when multiple SettingsTabs render on the same page (very rare). */
   hashKey?: string;
+  /** Reports the initial pane and subsequent changes, including external hash navigation. */
+  onTabChange?: (tabId: string) => void;
   className?: string;
 }
 
-export default function SettingsTabs({ tabs, defaultTabId, lazyMount = false, hashKey, className = '' }: SettingsTabsProps) {
+export default function SettingsTabs({ tabs, defaultTabId, lazyMount = false, hashKey, onTabChange, className = '' }: SettingsTabsProps) {
   const resolvedDefault = defaultTabId ?? tabs[0]?.id;
 
   // Initialize from URL hash if it matches a known tab; otherwise fall back
@@ -48,6 +50,17 @@ export default function SettingsTabs({ tabs, defaultTabId, lazyMount = false, ha
 
   const [activeId, setActiveId] = useState<string>(readInitialTab);
   const [visitedIds, setVisitedIds] = useState<Set<string>>(() => new Set([readInitialTab()]));
+  const onTabChangeRef = useRef(onTabChange);
+
+  useEffect(() => {
+    onTabChangeRef.current = onTabChange;
+  }, [onTabChange]);
+
+  // Notify for pane changes only. Recreated tab arrays or parent callbacks
+  // must not cause repeated notifications or parent/child render loops.
+  useEffect(() => {
+    onTabChangeRef.current?.(activeId);
+  }, [activeId]);
 
   const activateTab = useCallback((id: string) => {
     setActiveId(id);

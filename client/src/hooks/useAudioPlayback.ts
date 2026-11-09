@@ -29,12 +29,14 @@ export function useAudioPlayback({ voices, currentVoiceId, currentLanguage, rest
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const operationRef = useRef(0);
   const activeKeyRef = useRef<string | null>(null);
+  const activeSourceRef = useRef<PreviewSource | null>(null);
   const onErrorRef = useRef(onError);
   onErrorRef.current = onError;
 
   const stop = useCallback(() => {
     operationRef.current++;
     activeKeyRef.current = null;
+    activeSourceRef.current = null;
     requestRef.current?.abort();
     requestRef.current = null;
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -50,6 +52,13 @@ export function useAudioPlayback({ voices, currentVoiceId, currentLanguage, rest
       audio.load();
     }
   }, []);
+
+  const stopPlayback = useCallback((source?: PreviewSource) => {
+    if (source && activeSourceRef.current !== source) return;
+    stop();
+    setPlaying(null);
+    setLoading(null);
+  }, [stop]);
 
   const text = getPreviewText(currentLanguage, restaurantName);
   const configurationKey = JSON.stringify([currentVoiceId, currentLanguage, text,
@@ -84,6 +93,7 @@ export function useAudioPlayback({ voices, currentVoiceId, currentLanguage, rest
     if (isPlaying) return;
 
     const operation = operationRef.current;
+    activeSourceRef.current = source;
     const isCurrent = () => operationRef.current === operation;
     const playback = { voiceId, source, key };
     let failure: VoicePreviewError = 'previewFailed';
@@ -163,5 +173,6 @@ export function useAudioPlayback({ voices, currentVoiceId, currentLanguage, rest
     loadingSource: loading?.source ?? null,
     handlePlayVoice,
     handlePreviewWithSettings,
+    stopPlayback,
   };
 }

@@ -1,9 +1,55 @@
-import { afterEach, describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import SettingsTabs from '../SettingsTabs';
 
 afterEach(() => window.history.replaceState(null, '', window.location.pathname));
+
+const voiceTabs = () => [
+  { id: 'voice', label: 'Voice', content: <p>Voice preview controls</p> },
+  { id: 'phone', label: 'Phone', content: <p>Phone connection</p> },
+];
+
+describe('SettingsTabs active-pane notifications', () => {
+  it('reports the initial deep-linked pane once', () => {
+    window.history.replaceState(null, '', '#voice-settings:phone');
+    const onTabChange = vi.fn();
+    render(<SettingsTabs {...{ tabs: voiceTabs(), hashKey: 'voice-settings', onTabChange }} />);
+    expect(onTabChange).toHaveBeenCalledExactlyOnceWith('phone');
+  });
+
+  it('reports click, keyboard, and external hash navigation, keeping hidden panes mounted', async () => {
+    const onTabChange = vi.fn();
+    const user = userEvent.setup();
+    render(<SettingsTabs {...{ tabs: voiceTabs(), hashKey: 'voice-settings', onTabChange }} />);
+    await user.click(screen.getByRole('tab', { name: 'Phone' }));
+    await user.keyboard('{ArrowLeft}');
+    window.history.replaceState(null, '', '#voice-settings:phone');
+    fireEvent(window, new HashChangeEvent('hashchange'));
+    expect(onTabChange.mock.calls.map(([id]) => id)).toEqual(['voice', 'phone', 'voice', 'phone']);
+    expect(screen.getByText('Voice preview controls')).toBeInTheDocument();
+    expect(screen.getByText('Voice preview controls')).not.toBeVisible();
+  });
+
+  it('does not notify again for parent rerenders, recreated tabs, or reselecting the active tab', async () => {
+    const onTabChange = vi.fn();
+    const { rerender } = render(<SettingsTabs {...{ tabs: voiceTabs(), hashKey: 'voice-settings', onTabChange }} />);
+    rerender(<SettingsTabs {...{ tabs: voiceTabs(), hashKey: 'voice-settings', onTabChange }} />);
+    await userEvent.click(screen.getByRole('tab', { name: 'Voice' }));
+    expect(onTabChange).toHaveBeenCalledExactlyOnceWith('voice');
+  });
+
+  it('uses the latest callback without repeating notifications when its identity changes', async () => {
+    const oldCallback = vi.fn();
+    const latestCallback = vi.fn();
+    const { rerender } = render(<SettingsTabs {...{ tabs: voiceTabs(), hashKey: 'voice-settings', onTabChange: oldCallback }} />);
+    rerender(<SettingsTabs {...{ tabs: voiceTabs(), hashKey: 'voice-settings', onTabChange: latestCallback }} />);
+    expect(latestCallback).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('tab', { name: 'Phone' }));
+    expect(oldCallback).toHaveBeenCalledExactlyOnceWith('voice');
+    expect(latestCallback).toHaveBeenCalledExactlyOnceWith('phone');
+  });
+});
 
 describe('SettingsTabs lazy mounting', () => {
   it('does not fetch/render untouched panels, then preserves edits after a switch', async () => {

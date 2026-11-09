@@ -181,12 +181,16 @@ export default function VoiceTuningPanel({
           <button
             type="button"
             onClick={onPreview}
+            aria-describedby="voice-preview-hint"
             disabled={!currentVoiceId || loadingAudio !== null}
             className="px-5 py-2.5 text-sm font-medium bg-soft-gray hover:bg-border-gray rounded-xl transition-colors flex items-center gap-2 disabled:opacity-50"
           >
             {loadingAudio ? <Spinner size="sm" /> : <ThiingsIcon name={playingVoiceId === currentVoiceId ? "pause" : "play"} pxSize={16} />}
-            {playingVoiceId === currentVoiceId ? t('common.pause', 'Pause') : t('common.preview', 'Preview')}
+            {playingVoiceId === currentVoiceId ? t('common.pause', 'Pause') : t('voiceTuning.previewWithSettings', 'Hear how it sounds')}
           </button>
+          <p id="voice-preview-hint" className="mt-2 text-xs text-muted-stone">
+            {t('voiceSettings.previewHint')}
+          </p>
         </div>
       </div>
     </section>

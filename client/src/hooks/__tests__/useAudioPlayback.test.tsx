@@ -1,5 +1,6 @@
 import { act, cleanup, render, renderHook, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import i18n from 'i18next';
 import { authFetch } from '../../services/api';
 import { useAudioPlayback } from '../useAudioPlayback';
 import { DEFAULT_VOICE_SETTINGS, type EnhancedVoice } from '../../components/voice/voiceTypes';
@@ -179,6 +180,54 @@ describe('useAudioPlayback correctness', () => {
     expect(authFetch).toHaveBeenCalledTimes(1);
   });
 
+  it('stops only library playback when its controls are closed', async () => {
+    const { result } = renderHook(() => useAudioPlayback(options()));
+    await act(async () => { await result.current.handlePlayVoice('voice-a', 'Library text'); });
+    const sample = latestAudio();
+    act(() => { result.current.stopPlayback('library'); });
+    expect(sample.pause).toHaveBeenCalled();
+    expect(sample.src).toBe('');
+    expect(result.current.playingSource).toBeNull();
+    expect(result.current.loadingSource).toBeNull();
+  });
+
+  it('cancels pending library generation when its controls close', async () => {
+    const pending = deferred<Response>();
+    vi.mocked(authFetch).mockReturnValueOnce(pending.promise);
+    const { result } = renderHook(() => useAudioPlayback(options()));
+    let playback!: Promise<void>;
+    act(() => { playback = result.current.handlePlayVoice('voice-a', 'Library text'); });
+    const signal = vi.mocked(authFetch).mock.calls[0][1]?.signal;
+    act(() => { result.current.stopPlayback('library'); });
+    expect(signal?.aborted).toBe(true);
+    await act(async () => { pending.resolve(response()); await playback; });
+    expect(FakeAudio.instances).toHaveLength(0);
+    expect(result.current.loadingAudio).toBeNull();
+  });
+
+  it('preserves configured playback when the library closes', async () => {
+    const { result } = renderHook(() => useAudioPlayback(options()));
+    await act(async () => { await result.current.handlePreviewWithSettings(); });
+    const configured = latestAudio();
+    act(() => { result.current.stopPlayback('library'); });
+    expect(configured.pause).not.toHaveBeenCalled();
+    expect(result.current.playingSource).toBe('configured');
+  });
+
+  it('preserves pending configured generation when the library closes', async () => {
+    const pending = deferred<Response>();
+    vi.mocked(authFetch).mockReturnValueOnce(pending.promise);
+    const { result } = renderHook(() => useAudioPlayback(options()));
+    let playback!: Promise<void>;
+    act(() => { playback = result.current.handlePreviewWithSettings(); });
+    const signal = vi.mocked(authFetch).mock.calls[0][1]?.signal;
+    act(() => { result.current.stopPlayback('library'); });
+    expect(signal?.aborted).toBe(false);
+    expect(result.current.loadingSource).toBe('configured');
+    await act(async () => { pending.resolve(response()); await playback; });
+    expect(result.current.playingSource).toBe('configured');
+  });
+
   it('bounds a hung generation, aborting it and ignoring its later response', async () => {
     vi.useFakeTimers();
     try {
@@ -302,6 +351,11 @@ describe('useAudioPlayback correctness', () => {
 });
 
 describe('configured preview controls', () => {
+  it('retains the descriptive tuning action and explains the preview', () => {
+    render(<VoiceTuningPanel settings={DEFAULT_VOICE_SETTINGS} currentVoiceId="a" loadingAudio={null}
+      onSettingChange={vi.fn()} onApplyPreset={vi.fn()} onReset={vi.fn()} onPreview={vi.fn()} />);
+    expect(screen.getByRole('button', { name: 'Hear how it sounds' })).toHaveAccessibleDescription(i18n.t('voiceSettings.previewHint'));
+  });
   it('labels the current preview Pause while it is playing', () => {
     render(<VoiceCurrentCard currentVoiceId="a" pendingVoiceId={null} selectedBrowserVoice={undefined}
       savedVoiceName="Test" savedVoiceId="a" currentLanguage="pt" restaurantName="Test"

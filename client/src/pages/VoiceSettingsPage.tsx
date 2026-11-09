@@ -93,6 +93,8 @@ export default function VoiceSettingsPage() {
   const [showEngineSwitchConfirm, setShowEngineSwitchConfirm] = useState(false);
   const [engineSwitchTarget, setEngineSwitchTarget] = useState<VoiceEngineSettings['voice_engine'] | null>(null);
   const [isBrowserOpen, setIsBrowserOpen] = useState(false);
+  const [activeVoicePane, setActiveVoicePane] = useState(() =>
+    typeof window !== 'undefined' && window.location.hash === '#voice-settings:phone' ? 'phone' : 'voice');
 
   // ─── Derived state ────────────────────────────────────────────────────────────
 
@@ -117,17 +119,22 @@ export default function VoiceSettingsPage() {
 
   // ─── Audio playback ───────────────────────────────────────────────────────────
 
-  const { playingVoiceId, playingSource, loadingAudio, loadingSource, handlePlayVoice, handlePreviewWithSettings } = useAudioPlayback({
+  const { playingVoiceId, playingSource, loadingAudio, loadingSource, handlePlayVoice, handlePreviewWithSettings, stopPlayback } = useAudioPlayback({
     voices,
     currentVoiceId,
     currentLanguage,
     restaurantName: config?.restaurant_name || undefined,
     currentSettings,
-    enabled: currentEngine === 'elevenlabs',
+    enabled: currentEngine === 'elevenlabs' && activeVoicePane === 'voice',
     onError: (error) => toast.error(t(`voiceSettings.${error}`)),
   });
 
   // ─── Handlers ─────────────────────────────────────────────────────────────────
+
+  const handleToggleVoiceBrowser = () => {
+    if (isBrowserOpen) stopPlayback('library');
+    setIsBrowserOpen(!isBrowserOpen);
+  };
 
   const handleSettingChange = (key: keyof VoiceSettings, value: number) => {
     setPendingSettings((previous) => ({ ...(previous ?? config?.voice_settings ?? DEFAULT_VOICE_SETTINGS), [key]: value }));
@@ -397,7 +404,7 @@ export default function VoiceSettingsPage() {
                     loadingAudio={loadingSource === 'configured' ? loadingAudio : null}
                     playingVoiceId={playingSource === 'configured' ? playingVoiceId : null}
                     onPlay={() => { void handlePreviewWithSettings(); }}
-                    onToggleBrowser={() => setIsBrowserOpen(!isBrowserOpen)}
+                    onToggleBrowser={handleToggleVoiceBrowser}
                   />
                   <VoiceTuningPanel
                     settings={currentSettings}
@@ -478,7 +485,7 @@ export default function VoiceSettingsPage() {
 
           return (
             <>
-              <SettingsTabs tabs={tabs} hashKey="voice-settings" />
+              <SettingsTabs tabs={tabs} hashKey="voice-settings" onTabChange={setActiveVoicePane} />
               <div className="hairline my-10" />
               <p className="text-[15px] text-muted-stone">
                 {t('voiceSettings.otherChannels')}{' '}
