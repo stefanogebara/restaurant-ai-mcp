@@ -5,6 +5,7 @@
  * Used by ElevenLabs webhook to route calls to correct restaurant
  */
 
+const { isSharedPlatformPhone } = require('./platform-phone-policy');
 const { supabaseAdmin: query } = require('./supabase');
 const { createSecureLogger } = require('./secure-logger');
 const logger = createSecureLogger('RestaurantLoader');
@@ -15,6 +16,7 @@ const logger = createSecureLogger('RestaurantLoader');
  * @returns {Promise<Object>} Restaurant configuration including voice, greeting, hours, etc.
  */
 async function getRestaurantByPhone(phoneNumber) {
+  if (isSharedPlatformPhone(phoneNumber)) return null;
   if (!phoneNumber) {
     throw new Error('Phone number is required for restaurant lookup');
   }

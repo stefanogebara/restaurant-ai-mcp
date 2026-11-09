@@ -387,6 +387,24 @@ describe('Shared voice agent routing', () => {
     expect(res.status).toHaveBeenCalledWith(403);
   });
 
+  test.each(['header','query-phone','query-called','body-called','body-phone'])('rejects a formatted shared line in %s before explicit tenant fallback', async location => {
+    const formatted = '+1 (555) 123-4567';
+    const body = { action: 'check_availability', restaurant_id: RESTAURANT_A.id, agent_id: 'agent_dedicated', date: '2026-11-09', time: '19:00', party_size: 2 };
+    const query = {};
+    const requestHeaders = {};
+    if (location === 'header') requestHeaders['x-called-number'] = formatted;
+    if (location === 'query-phone') query.phone = formatted;
+    if (location === 'query-called') query.called_phone = formatted;
+    if (location === 'body-called') body.called_phone = formatted;
+    if (location === 'body-phone') body.phone = formatted;
+    const res = mockRes();
+    await handler(bearerReq({ body, query, headers: requestHeaders }), res);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(mockCheckAvailability).not.toHaveBeenCalled();
+    expect(mockGetRestaurantById).not.toHaveBeenCalled();
+    expect(mockGetRestaurantByAgentId).not.toHaveBeenCalled();
+  });
+
   test('rejects the shared called number without an agent ID when using the legacy token', async () => {
     const res = mockRes();
     await handler(bearerReq({ body: { action: 'get_current_datetime' }, headers: { 'x-called-number': called } }), res);
