@@ -43,3 +43,22 @@ test('a shared platform phone cannot be resolved through the legacy restaurant l
  try {const {getRestaurantByPhone}=require('../_lib/restaurant-loader');expect(await getRestaurantByPhone('+55 (11) 5028-9356')).toBeNull();expect(mockChain.schema).not.toHaveBeenCalled();}
  finally{if(previous===undefined)delete process.env.ELEVENLABS_SHARED_PHONE;else process.env.ELEVENLABS_SHARED_PHONE=previous;}
 });
+
+
+describe.each([
+  ['getRestaurantById', 'rest-notices'],
+  ['getRestaurantByPhone', '+551140001234'],
+  ['getRestaurantByAgentId', 'agent-notices'],
+])('%s outbound notice setting', (lookup, identifier) => {
+  test.each([false, true])('loads and preserves whatsapp_enabled=%s instead of dropping the explicit setting', async enabled => {
+    const row = { id: 'rest-notices', restaurant_name: 'Sandbox', whatsapp_enabled: enabled };
+    mockSingle.mockImplementationOnce(async () => {
+      // Simulate the selected columns so the test covers both projection and mapping.
+      const columns = mockChain.select.mock.calls.at(-1)[0].split(',').map(column => column.trim());
+      return { data: Object.fromEntries(columns.filter(column => column in row).map(column => [column, row[column]])), error: null };
+    });
+    const restaurant = await require('../_lib/restaurant-loader')[lookup](identifier);
+    expect(restaurant.whatsapp_enabled).toBe(enabled);
+    expect(mockChain.select.mock.calls.at(-1)[0].split(',').map(column => column.trim())).toContain('whatsapp_enabled');
+  });
+});

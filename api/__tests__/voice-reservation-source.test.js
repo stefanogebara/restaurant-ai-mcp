@@ -206,3 +206,42 @@ test('Italian voice booking keeps both WhatsApp template and spoken confirmation
   expect(result.success).toBe(true); expect(mockSendTemplateMessage).not.toHaveBeenCalled();
   expect(result.message).toMatch(/n[aã]o.*confirmar.*WhatsApp/i);
 });
+
+
+test('explicitly disabled WhatsApp notices do not start tracking or send, while the voice booking succeeds', async () => {
+  const { beginConfirmation, finishConfirmation } = require('../_services/reservationWhatsAppDelivery');
+  beginConfirmation.mockClear();
+  finishConfirmation.mockClear();
+  const result = await createReservation(
+    'sandbox-restaurant',
+    { restaurant_name: 'Sandbox', timezone: 'America/Sao_Paulo', agent_language: 'pt-BR', whatsapp_enabled: false },
+    { date: '2026-11-09', time: '19:00', party_size: 2, customer_name: 'Test', customer_phone: '+551150283918' },
+  );
+
+  expect(result.success).toBe(true);
+  expect(result.reservation_id).toBe('RES-VOICE-SOURCE');
+  expect(mockDbCreateReservation).toHaveBeenCalledWith('sandbox-restaurant', expect.objectContaining({ source: 'voice_ai', status: 'confirmed' }));
+  expect(result.message).toMatch(/reserva.*confirmada/i);
+  expect(result.message).not.toMatch(/solicitamos.*WhatsApp|receber[aá].*WhatsApp/i);
+  expect(beginConfirmation).not.toHaveBeenCalled();
+  expect(finishConfirmation).not.toHaveBeenCalled();
+  expect(mockSendTemplateMessage).not.toHaveBeenCalled();
+});
+
+test('explicitly enabled WhatsApp notices still track and send the voice confirmation normally', async () => {
+  const { beginConfirmation, finishConfirmation } = require('../_services/reservationWhatsAppDelivery');
+  beginConfirmation.mockClear();
+  finishConfirmation.mockClear();
+  mockDbCreateReservation.mockResolvedValueOnce({ success: true, data: { id: 'reservation-enabled' } });
+  const result = await createReservation(
+    'sandbox-restaurant',
+    { restaurant_name: 'Sandbox', timezone: 'America/Sao_Paulo', agent_language: 'pt-BR', whatsapp_enabled: true },
+    { date: '2026-11-09', time: '19:00', party_size: 2, customer_name: 'Test', customer_phone: '+551150283918' },
+  );
+
+  expect(result.success).toBe(true);
+  expect(beginConfirmation).toHaveBeenCalledWith(expect.objectContaining({ restaurantId: 'sandbox-restaurant', reservationRecordId: 'reservation-enabled' }));
+  expect(mockSendTemplateMessage).toHaveBeenCalledTimes(1);
+  expect(finishConfirmation).toHaveBeenCalledWith(expect.any(Object), expect.objectContaining({ success: true }));
+  expect(result.message).toMatch(/solicitamos.*WhatsApp/i);
+});

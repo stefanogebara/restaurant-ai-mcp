@@ -31,7 +31,7 @@ async function getRestaurantByPhone(phoneNumber) {
     const result = await query
       .schema('restaurant')
       .from('restaurant_config')
-      .select('id, restaurant_name, city, country, phone, email, website, voice_id, voice_engine, voice_engine_status, openai_voice_id, persona_prompt_override, voice_ws_endpoint, agent_name, agent_greeting, agent_language, ai_config, business_hours, timezone, average_dining_duration_minutes, table_configuration, reservation_settings, team_members')
+      .select('id, restaurant_name, city, country, phone, email, website, whatsapp_enabled, voice_id, voice_engine, voice_engine_status, openai_voice_id, persona_prompt_override, voice_ws_endpoint, agent_name, agent_greeting, agent_language, ai_config, business_hours, timezone, average_dining_duration_minutes, table_configuration, reservation_settings, team_members')
       .eq('phone', phoneNumber)
       .eq('is_active', true)
       .eq('onboarding_completed', true)
@@ -56,6 +56,7 @@ async function getRestaurantByPhone(phoneNumber) {
       phone: restaurant.phone,
       email: restaurant.email,
       website: restaurant.website,
+      whatsapp_enabled: restaurant.whatsapp_enabled,
 
       // Voice configuration
       voice_id: restaurant.voice_id,
@@ -109,7 +110,7 @@ async function getRestaurantById(restaurantId) {
     const result = await query
       .schema('restaurant')
       .from('restaurant_config')
-      .select('id, restaurant_name, city, country, phone, email, website, voice_id, voice_engine, voice_engine_status, openai_voice_id, persona_prompt_override, voice_ws_endpoint, agent_name, agent_greeting, agent_language, ai_config, business_hours, timezone, average_dining_duration_minutes, table_configuration, reservation_settings, team_members, is_demo, onboarding_completed')
+      .select('id, restaurant_name, city, country, phone, email, website, whatsapp_enabled, voice_id, voice_engine, voice_engine_status, openai_voice_id, persona_prompt_override, voice_ws_endpoint, agent_name, agent_greeting, agent_language, ai_config, business_hours, timezone, average_dining_duration_minutes, table_configuration, reservation_settings, team_members, is_demo, onboarding_completed')
       .eq('id', restaurantId)
       .eq('is_active', true)
       .single();
@@ -129,6 +130,7 @@ async function getRestaurantById(restaurantId) {
         phone: restaurant.phone,
         email: restaurant.email,
         website: restaurant.website,
+        whatsapp_enabled: restaurant.whatsapp_enabled,
         voice_id: restaurant.voice_id,
         voice_engine: restaurant.voice_engine || 'elevenlabs',
         voice_engine_status: restaurant.voice_engine_status || 'active',
@@ -220,7 +222,7 @@ async function getRestaurantByAgentId(agentId) {
     const result = await query
       .schema('restaurant')
       .from('restaurant_config')
-      .select('id, restaurant_name, city, country, phone, email, website, voice_id, voice_engine, voice_engine_status, openai_voice_id, persona_prompt_override, voice_ws_endpoint, agent_name, agent_greeting, agent_language, ai_config, business_hours, timezone, average_dining_duration_minutes, table_configuration, reservation_settings, team_members, elevenlabs_agent_id')
+      .select('id, restaurant_name, city, country, phone, email, website, whatsapp_enabled, voice_id, voice_engine, voice_engine_status, openai_voice_id, persona_prompt_override, voice_ws_endpoint, agent_name, agent_greeting, agent_language, ai_config, business_hours, timezone, average_dining_duration_minutes, table_configuration, reservation_settings, team_members, elevenlabs_agent_id')
       .eq('elevenlabs_agent_id', agentId)
       .eq('is_active', true)
       .single();
@@ -241,6 +243,7 @@ async function getRestaurantByAgentId(agentId) {
       phone: restaurant.phone,
       email: restaurant.email,
       website: restaurant.website,
+      whatsapp_enabled: restaurant.whatsapp_enabled,
       voice_id: restaurant.voice_id,
       voice_engine: restaurant.voice_engine || 'elevenlabs',
       voice_engine_status: restaurant.voice_engine_status || 'active',

@@ -416,29 +416,34 @@ async function createReservation(restaurantId, restaurant, params) {
     // alimentam a detecção de no-show), e a resposta ainda diz success: true.
     // Teto menor que os 5s usados no resto do projeto porque aqui é chamada de
     // voz ao vivo — teto estourado vira silêncio na linha com o cliente.
-    const normalizedPhone = customer_phone.startsWith('+') ? customer_phone : `+${customer_phone}`;
-    let confirmationTimeout;
-    const whatsappResult = await Promise.race([
-      sendVoiceReservationWhatsApp({
-        phone: normalizedPhone,
-        restaurantName,
-        restaurantId,
-        reservationId,
-        reservationRecordId: createResult.data?.id,
-        customerName: customer_name,
-        partySize: party_size,
-        date,
-        time,
-        language: restaurant.agent_language || restaurant.language || 'pt-BR'
-      }).catch(err => {
-        logger.warn('WhatsApp confirmation failed (non-fatal):', err.message);
-        return { success: false };
-      }),
-      new Promise((resolve) => { confirmationTimeout = setTimeout(() => resolve({ success: false, timeout: true }), 3000); }),
-    ]);
-    clearTimeout(confirmationTimeout);
-    if (!whatsappResult?.success) {
-      logger.warn('WhatsApp confirmation was not accepted before the voice response');
+    // Honor an explicit owner opt-out before tracking or contacting WhatsApp.
+    // Older internal callers without this flag retain their existing behavior.
+    let whatsappResult;
+    if (restaurant.whatsapp_enabled !== false) {
+      const normalizedPhone = customer_phone.startsWith('+') ? customer_phone : `+${customer_phone}`;
+      let confirmationTimeout;
+      whatsappResult = await Promise.race([
+        sendVoiceReservationWhatsApp({
+          phone: normalizedPhone,
+          restaurantName,
+          restaurantId,
+          reservationId,
+          reservationRecordId: createResult.data?.id,
+          customerName: customer_name,
+          partySize: party_size,
+          date,
+          time,
+          language: restaurant.agent_language || restaurant.language || 'pt-BR'
+        }).catch(err => {
+          logger.warn('WhatsApp confirmation failed (non-fatal):', err.message);
+          return { success: false };
+        }),
+        new Promise((resolve) => { confirmationTimeout = setTimeout(() => resolve({ success: false, timeout: true }), 3000); }),
+      ]);
+      clearTimeout(confirmationTimeout);
+      if (!whatsappResult?.success) {
+        logger.warn('WhatsApp confirmation was not accepted before the voice response');
+      }
     }
 
     // Tell the caller what we actually know about the WhatsApp request.
