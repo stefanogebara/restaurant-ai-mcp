@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { QueryClient, QueryClientProvider, focusManager } from '@tanstack/react-query';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useSaveWhatsAppSettings, useSendTestMessage, useWhatsAppTestMessageStatus } from '../useWhatsAppSettings';
 
 const { mockFetch } = vi.hoisted(() => ({ mockFetch: vi.fn() }));
@@ -51,5 +51,97 @@ describe('WhatsApp response truthfulness', () => {
     const { result } = renderHook(() => useWhatsAppTestMessageStatus(), { wrapper });
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error?.message).toBe('Lookup unavailable');
+  });
+});
+
+describe('bounded WhatsApp receipt polling', () => {
+  let client: QueryClient;
+  const requested = '2026-11-09T12:00:00Z';
+  function receipt(status: string, requestedAt = requested) {
+    return { id: 'real-test', status, requested_at: requestedAt, status_updated_at: new Date().toISOString() };
+  }
+  function mount() {
+    const created = setup();
+    client = created.client;
+    return renderHook(() => useWhatsAppTestMessageStatus(), { wrapper: created.wrapper });
+  }
+  async function advance(ms: number) {
+    await act(async () => { await vi.advanceTimersByTimeAsync(ms); });
+  }
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(requested));
+    focusManager.setFocused(true);
+  });
+  afterEach(() => {
+    client?.clear();
+    focusManager.setFocused(undefined);
+    vi.useRealTimers();
+  });
+
+  it('finds a read receipt after delivery without reload, then stops', async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ success: true, data: receipt('delivered') }) });
+    respond({ success: true, data: receipt('read') });
+    const { result } = mount();
+    await advance(1);
+    await advance(59_000);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    await advance(1_000);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(result.current.data?.status).toBe('read');
+    await advance(120_000);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it.each(['accepted', 'sent', 'queued'])('checks %s every fifteen seconds', async (status) => {
+    respond({ success: true, data: receipt(status) });
+    mount();
+    await advance(1);
+    await advance(15_000);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('preserves the original deadline as a pending message becomes delivered', async () => {
+    vi.setSystemTime(new Date('2026-11-09T12:08:00Z'));
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ success: true, data: receipt('sent') }) });
+    mockFetch.mockImplementation(async () => ({ ok: true, json: async () => ({ success: true, data: receipt('delivered') }) }));
+    mount();
+    await advance(1);
+    await advance(15_000);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    await advance(60_000);
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+    await advance(45_000);
+    expect(mockFetch).toHaveBeenCalledTimes(4);
+    await advance(10 * 60_000);
+    expect(mockFetch).toHaveBeenCalledTimes(4);
+  });
+
+  it.each([
+    ['read', requested], ['failed', requested], ['unknown', requested],
+    ['delivered', 'invalid'], ['delivered', '2026-11-09T11:50:00Z'],
+    ['delivered', '2026-11-09T12:01:00Z'],
+  ])('does not poll terminal, invalid or expired data: %s / %s', async (status, requestedAt) => {
+    respond({ success: true, data: receipt(status, requestedAt) });
+    mount();
+    await advance(1);
+    await advance(120_000);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not poll when no previous test exists', async () => {
+    respond({ success: true, data: null });
+    mount();
+    await advance(120_000);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('pauses delivered-message polling while the tab is in the background', async () => {
+    respond({ success: true, data: receipt('delivered') });
+    mount();
+    await advance(1);
+    focusManager.setFocused(false);
+    await advance(120_000);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 });
