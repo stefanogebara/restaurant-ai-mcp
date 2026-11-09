@@ -117,12 +117,14 @@ export default function VoiceSettingsPage() {
 
   // ─── Audio playback ───────────────────────────────────────────────────────────
 
-  const { playingVoiceId, loadingAudio, handlePlayVoice, handlePreviewWithSettings } = useAudioPlayback({
+  const { playingVoiceId, playingSource, loadingAudio, loadingSource, handlePlayVoice, handlePreviewWithSettings } = useAudioPlayback({
     voices,
     currentVoiceId,
     currentLanguage,
     restaurantName: config?.restaurant_name || undefined,
     currentSettings,
+    enabled: currentEngine === 'elevenlabs',
+    onError: (error) => toast.error(t(`voiceSettings.${error}`)),
   });
 
   // ─── Handlers ─────────────────────────────────────────────────────────────────
@@ -392,19 +394,20 @@ export default function VoiceSettingsPage() {
                     currentLanguage={currentLanguage}
                     restaurantName={config.restaurant_name || undefined}
                     isBrowserOpen={isBrowserOpen}
-                    loadingAudio={loadingAudio}
-                    playingVoiceId={playingVoiceId}
-                    onPlay={handlePlayVoice}
+                    loadingAudio={loadingSource === 'configured' ? loadingAudio : null}
+                    playingVoiceId={playingSource === 'configured' ? playingVoiceId : null}
+                    onPlay={() => { void handlePreviewWithSettings(); }}
                     onToggleBrowser={() => setIsBrowserOpen(!isBrowserOpen)}
                   />
                   <VoiceTuningPanel
                     settings={currentSettings}
                     currentVoiceId={currentVoiceId}
-                    loadingAudio={loadingAudio}
+                    loadingAudio={loadingSource === 'configured' ? loadingAudio : null}
+                    playingVoiceId={playingSource === 'configured' ? playingVoiceId : null}
                     onSettingChange={handleSettingChange}
                     onApplyPreset={handlePresetChange}
                     onReset={() => setPendingSettings({ ...DEFAULT_VOICE_SETTINGS })}
-                    onPreview={() => handlePreviewWithSettings(toast)}
+                    onPreview={() => { void handlePreviewWithSettings(); }}
                   />
                   {isBrowserOpen && (
                     <section className="py-5">
@@ -437,8 +440,8 @@ export default function VoiceSettingsPage() {
                           <VoiceGrid
                             voices={voices}
                             selectedVoiceId={pendingVoiceId || config.voice_id || ''}
-                            playingVoiceId={playingVoiceId}
-                            loadingAudioId={loadingAudio}
+                            playingVoiceId={playingSource === 'library' ? playingVoiceId : null}
+                            loadingAudioId={loadingSource === 'library' ? loadingAudio : null}
                             hasMore={hasMore}
                             isLoadingMore={isLoadingMore}
                             onSelectVoice={setPendingVoiceId}

@@ -9,6 +9,7 @@ interface Props {
   settings: VoiceSettings;
   currentVoiceId: string;
   loadingAudio: string | null;
+  playingVoiceId?: string | null;
   onSettingChange: (key: keyof VoiceSettings, value: number) => void;
   onApplyPreset: (preset: Pick<VoiceSettings, 'stability' | 'similarity_boost' | 'style'>) => void;
   onReset: () => void;
@@ -53,6 +54,7 @@ export default function VoiceTuningPanel({
   settings,
   currentVoiceId,
   loadingAudio,
+  playingVoiceId,
   onSettingChange,
   onApplyPreset,
   onReset,
@@ -182,8 +184,8 @@ export default function VoiceTuningPanel({
             disabled={!currentVoiceId || loadingAudio !== null}
             className="px-5 py-2.5 text-sm font-medium bg-soft-gray hover:bg-border-gray rounded-xl transition-colors flex items-center gap-2 disabled:opacity-50"
           >
-            {loadingAudio ? <Spinner size="sm" /> : <ThiingsIcon name="play" pxSize={16} />}
-            {t('voiceTuning.previewWithSettings', 'Hear how it sounds')}
+            {loadingAudio ? <Spinner size="sm" /> : <ThiingsIcon name={playingVoiceId === currentVoiceId ? "pause" : "play"} pxSize={16} />}
+            {playingVoiceId === currentVoiceId ? t('common.pause', 'Pause') : t('common.preview', 'Preview')}
           </button>
         </div>
       </div>

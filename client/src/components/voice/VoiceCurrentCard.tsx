@@ -88,7 +88,7 @@ export default function VoiceCurrentCard({
                 ) : (
                   <ThiingsIcon name="play" pxSize={16} />
                 )}
-                {t('voiceCurrentCard.preview', 'Preview')}
+                {playingVoiceId === currentVoiceId ? t('common.pause', 'Pause') : t('common.preview', 'Preview')}
               </button>
             )}
             <button
