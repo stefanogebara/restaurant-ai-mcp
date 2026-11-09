@@ -52,7 +52,7 @@ import ThiingsIcon from '../components/common/ThiingsIcon';
 import { LS_FIRST_RESERVATION_TRACKED, LS_LAUNCH_CHECKLIST_DONE } from '../config/localStorageKeys';
 import LaunchChecklistModal from '../components/dashboard/LaunchChecklistModal';
 import { useToast } from '../contexts/ToastContext';
-import { formatLocalDate, todayLocalISO } from '../utils/timeFormatting';
+import { getDashboardReservationDays } from '../utils/dashboardReservationDays';
 
 function maybeTrackFirstReservation() {
   if (!localStorage.getItem(LS_FIRST_RESERVATION_TRACKED)) {
@@ -122,14 +122,11 @@ export default function Dashboard() {
   // The polling fallback above does not depend on this subscription.
   useRealtimeDashboard(restaurantId);
 
-  // Local timezone — see todayLocalISO docs. Anti-pattern toISOString().split('T')[0]
-  // gave hosts in São Paulo at 23:00 tomorrow's date, hiding actual-today reservations.
-  const today = todayLocalISO();
-  const tomorrow = formatLocalDate(new Date(Date.now() + 86400000));
+  // Reservation dates belong to the restaurant, even when its host is travelling.
+  const { today, tomorrow, weekEnd } = getDashboardReservationDays(restaurantTimezone);
   // Day+2..Day+7 so a restaurant sees any booking made up to a week ahead.
   // Before: anything past tomorrow was invisible on the dashboard — caught
   // by an E2E that booked 2 days out and had the reservation vanish.
-  const weekEnd = formatLocalDate(new Date(Date.now() + 7 * 86400000));
   const todayReservations = reservations.filter((r) => r.date === today);
   const tomorrowReservations = reservations.filter((r) => r.date === tomorrow);
   const weekReservations = reservations.filter((r) => r.date > tomorrow && r.date <= weekEnd);
