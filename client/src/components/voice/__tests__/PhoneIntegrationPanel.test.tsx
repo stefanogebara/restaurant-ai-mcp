@@ -47,7 +47,7 @@ it('describes shared setup without claiming the line is disconnected or an indiv
   expect(screen.getByRole('heading', { name: 'Shared routing configured' })).toBeVisible();
   expect(screen.queryByRole('heading', { name: 'Phone not connected' })).not.toBeInTheDocument();
   expect(screen.queryByText(/No number has been assigned/)).not.toBeInTheDocument();
-  expect(screen.queryByText(/AI receptionist not set up yet/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/No individual agent is linked/)).not.toBeInTheDocument();
   expect(screen.queryByRole('link', { name: 'Ask Seatable to connect the phone' })).not.toBeInTheDocument();
   expect(screen.queryByText(/5028-9356/)).not.toBeInTheDocument();
 });
