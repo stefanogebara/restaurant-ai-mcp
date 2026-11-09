@@ -53,10 +53,36 @@ test('call list returns only the fields needed for its rows', async () => {
 
   const columns = mockQuery.select.mock.calls[0][0].split(',').map(column => column.trim());
   expect(columns).toEqual([
-    'id', 'conversation_id', 'caller_phone', 'called_phone', 'started_at',
+    'id', 'conversation_id', 'caller_phone', 'called_phone', 'started_at', 'ended_at',
     'duration_seconds', 'language', 'outcome', 'customer_name', 'party_size',
   ]);
   expect(res.status).toHaveBeenCalledWith(200);
+});
+
+test('list preserves completion markers for finished and unfinished calls without a recorded duration', async () => {
+  const rows = [
+    { id: 'finished', started_at: '2026-11-09T13:00:00Z', ended_at: '2026-11-09T13:01:00Z', duration_seconds: null, language: 'pt', transcript: ['detail-only'] },
+    { id: 'unfinished', started_at: '2026-11-09T13:02:00Z', ended_at: null, duration_seconds: null, language: 'en', transcript: [] },
+  ];
+  // Model the Data API projection: omitted columns must not magically appear
+  // in the response just because a fixture has them.
+  mockQuery.then.mockImplementationOnce(resolve => {
+    const columns = mockQuery.select.mock.calls[0][0].split(',').map(column => column.trim());
+    return resolve({
+      data: rows.map(row => Object.fromEntries(columns.filter(column => column in row).map(column => [column, row[column]]))),
+      error: null,
+      count: rows.length,
+    });
+  });
+  const res = response();
+  await handler({ method: 'GET', query: { action: 'list', channel: 'phone' } }, res);
+
+  expect(res.status).toHaveBeenCalledWith(200);
+  const { conversations } = res.json.mock.calls[0][0];
+  expect(conversations).toEqual([
+    { id: 'finished', started_at: '2026-11-09T13:00:00Z', ended_at: '2026-11-09T13:01:00Z', duration_seconds: null, language: 'pt' },
+    { id: 'unfinished', started_at: '2026-11-09T13:02:00Z', ended_at: null, duration_seconds: null, language: 'en' },
+  ]);
 });
 
 test('phone history requires caller or called number evidence', async () => {

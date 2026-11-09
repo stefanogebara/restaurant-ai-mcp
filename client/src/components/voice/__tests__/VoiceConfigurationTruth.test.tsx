@@ -79,7 +79,7 @@ describe('voice configuration is distinct from a connected phone', () => {
       <VoiceEngineSwitchModal isOpen engineSwitchTarget="openai_realtime" onConfirm={vi.fn()} onClose={vi.fn()} />,
     );
 
-    expect(screen.getByText(/Aún tendrás que guardar el cambio/)).toBeInTheDocument();
+    expect(screen.getByText(/Guarda la voz para aplicar el cambio/)).toBeInTheDocument();
     expect(screen.getByText(/Voz directa/)).toBeInTheDocument();
     expect(screen.queryByText(/30 segundos|ninguna llamada/i)).not.toBeInTheDocument();
   });

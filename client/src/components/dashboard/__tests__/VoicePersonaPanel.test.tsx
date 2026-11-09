@@ -35,7 +35,7 @@ describe('VoicePersonaPanel', () => {
 
   it('renders heading', () => {
     renderWithClient(<VoicePersonaPanel />);
-    expect(screen.getByText('Agent Persona')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Name and greeting' })).toBeInTheDocument();
   });
 
   it('renders agent name input with current value', () => {
@@ -45,7 +45,7 @@ describe('VoicePersonaPanel', () => {
 
   it('save button disabled when no changes', () => {
     renderWithClient(<VoicePersonaPanel />);
-    expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save name and greeting' })).toBeDisabled();
   });
 
   it('save button enabled after editing', async () => {
@@ -54,6 +54,6 @@ describe('VoicePersonaPanel', () => {
     const input = screen.getByDisplayValue('Sofia');
     await user.clear(input);
     await user.type(input, 'Marco');
-    expect(screen.getByRole('button', { name: /save/i })).not.toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save name and greeting' })).not.toBeDisabled();
   });
 });

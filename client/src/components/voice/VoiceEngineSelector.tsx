@@ -60,9 +60,10 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
           <button
             type="button"
             onClick={() => onEngineSwitch('elevenlabs')}
+            aria-pressed={currentEngine === 'elevenlabs'}
             className={`text-left p-4 rounded-2xl border-2 transition-all ${
               currentEngine === 'elevenlabs'
-                ? 'border-burgundy bg-burgundy/5'
+                ? 'border-deep-charcoal bg-soft-gray'
                 : 'border-glass-border-dark hover:border-muted-stone'
             }`}
           >
@@ -71,7 +72,7 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
                 {t('voiceEngine.premiumName')}
               </span>
               {currentEngine === 'elevenlabs' && (
-                <span className="text-xs font-medium text-deep-charcoal bg-deep-charcoal/[0.06] px-2 py-0.5 rounded-full">{t('voiceEngine.current')}</span>
+                <span className="text-xs font-medium text-deep-charcoal bg-deep-charcoal/[0.06] px-2 py-0.5 rounded-full">{t(pendingEngine ? 'voiceEngine.pending' : 'voiceEngine.current')}</span>
               )}
             </div>
             <p className="text-sm text-muted-stone">
@@ -82,9 +83,10 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
           <button
             type="button"
             onClick={() => onEngineSwitch('openai_realtime')}
+            aria-pressed={currentEngine === 'openai_realtime'}
             className={`text-left p-4 rounded-2xl border-2 transition-all ${
               currentEngine === 'openai_realtime'
-                ? 'border-burgundy bg-burgundy/5'
+                ? 'border-deep-charcoal bg-soft-gray'
                 : 'border-glass-border-dark hover:border-muted-stone'
             }`}
           >
@@ -93,7 +95,7 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
                 {t('voiceEngine.fastName')}
               </span>
               {currentEngine === 'openai_realtime' && (
-                <span className="text-xs font-medium text-deep-charcoal bg-deep-charcoal/[0.06] px-2 py-0.5 rounded-full">{t('voiceEngine.current')}</span>
+                <span className="text-xs font-medium text-deep-charcoal bg-deep-charcoal/[0.06] px-2 py-0.5 rounded-full">{t(pendingEngine ? 'voiceEngine.pending' : 'voiceEngine.current')}</span>
               )}
             </div>
             <p className="text-sm text-muted-stone">
@@ -102,11 +104,7 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
           </button>
         </div>
 
-        {pendingEngine && (
-          <p className="mt-3 text-xs text-amber-600 bg-amber-600/10 rounded-xl px-3 py-2">
-            {t('voiceEngine.changePending', 'Change pending. Click "Save Changes" to apply.')}
-          </p>
-        )}
+
       </div>
     </section>
   );

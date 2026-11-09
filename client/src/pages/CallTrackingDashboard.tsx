@@ -5,7 +5,7 @@
  * UI is delegated to focused subcomponents in components/call-tracking/.
  */
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { SkeletonCallTracking } from '../components/common/Skeleton';
@@ -58,10 +58,20 @@ export default function CallTrackingDashboard() {
   const { data: convsResult, isLoading, isError, isFetching: isFetchingConversations, refetch: refetchConversations } = useCallConversations(filter, userId, page, channel);
   const { data: stats, isError: statsError, refetch: refetchStats } = useCallStats(filter, userId, channel);
   const phoneStatusQuery = usePhoneStatus(userId);
-  const { data: selectedConversation } = useConversationDetail(selectedConversationId);
+  const conversationDetail = useConversationDetail(selectedConversationId);
+  const selectedConversation = conversationDetail.data;
 
   const conversations = convsResult?.conversations ?? [];
   const pagination = convsResult?.pagination;
+  // A moving date window or a deletion can remove the final page during polling.
+  // Clamp only after this page's settled response, never against another page's data.
+  useEffect(() => {
+    if (isLoading || isFetchingConversations || isError || !pagination || page === 0) return;
+    if (pagination.offset !== page * CALLS_PAGE_SIZE || !Number.isFinite(pagination.total) || pagination.total < 0) return;
+    const lastPage = Math.max(0, Math.ceil(pagination.total / CALLS_PAGE_SIZE) - 1);
+    if (page > lastPage) setPage(lastPage);
+  }, [isLoading, isFetchingConversations, isError, pagination, page]);
+
   const changeFilter = useCallback((next: CallFilter) => {
     setPage(0);
     setFilter(next);
@@ -232,9 +242,13 @@ export default function CallTrackingDashboard() {
             )}
           </div>
 
-          {selectedConversation && (
+          {selectedConversationId && (
             <CallConversationModal
-              conversation={selectedConversation}
+              conversation={selectedConversation ?? null}
+              isLoading={conversationDetail.isPending || (!selectedConversation && conversationDetail.isFetching)}
+              isError={conversationDetail.isError}
+              isFetching={conversationDetail.isFetching}
+              onRetry={() => { void conversationDetail.refetch(); }}
               onClose={() => setSelectedConversationId(null)}
               timeZone={timeZone}
               timeZoneLabel={timeZoneLabel}
