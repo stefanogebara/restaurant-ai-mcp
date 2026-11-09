@@ -131,7 +131,7 @@ describe('language saves keep the live TTS and summary configuration compatible'
     const payload = savedPayload();
     expect(payload.conversation_config.tts).toEqual({ model_id: expected, speed: 1.1 });
     expect(payload.conversation_config.agent).toEqual({ language: 'pt', first_message: 'Owner opening' });
-    expect(payload.platform_settings).toEqual({ summary_language: 'pt_BR' });
+    expect(payload.platform_settings).toEqual({ summary_language: 'pt-br' });
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
@@ -140,16 +140,19 @@ describe('language saves keep the live TTS and summary configuration compatible'
     const { req, res } = createMockReqRes({ method: 'PATCH', body: { language: 'pt', voice_id: 'new-voice' } });
     await handler(req, res);
     expect(savedPayload().conversation_config.tts).toEqual({ voice_id: 'new-voice' });
-    expect(savedPayload().platform_settings).toEqual({ summary_language: 'pt_BR' });
+    expect(savedPayload().platform_settings).toEqual({ summary_language: 'pt-br' });
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
   test.each([
-    ['pt', 'PT', 'pt_PT', 'pt_PT'],
-    ['pt-BR', 'BR', 'pt_BR', 'pt_BR'],
+    ['pt', 'PT', 'pt_PT', 'pt'],
+    ['pt-BR', 'BR', 'pt_BR', 'pt-br'],
     ['pt-PT', 'BR', 'pt_BR', 'pt'],
-    ['pt-BR', 'PT', 'pt_PT', 'pt_BR'],
+    ['pt-BR', 'PT', 'pt_PT', 'pt-br'],
     ['es', 'BR', 'pt_BR', 'es'],
+    ['pt', 'PT', 'pt-br', 'pt-br'],
+    ['pt', 'BR', 'pt', 'pt'],
+    ['pt', 'BR', 'pt_PT', 'pt'],
     ['en-GB', 'GB', 'en', 'en'],
   ])('keeps summary language aligned with %s in %s', async (language, country, summary, expected) => {
     arrange({ country, summary });

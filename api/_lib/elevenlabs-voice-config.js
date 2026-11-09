@@ -19,17 +19,17 @@ function summaryLanguageFor(language, currentSummary, restaurant) {
   const requested = normalizedLanguage(language);
   const [base, region] = requested.split('-');
   const current = normalizedLanguage(currentSummary);
-  // Preserve provider spelling and regional choices unless the owner explicitly
-  // selects another region or language. In particular, do not rewrite pt_BR.
-  if (current && current.split('-')[0] === base && (!region || current === requested)) {
-    return currentSummary;
-  }
+  // ElevenLabs conversation languages use canonical BCP-47 spelling.
+  // Preserve an existing Portuguese variant, but normalize legacy underscores.
+  // https://github.com/elevenlabs/packages/blob/main/packages/convai-widget-core/src/types/languages.ts
   if (base === 'pt') {
-    if (region) return region === 'br' ? 'pt_BR' : 'pt';
+    if (region) return region === 'br' ? 'pt-br' : 'pt';
+    if (current === 'pt-br') return 'pt-br';
+    if (current === 'pt' || current === 'pt-pt') return 'pt';
     const country = String(restaurant.country || '').trim().toLowerCase();
     const brazilian = ['br', 'brazil', 'brasil'].includes(country)
       || (!country && normalizedLanguage(restaurant.ai_config?.language) === 'pt-br');
-    return brazilian ? 'pt_BR' : 'pt';
+    return brazilian ? 'pt-br' : 'pt';
   }
   return base;
 }
