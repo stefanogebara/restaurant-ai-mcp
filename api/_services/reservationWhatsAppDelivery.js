@@ -2,7 +2,12 @@
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const logger = createSecureLogger('ReservationWhatsAppDelivery');
-const normalizePhone = value => String(value || '').replace(/\D/g, '');
+// Meta can return the legacy eight-digit subscriber ID for Brazilian mobiles.
+const normalizePhone = value => {
+  const digits = String(value || '').replace(/\D/g, '');
+  return /^55[1-9][0-9]9[0-9]{8}$/.test(digits)
+    ? digits.slice(0, 4) + digits.slice(5) : digits;
+};
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 async function beginConfirmation({ restaurantId, reservationRecordId, phone }) {

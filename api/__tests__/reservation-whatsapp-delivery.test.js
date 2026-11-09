@@ -42,3 +42,11 @@ test('dashboard joins UUIDs with authenticated tenant scope and picks latest att
 test('missing tenant performs no privileged read', async () => {
   await service.decorateReservationConfirmations(null,[{record_id:id}]); expect(mockFrom).not.toHaveBeenCalled();
 });
+test('correlates Meta Brazilian recipient ids with the optional ninth digit', async () => {
+  const q=chain({data:{id,sender_id:'sender-1',recipient_phone:'551199002121'}});
+  mockFrom.mockReturnValueOnce(chain({data:{id}})).mockReturnValueOnce(q);
+  await service.beginConfirmation({restaurantId:'r1',reservationRecordId:id,phone:'+5511999002121'});
+  expect(q.insert).toHaveBeenCalledWith(expect.objectContaining({recipient_phone:'551199002121'}));
+  await service.applyConfirmationReceipt({id:'wamid-br',status:'delivered',recipient_id:'551199002121',biz_opaque_callback_data:`reservation:${id}`},{phone_number_id:'sender-1'});
+  expect(mockRpc.mock.calls[0][1].p_recipient).toBe('551199002121');
+});
