@@ -33,6 +33,11 @@ vi.mock('../../components/dashboard/VoicePersonaPanel', () => ({ default: () => 
 vi.mock('../../components/voice/PhoneIntegrationPanel', () => ({ default: () => null }));
 
 describe('VoiceSettingsPage preset save', () => {
+  it('makes the call history reachable from the voice setup journey', () => {
+    renderWithProviders(<MemoryRouter><VoiceSettingsPage /></MemoryRouter>);
+    expect(screen.getByRole('link', { name: 'Call History' })).toHaveAttribute('href', '/host-dashboard/calls');
+  });
+
   it('submits all preset values together and keeps the saved speaking speed', async () => {
     saveVoice.mockClear();
     renderWithProviders(<MemoryRouter><VoiceSettingsPage /></MemoryRouter>);

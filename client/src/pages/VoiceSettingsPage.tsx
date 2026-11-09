@@ -363,19 +363,28 @@ export default function VoiceSettingsPage() {
               {t('voiceSettings.pageIntro')}
             </p>
           </div>
-          {(isDirty || isSaving) && (
-            <div className="fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom)+env(safe-area-inset-bottom))] z-40 sm:static sm:inset-auto">
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={isSaving}
-                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-burgundy px-6 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-burgundy-dark disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-              >
-                {isSaving && <Spinner size="sm" className="border-white border-t-white/30" />}
-                {isSaving ? t('voiceSettings.saving', 'Saving...') : t('voiceSettings.saveChanges', 'Save Changes')}
-              </button>
-            </div>
-          )}
+          <div className="flex shrink-0 flex-wrap items-center gap-3">
+            <Link
+              to="/host-dashboard/calls"
+              className="liquid-capsule inline-flex min-h-11 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-deep-charcoal hover:bg-soft-gray focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-burgundy/60"
+            >
+              <ThiingsIcon name="phone-call" size="sm" />
+              {t('navigation.callHistory')}
+            </Link>
+            {(isDirty || isSaving) && (
+              <div className="fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom)+env(safe-area-inset-bottom))] z-40 sm:static sm:inset-auto">
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-burgundy px-6 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-burgundy-dark disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                >
+                  {isSaving && <Spinner size="sm" className="border-white border-t-white/30" />}
+                  {isSaving ? t('voiceSettings.saving', 'Saving...') : t('voiceSettings.saveChanges', 'Save Changes')}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {(() => {

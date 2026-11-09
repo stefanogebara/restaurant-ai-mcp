@@ -19,7 +19,7 @@ Primary visual reference: DESIGN.md Liquid Glass v2 and the existing Manager AI 
 - [x] Add regressions for preview freshness, cleanup/races/errors and call-state/transcript behavior.
 - [x] Fix bounded preview and call-detail presentation issues; preserve routing and tenant boundaries.
 - [x] Integrate the independent backend voice audit findings only where reproduced and in scope.
-- [ ] Complete frontend/backend/build/static checks and independent review.
+- [x] Complete frontend/backend/build/static checks and independent review.
 - [ ] Verify PR checks, exact production SHA/alias and authenticated production behavior.
 
 Saving a voice, playing a generated sample and completing a telephone call are separate facts. Technical test calls remain in the dedicated sandbox. No test may spoof the owner's caller identity or require the owner to call now.
@@ -32,10 +32,14 @@ The independent backend audit also reproduced three save/sync consistency failur
 
 ## Local verification
 
-- Backend: 332 suites passed; 4,749 tests passed; six pre-existing skips.
-- Frontend: 150 suites and 1,270 tests passed.
+- Backend: 332 suites passed; 4,752 tests passed; six pre-existing skips.
+- Frontend: 150 suites and 1,271 tests passed.
 - Production build, changed-file ESLint, API syntax, fire-and-forget audit and phantom-column audit passed.
 - Independent frontend review approved the call presentation and audio lifecycle changes. Responsive keyboard navigation derives focus and columns from the rendered grid.
 - The explicit manual persona refresh now repairs the saved opening line as well as the prompt. Automatic name-only updates retain their existing greeting preservation rule.
 
 The local build retains the existing large-chunk warning. Jest retains its existing forced-exit warning. Neither is evidence of an end-to-end phone call.
+
+The independent backend review rejected underscore-spelled analysis locales. The corrected helper emits canonical `pt-br`, retains valid existing Portuguese variants, and normalizes legacy underscores. Revised expectations failed before the correction and passed afterward. Backend review then approved.
+
+The final navigation audit found no entry to the Calls route from Voice or any other page. Voice now provides a localized Call History action beside Save, with an integration regression and independent layout-code review. Production visual verification remains pending.
