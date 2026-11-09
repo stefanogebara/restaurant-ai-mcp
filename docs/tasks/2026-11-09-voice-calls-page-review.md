@@ -16,9 +16,9 @@ Primary visual reference: DESIGN.md Liquid Glass v2 and the existing Manager AI 
 ## Work
 
 - [x] Capture authenticated desktop/mobile Voice and Calls behavior and concrete failures.
-- [ ] Add regressions for preview freshness, cleanup/races/errors and call-state/transcript behavior.
-- [ ] Fix bounded preview and call-detail presentation issues; preserve routing and tenant boundaries.
-- [ ] Integrate the independent backend voice audit findings only where reproduced and in scope.
+- [x] Add regressions for preview freshness, cleanup/races/errors and call-state/transcript behavior.
+- [x] Fix bounded preview and call-detail presentation issues; preserve routing and tenant boundaries.
+- [x] Integrate the independent backend voice audit findings only where reproduced and in scope.
 - [ ] Complete frontend/backend/build/static checks and independent review.
 - [ ] Verify PR checks, exact production SHA/alias and authenticated production behavior.
 
@@ -29,3 +29,13 @@ Saving a voice, playing a generated sample and completing a telephone call are s
 Native audio playback with a muted output confirmed a real Portuguese preview was generated, then replayed unchanged after staging Spanish. The cache made no second preview request. The same audio continued after SPA navigation to Dashboard, with document time origin unchanged. No settings were saved. Keyboard Enter on a library preview button selected that voice and exposed Save Changes without playing it. The authenticated Spanish library also showed English pagination text. Real completed-call transcripts contain blank provider tool turns, rendered as empty agent bubbles. Incomplete calls expose the initial English placeholder, and completed calls with no duration can be mislabeled Live.
 
 The independent backend audit also reproduced three save/sync consistency failures with mocked providers: English-only TTS model retained on Portuguese change, manual prompt refresh not repairing the saved greeting, and persona-triggered knowledge replacement dropping POS menu items. These are under a separate backend write scope in the same review batch.
+
+## Local verification
+
+- Backend: 332 suites passed; 4,749 tests passed; six pre-existing skips.
+- Frontend: 150 suites and 1,270 tests passed.
+- Production build, changed-file ESLint, API syntax, fire-and-forget audit and phantom-column audit passed.
+- Independent frontend review approved the call presentation and audio lifecycle changes. Responsive keyboard navigation derives focus and columns from the rendered grid.
+- The explicit manual persona refresh now repairs the saved opening line as well as the prompt. Automatic name-only updates retain their existing greeting preservation rule.
+
+The local build retains the existing large-chunk warning. Jest retains its existing forced-exit warning. Neither is evidence of an end-to-end phone call.
