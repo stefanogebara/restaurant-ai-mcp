@@ -159,11 +159,10 @@ export default function CallConversationModal({ conversation, onClose, timeZone,
                   <div key={idx} className="bg-soft-gray/50 rounded-xl p-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-deep-charcoal">{tool.tool_name}</span>
-                      {tool.success ? (
-                        <ThiingsIcon name="check-circle" size="xs" />
-                      ) : (
-                        <ThiingsIcon name="x-circle" size="xs" />
-                      )}
+                      <span className={`inline-flex items-center gap-1.5 text-xs ${tool.success === true ? 'text-emerald-700' : tool.success === false ? 'text-red-700' : 'text-muted-stone'}`}>
+                        <ThiingsIcon name={tool.success === true ? 'check-circle' : tool.success === false ? 'x-circle' : 'info'} size="xs" />
+                        {t(tool.success === true ? 'callTracking.toolResultSuccess' : tool.success === false ? 'callTracking.toolResultFailure' : 'callTracking.toolResultUnknown')}
+                      </span>
                     </div>
                   </div>
                 ))}

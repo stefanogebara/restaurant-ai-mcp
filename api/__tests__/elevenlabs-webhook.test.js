@@ -1400,6 +1400,34 @@ describe('Error handling', () => {
 describe('Conversation logging', () => {
   const conversationLogger = require('../_services/conversationLogger');
 
+  test.each([
+    [{ success: true, available: true }, true],
+    [{ success: true, available: false }, true],
+    [{ success: false, message: 'Could not check availability' }, false],
+    [{ available: false }, null],
+  ])('records the completed availability result without inferring from availability: %j', async (result, expected) => {
+    mockGetRestaurantById.mockResolvedValue(RESTAURANT_A);
+    mockCheckAvailability.mockResolvedValueOnce(result);
+    const body = { action: 'check_availability', restaurant_id: RESTAURANT_A.id, conversation_id: 'conv-availability-result', date: '2026-11-10', time: '19:00', party_size: 2 };
+    const res = mockRes();
+    await handler(authenticatedReq({ body }), res);
+    expect(conversationLogger.logToolCall).toHaveBeenCalledTimes(1);
+    expect(conversationLogger.logToolCall).toHaveBeenCalledWith('conv-availability-result', expect.objectContaining({ tool_name: 'check_availability', success: expected }));
+    expect(mockCheckAvailability.mock.invocationCallOrder[0]).toBeLessThan(conversationLogger.logToolCall.mock.invocationCallOrder[0]);
+    expect(res.json).toHaveBeenCalledWith(result);
+  });
+
+  test('records an unexpected availability exception as a failed tool before responding', async () => {
+    mockGetRestaurantById.mockResolvedValue(RESTAURANT_A);
+    mockCheckAvailability.mockRejectedValueOnce(new Error('Availability service unavailable'));
+    const body = { action: 'check_availability', restaurant_id: RESTAURANT_A.id, conversation_id: 'conv-availability-error', date: '2026-11-10', time: '19:00', party_size: 2 };
+    const res = mockRes();
+    await handler(authenticatedReq({ body }), res);
+    expect(conversationLogger.logToolCall).toHaveBeenCalledTimes(1);
+    expect(conversationLogger.logToolCall).toHaveBeenCalledWith('conv-availability-error', expect.objectContaining({ success: false, error_message: 'Availability service unavailable' }));
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false }));
+  });
+
   test('starts conversation when conversation_id is present', async () => {
     const body = {
       action: 'get_current_datetime',

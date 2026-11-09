@@ -508,15 +508,6 @@ async function handleCheckAvailability(req, res) {
   const data = req.method === 'POST' ? req.body : req.query;
   const { date, time, party_size } = data;
 
-  // Log tool call
-  if (conversationId) {
-    await req.conversationLogger.logToolCall(conversationId, {
-      tool_name: 'check_availability',
-      parameters: { date, time, party_size },
-      success: null
-    });
-  }
-
   // Get restaurant from session, request, body, or query string restaurant_id (voice agent)
   // ElevenLabs webhook tools put fixed params (restaurant_id) in the query string even for POST
   const restaurantIdFromQuery = req.query.restaurant_id || req.query.restaurantId;
@@ -524,7 +515,27 @@ async function handleCheckAvailability(req, res) {
   if (!restaurant.id && (data.restaurant_id || restaurantIdFromQuery)) {
     restaurant = { id: data.restaurant_id || restaurantIdFromQuery };
   }
-  const result = await toolHandlers.checkAvailability(restaurant.id, restaurant, { date, time, party_size });
+  let result;
+  try {
+    result = await toolHandlers.checkAvailability(restaurant.id, restaurant, { date, time, party_size });
+  } catch (error) {
+    if (conversationId) {
+      await req.conversationLogger.logToolCall(conversationId, {
+        tool_name: 'check_availability', parameters: { date, time, party_size },
+        success: false, error_message: error.message,
+      });
+    }
+    throw error;
+  }
+  // Record this invocation's actual result. A successful check may find no
+  // tables; unavailable is not a tool failure. Never guess historical results.
+  if (conversationId) {
+    await req.conversationLogger.logToolCall(conversationId, {
+      tool_name: 'check_availability', parameters: { date, time, party_size },
+      success: typeof result?.success === 'boolean' ? result.success : null,
+      ...(result?.success === false ? { error_message: result.message } : {}),
+    });
+  }
   logger.info(' check_availability response:', result);
   return res.status(200).json(result);
 }
