@@ -27,7 +27,7 @@ const logger = createSecureLogger('ToolHandlers');
  * may be retried with another variant of the SAME language, never a different
  * language. Network ambiguity or any other rejection must not be retried.
  */
-async function sendVoiceReservationWhatsApp({ phone, restaurantName, reservationId, partySize, date, time, language = 'pt-BR' }) {
+async function sendVoiceReservationWhatsApp({ phone, restaurantName, restaurantId, reservationRecordId, reservationId, partySize, date, time, language = 'pt-BR' }) {
   const { sendTemplateMessage } = require('./whatsapp-sender');
   const { getTemplateLanguageCandidates, isTemplateTranslationMissing } = require('./whatsapp-meta-templates');
 
@@ -45,12 +45,21 @@ async function sendVoiceReservationWhatsApp({ phone, restaurantName, reservation
     // Preserve the unambiguous ISO date if the configured locale is invalid.
   }
 
+  const { beginConfirmation, finishConfirmation } = require('../_services/reservationWhatsAppDelivery');
+  const tracking = await beginConfirmation({ restaurantId, reservationRecordId, phone });
+  if (!tracking) return { success: false, error: 'Confirmation tracking unavailable; send not attempted' };
+  const options = { callbackData: `reservation:${tracking.id}` };
   const bodyParameters = [restaurantName, formattedDate, time.substring(0, 5), String(partySize), reservationId];
   for (const candidate of candidates) {
-    const result = await sendTemplateMessage(phone, 'reservation_confirmed', candidate, bodyParameters);
-    if (result.success || result.ambiguo || !isTemplateTranslationMissing(result)) return result;
+    const result = await sendTemplateMessage(phone, 'reservation_confirmed', candidate, bodyParameters, options);
+    if (result.success || result.ambiguo || !isTemplateTranslationMissing(result)) {
+      await finishConfirmation(tracking, result);
+      return result;
+    }
   }
-  return { success: false, error: 'No approved reservation template in the restaurant language' };
+  const result = { success: false, error: 'No approved reservation template in the restaurant language' };
+  await finishConfirmation(tracking, result);
+  return result;
 }
 
 // ============================================================================
@@ -415,6 +424,7 @@ async function createReservation(restaurantId, restaurant, params) {
         restaurantName,
         restaurantId,
         reservationId,
+        reservationRecordId: createResult.data?.id,
         customerName: customer_name,
         partySize: party_size,
         date,

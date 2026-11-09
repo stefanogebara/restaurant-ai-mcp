@@ -6,6 +6,7 @@ import type { UpcomingReservation, Table } from '../../types/host.types';
 import NoShowRiskBadge from './NoShowRiskBadge';
 import DepositSuggestChip from './DepositSuggestChip';
 import DepositBadge from './DepositBadge';
+import WhatsAppConfirmationStatus from './WhatsAppConfirmationStatus';
 import CustomerTierBadge from './CustomerTierBadge';
 import DepositActions from './DepositActions';
 import { formatCurrency } from '../../utils/currency';
@@ -409,7 +410,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
   const avatarStyle = { background: `linear-gradient(135deg, hsl(${hue},50%,75%), hsl(${(hue + 40) % 360},50%,65%))` };
 
   return (
-    <div className={`flex items-center py-3 sm:py-[18px] border-b border-[#F5F5F4] last:border-b-0 gap-2 sm:gap-4 transition-colors ${
+    <div className={`flex flex-wrap items-center py-3 sm:py-[18px] border-b border-[#F5F5F4] last:border-b-0 gap-2 sm:gap-4 transition-colors ${
   reservation.party_size >= 6
     ? 'pl-3 sm:pl-5 pr-3 sm:pr-6 border-l-2 border-l-[#9F1239]/30'
     : 'px-3 sm:px-6'
@@ -490,7 +491,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
           ) : null}
           {reservation.special_requests && <span className="hidden sm:inline"> · {reservation.special_requests}</span>}
         </div>
-        {/* Risk + Deposit badges */}
+        {/* Risk and deposit badges */}
         {(reservation.ml_risk_score != null || reservation.deposit_amount || reservation.deposit_suggested) && (
           <div className="flex items-center gap-1.5 mt-1 flex-wrap">
             <NoShowRiskBadge
@@ -712,6 +713,11 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
               </div>
             </div>
           )}
+        </div>
+      )}
+      {reservation.whatsapp_confirmation && (
+        <div className="basis-full pl-10 sm:pl-[52px]">
+          <WhatsAppConfirmationStatus receipt={reservation.whatsapp_confirmation} />
         </div>
       )}
     </div>

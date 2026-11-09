@@ -21,6 +21,7 @@ const { rejectOversizedBody } = require('./_lib/rate-limit');
 const { setWebhookCors } = require('./_lib/cors');
 const { updateDeliveryStatus } = require('./_services/campaignService');
 const { updateWhatsAppTestMessageStatus } = require('./_services/whatsappTestMessageService');
+const { applyConfirmationReceipt } = require('./_services/reservationWhatsAppDelivery');
 const { MetaAdapter } = require('./_lib/channels/meta-adapter');
 const { processMessage } = require('./_lib/channels/message-processor');
 
@@ -61,6 +62,15 @@ async function handlePost(req, res) {
   }
 
   try {
+    // Signed batches may include several entries/changes; no receipt may be dropped.
+    for (const entry of req.body.entry || []) {
+      for (const change of entry.changes || []) {
+        for (const status of change.value?.statuses || []) {
+          await applyConfirmationReceipt(status, change.value.metadata);
+        }
+      }
+    }
+
     // Number-health events (prospecting circuit breaker): quality-rating
     // changes arrive as their own change field, before any message routing.
     const change = req.body.entry?.[0]?.changes?.[0];

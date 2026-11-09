@@ -285,6 +285,36 @@
       "noResults": "Sin resultados",
       "noResultsHint": "Intenta una búsqueda o filtro diferente"
     },
+    "whatsappConfirmation": {
+      "requested": {
+        "label": "Envío sin confirmar",
+        "description": "Se solicitó el envío, pero el envío y la entrega no están confirmados."
+      },
+      "accepted": {
+        "label": "Aceptado para envío",
+        "description": "Aceptado para envío. El envío y la entrega aún no están confirmados."
+      },
+      "sent": {
+        "label": "Enviado",
+        "description": "Enviado a WhatsApp. La entrega al cliente aún no está confirmada."
+      },
+      "delivered": {
+        "label": "Entregado",
+        "description": "El mensaje de confirmación se entregó al cliente."
+      },
+      "read": {
+        "label": "Leído",
+        "description": "El cliente leyó el mensaje de confirmación."
+      },
+      "failed": {
+        "label": "Error de envío",
+        "description": "No se pudo enviar o entregar el mensaje de confirmación."
+      },
+      "unknown": {
+        "label": "Envío sin confirmar",
+        "description": "Se solicitó el envío, pero el envío y la entrega no están confirmados."
+      }
+    },
     "noShowRisk": {
       "low": "Riesgo Bajo",
       "medium": "Riesgo Medio",

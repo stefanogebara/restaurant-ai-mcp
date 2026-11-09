@@ -299,3 +299,11 @@ describe('sendReservationConfirmation', () => {
     });
   });
 });
+
+ test('template callback correlation is passed to Meta without altering normal templates', async () => {
+  process.env.WHATSAPP_ACCESS_TOKEN = 'test-token'; process.env.WHATSAPP_PHONE_NUMBER_ID = 'test-phone-id';
+  global.fetch = jest.fn(async () => ({ok:true,json:async()=>({messages:[{id:'wamid'}]})}));
+  const {sendTemplateMessage} = require('../_lib/whatsapp-sender');
+  await sendTemplateMessage('+5511','reservation_confirmed','pt_BR',[],{callbackData:'reservation:tracking-id'});
+  expect(JSON.parse(global.fetch.mock.calls[0][1].body).biz_opaque_callback_data).toBe('reservation:tracking-id');
+});

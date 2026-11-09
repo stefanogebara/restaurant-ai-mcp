@@ -15,10 +15,15 @@ jest.mock('../_lib/whatsapp-sender', () => ({
   sendTemplateMessage: (...args) => mockSendTemplateMessage(...args),
 }));
 
+jest.mock('../_services/reservationWhatsAppDelivery', () => ({
+  beginConfirmation: jest.fn(async () => null), finishConfirmation: jest.fn(async () => {}),
+}));
+
 const { createReservation } = require('../_lib/tool-handlers');
 const { buildVoiceConfirmation } = require('../_lib/reservation-validator');
 
 beforeEach(() => {
+  require('../_services/reservationWhatsAppDelivery').beginConfirmation.mockResolvedValue({id:'tracking',sender_id:'sender',recipient_phone:'5511'});
   mockDbCreateReservation.mockClear();
   mockSendTemplateMessage.mockReset();
   mockSendTemplateMessage.mockResolvedValue({ success: true, messageId: 'wamid-test' });
@@ -95,7 +100,7 @@ test.each([
   expect(result.success).toBe(true);
   expect(mockSendTemplateMessage).toHaveBeenCalledTimes(1);
   expect(mockSendTemplateMessage).toHaveBeenCalledWith(
-    '+551150283918', 'reservation_confirmed', expectedMetaLanguage, expect.any(Array),
+    '+551150283918', 'reservation_confirmed', expectedMetaLanguage, expect.any(Array), expect.any(Object),
   );
   const dateParameter = mockSendTemplateMessage.mock.calls[0][3][1];
   const expectedDate = new Intl.DateTimeFormat(agentLanguage, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date('2026-11-09T12:00:00Z'));
@@ -183,4 +188,21 @@ test('Italian voice booking keeps both WhatsApp template and spoken confirmation
   expect(mockSendTemplateMessage.mock.calls.map(call => call[2])).toEqual(['it']);
   expect(result.message).toMatch(/prenotazione.*confermata/i);
   expect(result.message).toMatch(/9 novembre 2026/);
+});
+
+ test('links the provider request to the created reservation UUID', async () => {
+  const {beginConfirmation, finishConfirmation} = require('../_services/reservationWhatsAppDelivery');
+  beginConfirmation.mockResolvedValueOnce({id:'tracking',sender_id:'sender',recipient_phone:'5511'});
+  mockDbCreateReservation.mockResolvedValueOnce({success:true,data:{id:'db-reservation-uuid'}});
+  await createReservation('sandbox-restaurant',{restaurant_name:'Sandbox',agent_language:'pt'}, {date:'2026-11-09',time:'19:00',party_size:2,customer_name:'Test',customer_phone:'+5511'});
+  expect(beginConfirmation).toHaveBeenLastCalledWith(expect.objectContaining({restaurantId:'sandbox-restaurant',reservationRecordId:'db-reservation-uuid'}));
+  expect(mockSendTemplateMessage.mock.calls[0][4]).toEqual({callbackData:'reservation:tracking'});
+  expect(finishConfirmation).toHaveBeenLastCalledWith(expect.objectContaining({id:'tracking'}),expect.objectContaining({success:true,messageId:'wamid-test'}));
+});
+
+ test('a tracking failure skips sending while keeping the reservation confirmed', async () => {
+  require('../_services/reservationWhatsAppDelivery').beginConfirmation.mockResolvedValueOnce(null);
+  const result = await createReservation('sandbox-restaurant',{restaurant_name:'Sandbox',agent_language:'pt'}, {date:'2026-11-09',time:'19:00',party_size:2,customer_name:'Test',customer_phone:'+5511'});
+  expect(result.success).toBe(true); expect(mockSendTemplateMessage).not.toHaveBeenCalled();
+  expect(result.message).toMatch(/n[aã]o.*confirmar.*WhatsApp/i);
 });
