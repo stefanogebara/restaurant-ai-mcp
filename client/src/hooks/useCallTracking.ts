@@ -101,6 +101,19 @@ export function useConversationDetail(conversationId: string | null) {
       return data.conversation ?? null;
     },
     enabled: !!conversationId,
-    staleTime: Infinity,
+    // Reopening must fetch changes that arrived after the previous view.
+    staleTime: 0,
+    refetchIntervalInBackground: false,
+    refetchInterval: (query) => {
+      const conversation = query.state.data;
+      if (!conversation || conversation.ended_at) return false;
+      // Booking outcome can arrive before the call ends. Observe completion,
+      // bounded by the original start, without polling old records forever.
+      const started = Date.parse(conversation.started_at);
+      const age = Date.now() - started;
+      const remaining = 10 * 60 * 1000 - age;
+      if (!Number.isFinite(started) || age < 0 || remaining <= 0) return false;
+      return Math.min(15 * 1000, remaining);
+    },
   });
 }
