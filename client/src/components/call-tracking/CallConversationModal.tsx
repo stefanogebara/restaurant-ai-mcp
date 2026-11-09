@@ -157,7 +157,7 @@ export default function CallConversationModal({ conversation, onClose, timeZone,
               <div className="space-y-2">
                 {conversation.tools_used.map((tool, idx) => (
                   <div key={idx} className="bg-soft-gray/50 rounded-xl p-3">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                       <span className="text-sm font-medium text-deep-charcoal">{tool.tool_name}</span>
                       <span className={`inline-flex items-center gap-1.5 text-xs ${tool.success === true ? 'text-emerald-700' : tool.success === false ? 'text-red-700' : 'text-muted-stone'}`}>
                         <ThiingsIcon name={tool.success === true ? 'check-circle' : tool.success === false ? 'x-circle' : 'info'} size="xs" />
