@@ -320,6 +320,36 @@
     "responseRate": "Response Rate",
     "responses": "Responses",
     "reports": "Reports",
+    "whatsappConfirmation": {
+      "requested": {
+        "label": "Sending unconfirmed",
+        "description": "Sending was requested, but sending and delivery are unconfirmed."
+      },
+      "accepted": {
+        "label": "Accepted for sending",
+        "description": "Accepted for sending. Sending and delivery are not yet confirmed."
+      },
+      "sent": {
+        "label": "Sent",
+        "description": "Sent to WhatsApp. Delivery to the guest is not yet confirmed."
+      },
+      "delivered": {
+        "label": "Delivered",
+        "description": "The confirmation message was delivered to the guest."
+      },
+      "read": {
+        "label": "Read",
+        "description": "The guest read the confirmation message."
+      },
+      "failed": {
+        "label": "Sending failed",
+        "description": "The confirmation message could not be sent or delivered."
+      },
+      "unknown": {
+        "label": "Sending unconfirmed",
+        "description": "Sending was requested, but sending and delivery are unconfirmed."
+      }
+    },
     "noShowRisk": {
       "low": "Low Risk",
       "medium": "Medium Risk",

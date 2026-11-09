@@ -4,6 +4,7 @@ const {
   getUpcomingReservations,
   query: supabase
 } = require('../../_lib/supabase');
+const { decorateReservationConfirmations } = require('../reservationWhatsAppDelivery');
 const { decorateWithDepositSuggestion } = require('../../_lib/deposit-suggest');
 
 async function handleDashboard(req, res) {
@@ -40,6 +41,8 @@ async function handleDashboard(req, res) {
   upcomingReservationsResult.reservations = (upcomingReservationsResult.reservations || []).map(
     (r) => decorateWithDepositSuggestion(r, depositConfig),
   );
+
+  upcomingReservationsResult.reservations = await decorateReservationConfirmations(restaurantId, upcomingReservationsResult.reservations);
 
   const tables = tablesResult.tables;
 

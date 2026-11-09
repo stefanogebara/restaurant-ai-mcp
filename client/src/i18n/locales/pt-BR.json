@@ -320,6 +320,36 @@
     "responseRate": "Taxa de Resposta",
     "responses": "Respostas",
     "reports": "Relatórios",
+    "whatsappConfirmation": {
+      "requested": {
+        "label": "Envio não confirmado",
+        "description": "O envio foi solicitado, mas o envio e a entrega não foram confirmados."
+      },
+      "accepted": {
+        "label": "Aceito para envio",
+        "description": "Aceito para envio. O envio e a entrega ainda não foram confirmados."
+      },
+      "sent": {
+        "label": "Enviada",
+        "description": "Enviada ao WhatsApp. A entrega ao cliente ainda não foi confirmada."
+      },
+      "delivered": {
+        "label": "Entregue",
+        "description": "A mensagem de confirmação foi entregue ao cliente."
+      },
+      "read": {
+        "label": "Lida",
+        "description": "O cliente leu a mensagem de confirmação."
+      },
+      "failed": {
+        "label": "Falha no envio",
+        "description": "Não foi possível enviar ou entregar a mensagem de confirmação."
+      },
+      "unknown": {
+        "label": "Envio não confirmado",
+        "description": "O envio foi solicitado, mas o envio e a entrega não foram confirmados."
+      }
+    },
     "noShowRisk": {
       "low": "Risco Baixo",
       "medium": "Risco Médio",

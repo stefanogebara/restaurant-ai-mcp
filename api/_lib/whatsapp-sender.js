@@ -196,6 +196,7 @@ async function sendWhatsAppMessage(to, message, options = {}) {
  * @param {object} [options] - Optional configuration
  * @param {string} [options.phoneNumberId] - Override the Meta sender number id
  *   (e.g. the prospecting number). Defaults to WHATSAPP_PHONE_NUMBER_ID.
+ * @param {string} [options.callbackData] - Opaque correlation echoed in Meta status callbacks.
  * @returns {{ success: boolean, messageId?: string, error?: string }}
  */
 async function sendTemplateMessage(to, templateName, languageCode = 'en', bodyParameters = [], options = {}) {
@@ -230,6 +231,8 @@ async function sendTemplateMessage(to, templateName, languageCode = 'en', bodyPa
         components
       }
     };
+
+    if (options.callbackData) payload.biz_opaque_callback_data = options.callbackData;
 
     logger.info(`Sending template '${templateName}' to ${to}`);
 
