@@ -13,6 +13,19 @@ interface Props {
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea, input, select, audio[controls], [tabindex]:not([tabindex="-1"])';
 
+const SECTION_TITLE = 'font-sans text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-3';
+const TOOL_LABEL_KEYS = new Map([
+  ['check_availability', 'callTracking.toolNames.checkAvailability'],
+  ['create_reservation', 'callTracking.toolNames.createReservation'],
+  ['get_current_datetime', 'callTracking.toolNames.currentDateTime'],
+  ['get_wait_time', 'callTracking.toolNames.waitTime'],
+  ['identify_restaurant', 'callTracking.toolNames.identifyRestaurant'],
+  ['lookup_reservation', 'callTracking.toolNames.lookupReservation'],
+  ['get_customer_info', 'callTracking.toolNames.customerInfo'],
+  ['update_reservation', 'callTracking.toolNames.updateReservation'],
+  ['cancel_reservation', 'callTracking.toolNames.cancelReservation'],
+]);
+
 export default function CallConversationModal({ conversation, onClose, timeZone, timeZoneLabel }: Props) {
   const { t, i18n } = useTranslation();
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -61,7 +74,13 @@ export default function CallConversationModal({ conversation, onClose, timeZone,
 
   const durationText = conversation.duration_seconds != null
     ? `${Math.floor(conversation.duration_seconds / 60)}m ${conversation.duration_seconds % 60}s`
-    : t('callTracking.durationUnknown');
+    : t(conversation.ended_at ? 'callTracking.durationUnknown' : 'callTracking.pendingDuration');
+  const awaitingFinalData = !conversation.ended_at;
+  const transcript = conversation.transcript?.filter(message => typeof message?.content === 'string' && message.content.trim()) ?? [];
+  const toolLabel = (name: string) => {
+    const key = TOOL_LABEL_KEYS.get(name);
+    return key ? t(key) : name;
+  };
 
   return (
     <div
@@ -79,7 +98,7 @@ export default function CallConversationModal({ conversation, onClose, timeZone,
         {/* Header */}
         <div className="sticky top-0 bg-warm-white/95 backdrop-blur-glass-nav border-b border-glass-border-dark p-6 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-deep-charcoal">{t('callTracking.conversationDetails')}</h2>
+            <h2 className="font-serif text-2xl text-deep-charcoal">{t('callTracking.conversationDetails')}</h2>
             <p className="text-sm text-stone-gray mt-1">{formatDate(conversation.started_at, i18n.language, timeZone)}</p>
             <p className="text-xs text-muted-stone mt-0.5">{timeZoneLabel}</p>
           </div>
@@ -97,21 +116,16 @@ export default function CallConversationModal({ conversation, onClose, timeZone,
         <div className="bg-warm-white/95 p-6 space-y-6">
           {/* Summary */}
           {conversation.summary && (
-            <div className="bg-stone-500/10 border border-stone-500/20 rounded-xl p-4">
-              <div className="flex items-start gap-3">
-                <ThiingsIcon name="chat" size="sm" className="mt-0.5" />
-                <div>
-                  <h3 className="font-semibold text-deep-charcoal mb-1">{t('callTracking.summary')}</h3>
-                  <p className="text-sm text-stone-gray">{conversation.summary}</p>
-                </div>
-              </div>
-            </div>
+            <section className="pb-6 border-b border-glass-border-dark">
+              <h3 className={SECTION_TITLE}>{t('callTracking.summary')}</h3>
+              <p className="text-[15px] leading-relaxed text-deep-charcoal break-words">{conversation.summary}</p>
+            </section>
           )}
 
           {/* Recording */}
           {conversation.recording_url && (
             <div className="bg-soft-gray/50 rounded-xl p-4">
-              <h3 className="font-semibold text-deep-charcoal mb-2">{t('callTracking.recording', 'Recording')}</h3>
+              <h3 className={SECTION_TITLE}>{t('callTracking.recording', 'Recording')}</h3>
               <audio controls className="w-full" preload="metadata">
                 <source src={conversation.recording_url} />
               </audio>
@@ -119,11 +133,11 @@ export default function CallConversationModal({ conversation, onClose, timeZone,
           )}
 
           {/* Metadata */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-5">
             <div>
               <p className="text-sm text-stone-gray">{t('callTracking.outcome')}</p>
               <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${getOutcomeColor(conversation.outcome)}`}>
-                {t(getOutcomeLabelKey(conversation.outcome))}
+                {t(!conversation.outcome && awaitingFinalData ? 'callTracking.pendingResult' : getOutcomeLabelKey(conversation.outcome))}
               </span>
             </div>
             <div>
@@ -132,7 +146,9 @@ export default function CallConversationModal({ conversation, onClose, timeZone,
             </div>
             <div>
               <p className="text-sm text-stone-gray">{t('callTracking.language')}</p>
-              <p className="text-sm font-medium text-deep-charcoal mt-1 uppercase">{conversation.language}</p>
+              <p className={`text-sm font-medium text-deep-charcoal mt-1 ${awaitingFinalData ? '' : 'uppercase'}`}>
+                {awaitingFinalData ? t('callTracking.pendingLanguage') : conversation.language || t('callTracking.durationUnknown')}
+              </p>
             </div>
             {conversation.customer_sentiment && (
               <div>
@@ -143,9 +159,9 @@ export default function CallConversationModal({ conversation, onClose, timeZone,
               </div>
             )}
             {conversation.reservation_id && (
-              <div>
+              <div className="col-span-2">
                 <p className="text-sm text-stone-gray">{t('callTracking.reservationId')}</p>
-                <p className="text-sm font-medium text-deep-charcoal mt-1">{conversation.reservation_id}</p>
+                <p className="text-sm font-medium text-deep-charcoal mt-1 break-all">{conversation.reservation_id}</p>
               </div>
             )}
           </div>
@@ -153,12 +169,12 @@ export default function CallConversationModal({ conversation, onClose, timeZone,
           {/* Tools Used */}
           {conversation.tools_used && conversation.tools_used.length > 0 && (
             <div>
-              <h3 className="font-semibold text-deep-charcoal mb-3">{t('callTracking.toolsUsed')}</h3>
-              <div className="space-y-2">
+              <h3 className={SECTION_TITLE}>{t('callTracking.toolsUsed')}</h3>
+              <div>
                 {conversation.tools_used.map((tool, idx) => (
-                  <div key={idx} className="bg-soft-gray/50 rounded-xl p-3">
+                  <div key={idx} className="border-b border-glass-border-dark py-3 last:border-0">
                     <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                      <span className="text-sm font-medium text-deep-charcoal">{tool.tool_name}</span>
+                      <span className="text-sm font-medium text-deep-charcoal break-words">{toolLabel(tool.tool_name)}</span>
                       <span className={`inline-flex items-center gap-1.5 text-xs ${tool.success === true ? 'text-emerald-700' : tool.success === false ? 'text-red-700' : 'text-muted-stone'}`}>
                         <ThiingsIcon name={tool.success === true ? 'check-circle' : tool.success === false ? 'x-circle' : 'info'} size="xs" />
                         {t(tool.success === true ? 'callTracking.toolResultSuccess' : tool.success === false ? 'callTracking.toolResultFailure' : 'callTracking.toolResultUnknown')}
@@ -172,27 +188,23 @@ export default function CallConversationModal({ conversation, onClose, timeZone,
 
           {/* Transcript */}
           <div>
-            <h3 className="font-semibold text-deep-charcoal mb-3">{t('callTracking.transcript')}</h3>
-            {conversation.transcript && conversation.transcript.length > 0 ? (
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {conversation.transcript.map((message, idx) => (
+            <h3 className={SECTION_TITLE}>{t('callTracking.transcript')}</h3>
+            {transcript.length > 0 ? (
+              <div>
+                {transcript.map((message, idx) => (
                   <div
                     key={idx}
-                    className={`p-3 rounded-xl ${
-                      message.role === 'user'
-                        ? 'bg-stone-500/10 ml-4 sm:ml-8'
-                        : 'bg-soft-gray mr-4 sm:mr-8'
-                    }`}
+                    className="py-4 border-b border-glass-border-dark first:pt-0 last:border-0"
                   >
                     <p className="text-xs text-stone-gray mb-1">
                       {message.role === 'user' ? t('callTracking.customer') : t('callTracking.agent')}
                     </p>
-                    <p className="text-sm text-deep-charcoal whitespace-pre-wrap break-words">{message.content}</p>
+                    <p className="text-[15px] leading-relaxed text-deep-charcoal whitespace-pre-wrap break-words">{message.content}</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-stone italic">{t('callTracking.noTranscriptAvailable')}</p>
+              <p className="text-sm text-muted-stone">{t(awaitingFinalData ? 'callTracking.pendingTranscript' : 'callTracking.noTranscriptAvailable')}</p>
             )}
           </div>
 
@@ -217,7 +229,7 @@ export default function CallConversationModal({ conversation, onClose, timeZone,
           <button
             type="button"
             onClick={onClose}
-            className="w-full px-4 py-2 bg-burgundy text-white rounded-xl font-medium hover:bg-burgundy-dark transition-colors"
+            className="w-full min-h-11 px-4 py-2 bg-burgundy text-white rounded-full font-medium hover:bg-burgundy-dark transition-colors"
           >
             {t('common.close')}
           </button>

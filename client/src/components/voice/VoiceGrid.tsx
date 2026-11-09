@@ -3,6 +3,7 @@
  */
 
 import { useState, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import VoiceCard from './VoiceCard';
 import VoiceCardSkeleton from './VoiceCardSkeleton';
 import type { EnhancedVoice } from './voiceTypes';
@@ -35,6 +36,7 @@ export default function VoiceGrid({
   isLoading = false,
   source,
 }: VoiceGridProps) {
+  const { t } = useTranslation();
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -74,7 +76,7 @@ export default function VoiceGrid({
   if (isLoading) {
     return (
       <div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" role="status" aria-label="Loading voices">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" role="status" aria-label={t('voiceSettings.libraryLoadingAria')}>
           {Array.from({ length: 6 }).map((_, i) => (
             <VoiceCardSkeleton key={i} />
           ))}
@@ -89,8 +91,8 @@ export default function VoiceGrid({
         <div className="w-14 h-14 mx-auto mb-3 bg-soft-gray rounded-2xl flex items-center justify-center">
           <ThiingsIcon name="search" pxSize={24} />
         </div>
-        <p className="text-sm font-semibold text-deep-charcoal">No voices found</p>
-        <p className="text-xs text-stone-gray mt-1">Try adjusting your search or filters.</p>
+        <p className="text-sm font-semibold text-deep-charcoal">{t('voiceSettings.libraryEmptyTitle')}</p>
+        <p className="text-xs text-stone-gray mt-1">{t('voiceSettings.libraryEmptyHint')}</p>
       </div>
     );
   }
@@ -99,14 +101,14 @@ export default function VoiceGrid({
     <div>
       {source === 'own_voices_fallback' && (
         <p className="text-xs text-stone-gray bg-soft-gray rounded-xl px-3 py-2 mb-3">
-          Showing curated voices. Contact support to unlock the full voice library.
+          {t('voiceSettings.libraryFallbackNotice')}
         </p>
       )}
 
       <div
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[520px] overflow-y-auto pr-1"
         role="radiogroup"
-        aria-label="Available voices"
+        aria-label={t('voiceSettings.libraryAvailableAria')}
         onKeyDown={handleGridKeyDown}
       >
         {voices.map((voice, index) => (
@@ -134,7 +136,7 @@ export default function VoiceGrid({
             disabled={isLoadingMore}
             className="px-6 py-2.5 text-sm font-medium text-burgundy bg-burgundy/5 hover:bg-burgundy/10 rounded-xl transition-colors disabled:opacity-50"
           >
-            {isLoadingMore ? 'Loading more voices...' : 'Show more voices'}
+            {isLoadingMore ? t('voiceSettings.libraryLoadingMore') : t('voiceSettings.libraryShowMore')}
           </button>
         </div>
       )}

@@ -23,8 +23,12 @@ const VoiceCard = forwardRef<HTMLDivElement, VoiceCardProps>(function VoiceCard(
   ref,
 ) {
   const { t } = useTranslation();
+  const genderLabel = voice.gender === 'male' ? t('voiceSettings.filterMale')
+    : voice.gender === 'female' ? t('voiceSettings.filterFemale') : t('voiceSettings.unspecifiedGender');
+  const languageLabel = voice.language?.toUpperCase() || t('voiceSettings.languageNotSpecified');
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      if (e.target !== e.currentTarget) return;
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         onSelect(voice.id);
@@ -41,20 +45,20 @@ const VoiceCard = forwardRef<HTMLDivElement, VoiceCardProps>(function VoiceCard(
       tabIndex={0}
       role="radio"
       aria-checked={isSelected}
-      aria-label={`${voice.name} - ${voice.gender || 'neutral'} - ${voice.language?.toUpperCase() || 'EN'}`}
+      aria-label={`${voice.name} - ${genderLabel} - ${languageLabel}`}
       className={`
         relative glass-card border-2 p-5 cursor-pointer
         transition-all duration-200 hover:border-burgundy/50
         focus:outline-none focus:ring-2 focus:ring-burgundy focus:ring-offset-2
         ${isSelected
-          ? 'border-burgundy bg-burgundy/5'
+          ? 'border-deep-charcoal bg-soft-gray'
           : 'border-glass-border-dark hover:border-burgundy/50'
         }
       `}
     >
       {/* Selected Checkmark */}
       {isSelected && (
-        <div className="absolute top-3 right-3 text-burgundy">
+        <div className="absolute top-3 right-3 text-deep-charcoal">
           <ThiingsIcon name="check-circle" pxSize={22} />
         </div>
       )}
@@ -62,27 +66,24 @@ const VoiceCard = forwardRef<HTMLDivElement, VoiceCardProps>(function VoiceCard(
       {/* Voice Info */}
       <div className="mb-3">
         <div className="flex items-center gap-2 mb-1">
-          <h3 className="text-base font-bold text-deep-charcoal truncate pr-6">
+          <h3 className="font-sans text-[15px] font-semibold text-deep-charcoal line-clamp-2 break-words pr-6" title={voice.name}>
             {voice.name}
           </h3>
-          <span className="text-xs capitalize text-stone-gray">
-            {voice.gender === 'male' ? '\u2642' : voice.gender === 'female' ? '\u2640' : ''}
-          </span>
         </div>
 
         {/* Tags */}
         <div className="flex flex-wrap gap-1.5 mb-2">
-          <span className="inline-flex items-center px-2 py-0.5 rounded-[46px] text-xs font-medium bg-burgundy/[0.10] text-burgundy">
-            {voice.language?.toUpperCase() || 'EN'}
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-soft-gray text-stone-gray">
+            {languageLabel}
           </span>
           {voice.accent && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-[46px] text-xs font-medium bg-amber-600/[0.12] text-amber-700">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-soft-gray text-stone-gray">
               {voice.accent}
             </span>
           )}
-          {voice.category && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-[46px] text-xs font-medium bg-muted-stone/[0.10] text-muted-stone">
-              {voice.category}
+          {voice.gender && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-soft-gray text-stone-gray">
+              {genderLabel}
             </span>
           )}
         </div>
@@ -97,6 +98,7 @@ const VoiceCard = forwardRef<HTMLDivElement, VoiceCardProps>(function VoiceCard(
 
       {/* Play Button */}
       <button
+        type="button"
         onClick={(e) => {
           e.stopPropagation();
           onPlay(voice.id, voice.preview_phrase);
