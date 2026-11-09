@@ -105,11 +105,13 @@ confirmação de reserva por voz, não para os crons.
   data da ElevenLabs passa a ser escopada por restaurante (#228) e migração
   seletiva de ferramentas de data legadas presas a dois hosts fixos (#234).
 - **Servidor de voz da Fly: empacotamento e runtime do Node corrigidos**
-  (#258, "Fix Fly voice server packaging and Node runtime") — candidato a
-  resolver o `known_gap` registrado desde agosto sobre `fly.toml` apontar
-  para `api/voice-server/Dockerfile`, caminho que não existe; **não
-  confirmado linha a linha nesta passada** — vale conferir no próximo toque
-  em voz antes de remover o `known_gap` do config.
+  (#258, "Fix Fly voice server packaging and Node runtime") — **conferido
+  nesta rodada (via o spike de intel sobre preço da Fly.io, que leu o
+  `fly.toml` real): NÃO resolveu o `known_gap`.** O arquivo na raiz do
+  repo ainda aponta para `api/voice-server/Dockerfile`, caminho que não
+  existe (o diretório real é `api/_voice-server/`). #258 corrigiu outra
+  coisa (empacotamento/runtime do Node dentro do build), não esse caminho.
+  O `known_gap` permanece aberto, sem alteração no `intel.config.json`.
 - **Reserva por voz ganha rastreio de entrega de WhatsApp** (#281, "Track
   WhatsApp delivery on voice reservations") — toca o `known_gap` dos dois
   caminhos de WhatsApp hardcoded (reminders=Twilio, campanhas=Meta), mas só
@@ -173,13 +175,14 @@ dois elos de intel empilhados em vez de um.
 
 ## Divergências com o config
 
-1. **Possível correção do `known_gap` do `fly.toml`** (linha: "fly.toml
-   aponta o build para api/voice-server/Dockerfile, caminho que não
-   existe") — o PR #258 ("Fix Fly voice server packaging and Node runtime")
-   é candidato direto a resolver isto, mas não foi lido linha a linha nesta
-   passada. **Não removido do `known_gaps` agora — fica para confirmação no
-   próximo toque em voz**, por ser o tipo de correção que exige ler o
-   `fly.toml` atual, não só o nome do PR.
+1. **`known_gap` do `fly.toml` — checado nesta rodada, continua real.** O
+   PR #258 ("Fix Fly voice server packaging and Node runtime") não resolveu
+   o caminho de build quebrado: `fly.toml` na raiz ainda aponta para
+   `api/voice-server/Dockerfile` (confirmado ao ler o arquivo durante o
+   spike de intel sobre o aumento de preço de RAM da Fly.io, nesta mesma
+   passada). Nenhuma mudança no `known_gaps` do config — ele já estava
+   certo; a suspeita de resolução registrada na rodada anterior do
+   `STATE.md` está descartada.
 2. **Processo, de novo — agora com dois elos represados, não um:** a rodada
    de 02/11 (#218) já tinha recomendado fechar #214 sem merge quando #218
    fosse revisado. Nenhum dos dois foi revisado. Esta rodada estende #218 em

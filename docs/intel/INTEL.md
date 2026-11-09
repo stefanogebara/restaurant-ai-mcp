@@ -69,160 +69,51 @@
 
 ---
 
-### [DISCUTIR 8/15] Burger King recua de IA de voz obrigatória no drive-thru — o Seatable não tem fallback humano na ligação
-**Data:** 2026-09-28 · **Fonte:** [Nation's Restaurant News](https://www.nrn.com/quick-service/burger-king-rethinks-its-drive-thru-ai-strategy) · **Eixos:** P2 A2 D1 E2 L2
+### [DISCUTIR 10/15] Graph API v26.0 não nos atinge, mas expôs versões mortas no código
+**Data:** 2026-10-27 · **Fonte:** [Meta for Developers — Graph API Changelog v26.0](https://developers.facebook.com/docs/graph-api/changelog/version26.0) · **Eixos:** P1 A2 D2 E3 L2
 
-**O que é:** o Burger King testou IA de voz como único caminho de pedido em 50–70 lojas de
-drive-thru e recuou depois que dado da Technomic mostrou só 23% dos consumidores achando
-atrativo pedir a um bot de IA, contra 46% que acham desagradável e 46% que preferem
-atendente humano — o VP de tecnologia da marca citou clientes indo embora sem pedir por não
-quererem falar com o bot. "Patty" continua existindo, mas virou copiloto interno via headset
-para o atendente humano, não substituto do atendimento direto ao cliente.
+**O que é:** a v26.0 remove em 27/10/2026 a Commerce Order Management API (47 endpoints, sem substituto) e os parâmetros legados `pretty`/`debug`/`date_format`/`If-None-Match` — nenhum dos dois toca este repo (`grep` confirma zero ocorrência). O que a própria changelog expõe de relevante é o calendário de versões: `v20.0` já foi removida em 24/09/2026 e **`v21.0` tem remoção confirmada para 21/01/2027**.
 
-**O que a fonte não prova:** a escala do teste (50–70 lojas) é autodeclarada, e os
-percentuais da Technomic aparecem sem amostra nem metodologia publicada — não são
-auditáveis, só citados de segunda mão. E generalizar de "rejeição a pedido de fast-food por
-voz forçada" para "rejeição a reserva de mesa por telefone com IA" é inferência, não dado:
-Burger King testou pedido complexo em drive-thru americano, não reserva simples em
-restaurante independente brasileiro.
+**O que a fonte não prova:** o status de `v18.0`/`v19.0` não está no changelog da v26.0 — é inferência pelo padrão de ciclo (~2 anos), não fato confirmado pela Meta.
 
-**Por que toca este projeto mesmo assim:** o Seatable atende telefone de reserva **100% por
-IA de voz**, sem opção declarada de cair para um humano durante a ligação, e sem telemetria
-de insatisfação ou abandono — o mesmo buraco que o `known_gaps` já registra como "zero
-instrumentação de qualidade/latência na voz". O canal de WhatsApp tem transbordo humano
-(`api/_services/whatsapp/handoff.js`, ainda desligado por calibração pendente — ver
-`BACKLOG.md#whatsapp-transbordo-humano`); a ligação de voz não tem equivalente nenhum.
+**Por que toca este projeto:** o repo chama `graph.facebook.com` com versões hardcoded antigas e divergentes, nenhuma delas corrente: **`v21.0`** em `api/_lib/whatsapp-provisioning.js`, `api/_lib/prospecting/wa-management.js`, `api/_lib/integration-probes.js`, `api/_crons/analytics-briefing.js`, e todo o módulo `api/instagram/` (`fetch-recent-media.js`, `fetch-profile.js`, `publish-flow.js`, `oauth-start.js`, `oauth-callback.js`); **`v19.0`** em `api/whatsapp-settings.js` e `api/_lib/whatsapp-meta-templates.js`; **`v18.0`** em `api/_lib/whatsapp-sender.js`, `api/_lib/whatsapp-interactions.js`, `api/_services/whatsapp/message-sender.js`, `api/whatsapp-status.js`, `api/_crons/monitor-meta-token-expiry.js`. A `v21.0` — que toca provisionamento de WhatsApp, a Olímpia e todo o Instagram — morre em ~2,5 meses.
 
-**A pergunta:** vale abrir um spike medindo taxa de "pedido de atendente" ou desligamento no
-meio da ligação a partir dos transcritos que `api/cron/sync-conversation-data.js` já puxa
-— antes que apareça o mesmo padrão de rejeição em reserva de restaurante independente — ou é
-caso específico demais de fast-food americano (pedido complexo, não reserva) para importar
-pro produto?
-
-**Atualização 2026-10-12 — um relatório diferente, do lado oposto, no mesmo período.** O
-relatório anual Intouch Insight/QSR Magazine (mystery shop, 120 pedidos assistidos por IA em
-Burger King/Taco Bell/Wendy's, 2.145 visitas totais) mostra a IA **dobrando** a taxa de
-conclusão de pedido sem humano (20%→40% ano a ano) e "liderando" em acurácia pela primeira vez.
-Fonte primária (QSR Magazine) devolveu 403 — número só confirmado via cobertura secundária
-(MarketScale). Isto não contradiz o recuo do Burger King, complementa: a IA ficou **tecnicamente
-melhor** em completar o pedido no mesmo período em que o BK recuou por **rejeição do cliente**
-em atendimento forçado. Capacidade crescente não resolve, por si, o problema de aceitação que
-motivou o recuo — reforça, não dilui, a pergunta original sobre fallback humano na ligação.
+**A pergunta:** vale abrir agora um item de BACKLOG para padronizar e atualizar a versão do Graph API nos ~11 pontos de chamada antes do prazo de 21/01/2027 da v21.0 (e confirmar se v18.0/v19.0 ainda respondem em produção), ou isso espera a próxima rodada de manutenção de dívida técnica?
 
 ---
 
-### [DISCUTIR 8/15] A Square constrói voz agêntica dentro do próprio kiosk — não mais por parceria
-**Data:** 2026-10-14 · **Fonte:** [Square (press release oficial)](https://squareup.com/us/en/press/square-kiosk-self-service-reimagined) · **Eixos:** P2 A1 D2 E1 L2
+### [DISCUTIR 9/15] Who Gives a Crap desliga agente de IA por confirmar erro de preço em vez de escalar para humano
+**Data:** 2026-07-13 · **Fonte:** [CX Foundation](https://cxfoundation.com/news/ai-agent-taken-offline-for-lying-to-a-customer) · **Eixos:** P2 A2 D2 E1 L2
 
-**O que é:** a Square lançou um kiosk flagship de autoatendimento (US$1.999 + US$99/mês de taxa de
-software, exigindo plano Square Plus US$49 ou Premium US$149/loja) com tela de 21,5", detecção
-de presença e uma camada de voz "agêntica e conversacional" embutida — responde pergunta de
-cardápio/alergia, sugere item por popularidade/horário/carrinho em tempo real, permite alternar
-entre voz e toque na mesma sessão. Pacote multi-loja para redes de franquia anunciado sem preço.
+**O que é:** um e-mail da Who Gives a Crap saiu com erro de digitação dizendo que a assinatura de
+papel higiênico subiria de US$66 (48 rolos) para US$69,50 (24 rolos) — mais que o dobro, quando o
+correto era US$69,50 para 48 rolos. Quando o cliente confrontou o agente de atendimento por IA, ele
+**confirmou o erro em vez de corrigir ou escalar para um humano**. A empresa confirmou o typo,
+desligou o agente na hora e corrigiu por e-mail. O mesmo artigo cobre um caso irmão da Meta AI
+(abril/2026): um agente inventou um número de chamado falso para fechar um atendimento que não
+sabia resolver — outro "não escalou".
 
-**O que a fonte não prova:** zero benchmark ou número de acurácia da voz; nenhum detalhe de como
-o cardápio é sincronizado para a camada de voz "entender" em tempo real; não fica claro se a IA
-fecha o pedido sozinha ou é assistida. Release só em inglês/EUA, sem menção a expansão. Fornecedor
-do motor de voz não divulgado. É copy de anúncio da própria Square, sem auditoria terceira.
+**O que a fonte não prova:** não há transcrição completa, não diz modelo/plataforma usada pela WGAC,
+não explica a causa técnica da falha de escalonamento — é um incidente confirmado pela empresa, sem
+benchmark nem metodologia.
 
-**Por que toca este projeto:** Square já é um `pos_provider` integrado neste repo (`api/square.js`,
-`database/migrations/20260126_pos_and_revenue.sql`) — e hoje `handleCatalogSync` busca o catálogo
-do Square e **descarta** os itens, gravando só a contagem (`known_gap` já registrado). Isso é
-diferente do padrão já visto em Resy+Toast, Square+OpenTable e Google Ask Maps (todos parceria
-externa): aqui é a própria Square construindo voz **dentro do seu próprio hardware/POS**, sem
-intermediário — uma escalada da `bets[0]` ("POS embutir voz") em direção ao canal de kiosk
-presencial, não ao canal de telefone/reserva que é o que o Seatable ataca.
+**Por que toca este projeto:** o guardrail determinístico que existe aqui — `claim-linter.js`
+(`api/_lib/prospecting/claim-linter.js`, `settled`) — é regex fixo sobre 7 famílias nascidas de
+incidentes já ocorridos na prospecção (Olímpia); a família mais próxima, `preco-inventado`, bloqueia
+a IA **inventar** preço, não cobre a IA **confirmar um erro que veio de um humano upstream** — exatamente
+a falha do caso WGAC. O linter, por decisão, não cobre o caminho de atendimento ao cliente final
+(`api/_services/whatsapp/conversation.js`, `reservation-tools.js`) — gap já registrado no item ANPD
+arquivado por idade. O escalonamento que resolveria isso já está **construído e desligado**:
+`api/_services/whatsapp/handoff.js` nasce com `whatsapp_handoff_enabled = false` em todo restaurante,
+por falta de calibração (`BACKLOG.md#whatsapp-transbordo-humano`). Relacionado, mas não o mesmo
+movimento, ao item (agora arquivado por idade) sobre o recuo do Burger King — aquele é rejeição do
+cliente à IA de voz; este é a IA propagando um erro factual em vez de verificar/escalar, em texto.
 
-**A pergunta:** isso muda a urgência do spike `BACKLOG.md#ucp-catalogo-legivel` (já PROTOTIPAR
-11/15, aberto desde 24/08, sem spike rodado) de "nice to have" para "correr antes que a Square
-estenda essa mesma voz do kiosk para telefone/WhatsApp"? Ou o kiosk de autoatendimento presencial
-para QSR americano é distante o bastante do caso de uso (reserva por telefone, restaurante
-independente, Brasil) para não mudar prioridade nenhuma?
-
----
-
-### [DISCUTIR 11/15] "Português + WhatsApp" não é território vago — já tem ocupante brasileiro
-**Data:** 2026-09-01 · **Eixos:** P3 A2 D2 E1 L3
-**Fontes:** [Baguete, 26/ago](https://www.baguete.com.br/noticias/fogo-de-chao-automatiza-atendimento-com-foodster) · [Portal Filipe Mello, 27/ago](https://www.portalfilipemello.com/2026/08/fogo-de-chao-registra-mais-de-mil.html) · [foodster.ai](https://foodster.ai)
-**Ponteiro de trabalho:** o spike de transbordo saiu daqui → `BACKLOG.md#whatsapp-transbordo-humano`
-
-**O que é:** a Foodster (RJ) e a Wiv (ex-Blip, parceira Diamond) rodam no Fogo de Chão um agente de
-WhatsApp via Meta Cloud API — reserva, fila, cardápio, cancelamento e transbordo humano — com
-integração nativa ao **Tagme**. Eles não são donos da reserva: o Tagme é quem guarda reserva e fila.
-O mecanismo comercial não é o modelo de IA, é **canal**: Blip como distribuição e Tagme como base
-instalada de rede.
-
-**Os números não sustentam o que parecem sustentar.** "12 mil usuários únicos" é a soma de únicos
-*mensais* (2.558 + ~4k + 5.416) — o mesmo cliente contado três vezes; idem as 255 mil mensagens. Não
-há baseline pré-IA nem controle, então nada atribui o +112% de contatos à IA em vez de mídia ou
-sazonalidade. Os 76,7% de comparecimento são medidos pelo Tagme, não pela IA. E falta a métrica que
-diria se o agente resolve ou empurra: taxa de transbordo. Baguete e Portal Filipe Mello são
-reescritas do mesmo release; o foodster.ai não publica o case.
-
-**Por que toca este projeto — e por que sobrevive à demolição dos números:** a `bets[0]` foi
-reescrita em 2026-09-01 para dizer que a linha defensável é *"o loop está em português e começa num
-canal que os americanos não têm — o WhatsApp"*. Isso descreve um espaço que **já tem ocupante
-brasileiro com case público em rede nacional**, e o foodster.ai diz atender "restaurantes e redes",
-não só rede. O que continua defensável é outra coisa: eles são a primeira camada em cima da reserva
-alheia, enquanto aqui a reserva, a mesa, a receita (`api/_lib/pos/service-completion-core.js`) e o
-`customer_ltv` são do próprio produto, mais voz PSTN e a Olímpia. O diferencial migra de **canal**
-para **propriedade do dado**.
-
-**Ressalva de escala, que corta nos dois sentidos:** Fogo de Chão é rede grande, e o público
-declarado no config é restaurante independente de São Paulo. Isso enfraquece o item como ameaça
-direta — e o fortalece como prova de que a camada está sendo ocupada de cima para baixo.
-
-**A pergunta:** (a) a `bets[0]` vira *"o loop está em português **e o dado do cliente é nosso, não do
-Tagme**"* — isto é, o diferencial deixa de ser canal e passa a ser propriedade do dado? (b) num
-restaurante de SP que já usa Tagme, o Seatable entra como substituto ou como **leitor** — adicionar
-`tagme` a `VALID_SOURCES` em `api/external-booking-webhook.js` e conviver, como a Saipos ficou de
-conector de leitura no `settled` de 2026-09-01?
-
-**Atualização 2026-09-21 — dois data points novos, um em cada extremo do território:**
-
-**(1) O iFood comprou uma fatia da Tagme.** No iFood Move 2026 (16-17/09), o iFood confirmou
-investimento na própria Tagme (valor não divulgado) e expandiu o "Pra Comer Fora" — reserva
-sem ligar, fila pelo celular, dentro do app de delivery — de 3 para 50+ cidades. Isso é a
-**segunda** aquisição/investimento em reserva do iFood em três semanas: depois de adquirir
-100% da Get In em 24/08 (já `seen.jsonl`, PROTOTIPAR 12/15), agora um pedaço da Tagme —
-somado a Saipos, Anota AI, OPDV e 3S Checkout, são seis empresas do mesmo nicho operacional
-de restaurante independente compradas ou capitalizadas sob o guarda-chuva de R$24bi/ano
-anunciado no mesmo evento. Não é aposta pontual, é padrão de compra sistemática da camada
-operacional inteira. Fontes: [Central do Varejo](https://centraldovarejo.com.br/ifood-investe-na-tagme-e-expande-o-comer-fora-para-mais-de-50-cidades/) ·
-[NeoFeed](https://neofeed.com.br/negocios/ifood-serve-r-24-bilhoes-em-investimentos-e-avanca-para-tres-novos-segmentos/).
-Nenhuma fonte é o release primário do iFood — todas reescrevem o mesmo press kit do evento —
-e nenhuma confirma tecnicamente se o "Pra Comer Fora" já roda sobre o motor da Tagme.
-
-**(2) Existe um Chef.Ai — e ele mira o segmento exato da `bets[2]`, sem passar por rede.**
-"Maitre virtual" de WhatsApp/Instagram fundado por dono de restaurante em Campinas
-(Restaurante Benedito), citado com 50+ clientes majoritariamente independentes do interior
-de SP. Reserva, fila, combinação de mesa para grupos, "memória" de preferência dentro da
-janela do WhatsApp. **Diferença que importa:** a Foodster mira rede grande via parceria com
-Tagme; o Chef.Ai mira o restaurante único, sem intermediário — mais perto do público
-declarado no config do que qualquer item já registrado aqui. Mas os números (771 clientes
-respondidos e 243 reservas no Dia dos Namorados/2025, 200 msgs/dia) são autodeclarados pelo
-fundador e reciclados por pelo menos três veículos ao longo de 13 meses sem atualização —
-esta cobertura de 17/09 não traz fato novo, é reaquecimento de imprensa. Fonte:
-[Movimento Econômico, 17/09](https://movimentoeconomico.com.br/tecnologia/2026/09/17/restaurantes-recorrem-a-ia-para-melhorar-gestao-e-relacionamento-com-clientes/).
-Nenhuma cobertura mostra se o Chef.Ai grava dado de cliente em CRM próprio ou fecha loop de
-receita — descreve só a camada de atendimento.
-
-**A pergunta revisada:** o Chef.Ai mostra que o nicho exato do Seatable (independente, sem
-parceria de rede) já tem ocupante brasileiro sustentado há 13+ meses, não é hipótese. Vale um
-spike de diligência direta (virar cliente teste, ou entrevistar um dos 50+ citados) para
-confirmar se ele tem ou não uma perna de CRM/receita — antes de decidir se a pergunta (a)/(b)
-acima precisa ser reescrita para citar concorrência no nível de restaurante único, não só de
-rede via Tagme?
-
-**Atualização 2026-10-12 — a lacuna técnica da atualização de 21/09 tem resposta, e é
-retroativa.** Aquela atualização registrou que "nenhuma fonte confirma tecnicamente se o 'Pra
-Comer Fora' já roda sobre o motor da Tagme". Um fato de 10/06/2026 — processado agora por erro
-de dedup anterior (a nota em `seen.jsonl` apontava para o item errado, corrigida nesta rodada) —
-responde isso: o iFood já lançava reserva de mesa integrada a **Tagme** (gestão/cardápio) + **Get
-In** (fila) desde o lançamento em SP, com 1.000+ estabelecimentos no dia 1 (D.O.M., Mocotó, Pobre
-Juan). Ou seja, a integração operacional já existia **três meses antes** do investimento formal
-anunciado no iFood Move (16-17/09) — o investimento de setembro é a formalização do capital numa
-parceria que já rodava, não o início da integração. [Mobile Time, 10/06](https://www.mobiletime.com.br/noticias/10/06/2026/ifood-reservas-de-mesa/)
+**A pergunta:** vale priorizar a calibração do `handoff.js` especificamente para disputas de fato
+(preço, depósito, política dita incorretamente por host ou por engano no sistema) como caso de uso
+que desbloqueia o toggle, em vez de esperar calibração genérica — ou o caminho certo é estender o
+`claim-linter` (ou um linter novo, com famílias próprias) para cobrir o texto de confirmação em
+`conversation.js`/`reservation-tools.js` antes de qualquer resposta de valor monetário sair sozinha?
 
 ---
 
@@ -406,6 +297,29 @@ está sendo cobrada, sem esperar a Meta confirmar o valor por escrito.
 
 ---
 
+**Absorvido em 2026-11-09 — o canal BSP confirma passthrough sem markup, mas o rate card BRL segue
+ausente até na fonte do próprio parceiro.** Abri as duas notas do Twilio Help Center sobre
+"Changes to WhatsApp's Pricing October 2026" via endpoint da API do Zendesk (a página HTML
+devolve 403 — mesmo bloqueio de bot que outras tentativas já bateram neste item). As duas notas
+não divergem como se suspeitava: descrevem o mesmo mecanismo com texto quase idêntico — a partir
+de 01/10/2026 a Meta cobra "service messages" (não-template, dentro da janela de atendimento de
+24h) com as primeiras 1.000 mensagens/mês por número grátis, e volta a cobrar Utility templates
+enviados dentro dessa mesma janela (grátis desde jul/2025); volume tiers agora contam Utility
+dentro da janela de serviço. Texto literal de uma das notas: *"Starting October 1st, 2026, Meta
+will again charge for all Utility messages."* As duas confirmam, em texto próprio da Twilio, que
+**"Twilio's per-message fees and pricing model [are] unchanged"** — a Twilio repassa a tarifa da
+Meta sem markup próprio, resposta direta (para este BSP específico) à pergunta aberta em 05/10
+sobre se o BSP absorve o custo ou repassa. Nenhuma das duas notas traz valor em BRL — ambas
+remetem à "página de pricing atual da Twilio" e aos "rate cards da Meta" para a cifra exata, o
+mesmo buraco que a doc-mãe da Meta mantém desde 01/09. **O que isso muda:**
+`api/_lib/channels/twilio-adapter.js` é um dos três adapters deste repo, e agora há confirmação
+de fonte primária de BSP (não extrapolação de imprensa) de que, pelo canal Twilio, o repasse de
+custo ao restaurante é integral — reforça, não resolve, a pergunta já aberta sobre monitorar
+billing da WABA e ligar a leitura de `pricing_category`. Score mantido; sem rate card novo, item
+continua `DISCUTIR`.
+
+---
+
 ## Fila de trabalho
 
 Promovido em 2026-10-12:
@@ -468,6 +382,16 @@ Promovidos em 2026-08-24, os quatro com âncora verificada:
 
 ## Radar
 
+- `2026-11-09` **Fly.io sobe RAM de Machines de ~US$5 para US$6/GB-mês em 1º/out/2026** (CPU,
+  volumes e egress sem mudança; confirmado em docs.fly.io/about/pricing e fly.io/pricing.md) —
+  impacto real no `seatable-voice` (1 Machine always-on, 512MB, `fly.toml`) é de centavos/mês,
+  não motivo para spike; reabre só de raspão a pergunta arquivada sobre sair da Fly.io.
+  [Fly.io](https://docs.fly.io/about/pricing) · 6/15
+- `2026-11-09` **Supabase teve blips reais de pooler/storage** em us-east-1 (9/out) e us-east-2
+  (3/nov), atribuídos a provedor de nuvem — mas NÃO nas datas/região que um tracker terceiro
+  alegou para 21-22/out e 2-4/nov; status oficial não confirma o recorte do scout, e nenhum
+  incidente aparece nos 3 dias (07-09/11) de maior volume de commits desta série.
+  [status.supabase.com](https://status.supabase.com/history) · 5/15
 - `2026-11-02` **Yelp lança "Check for Me": a IA do app liga PARA o restaurante perguntando
   tempo de espera** (lançamento anunciado para "próximos meses", só EUA/iOS) — o cliente pede
   pelo app, a IA do Yelp telefona para a equipe e manda a resposta por SMS. Mesmo movimento do
@@ -772,6 +696,174 @@ Promovidos em 2026-08-24, os quatro com âncora verificada:
   estande sem preço nem prazo público. Decidir ir como visitante expira ~14/09. [Abrasel](https://abrasel.com.br/noticias/noticias/salao-abrasel-5-motivos-para-participar-do-evento/) · 7/15
 
 ## Arquivo
+
+### [ARQUIVADO 2026-11-09] Três itens entre 09-28 e 10-14 — envelheceram sem decisão (26 a 28 dias em aberto)
+
+Nenhum recebeu resposta do Stefano nem atualização nos últimos 21 dias — mesma regra de manutenção aplicada nas rodadas anteriores. O item do Burger King é referenciado de passagem pelo novo `[DISCUTIR 9/15] Who Gives a Crap` desta rodada — a referência continua válida com o item arquivado, só não é mais "em aberto" por falta de decisão própria. Conteúdo original preservado abaixo, sem reavaliação de score — arquivado por idade, não por descarte de mérito.
+
+<details>
+<summary>[DISCUTIR 8/15] Burger King recua de IA de voz obrigatória no drive-thru — o Seatable não tem fallback humano na ligação — 2026-09-28</summary>
+
+**Fonte:** [Nation's Restaurant News](https://www.nrn.com/quick-service/burger-king-rethinks-its-drive-thru-ai-strategy) · **Eixos:** P2 A2 D1 E2 L2
+
+**O que é:** o Burger King testou IA de voz como único caminho de pedido em 50–70 lojas de
+drive-thru e recuou depois que dado da Technomic mostrou só 23% dos consumidores achando
+atrativo pedir a um bot de IA, contra 46% que acham desagradável e 46% que preferem
+atendente humano — o VP de tecnologia da marca citou clientes indo embora sem pedir por não
+quererem falar com o bot. "Patty" continua existindo, mas virou copiloto interno via headset
+para o atendente humano, não substituto do atendimento direto ao cliente.
+
+**O que a fonte não prova:** a escala do teste (50–70 lojas) é autodeclarada, e os
+percentuais da Technomic aparecem sem amostra nem metodologia publicada — não são
+auditáveis, só citados de segunda mão. E generalizar de "rejeição a pedido de fast-food por
+voz forçada" para "rejeição a reserva de mesa por telefone com IA" é inferência, não dado:
+Burger King testou pedido complexo em drive-thru americano, não reserva simples em
+restaurante independente brasileiro.
+
+**Por que toca este projeto mesmo assim:** o Seatable atende telefone de reserva **100% por
+IA de voz**, sem opção declarada de cair para um humano durante a ligação, e sem telemetria
+de insatisfação ou abandono — o mesmo buraco que o `known_gaps` já registra como "zero
+instrumentação de qualidade/latência na voz". O canal de WhatsApp tem transbordo humano
+(`api/_services/whatsapp/handoff.js`, ainda desligado por calibração pendente — ver
+`BACKLOG.md#whatsapp-transbordo-humano`); a ligação de voz não tem equivalente nenhum.
+
+**A pergunta:** vale abrir um spike medindo taxa de "pedido de atendente" ou desligamento no
+meio da ligação a partir dos transcritos que `api/cron/sync-conversation-data.js` já puxa
+— antes que apareça o mesmo padrão de rejeição em reserva de restaurante independente — ou é
+caso específico demais de fast-food americano (pedido complexo, não reserva) para importar
+pro produto?
+
+**Atualização 2026-10-12 — um relatório diferente, do lado oposto, no mesmo período.** O
+relatório anual Intouch Insight/QSR Magazine (mystery shop, 120 pedidos assistidos por IA em
+Burger King/Taco Bell/Wendy's, 2.145 visitas totais) mostra a IA **dobrando** a taxa de
+conclusão de pedido sem humano (20%→40% ano a ano) e "liderando" em acurácia pela primeira vez.
+Fonte primária (QSR Magazine) devolveu 403 — número só confirmado via cobertura secundária
+(MarketScale). Isto não contradiz o recuo do Burger King, complementa: a IA ficou **tecnicamente
+melhor** em completar o pedido no mesmo período em que o BK recuou por **rejeição do cliente**
+em atendimento forçado. Capacidade crescente não resolve, por si, o problema de aceitação que
+motivou o recuo — reforça, não dilui, a pergunta original sobre fallback humano na ligação.
+
+</details>
+
+<details>
+<summary>[DISCUTIR 8/15] A Square constrói voz agêntica dentro do próprio kiosk — não mais por parceria — 2026-10-14</summary>
+
+**Fonte:** [Square (press release oficial)](https://squareup.com/us/en/press/square-kiosk-self-service-reimagined) · **Eixos:** P2 A1 D2 E1 L2
+
+**O que é:** a Square lançou um kiosk flagship de autoatendimento (US$1.999 + US$99/mês de taxa de
+software, exigindo plano Square Plus US$49 ou Premium US$149/loja) com tela de 21,5", detecção
+de presença e uma camada de voz "agêntica e conversacional" embutida — responde pergunta de
+cardápio/alergia, sugere item por popularidade/horário/carrinho em tempo real, permite alternar
+entre voz e toque na mesma sessão. Pacote multi-loja para redes de franquia anunciado sem preço.
+
+**O que a fonte não prova:** zero benchmark ou número de acurácia da voz; nenhum detalhe de como
+o cardápio é sincronizado para a camada de voz "entender" em tempo real; não fica claro se a IA
+fecha o pedido sozinha ou é assistida. Release só em inglês/EUA, sem menção a expansão. Fornecedor
+do motor de voz não divulgado. É copy de anúncio da própria Square, sem auditoria terceira.
+
+**Por que toca este projeto:** Square já é um `pos_provider` integrado neste repo (`api/square.js`,
+`database/migrations/20260126_pos_and_revenue.sql`) — e hoje `handleCatalogSync` busca o catálogo
+do Square e **descarta** os itens, gravando só a contagem (`known_gap` já registrado). Isso é
+diferente do padrão já visto em Resy+Toast, Square+OpenTable e Google Ask Maps (todos parceria
+externa): aqui é a própria Square construindo voz **dentro do seu próprio hardware/POS**, sem
+intermediário — uma escalada da `bets[0]` ("POS embutir voz") em direção ao canal de kiosk
+presencial, não ao canal de telefone/reserva que é o que o Seatable ataca.
+
+**A pergunta:** isso muda a urgência do spike `BACKLOG.md#ucp-catalogo-legivel` (já PROTOTIPAR
+11/15, aberto desde 24/08, sem spike rodado) de "nice to have" para "correr antes que a Square
+estenda essa mesma voz do kiosk para telefone/WhatsApp"? Ou o kiosk de autoatendimento presencial
+para QSR americano é distante o bastante do caso de uso (reserva por telefone, restaurante
+independente, Brasil) para não mudar prioridade nenhuma?
+
+</details>
+
+<details>
+<summary>[DISCUTIR 11/15] "Português + WhatsApp" não é território vago — já tem ocupante brasileiro — 2026-09-01</summary>
+
+**Fontes:** [Baguete, 26/ago](https://www.baguete.com.br/noticias/fogo-de-chao-automatiza-atendimento-com-foodster) · [Portal Filipe Mello, 27/ago](https://www.portalfilipemello.com/2026/08/fogo-de-chao-registra-mais-de-mil.html) · [foodster.ai](https://foodster.ai)
+**Ponteiro de trabalho:** o spike de transbordo saiu daqui → `BACKLOG.md#whatsapp-transbordo-humano`
+
+**O que é:** a Foodster (RJ) e a Wiv (ex-Blip, parceira Diamond) rodam no Fogo de Chão um agente de
+WhatsApp via Meta Cloud API — reserva, fila, cardápio, cancelamento e transbordo humano — com
+integração nativa ao **Tagme**. Eles não são donos da reserva: o Tagme é quem guarda reserva e fila.
+O mecanismo comercial não é o modelo de IA, é **canal**: Blip como distribuição e Tagme como base
+instalada de rede.
+
+**Os números não sustentam o que parecem sustentar.** "12 mil usuários únicos" é a soma de únicos
+*mensais* (2.558 + ~4k + 5.416) — o mesmo cliente contado três vezes; idem as 255 mil mensagens. Não
+há baseline pré-IA nem controle, então nada atribui o +112% de contatos à IA em vez de mídia ou
+sazonalidade. Os 76,7% de comparecimento são medidos pelo Tagme, não pela IA. E falta a métrica que
+diria se o agente resolve ou empurra: taxa de transbordo. Baguete e Portal Filipe Mello são
+reescritas do mesmo release; o foodster.ai não publica o case.
+
+**Por que toca este projeto — e por que sobrevive à demolição dos números:** a `bets[0]` foi
+reescrita em 2026-09-01 para dizer que a linha defensável é *"o loop está em português e começa num
+canal que os americanos não têm — o WhatsApp"*. Isso descreve um espaço que **já tem ocupante
+brasileiro com case público em rede nacional**, e o foodster.ai diz atender "restaurantes e redes",
+não só rede. O que continua defensável é outra coisa: eles são a primeira camada em cima da reserva
+alheia, enquanto aqui a reserva, a mesa, a receita (`api/_lib/pos/service-completion-core.js`) e o
+`customer_ltv` são do próprio produto, mais voz PSTN e a Olímpia. O diferencial migra de **canal**
+para **propriedade do dado**.
+
+**Ressalva de escala, que corta nos dois sentidos:** Fogo de Chão é rede grande, e o público
+declarado no config é restaurante independente de São Paulo. Isso enfraquece o item como ameaça
+direta — e o fortalece como prova de que a camada está sendo ocupada de cima para baixo.
+
+**A pergunta:** (a) a `bets[0]` vira *"o loop está em português **e o dado do cliente é nosso, não do
+Tagme**"* — isto é, o diferencial deixa de ser canal e passa a ser propriedade do dado? (b) num
+restaurante de SP que já usa Tagme, o Seatable entra como substituto ou como **leitor** — adicionar
+`tagme` a `VALID_SOURCES` em `api/external-booking-webhook.js` e conviver, como a Saipos ficou de
+conector de leitura no `settled` de 2026-09-01?
+
+**Atualização 2026-09-21 — dois data points novos, um em cada extremo do território:**
+
+**(1) O iFood comprou uma fatia da Tagme.** No iFood Move 2026 (16-17/09), o iFood confirmou
+investimento na própria Tagme (valor não divulgado) e expandiu o "Pra Comer Fora" — reserva
+sem ligar, fila pelo celular, dentro do app de delivery — de 3 para 50+ cidades. Isso é a
+**segunda** aquisição/investimento em reserva do iFood em três semanas: depois de adquirir
+100% da Get In em 24/08 (já `seen.jsonl`, PROTOTIPAR 12/15), agora um pedaço da Tagme —
+somado a Saipos, Anota AI, OPDV e 3S Checkout, são seis empresas do mesmo nicho operacional
+de restaurante independente compradas ou capitalizadas sob o guarda-chuva de R$24bi/ano
+anunciado no mesmo evento. Não é aposta pontual, é padrão de compra sistemática da camada
+operacional inteira. Fontes: [Central do Varejo](https://centraldovarejo.com.br/ifood-investe-na-tagme-e-expande-o-comer-fora-para-mais-de-50-cidades/) ·
+[NeoFeed](https://neofeed.com.br/negocios/ifood-serve-r-24-bilhoes-em-investimentos-e-avanca-para-tres-novos-segmentos/).
+Nenhuma fonte é o release primário do iFood — todas reescrevem o mesmo press kit do evento —
+e nenhuma confirma tecnicamente se o "Pra Comer Fora" já roda sobre o motor da Tagme.
+
+**(2) Existe um Chef.Ai — e ele mira o segmento exato da `bets[2]`, sem passar por rede.**
+"Maitre virtual" de WhatsApp/Instagram fundado por dono de restaurante em Campinas
+(Restaurante Benedito), citado com 50+ clientes majoritariamente independentes do interior
+de SP. Reserva, fila, combinação de mesa para grupos, "memória" de preferência dentro da
+janela do WhatsApp. **Diferença que importa:** a Foodster mira rede grande via parceria com
+Tagme; o Chef.Ai mira o restaurante único, sem intermediário — mais perto do público
+declarado no config do que qualquer item já registrado aqui. Mas os números (771 clientes
+respondidos e 243 reservas no Dia dos Namorados/2025, 200 msgs/dia) são autodeclarados pelo
+fundador e reciclados por pelo menos três veículos ao longo de 13 meses sem atualização —
+esta cobertura de 17/09 não traz fato novo, é reaquecimento de imprensa. Fonte:
+[Movimento Econômico, 17/09](https://movimentoeconomico.com.br/tecnologia/2026/09/17/restaurantes-recorrem-a-ia-para-melhorar-gestao-e-relacionamento-com-clientes/).
+Nenhuma cobertura mostra se o Chef.Ai grava dado de cliente em CRM próprio ou fecha loop de
+receita — descreve só a camada de atendimento.
+
+**A pergunta revisada:** o Chef.Ai mostra que o nicho exato do Seatable (independente, sem
+parceria de rede) já tem ocupante brasileiro sustentado há 13+ meses, não é hipótese. Vale um
+spike de diligência direta (virar cliente teste, ou entrevistar um dos 50+ citados) para
+confirmar se ele tem ou não uma perna de CRM/receita — antes de decidir se a pergunta (a)/(b)
+acima precisa ser reescrita para citar concorrência no nível de restaurante único, não só de
+rede via Tagme?
+
+**Atualização 2026-10-12 — a lacuna técnica da atualização de 21/09 tem resposta, e é
+retroativa.** Aquela atualização registrou que "nenhuma fonte confirma tecnicamente se o 'Pra
+Comer Fora' já roda sobre o motor da Tagme". Um fato de 10/06/2026 — processado agora por erro
+de dedup anterior (a nota em `seen.jsonl` apontava para o item errado, corrigida nesta rodada) —
+responde isso: o iFood já lançava reserva de mesa integrada a **Tagme** (gestão/cardápio) + **Get
+In** (fila) desde o lançamento em SP, com 1.000+ estabelecimentos no dia 1 (D.O.M., Mocotó, Pobre
+Juan). Ou seja, a integração operacional já existia **três meses antes** do investimento formal
+anunciado no iFood Move (16-17/09) — o investimento de setembro é a formalização do capital numa
+parceria que já rodava, não o início da integração. [Mobile Time, 10/06](https://www.mobiletime.com.br/noticias/10/06/2026/ifood-reservas-de-mesa/)
+
+</details>
+
+---
 
 ### [ARQUIVADO 2026-11-02] Sete itens entre 09-14 e 10-09 — envelheceram sem decisão (24 a 49 dias em aberto), mais um já promovido e nunca destacado
 
