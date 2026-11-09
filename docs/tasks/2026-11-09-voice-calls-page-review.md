@@ -32,7 +32,7 @@ The independent backend audit also reproduced three save/sync consistency failur
 
 ## Local verification
 
-- Backend: 332 suites passed; 4,752 tests passed; six pre-existing skips.
+- Backend: 332 suites passed; 4,755 tests passed; six pre-existing skips.
 - Frontend: 150 suites and 1,274 tests passed.
 - Production build, changed-file ESLint, API syntax, fire-and-forget audit and phantom-column audit passed.
 - Independent frontend review approved the call presentation and audio lifecycle changes. Responsive keyboard navigation derives focus and columns from the rendered grid.
@@ -51,3 +51,9 @@ The first exact ready preview failed the authenticated Voice journey: `VITE_API_
 Subscription checks now use the current deployment's API, consistent with the other Voice requests and the existing Vite proxy. Feature access exposes request failure/retry; Voice renders a retry message instead of an upgrade offer when the plan check fails. Three new regressions failed before and passed after this correction. The revised preview must pass the browser gate before merge.
 
 A CLI `env run` access attempt unexpectedly created a disposable `seatable-preview-oidc-check` project containing only a 129-byte token-presence check, without credentials. It was deleted immediately; a subsequent provider lookup returned project-not-found. The Seatable project link and production were unchanged. Preview access uses a private development OIDC file and an origin-scoped header instead. All temporary credential files must be removed after verification.
+
+## Library audio policy
+
+A read-only production audition of Renato Vilella's library sample failed with native media error 4 and a `securitypolicyviolation`: `media-src` blocked `storage.googleapis.com`. The provider's real sample URL uses `/eleven-public-prod/`. All three deployed CSP policies now allow only that HTTPS bucket path for media. Script/connect sources remain unchanged. The three regression guards failed before and passed after the change; independent security review approved the bounded source.
+
+The revised frontend preview passed native PT/ES generated playback, configuration-sensitive caching, Phone-pane and SPA cleanup, keyboard audition without selection, library-close cleanup, localized failure feedback, and real PT call readability/keyboard/mobile checks. This pre-push run applied the candidate CSP header as a test fixture and used the real production provider GET/preview endpoints because previews have no ElevenLabs key. It is not the final published-header or same-origin production proof. No settings were saved or calls placed.
