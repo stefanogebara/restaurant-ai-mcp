@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
@@ -6,9 +6,10 @@ import { renderWithProviders } from '../../test/renderWithProviders';
 import VoiceSettingsPage from '../VoiceSettingsPage';
 
 const saveVoice = vi.hoisted(() => vi.fn());
+const access = vi.hoisted(() => ({ hasAccess: true, isLoading: false, isError: false, refetch: vi.fn() }));
 
 vi.mock('../../components/layout/DashboardLayout', () => ({ default: ({ children }: { children: React.ReactNode }) => <div>{children}</div> }));
-vi.mock('../../hooks/useSubscription', () => ({ useFeatureAccess: () => ({ hasAccess: true, isLoading: false }) }));
+vi.mock('../../hooks/useSubscription', () => ({ useFeatureAccess: () => access }));
 vi.mock('../../hooks/useVoiceSettings', () => ({
   useVoiceSettings: () => ({
     data: {
@@ -33,6 +34,16 @@ vi.mock('../../components/dashboard/VoicePersonaPanel', () => ({ default: () => 
 vi.mock('../../components/voice/PhoneIntegrationPanel', () => ({ default: () => null }));
 
 describe('VoiceSettingsPage preset save', () => {
+  beforeEach(() => { access.hasAccess = true; access.isError = false; access.refetch.mockClear(); });
+  it('offers retry instead of an upgrade when voice access could not be checked', async () => {
+    access.hasAccess = false; access.isError = true;
+    renderWithProviders(<MemoryRouter><VoiceSettingsPage /></MemoryRouter>);
+    expect(screen.getByText('Could not check voice access')).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(access.refetch).toHaveBeenCalledOnce();
+    expect(screen.queryByText(/Unlock with/i)).not.toBeInTheDocument();
+  });
+
   it('makes the call history reachable from the voice setup journey', () => {
     renderWithProviders(<MemoryRouter><VoiceSettingsPage /></MemoryRouter>);
     expect(screen.getByRole('link', { name: 'Call History' })).toHaveAttribute('href', '/host-dashboard/calls');

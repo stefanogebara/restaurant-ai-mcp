@@ -47,8 +47,8 @@ import { legacyVoiceSettingsRedirect } from '../lib/legacySettingsRedirect';
 export default function VoiceSettingsPage() {
   const { t } = useTranslation();
   const toast = useToast();
-  const { hasAccess, isLoading: isLoadingAccess } = useFeatureAccess('voice_ai');
-  const canLoadVoiceData = !isLoadingAccess && hasAccess;
+  const { hasAccess, isLoading: isLoadingAccess, isError: isAccessError, refetch: refetchAccess } = useFeatureAccess('voice_ai');
+  const canLoadVoiceData = !isLoadingAccess && !isAccessError && hasAccess;
 
   const { data: config, isLoading: isLoadingConfig, isError: isConfigError, refetch: refetchConfig } = useVoiceSettings({ enabled: canLoadVoiceData });
   const saveMutation = useSaveVoiceSettings();
@@ -218,6 +218,24 @@ export default function VoiceSettingsPage() {
     ? null
     : legacyVoiceSettingsRedirect(window.location.hash, window.location.search);
   if (legacyDestination) return <Navigate to={legacyDestination} replace />;
+
+  if (isAccessError) {
+    return (
+      <DashboardLayout>
+        <section className="p-6 mt-14 lg:mt-0 lg:p-8 max-w-5xl" role="alert">
+          <h1 className="font-serif text-3xl text-deep-charcoal">{t('voiceSettings.accessCheckFailedTitle')}</h1>
+          <p className="mt-3 max-w-2xl text-[15px] text-muted-stone">{t('voiceSettings.accessCheckFailedHint')}</p>
+          <button
+            type="button"
+            onClick={() => { void refetchAccess(); }}
+            className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-burgundy px-5 py-2.5 text-sm font-medium text-white hover:bg-burgundy-dark"
+          >
+            {t('common.retry')}
+          </button>
+        </section>
+      </DashboardLayout>
+    );
+  }
 
   if (!isLoadingAccess && !hasAccess) {
     return (

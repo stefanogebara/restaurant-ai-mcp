@@ -2910,6 +2910,8 @@
     }
   },
   "voiceSettings": {
+    "accessCheckFailedTitle": "Não foi possível verificar o acesso à voz",
+    "accessCheckFailedHint": "Não conseguimos verificar seu plano agora. Tente novamente para carregar as configurações de voz.",
     "previewHint": "Amostra de áudio no idioma e com os ajustes atuais.",
     "previewFailed": "Não foi possível gerar a prévia da voz. Tente novamente.",
     "previewPlaybackFailed": "Não foi possível reproduzir esta prévia. Tente novamente.",

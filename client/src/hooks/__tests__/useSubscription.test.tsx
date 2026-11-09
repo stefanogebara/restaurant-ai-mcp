@@ -13,7 +13,7 @@
  * prop does NOT change the cache key.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
@@ -32,7 +32,7 @@ vi.mock('../../config/localStorageKeys', () => ({
   LS_CUSTOMER_EMAIL: 'customer_email',
 }));
 
-import { useSubscription } from '../useSubscription';
+import { useSubscription, useFeatureAccess } from '../useSubscription';
 import { useAuth } from '../../contexts/AuthContext';
 import { authFetch } from '../../services/api';
 
@@ -43,6 +43,23 @@ function wrapWithClient(qc: QueryClient) {
 }
 
 describe('useSubscription cache key (FF.1)', () => {
+  afterEach(() => vi.unstubAllEnvs());
+  it('checks the current deployment rather than a legacy API origin', async () => {
+    vi.stubEnv('VITE_API_URL', 'https://old-deployment.example');
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const { result } = renderHook(() => useSubscription(), { wrapper: wrapWithClient(qc) });
+    await waitFor(() => expect(result.current.data).toBeDefined());
+    expect(authFetch).toHaveBeenCalledWith('/api/subscription-status');
+  });
+
+  it('exposes failed access checks so they are not mistaken for missing plans', async () => {
+    vi.mocked(authFetch).mockRejectedValueOnce(new Error('Network unavailable'));
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const { result } = renderHook(() => useFeatureAccess('voice_ai'), { wrapper: wrapWithClient(qc) });
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.refetch).toEqual(expect.any(Function));
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
