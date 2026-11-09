@@ -47,8 +47,8 @@ import { legacyVoiceSettingsRedirect } from '../lib/legacySettingsRedirect';
 export default function VoiceSettingsPage() {
   const { t } = useTranslation();
   const toast = useToast();
-  const { hasAccess, isLoading: isLoadingAccess } = useFeatureAccess('voice_ai');
-  const canLoadVoiceData = !isLoadingAccess && hasAccess;
+  const { hasAccess, isLoading: isLoadingAccess, isError: isAccessError, refetch: refetchAccess } = useFeatureAccess('voice_ai');
+  const canLoadVoiceData = !isLoadingAccess && !isAccessError && hasAccess;
 
   const { data: config, isLoading: isLoadingConfig, isError: isConfigError, refetch: refetchConfig } = useVoiceSettings({ enabled: canLoadVoiceData });
   const saveMutation = useSaveVoiceSettings();
@@ -93,6 +93,8 @@ export default function VoiceSettingsPage() {
   const [showEngineSwitchConfirm, setShowEngineSwitchConfirm] = useState(false);
   const [engineSwitchTarget, setEngineSwitchTarget] = useState<VoiceEngineSettings['voice_engine'] | null>(null);
   const [isBrowserOpen, setIsBrowserOpen] = useState(false);
+  const [activeVoicePane, setActiveVoicePane] = useState(() =>
+    typeof window !== 'undefined' && window.location.hash === '#voice-settings:phone' ? 'phone' : 'voice');
 
   // ─── Derived state ────────────────────────────────────────────────────────────
 
@@ -117,15 +119,22 @@ export default function VoiceSettingsPage() {
 
   // ─── Audio playback ───────────────────────────────────────────────────────────
 
-  const { playingVoiceId, loadingAudio, handlePlayVoice, handlePreviewWithSettings } = useAudioPlayback({
+  const { playingVoiceId, playingSource, loadingAudio, loadingSource, handlePlayVoice, handlePreviewWithSettings, stopPlayback } = useAudioPlayback({
     voices,
     currentVoiceId,
     currentLanguage,
     restaurantName: config?.restaurant_name || undefined,
     currentSettings,
+    enabled: currentEngine === 'elevenlabs' && activeVoicePane === 'voice',
+    onError: (error) => toast.error(t(`voiceSettings.${error}`)),
   });
 
   // ─── Handlers ─────────────────────────────────────────────────────────────────
+
+  const handleToggleVoiceBrowser = () => {
+    if (isBrowserOpen) stopPlayback('library');
+    setIsBrowserOpen(!isBrowserOpen);
+  };
 
   const handleSettingChange = (key: keyof VoiceSettings, value: number) => {
     setPendingSettings((previous) => ({ ...(previous ?? config?.voice_settings ?? DEFAULT_VOICE_SETTINGS), [key]: value }));
@@ -209,6 +218,24 @@ export default function VoiceSettingsPage() {
     ? null
     : legacyVoiceSettingsRedirect(window.location.hash, window.location.search);
   if (legacyDestination) return <Navigate to={legacyDestination} replace />;
+
+  if (isAccessError) {
+    return (
+      <DashboardLayout>
+        <section className="p-6 mt-14 lg:mt-0 lg:p-8 max-w-5xl" role="alert">
+          <h1 className="font-serif text-3xl text-deep-charcoal">{t('voiceSettings.accessCheckFailedTitle')}</h1>
+          <p className="mt-3 max-w-2xl text-[15px] text-muted-stone">{t('voiceSettings.accessCheckFailedHint')}</p>
+          <button
+            type="button"
+            onClick={() => { void refetchAccess(); }}
+            className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-burgundy px-5 py-2.5 text-sm font-medium text-white hover:bg-burgundy-dark"
+          >
+            {t('common.retry')}
+          </button>
+        </section>
+      </DashboardLayout>
+    );
+  }
 
   if (!isLoadingAccess && !hasAccess) {
     return (
@@ -354,19 +381,28 @@ export default function VoiceSettingsPage() {
               {t('voiceSettings.pageIntro')}
             </p>
           </div>
-          {(isDirty || isSaving) && (
-            <div className="fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom)+env(safe-area-inset-bottom))] z-40 sm:static sm:inset-auto">
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={isSaving}
-                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-burgundy px-6 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-burgundy-dark disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-              >
-                {isSaving && <Spinner size="sm" className="border-white border-t-white/30" />}
-                {isSaving ? t('voiceSettings.saving', 'Saving...') : t('voiceSettings.saveChanges', 'Save Changes')}
-              </button>
-            </div>
-          )}
+          <div className="flex shrink-0 flex-wrap items-center gap-3">
+            <Link
+              to="/host-dashboard/calls"
+              className="liquid-capsule inline-flex min-h-11 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-deep-charcoal hover:bg-soft-gray focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-burgundy/60"
+            >
+              <ThiingsIcon name="phone-call" size="sm" />
+              {t('navigation.callHistory')}
+            </Link>
+            {(isDirty || isSaving) && (
+              <div className="fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom)+env(safe-area-inset-bottom))] z-40 sm:static sm:inset-auto">
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-burgundy px-6 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-burgundy-dark disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                >
+                  {isSaving && <Spinner size="sm" className="border-white border-t-white/30" />}
+                  {isSaving ? t('voiceSettings.saving', 'Saving...') : t('voiceSettings.saveChanges', 'Save Changes')}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {(() => {
@@ -392,19 +428,20 @@ export default function VoiceSettingsPage() {
                     currentLanguage={currentLanguage}
                     restaurantName={config.restaurant_name || undefined}
                     isBrowserOpen={isBrowserOpen}
-                    loadingAudio={loadingAudio}
-                    playingVoiceId={playingVoiceId}
-                    onPlay={handlePlayVoice}
-                    onToggleBrowser={() => setIsBrowserOpen(!isBrowserOpen)}
+                    loadingAudio={loadingSource === 'configured' ? loadingAudio : null}
+                    playingVoiceId={playingSource === 'configured' ? playingVoiceId : null}
+                    onPlay={() => { void handlePreviewWithSettings(); }}
+                    onToggleBrowser={handleToggleVoiceBrowser}
                   />
                   <VoiceTuningPanel
                     settings={currentSettings}
                     currentVoiceId={currentVoiceId}
-                    loadingAudio={loadingAudio}
+                    loadingAudio={loadingSource === 'configured' ? loadingAudio : null}
+                    playingVoiceId={playingSource === 'configured' ? playingVoiceId : null}
                     onSettingChange={handleSettingChange}
                     onApplyPreset={handlePresetChange}
                     onReset={() => setPendingSettings({ ...DEFAULT_VOICE_SETTINGS })}
-                    onPreview={() => handlePreviewWithSettings(toast)}
+                    onPreview={() => { void handlePreviewWithSettings(); }}
                   />
                   {isBrowserOpen && (
                     <section className="py-5">
@@ -437,8 +474,8 @@ export default function VoiceSettingsPage() {
                           <VoiceGrid
                             voices={voices}
                             selectedVoiceId={pendingVoiceId || config.voice_id || ''}
-                            playingVoiceId={playingVoiceId}
-                            loadingAudioId={loadingAudio}
+                            playingVoiceId={playingSource === 'library' ? playingVoiceId : null}
+                            loadingAudioId={loadingSource === 'library' ? loadingAudio : null}
                             hasMore={hasMore}
                             isLoadingMore={isLoadingMore}
                             onSelectVoice={setPendingVoiceId}
@@ -475,7 +512,7 @@ export default function VoiceSettingsPage() {
 
           return (
             <>
-              <SettingsTabs tabs={tabs} hashKey="voice-settings" />
+              <SettingsTabs tabs={tabs} hashKey="voice-settings" onTabChange={setActiveVoicePane} />
               <div className="hairline my-10" />
               <p className="text-[15px] text-muted-stone">
                 {t('voiceSettings.otherChannels')}{' '}

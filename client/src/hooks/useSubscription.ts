@@ -66,13 +66,11 @@ export function useSubscription(options: UseSubscriptionOptions = {}) {
   return useQuery<SubscriptionResponse>({
     queryKey: ['subscription', cacheKey],
     queryFn: async () => {
-      const apiUrl = import.meta.env.VITE_API_URL || '';
-
       if (!queryEmail) {
         return { has_subscription: false };
       }
 
-      const response = await authFetch(`${apiUrl}/api/subscription-status`);
+      const response = await authFetch('/api/subscription-status');
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -93,7 +91,7 @@ export function useSubscription(options: UseSubscriptionOptions = {}) {
  * Check if user has access to a specific feature
  */
 export function useFeatureAccess(featureName: string, email?: string) {
-  const { data, isLoading } = useSubscription({ email });
+  const { data, isLoading, isError, refetch } = useSubscription({ email });
 
   const hasAccess = () => {
     if (!data?.has_subscription || !data.subscription?.is_active) {
@@ -131,6 +129,8 @@ export function useFeatureAccess(featureName: string, email?: string) {
   return {
     hasAccess: hasAccess(),
     isLoading,
+    isError,
+    refetch,
     subscription: data?.subscription,
   };
 }

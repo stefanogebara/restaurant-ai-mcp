@@ -15,6 +15,7 @@ const { createSecureLogger } = require('../_lib/secure-logger');
 const { postCallWebhookOverrides } = require('../_lib/elevenlabs-post-call-config');
 const { buildPersonaPrompt } = require('../_lib/persona-prompt-builder');
 const { buildFirstMessage } = require('../_lib/voice-first-message');
+const { buildKnowledgeDoc, loadKnowledgeBaseData } = require('../_lib/elevenlabs-knowledge-base');
 const { validateElevenLabsVoiceId } = require('../_lib/validation');
 
 const logger = createSecureLogger('ElevenLabsAgentService');
@@ -143,8 +144,8 @@ async function getAgentIdForRestaurant(restaurantId) {
 /**
  * Sync the knowledge base document for a restaurant's ElevenLabs agent.
  *
- * - Resolves agent ID via getAgentIdForRestaurant
- * - Builds knowledge doc from restaurant config + manager memory
+ * - Loads the tenant's agent, restaurant config, manager facts and POS menu
+ * - Builds the same knowledge document as the manual sync endpoint
  * - Deletes old KB doc if one exists
  * - Creates new KB doc and links to agent
  * - Saves new elevenlabs_kb_doc_id to restaurant_config
@@ -159,40 +160,14 @@ async function syncKnowledgeBase(restaurantId) {
       return { success: false, error: 'ElevenLabs API key not configured' };
     }
 
-    const agentId = await getAgentIdForRestaurant(restaurantId);
-    if (!agentId) {
-      return { success: false, error: 'Agent not provisioned' };
-    }
-
-    // Fetch restaurant config + manager facts in parallel
-    const [configResult, factsResult] = await Promise.all([
-      supabaseAdmin
-        .schema('restaurant')
-        .from('restaurant_config')
-        .select('restaurant_name, phone, email, city, country, restaurant_type, timezone, business_hours, average_dining_duration_minutes, deposit_config, ai_personality, agent_greeting, persona_prompt_override, elevenlabs_kb_doc_id')
-        .eq('id', restaurantId)
-        .single(),
-      supabaseAdmin
-        .from('manager_memory')
-        .select('content')
-        .eq('restaurant_id', restaurantId)
-        .eq('type', 'fact')
-        .order('created_at', { ascending: false })
-        .limit(50),
-    ]);
-
-    if (configResult.error || !configResult.data) {
-      logger.error('Failed to fetch restaurant config for KB sync', { restaurantId, error: configResult.error?.message });
-      return { success: false, error: 'Restaurant not found' };
-    }
-
-    // Import buildKnowledgeDoc from elevenlabs-kb-sync
-    const { buildKnowledgeDoc } = require('../elevenlabs-kb-sync');
-    const knowledgeDoc = buildKnowledgeDoc(configResult.data, factsResult.data || []);
-    const docName = `${configResult.data.restaurant_name || 'Restaurant'} - Knowledge Base`;
+    const { config, managerFacts, menuItems } = await loadKnowledgeBaseData(restaurantId);
+    const agentId = config.elevenlabs_agent_id;
+    if (!agentId) return { success: false, error: 'Agent not provisioned' };
+    const knowledgeDoc = buildKnowledgeDoc(config, managerFacts, menuItems);
+    const docName = `${config.restaurant_name || 'Restaurant'} - Knowledge Base`;
 
     // Delete old KB doc if it exists
-    const oldDocId = configResult.data.elevenlabs_kb_doc_id;
+    const oldDocId = config.elevenlabs_kb_doc_id;
     if (oldDocId) {
       try {
         const deleteRes = await fetch(`${ELEVENLABS_BASE}/knowledge-base/${encodeURIComponent(oldDocId)}`, {
