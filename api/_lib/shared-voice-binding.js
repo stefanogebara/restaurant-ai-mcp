@@ -50,6 +50,38 @@ function matchesSpokenName(row, name) {
     .some(alias => normalizedName(alias) === name);
 }
 
+// Recovery suggestions are not identity matches. Only an extra standalone
+// connector between otherwise identical canonical words can produce a candidate.
+// Caller confirmation is an agent turn contract, not backend-verified speech.
+function suggestCanonicalRestaurant(rows, name, cityName) {
+  if (!cityName) return null;
+  const sameCity = rows.filter(row => normalizedName(row.city) === cityName);
+  // Do not steer a caller away from an existing name/alias, even if its owner
+  // has opted out. Aliases participate in ownership guards, never candidates.
+  if (sameCity.some(row => matchesSpokenName(row, name))) return null;
+  const spokenWords = name.split(' ');
+  const candidates = sameCity.filter(row => {
+    const officialWords = normalizedName(row.restaurant_name).split(' ');
+    return spokenWords.length === officialWords.length + 1 &&
+      spokenWords.some((word, index) => index > 0 && index < spokenWords.length - 1 &&
+        ['e', 'and', 'y'].includes(word) &&
+        spokenWords.filter((_, i) => i !== index).join(' ') === officialWords.join(' '));
+  });
+  // An opted-out canonical name can still explain the utterance. Count every
+  // plausible owner first; only a unique, explicitly opted-in candidate is safe.
+  if (candidates.length !== 1) return null;
+  const candidate = candidates[0];
+  if (candidate.ai_config?.phone?.shared_routing_enabled !== true) return null;
+  const official = normalizedName(candidate.restaurant_name);
+  if (sameCity.filter(row => matchesSpokenName(row, official)).length !== 1) return null;
+  return {
+    success: false, restaurant_identified: false, needs_confirmation: true,
+    suggested_restaurant: { restaurant_name: candidate.restaurant_name, city: candidate.city },
+    message: `Ask the caller: "Did you mean ${candidate.restaurant_name} in ${candidate.city}?" ` +
+      'Wait for the next user turn and explicit confirmation before calling identify_restaurant again with that exact official name and city. The restaurant is not identified yet.',
+  };
+}
+
 async function readBinding(conversationId) {
   const { data, error } = await supabaseAdmin.from('agent_conversations')
     .select('id, agent_id, restaurant_info_id, called_phone, caller_phone')
@@ -117,6 +149,8 @@ async function identifySharedRestaurant(ctx, restaurantName, city) {
     matchesSpokenName(row, name));
   const matches = cityName ? byName.filter(row => normalizedName(row.city) === cityName) : byName;
   if (matches.length !== 1) {
+    const suggestion = matches.length === 0 && suggestCanonicalRestaurant(data || [], name, cityName);
+    if (suggestion) return suggestion;
     return matches.length > 1 || (byName.length > 1 && !cityName)
       ? { success: false, restaurant_identified: false, needs_clarification: true,
         message: 'I found more than one restaurant with that name. Which city is it in?',
