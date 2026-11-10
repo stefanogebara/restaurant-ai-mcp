@@ -204,7 +204,7 @@ export default function CustomerPortal() {
                     pattern="^\+?[0-9 ]*$"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value.replace(/[^\d+ ]/g, ''))}
-                    placeholder="+XX XXXXXXXXX"
+                    placeholder="+5511999999999"
                     className="w-full px-4 py-3 border border-glass-border-input rounded-[10px] text-sm bg-white/60 text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
                   />
                 </div>

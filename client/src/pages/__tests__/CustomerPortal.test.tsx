@@ -15,7 +15,7 @@ beforeEach(() => {
 });
 afterEach(() => { vi.unstubAllGlobals(); window.history.replaceState({}, '', '/'); });
 function fields() {
-  return { phone: screen.getByPlaceholderText('+XX XXXXXXXXX'), code: screen.getByPlaceholderText(/CEL-|RES-/) };
+  return { phone: screen.getByLabelText('Phone Number'), code: screen.getByLabelText('Confirmation ID') };
 }
 function submit() { fireEvent.click(screen.getByRole('button', { name: 'Look Up Reservation' })); }
 function fillBoth() {
@@ -53,6 +53,7 @@ it.each(['id', 'reservation_id'])('prefills a receipt %s without fetching detail
   renderWithProviders(<CustomerPortal />);
   expect(screen.getByLabelText('Confirmation ID')).toHaveValue(CODE);
   expect(screen.getByLabelText('Phone Number')).toBeRequired();
+  expect(screen.getByLabelText('Phone Number')).toHaveAttribute('placeholder', '+5511999999999');
   expect(screen.getByLabelText('Phone Number')).toHaveValue('');
   expect(request).not.toHaveBeenCalled();
   submit();
