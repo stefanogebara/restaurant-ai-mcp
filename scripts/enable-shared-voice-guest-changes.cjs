@@ -20,10 +20,13 @@ function protectedHash(agent, phones) {
   return digest({ rest: fingerprint(copy, phones), keywords: agent.conversation_config.asr.keywords });
 }
 function buildTool(base, name, secret) {
+  const auth = base?.api_schema?.request_headers?.Authorization;
+  const vaultReference = auth && typeof auth === 'object' && Object.keys(auth).length === 1 &&
+    typeof auth.secret_id === 'string' && auth.secret_id.length >= 6;
+  const inlineSecret = typeof secret === 'string' && secret.length >= 32 && auth === `Bearer ${secret}`;
   if (!NAMES.includes(name) || base?.name !== 'create_reservation' || base.type !== 'webhook' ||
       base.api_schema?.url !== 'https://seatable.one/api/elevenlabs-webhook?action=create_reservation' ||
-      base.api_schema.method !== 'POST' || base.api_schema.request_headers?.Authorization !== `Bearer ${secret}` ||
-      typeof secret !== 'string' || secret.length < 32) throw Error('Unverified shared tool preimage');
+      base.api_schema.method !== 'POST' || (!vaultReference && !inlineSecret)) throw Error('Unverified shared tool preimage');
   const headers = base.api_schema.request_headers;
   for (const [key, variable] of Object.entries({ 'x-agent-id': 'system__agent_id', 'x-conversation-id': 'system__conversation_id',
     'x-called-number': 'system__called_number', 'x-caller-number': 'system__caller_id' })) {
@@ -68,8 +71,11 @@ async function enable({ api, db, options, secret, openJournal = createJournal })
   const p = before.agent.conversation_config.agent.prompt;
   const prompt = buildPrompt(p.prompt), hash = protectedHash(before.agent, before.phones);
   const tools = await Promise.all(p.tool_ids.map(id => api.getTool(id)));
-  if (tools.length !== 4 || tools.some((t,i) => t.id !== p.tool_ids[i] || t.response_mocks?.length) ||
+  if (tools.length !== 4 || tools.some((t,i) => t.id !== p.tool_ids[i]) ||
       tools.some(t => NAMES.includes(t.tool_config?.name))) throw Error('Unexpected existing tool inventory');
+  // Existing identification simulation mocks remain attached to the old tool.
+  // Do not edit that workspace record or copy mocks into the new guest tools.
+  const existingDefinitions = digest(tools.map(t => ({ id: t.id, config: t.tool_config, mocks: t.response_mocks })));
   const bases = tools.filter(t => t.tool_config?.name === 'create_reservation');
   if (bases.length !== 1) throw Error('Missing unique shared booking tool');
   const configs = NAMES.map(name => buildTool(bases[0].tool_config, name, secret));
@@ -78,7 +84,9 @@ async function enable({ api, db, options, secret, openJournal = createJournal })
   if (!options.apply) return report;
   if (!options.expectedVersion || !options.manifest) throw Error('Apply requires reviewed version and private journal');
   const fresh = await inspect({ api, db, options });
+  const freshTools = await Promise.all(p.tool_ids.map(id => api.getTool(id)));
   if (digest(fresh.agent) !== digest(before.agent) || digest(fresh.branch) !== digest(before.branch) ||
+      digest(freshTools.map(t => ({ id: t.id, config: t.tool_config, mocks: t.response_mocks }))) !== existingDefinitions ||
       protectedHash(fresh.agent, fresh.phones) !== hash) throw Error('Provider changed before publication');
   const journal = openJournal(options.manifest);
   try {
@@ -97,7 +105,9 @@ async function enable({ api, db, options, secret, openJournal = createJournal })
     await api.patchGuest(options.branchId, prompt, ids);
     const saved = await inspect({ api, db, options: { ...options, expectedVersion: undefined } });
     const sp = saved.agent.conversation_config.agent.prompt;
+    const preservedTools = await Promise.all(p.tool_ids.map(id => api.getTool(id)));
     if (sp.prompt !== prompt || digest(sp.tool_ids) !== digest(ids) || protectedHash(saved.agent, saved.phones) !== hash ||
+        digest(preservedTools.map(t => ({ id: t.id, config: t.tool_config, mocks: t.response_mocks }))) !== existingDefinitions ||
         saved.agent.version_id === before.agent.version_id) throw Error('Guest policy or protected configuration readback failed');
     journal.append({ event: 'verified', version: saved.agent.version_id, ids });
     return { ...report, status: 'verified', version: saved.agent.version_id, toolIds: ids.slice(-3) };

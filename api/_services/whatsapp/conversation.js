@@ -31,6 +31,11 @@ EXISTING RESERVATION CHANGES AND RESULT HONESTY:
 // confirmed; an ambiguous write must not become an invitation to repeat it.
 function mutationFallback(language, mutation) {
   const lang = language?.startsWith('es') ? 'es' : language?.startsWith('en') ? 'en' : 'pt';
+  if (!mutation) return {
+    en: 'I could not complete this request. Please contact the restaurant team to check its result before trying again.',
+    es: 'No pude completar esta solicitud. Contacta al restaurante para comprobar el resultado antes de intentarlo de nuevo.',
+    pt: 'Não consegui concluir este pedido. Fale com a equipe do restaurante para conferir o resultado antes de tentar novamente.',
+  }[lang];
   if (mutation?.result?.success === true && BOOKING_MUTATIONS.has(mutation.name)) {
     const confirmations = {
       en: { create_reservation: 'Your reservation is confirmed.', modify_reservation: 'The requested change was applied.', cancel_reservation: 'Your reservation was cancelled.' },

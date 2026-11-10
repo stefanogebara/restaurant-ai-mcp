@@ -34,6 +34,13 @@ test('rejects a guessed caller variable instead of publishing weaker identity', 
   const b = base(); b.api_schema.request_headers['x-caller-number'] = { variable_name: 'customer_phone' };
   expect(() => buildTool(b, 'cancel_reservation', secret)).toThrow(/native call header/);
 });
+test('preserves the existing provider vault reference without exporting or replacing its secret', () => {
+  const b = base(); b.api_schema.request_headers.Authorization = { secret_id: 'existing-seatable-vault-reference' };
+  const guest = buildTool(b, 'cancel_reservation');
+  expect(guest.api_schema.request_headers.Authorization).toEqual({ secret_id: 'existing-seatable-vault-reference' });
+  const untrusted = base(); untrusted.api_schema.request_headers.Authorization = { variable_name: 'user_supplied_auth' };
+  expect(() => buildTool(untrusted, 'cancel_reservation')).toThrow(/preimage/);
+});
 test('rejects a different credential and origin', () => {
   expect(() => buildTool(base(), 'cancel_reservation', 'x'.repeat(40))).toThrow(/preimage/);
   const b = base(); b.api_schema.url = 'https://another.example/api/elevenlabs-webhook?action=create_reservation';
