@@ -1,4 +1,5 @@
 const en = {
+  optional: 'optional', essentialDetails: 'Enter the essential restaurant details to continue.',
   manualTitle: 'Confirm the details for {{name}}.', manualEmptyTitle: 'Set up your restaurant.',
   manualIntro: 'Confirm your restaurant’s details and adjust the starting settings before taking reservations.',
   demoTitle: 'Review your demo setup for {{name}}.', initialHours: 'Initial hours — please confirm',
@@ -19,6 +20,7 @@ const en = {
 };
 type Copy = Record<keyof typeof en, string>;
 const pt: Copy = {
+  optional: 'opcional', essentialDetails: 'Informe os dados essenciais da casa para continuar.',
   manualTitle: 'Confira os dados do {{name}}.', manualEmptyTitle: 'Vamos montar sua recepcionista.',
   manualIntro: 'Confirme os dados da casa e ajuste a configuração inicial antes de receber reservas.',
   demoTitle: 'Confira a configuração do demo do {{name}}.', initialHours: 'Horário inicial — confirme',
@@ -38,6 +40,7 @@ const pt: Copy = {
   support: 'Se algo precisar de atenção, fale com hello@seatable.one pelo painel.',
 };
 const es: Copy = {
+  optional: 'opcional', essentialDetails: 'Introduce los datos esenciales del restaurante para continuar.',
   manualTitle: 'Confirma los datos de {{name}}.', manualEmptyTitle: 'Vamos a configurar tu restaurante.',
   manualIntro: 'Confirma los datos del restaurante y ajusta la configuración inicial antes de recibir reservas.',
   demoTitle: 'Revisa la configuración del demo de {{name}}.', initialHours: 'Horario inicial: confírmalo',

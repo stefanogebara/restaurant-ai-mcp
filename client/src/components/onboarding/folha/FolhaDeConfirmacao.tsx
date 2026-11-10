@@ -128,6 +128,7 @@ export function FolhaDeConfirmacao({
         <BlocoConfirmavel
           titulo={t('onboarding.folha.aCasa', 'A casa')}
           fonte={fonte}
+          textoPendente={source === 'google' ? undefined : copy.essentialDetails}
           pendente={pendente('restaurant_name') || pendente('city') || pendente('country')}
           resumo={
             <>
@@ -165,7 +166,7 @@ export function FolhaDeConfirmacao({
               </select>
             </label>
             <label className="block text-sm text-muted-stone">
-              {copy.type} <span>({t('common.optional', 'optional')})</span>
+              {copy.type} <span>({copy.optional})</span>
               <select aria-label={copy.type} className={`${entrada} mt-1`} value={(data.restaurant_type || '').replace(/_/g, '-')}
                 onChange={e => updateData({ restaurant_type: e.target.value })}>
                 <option value="">{copy.selectType}</option>

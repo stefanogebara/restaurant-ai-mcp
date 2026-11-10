@@ -151,3 +151,14 @@ test('o tipo do restaurante é opcional', () => {
   montar({ restaurant_type: '' });
   expect(screen.getByRole('button', { name: /Colocar no ar/ })).toBeEnabled();
 });
+
+test('o rótulo opcional está em português', () => {
+  montar({ country: '', country_code: undefined }, { origem: 'manual' });
+  expect(screen.getByLabelText('Tipo de restaurante').closest('label')).toHaveTextContent('Tipo de restaurante (opcional)');
+});
+
+test('dados essenciais manuais pendentes não afirmam que houve uma pesquisa', () => {
+  montar({ restaurant_name: '', city: '', country: '', country_code: undefined }, { origem: 'manual' });
+  expect(screen.getByText('Informe os dados essenciais da casa para continuar.')).toBeVisible();
+  expect(screen.queryByText('Só isso a gente não descobriu sozinho.')).not.toBeInTheDocument();
+});
