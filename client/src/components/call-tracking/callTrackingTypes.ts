@@ -2,6 +2,7 @@
 
 export interface ToolUsed {
   tool_name: string;
+  parameters?: Record<string, unknown>;
   success?: boolean | null;
 }
 
