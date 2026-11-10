@@ -14,7 +14,7 @@ import { LS_LANGUAGE } from '../../config/localStorageKeys';
 interface NavItem {
   path: string;
   label: string;
-  requiredFeature: keyof PlanFeatures;
+  requiredFeature?: keyof PlanFeatures;
 }
 
 interface NavSection {
@@ -35,7 +35,8 @@ const navSections: NavSection[] = [
     label: 'AI',
     items: [
       { path: '/host-dashboard/manager-ai', label: 'Manager AI', requiredFeature: 'overview' },
-      { path: '/host-dashboard/voice-settings', label: 'Voice & Calls', requiredFeature: 'voiceAI' },
+      // The saved phone overview is read-only; Voice settings enforce paid access.
+      { path: '/host-dashboard/voice-settings', label: 'Voice & Calls' },
       { path: '/host-dashboard/whatsapp', label: 'WhatsApp', requiredFeature: 'overview' },
       { path: '/host-dashboard/campaigns', label: 'Marketing', requiredFeature: 'advancedAnalytics' },
     ]
@@ -214,7 +215,7 @@ export default function Sidebar() {
                 <div className="space-y-1">
                 {section.items.map((item) => {
                   const active = isActive(item.path);
-                  const hasAccess = hasFeatureAccess(planType, item.requiredFeature);
+                  const hasAccess = !item.requiredFeature || hasFeatureAccess(planType, item.requiredFeature);
                   const isLocked = isSubscriptionLoading ? false : !hasAccess;
 
                   if (isLocked) {
