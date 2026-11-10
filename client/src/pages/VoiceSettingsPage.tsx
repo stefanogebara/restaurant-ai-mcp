@@ -5,7 +5,7 @@
  * UI is delegated to focused subcomponents in components/voice/.
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, Navigate } from 'react-router-dom';
 import DashboardLayout from '../components/layout/DashboardLayout';
@@ -19,7 +19,6 @@ import UpgradePrompt from '../components/common/UpgradePrompt';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { useVoiceBrowser } from '../hooks/useVoiceBrowser';
 import { useAudioPlayback } from '../hooks/useAudioPlayback';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import SettingsTabs, { type SettingsTabDef } from '../components/common/SettingsTabs';
 import VoiceEngineSelector from '../components/voice/VoiceEngineSelector';
@@ -33,13 +32,12 @@ import OpenAIEngineInfo from '../components/voice/OpenAIEngineInfo';
 import VoiceEngineSwitchModal from '../components/voice/VoiceEngineSwitchModal';
 import VoiceFilters from '../components/voice/VoiceFilters';
 import VoiceGrid from '../components/voice/VoiceGrid';
-import Spinner from '../components/common/Spinner';
 import VoicePersonaPanel from '../components/dashboard/VoicePersonaPanel';
 // VoiceExperimentPanel removed — non-functional (K-1)
 import PhoneIntegrationPanel from '../components/voice/PhoneIntegrationPanel';
+import VoicePhoneOnlyState from '../components/voice/VoicePhoneOnlyState';
 // AIStrategyPanel removed — dead feature
 // StrategyMetricsWidget moved to insights-only (removed from voice settings)
-import { authFetch } from '../services/api';
 
 import { DEFAULT_VOICE_SETTINGS } from '../components/voice/voiceTypes';
 import type { VoiceSettings } from '../components/voice/voiceTypes';
@@ -55,35 +53,6 @@ export default function VoiceSettingsPage() {
   const saveMutation = useSaveVoiceSettings();
   const { data: engineConfig, isLoading: isLoadingEngine, isError: isEngineError, refetch: refetchEngine } = useVoiceEngineSettings({ enabled: canLoadVoiceData });
   const saveEngineMutation = useSaveVoiceEngine();
-  const queryClient = useQueryClient();
-  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Clean up the post-retry 5s invalidate-queries timeout if the user navigates
-  // away before it fires — prevents setState-on-unmounted-component warnings.
-  useEffect(() => {
-    return () => {
-      if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
-    };
-  }, []);
-
-  const retryAgentMutation = useMutation({
-    mutationFn: async () => {
-      const res = await authFetch('/api/elevenlabs-agent-create', { method: 'POST' });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || t('voice.createAgentFailed', 'Failed to create agent'));
-      }
-      return res.json();
-    },
-    onSuccess: () => {
-      toast.success(t('voice.agentCreationStarted', 'Agent creation started. This may take up to 2 minutes.'));
-      if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
-      retryTimeoutRef.current = setTimeout(() => queryClient.invalidateQueries({ queryKey: ['voiceSettings'] }), 5000);
-    },
-    onError: (err) => {
-      toast.error(err instanceof Error ? err.message : t('voice.createAgentFailed', 'Failed to create agent'));
-    },
-  });
   // ─── Pending changes ──────────────────────────────────────────────────────────
 
   const [pendingVoiceId, setPendingVoiceId] = useState<string | null>(null);
@@ -316,60 +285,7 @@ export default function VoiceSettingsPage() {
   }
 
   if (!config?.agent_id) {
-    const hasRestaurantName = !!config?.restaurant_name;
-    return (
-      <DashboardLayout>
-        <div className="p-6 mt-14 lg:mt-0 lg:p-8 max-w-5xl space-y-6">
-          <div className="mt-8 text-center py-16">
-            <div className="max-w-md mx-auto">
-              {hasRestaurantName ? (
-                <>
-                  <div className="mx-auto mb-4 flex items-center justify-center">
-                    <Spinner size="lg" className="border-burgundy border-t-burgundy/30" />
-                  </div>
-                  <h2 className="font-serif text-[26px] text-deep-charcoal mb-2">
-                    {t('voice.agentCreating', 'Creating your voice agent...')}
-                  </h2>
-                  <p className="text-[15px] text-muted-stone mb-6">
-                    {t('voice.agentCreatingDesc', 'This may take up to 2 minutes. If the agent does not appear, try again below.')}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => retryAgentMutation.mutate()}
-                    disabled={retryAgentMutation.isPending}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-medium rounded-[100px] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    {retryAgentMutation.isPending ? (
-                      <Spinner size="sm" className="border-white border-t-white/30" />
-                    ) : (
-                      <ThiingsIcon name="refresh" size="xs" />
-                    )}
-                    {retryAgentMutation.isPending
-                      ? t('voice.retrying', 'Creating...')
-                      : t('voice.retryAgentCreation', 'Retry Agent Creation')}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <ThiingsIcon name="volume" pxSize={48} className="mx-auto mb-4" />
-                  <h2 className="font-serif text-[26px] text-deep-charcoal mb-2">{t('settings.noAgentConfigured')}</h2>
-                  <p className="text-[15px] text-muted-stone mb-6">
-                    {t('settings.noAgentDesc')}
-                  </p>
-                  <a
-                    href="/onboarding"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors"
-                  >
-                    <ThiingsIcon name="lightning" size="xs" />
-                    {t('settings.completeSetup')}
-                  </a>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </DashboardLayout>
-    );
+    return <DashboardLayout><VoicePhoneOnlyState /></DashboardLayout>;
   }
 
   // ─── Render ───────────────────────────────────────────────────────────────────
