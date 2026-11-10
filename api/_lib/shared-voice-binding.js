@@ -121,7 +121,8 @@ async function bindConversation(ctx, restaurantId) {
     restaurant_info_id: restaurantId,
     caller_phone: ctx.callerNumber,
     called_phone: ctx.calledNumber,
-    language: 'en',
+    // Caller language is unknown until provider detection; the DB default is English.
+    language: null,
     started_at: new Date().toISOString(),
     transcript: [], tools_used: [], errors_encountered: [],
     metadata: { voice_booking_guard: 'external_id_v1' },

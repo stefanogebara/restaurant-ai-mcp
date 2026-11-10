@@ -113,6 +113,29 @@ test('does not bind an unknown or fuzzy restaurant', async () => {
   expect(mockInserted).not.toHaveBeenCalled();
 });
 
+test.each(['pt', 'en', 'es'])('does not infer a shared caller language from restaurant language %s', async language => {
+  const ctx = readSharedContext(request());
+  mockGetRestaurantById.mockResolvedValueOnce({
+    id: 'rest-1', is_demo: false, onboarding_completed: true, agent_language: language,
+    ai_config: { language, phone: { shared_routing_enabled: true } },
+  });
+  await expect(identifySharedRestaurant(ctx, 'Cafe Primavera', 'Sao Paulo'))
+    .resolves.toMatchObject({ success: true, restaurant_id: 'rest-1' });
+  expect(mockInserted).toHaveBeenCalledWith(expect.objectContaining({ language: null }));
+  expect(mockBinding).toMatchObject({ language: null, transcript: [] });
+  expect(mockBinding).not.toHaveProperty('ended_at');
+});
+
+test.each([null, 'pt', 'en'])('reidentification preserves the existing caller language %s', async language => {
+  const ctx = readSharedContext(request());
+  mockBinding = { id: 1, conversation_id: ctx.conversationId, agent_id: AGENT,
+    restaurant_info_id: 'rest-1', called_phone: CALLED, caller_phone: CALLER, language };
+  await expect(identifySharedRestaurant(ctx, 'Cafe Primavera', 'Sao Paulo'))
+    .resolves.toMatchObject({ success: true, restaurant_id: 'rest-1' });
+  expect(mockInserted).not.toHaveBeenCalled();
+  expect(mockBinding.language).toBe(language);
+});
+
 test('accepts a configured spoken alias only with the matching city', async () => {
   const ctx = readSharedContext(request());
   mockRestaurants[0].ai_config.phone.shared_name_aliases = ['Seatable C1 Sandbox'];
