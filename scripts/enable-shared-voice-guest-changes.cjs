@@ -17,7 +17,52 @@ function protectedHash(agent, phones) {
   const copy = structuredClone(agent);
   copy.conversation_config.agent.prompt.prompt = '__GUEST_POLICY__';
   copy.conversation_config.agent.prompt.tool_ids = [];
+  // The API expands tool_ids into this deprecated response mirror. Protect
+  // system tools here; assertToolMirror checks every referenced custom tool.
+  if (Array.isArray(copy.conversation_config.agent.prompt.tools)) {
+    copy.conversation_config.agent.prompt.tools = copy.conversation_config.agent.prompt.tools.filter(t => t.type === 'system');
+  }
   return digest({ rest: fingerprint(copy, phones), keywords: agent.conversation_config.asr.keywords });
+}
+function assertToolMirror(agent, records) {
+  const mirror = agent.conversation_config.agent.prompt.tools;
+  if (!Array.isArray(mirror)) throw Error('Missing provider tool mirror');
+  const custom = mirror.filter(t => t.type !== 'system');
+  if (records.some(r => !r.id || !r.tool_config?.name) ||
+      new Set(records.map(r => r.id)).size !== records.length ||
+      new Set(records.map(r => r.tool_config.name)).size !== records.length) throw Error('Duplicate or missing referenced tool identity');
+  if (custom.length !== records.length || new Set(custom.map(t => t.name)).size !== custom.length ||
+      records.some(r => !custom.some(t => digest(t) === digest(r.tool_config)))) throw Error('Provider tool mirror differs from referenced records');
+}
+function normalizeCreatedTool(config) {
+  const copy = structuredClone(config);
+  const schema = copy?.api_schema?.request_body_schema;
+  if (!schema) return copy;
+  // Only these observed provider-added empty defaults are equivalent to omission.
+  // Keep every other key, including assignments and query schemas, in the digest.
+  const defaults = { dynamic_variable: '', is_omitted: false };
+  const propertyDefaults = { ...defaults, enum: null, is_system_provided: false,
+    allowed_values: null, allowed_values_dynamic_variable: '', constant_value: '' };
+  for (const [key, value] of Object.entries(defaults)) if (schema[key] === value) delete schema[key];
+  for (const property of Object.values(schema.properties || {})) {
+    for (const [key, value] of Object.entries(propertyDefaults)) if (property[key] === value) delete property[key];
+  }
+  return copy;
+}
+function assertCreatedTool(expected, actual) {
+  const wanted = expected.api_schema.request_body_schema;
+  const got = actual?.api_schema?.request_body_schema;
+  if (actual?.name !== expected.name || actual.type !== 'webhook' || actual.follow_redirects !== false ||
+      actual.api_schema.url !== expected.api_schema.url || actual.api_schema.method !== 'POST' ||
+      digest(actual.api_schema.request_headers) !== digest(expected.api_schema.request_headers) ||
+      got?.type !== 'object' || digest(got.required) !== digest(wanted.required) ||
+      digest(Object.keys(got.properties || {}).sort()) !== digest(Object.keys(wanted.properties).sort())) throw Error('Tool readback mismatch');
+  for (const [key, value] of Object.entries(got.properties)) {
+    if (value.type !== wanted.properties[key].type || value.description !== wanted.properties[key].description ||
+        value.is_system_provided === true || value.is_omitted === true || value.dynamic_variable || value.constant_value ||
+        value.allowed_values || value.enum?.length) throw Error('Guest input authority changed');
+  }
+  if (digest(normalizeCreatedTool(expected)) !== digest(normalizeCreatedTool(actual))) throw Error('Unexpected tool configuration change');
 }
 function buildTool(base, name, secret) {
   const auth = base?.api_schema?.request_headers?.Authorization;
@@ -73,6 +118,7 @@ async function enable({ api, db, options, secret, openJournal = createJournal })
   const tools = await Promise.all(p.tool_ids.map(id => api.getTool(id)));
   if (tools.length !== 4 || tools.some((t,i) => t.id !== p.tool_ids[i]) ||
       tools.some(t => NAMES.includes(t.tool_config?.name))) throw Error('Unexpected existing tool inventory');
+  assertToolMirror(before.agent, tools);
   // Existing identification simulation mocks remain attached to the old tool.
   // Do not edit that workspace record or copy mocks into the new guest tools.
   const existingDefinitions = digest(tools.map(t => ({ id: t.id, config: t.tool_config, mocks: t.response_mocks })));
@@ -91,14 +137,14 @@ async function enable({ api, db, options, secret, openJournal = createJournal })
   const journal = openJournal(options.manifest);
   try {
     journal.append({ event: 'before', ...report, prompt: p.prompt, ids: p.tool_ids });
-    const ids = [...p.tool_ids];
+    const ids = [...p.tool_ids], newRecords = [];
     for (const config of configs) {
       const created = await api.createTool(config);
       if (!created.id || created.tool_config?.name !== config.name) throw Error('Unverified tool creation');
       journal.append({ event: 'created', id: created.id, name: config.name });
       const saved = await api.getTool(created.id);
-      if (saved.tool_config?.api_schema?.url !== config.api_schema.url ||
-          digest(saved.tool_config.api_schema.request_headers) !== digest(config.api_schema.request_headers)) throw Error('Tool readback mismatch');
+      assertCreatedTool(config, saved.tool_config);
+      newRecords.push(saved);
       ids.push(created.id);
     }
     await inspect({ api, db, options });
@@ -106,6 +152,9 @@ async function enable({ api, db, options, secret, openJournal = createJournal })
     const saved = await inspect({ api, db, options: { ...options, expectedVersion: undefined } });
     const sp = saved.agent.conversation_config.agent.prompt;
     const preservedTools = await Promise.all(p.tool_ids.map(id => api.getTool(id)));
+    const savedNew = await Promise.all(newRecords.map(t => api.getTool(t.id)));
+    if (digest(savedNew.map(t => t.tool_config)) !== digest(newRecords.map(t => t.tool_config))) throw Error('Created guest tool changed during publication');
+    assertToolMirror(saved.agent, [...preservedTools, ...savedNew]);
     if (sp.prompt !== prompt || digest(sp.tool_ids) !== digest(ids) || protectedHash(saved.agent, saved.phones) !== hash ||
         digest(preservedTools.map(t => ({ id: t.id, config: t.tool_config, mocks: t.response_mocks }))) !== existingDefinitions ||
         saved.agent.version_id === before.agent.version_id) throw Error('Guest policy or protected configuration readback failed');
@@ -124,4 +173,4 @@ async function main(argv = process.argv.slice(2), env = process.env) {
   console.log(JSON.stringify(result));
 }
 if (require.main === module) main().catch(e => { console.error(e.message); process.exitCode = 1; });
-module.exports = { BEFORE, AFTER, NAMES, buildPrompt, buildTool, protectedHash, enable, main };
+module.exports = { BEFORE, AFTER, NAMES, buildPrompt, buildTool, protectedHash, assertToolMirror, assertCreatedTool, enable, main };

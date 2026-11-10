@@ -1,4 +1,4 @@
-const { BEFORE, AFTER, buildPrompt, buildTool, protectedHash } = require('../../scripts/enable-shared-voice-guest-changes.cjs');
+const { BEFORE, AFTER, buildPrompt, buildTool, protectedHash, assertToolMirror, assertCreatedTool } = require('../../scripts/enable-shared-voice-guest-changes.cjs');
 const secret = 's'.repeat(40);
 const base = () => ({ type: 'webhook', name: 'create_reservation',
   api_schema: { method: 'POST', url: 'https://seatable.one/api/elevenlabs-webhook?action=create_reservation',
@@ -55,4 +55,47 @@ test('protects voices, model, language, procedures and phone assignment while al
   after.conversation_config.agent.prompt.llm='other-model';
   expect(protectedHash(agent, ['phone-a'])).not.toBe(protectedHash(after, ['phone-a']));
   expect(protectedHash(agent, ['phone-a'])).not.toBe(protectedHash(agent, ['phone-b']));
+});
+test('permits only independently verified custom-tool mirror expansion and still protects system tools', () => {
+  const system = { type: 'system', name: 'language_detection', params: { only_at_conversation_start: false } };
+  const agent = { conversation_config: { asr: { keywords: [] }, agent: { prompt: {
+    prompt: BEFORE, tool_ids: ['old'], tools: [base(), system] } } } };
+  const added = buildTool(base(), 'cancel_reservation', secret), after = structuredClone(agent);
+  after.conversation_config.agent.prompt.tools.push(added);
+  after.conversation_config.agent.prompt.tool_ids.push('new');
+  expect(protectedHash(agent, [])).toBe(protectedHash(after, []));
+  expect(() => assertToolMirror(after, [{ id: 'old', tool_config: base() }, { id: 'new', tool_config: added }])).not.toThrow();
+  expect(() => assertToolMirror(after, [{ id: 'old', tool_config: base() }])).toThrow(/mirror/);
+  after.conversation_config.agent.prompt.tools[1].params.only_at_conversation_start = true;
+  expect(protectedHash(agent, [])).not.toBe(protectedHash(after, []));
+});
+test('rejects normalization that replaces guest proof with a system or constant value', () => {
+  const expected = buildTool(base(), 'cancel_reservation', secret), actual = structuredClone(expected);
+  expect(() => assertCreatedTool(expected, actual)).not.toThrow();
+  actual.api_schema.request_body_schema.properties.reservation_id.constant_value = 'some-other-guest';
+  expect(() => assertCreatedTool(expected, actual)).toThrow(/authority/);
+});
+test('requires one-to-one identities when comparing the provider tool mirror', () => {
+  const a = base(), b = structuredClone(a); b.name = 'unreviewed_tool';
+  b.api_schema.request_headers.Authorization = 'Bearer unreviewed';
+  const agent = { conversation_config: { agent: { prompt: { tools: [a, b] } } } };
+  expect(() => assertToolMirror(agent, [{ id: 'one', tool_config: a }, { id: 'one', tool_config: a }])).toThrow(/identity/);
+  expect(() => assertToolMirror(agent, [{ id: 'one', tool_config: a }, { id: 'two', tool_config: a }])).toThrow(/identity/);
+});
+test.each(['assignments', 'query_params_schema'])('rejects an unexpected %s in newly created guest tools', key => {
+  const expected = buildTool(base(), 'cancel_reservation', secret), actual = structuredClone(expected);
+  if (key === 'assignments') actual.assignments = [{ source: 'response', target: 'system__caller_id' }];
+  else actual.api_schema.query_params_schema = { type: 'object', properties: { phone: { type: 'string' } } };
+  expect(() => assertCreatedTool(expected, actual)).toThrow(/configuration/);
+});
+test('accepts only known empty schema defaults supplied by the provider', () => {
+  const expected = buildTool(base(), 'cancel_reservation', secret), actual = structuredClone(expected);
+  Object.assign(actual.api_schema.request_body_schema, { dynamic_variable: '', is_omitted: false });
+  Object.assign(actual.api_schema.request_body_schema.properties.reservation_id, {
+    dynamic_variable: '', is_omitted: false, enum: null, is_system_provided: false,
+    allowed_values: null, allowed_values_dynamic_variable: '', constant_value: '',
+  });
+  expect(() => assertCreatedTool(expected, actual)).not.toThrow();
+  actual.api_schema.request_body_schema.properties.reservation_id.allowed_values_dynamic_variable = 'another_guest';
+  expect(() => assertCreatedTool(expected, actual)).toThrow(/configuration/);
 });
