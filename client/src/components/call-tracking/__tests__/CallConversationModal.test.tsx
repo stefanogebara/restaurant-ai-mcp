@@ -135,3 +135,19 @@ describe('Call detail dialog lifecycle', () => {
     document.body.style.overflow = '';
   });
 });
+
+describe('reservation tool start/result lifecycle', () => {
+  it('shows one completed creation for the recorded call104 lifecycle, retaining the independent availability check', async () => {
+    await i18n.changeLanguage('pt-BR');
+    const parameters = { date: '2026-11-11', time: '19:00', phone: '+5511999990000', party_size: 2,
+      customer_name: 'Teste Onix104', customer_phone: '+5511999990000', restaurant_name: 'Seatable CI Sandbox', conversation_started: true };
+    renderCall({ tools_used: [
+      { tool_name: 'check_availability', success: true, parameters: { date: '2026-11-11', time: '19:00', party_size: 2 } },
+      { tool_name: 'create_reservation', success: null, parameters },
+      { tool_name: 'create_reservation', success: true, parameters: { ...parameters } },
+    ] as Conversation['tools_used'] });
+    expect(screen.getAllByText('Criar reserva', { exact: true })).toHaveLength(1);
+    expect(screen.queryByText('Resultado não registrado')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Concluída', { exact: true })).toHaveLength(2);
+  });
+});

@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDialogLifecycle } from '../../hooks/useDialogLifecycle';
 import ThiingsIcon from '../common/ThiingsIcon';
+import { normalizeCallToolActivities } from './callToolActivities';
 import { type Conversation, formatDate, getOutcomeColor, getOutcomeLabelKey, getSentimentColor, getSentimentLabelKey } from './callTrackingTypes';
 
 interface Props {
@@ -38,6 +39,7 @@ export default function CallConversationModal({ conversation, onClose, timeZone,
     ? `${Math.floor(conversation.duration_seconds / 60)}m ${conversation.duration_seconds % 60}s`
     : t(conversation?.ended_at ? 'callTracking.durationUnknown' : 'callTracking.pendingDuration');
   const awaitingFinalData = !conversation?.ended_at;
+  const toolActivities = normalizeCallToolActivities(conversation?.tools_used ?? []);
   const transcript = conversation?.transcript?.filter(message => typeof message?.content === 'string' && message.content.trim()) ?? [];
   const toolLabel = (name: string) => {
     const key = TOOL_LABEL_KEYS.get(name);
@@ -145,11 +147,11 @@ export default function CallConversationModal({ conversation, onClose, timeZone,
             </div>
 
             {/* Tools Used */}
-            {conversation.tools_used && conversation.tools_used.length > 0 && (
+            {toolActivities.length > 0 && (
               <div>
                 <h3 className={SECTION_TITLE}>{t('callTracking.toolsUsed')}</h3>
                 <div>
-                  {conversation.tools_used.map((tool, idx) => (
+                  {toolActivities.map((tool, idx) => (
                     <div key={idx} className="border-b border-glass-border-dark py-3 last:border-0">
                       <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                         <span className="text-sm font-medium text-deep-charcoal break-words">{toolLabel(tool.tool_name)}</span>
