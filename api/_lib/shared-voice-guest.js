@@ -22,7 +22,7 @@ function digit(token) {
 // may be 0..9/zero..nine, with optional "digit". Only hyphen/underscore are symbols.
 function decodeReservationCodeSpelling(value) {
   if (typeof value !== 'string' || value.length === 0 || value.length > 1500) return null;
-  const tokens = value.split(/[\s,;]+/).filter(Boolean);
+  const tokens = value.split(/[\s,;.]+/).filter(Boolean);
   if (!tokens.length || tokens.some(token => !/^[A-Za-z0-9-]+$/.test(token))) return null;
   let decoded = '';
   for (let i = 0; i < tokens.length; i++) {

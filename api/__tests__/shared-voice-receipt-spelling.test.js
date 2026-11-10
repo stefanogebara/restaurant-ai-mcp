@@ -38,6 +38,17 @@ test('accepts only explicit letter case, named symbols and individual digit toke
   expect(decodeReservationCodeSpelling(withSuffixHyphen)).toBe(code.slice(0, 18) + '-' + code.slice(19));
 });
 
+test('ASR full stops with no following whitespace preserve the full NATO spelling and exact case', async () => {
+  const withStops = spelling.replace(/, /g, '.').replace(/uppercase/g, 'Uppercase') + '.';
+  expect(withStops.startsWith('Uppercase Romeo.Uppercase Echo.Uppercase Sierra.hyphen.')).toBe(true);
+  expect(decodeReservationCodeSpelling(withStops)).toBe(code);
+  expect(decodeReservationCodeSpelling(withStops)).toHaveLength(25);
+  await runGuestAction({ ...args, data: { reservation_code_spelling: withStops } });
+  expect(mockVerify).toHaveBeenCalledTimes(1);
+  expect(mockVerify).toHaveBeenCalledWith({ restaurantId: 'bound-tenant', reservationId: code, customerPhone: context.callerNumber });
+  expect(guestProof({ reservation_id: code + '.' }, context)).toBeNull();
+});
+
 test('literal proof keeps its existing exact case, separators and surrounding-whitespace behavior', async () => {
   expect(guestProof({ reservation_id: ' ' + code + ' ' }, context)).toEqual({ reservationId: code, customerPhone: context.callerNumber });
   const differentCase = code.slice(0, 19) + 'T' + code.slice(20);
@@ -49,7 +60,9 @@ test('literal proof keeps its existing exact case, separators and surrounding-wh
 
 const invalid = [
   undefined, null, 123, [], {}, '', ', ; \n', 'RES-20261110-aB_cD9tTXyzQ',
-  'The code is ' + spelling, spelling + ' please', spelling + '.', spelling.replace(', ', ': '),
+  'The code is ' + spelling, spelling + ' please', spelling.replace(', ', ': '),
+  'The.code.is.' + spelling.replace(/, /g, '.'), spelling.replace(/, /g, '.') + '.please.repeat',
+  spelling + '.period', spelling + '.dot',
   spelling.replace('lowercase Tango', 'Tango'), spelling.replace('lowercase Tango', 't'),
   spelling.replace('lowercase Tango', 'uppercase lowercase Tango'), spelling.replace('digit nine', 'digit 09'),
   spelling.replace('digit nine', 'digit ten'), spelling.replace('digit nine', 'oh'),
