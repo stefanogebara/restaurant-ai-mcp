@@ -69,6 +69,15 @@ export default function Sidebar() {
   useDialogLifecycle(mobileDialogRef, () => setIsMobileOpen(false), isMobileOpen);
 
   useEffect(() => {
+    if (!isMobileOpen || typeof window.matchMedia !== 'function') return;
+    const desktop = window.matchMedia('(min-width: 1024px)');
+    const closeOnDesktop = () => { if (desktop.matches) setIsMobileOpen(false); };
+    desktop.addEventListener('change', closeOnDesktop);
+    closeOnDesktop();
+    return () => desktop.removeEventListener('change', closeOnDesktop);
+  }, [isMobileOpen]);
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
         setIsSettingsOpen(false);
