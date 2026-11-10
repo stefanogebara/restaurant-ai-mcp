@@ -1,4 +1,5 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { RestaurantInfo, TimeSlot } from '../components/booking/BookingForm';
 import reservationContract from '../../../shared/reservation-contract.js';
 import type { ReservationCreateInput, ReservationSummary } from '../../../shared/reservation-contract.js';
@@ -30,22 +31,32 @@ export function useRestaurantBySlug(slug: string | undefined) {
 
 export type ReservationData = ReservationSummary;
 
-export function useReservationById(id: string | null, initialData?: ReservationData) {
-  return useQuery<ReservationData>({
+export function useReservationById(id: string | null, initialData?: ReservationData, freshCreation = false) {
+  const queryClient = useQueryClient();
+  // React Query prefers an existing query (including its error) to initialData.
+  // Only an uncached, matching creation response can skip mount verification.
+  const [freshCreationId] = useState(() => freshCreation && initialData?.id === id
+    && !queryClient.getQueryState(['reservation', id]) ? id : null);
+  const hasFreshCreationData = Boolean(freshCreation && freshCreationId === id && initialData?.id === id);
+  const query = useQuery<ReservationData>({
     queryKey: ['reservation', id],
     queryFn: async () => {
       const res = await fetch(`${PORTAL_API}?action=reservation&id=${encodeURIComponent(id!)}`);
       // EE.3 — guard against non-OK HTML responses.
       if (!res.ok) throw new Error(`Reservation lookup failed (${res.status})`);
       const data = await res.json();
-      if (!data.success || !data.reservation) throw new Error('Reservation not found');
+      if (!data.success || !data.reservation || data.reservation.id !== id) throw new Error('Reservation not found');
       return data.reservation;
     },
-    enabled: !initialData && !!id,
-    initialData,
-    staleTime: Infinity,
+    enabled: !!id,
+    initialData: initialData?.id === id ? initialData : undefined,
+    staleTime: 0,
+    // A creation response is already current. Every later mount/Back/reload
+    // verifies the public summary; cached details alone cannot prove status.
+    refetchOnMount: hasFreshCreationData ? false : 'always',
     retry: false,
   });
+  return { ...query, hasFreshCreationData };
 }
 
 // ─── Availability ─────────────────────────────────────────────────────────────
