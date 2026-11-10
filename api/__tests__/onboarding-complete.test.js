@@ -104,8 +104,9 @@ jest.mock('../_lib/auth', () => ({
   ),
 }));
 
-jest.mock('../_lib/timezone', () => ({
-  suggestTimezone: jest.fn(() => 'America/Sao_Paulo'),
+// Exercise the real timezone resolver; rate-limit storage stays outside this unit test.
+jest.mock('../_lib/rate-limit', () => ({
+  checkAndApplyRateLimit: jest.fn().mockResolvedValue(false),
 }));
 
 // Rede fora do alcance do teste. Não é usado na criação de agente, mas outros
@@ -285,37 +286,75 @@ describe('Non-Brazil country → Growth trial', () => {
   });
 });
 
-describe('Missing country → Growth trial', () => {
-  test('undefined country creates Growth trial', async () => {
+describe('Explicit supported country is required before any writes', () => {
+  test.each([
+    [undefined, 'required'],
+    [null, 'required'],
+    ['', 'required'],
+    ['   ', 'required'],
+    ['Atlantis', 'unsupported country'],
+    ['ZZ', 'unsupported country'],
+    ['toString', 'unsupported country'],
+    ['__proto__', 'unsupported country'],
+    [42, 'unsupported country'],
+    [{ country: 'BR' }, 'unsupported country'],
+    [['BR'], 'unsupported country'],
+  ])('rejects country %p with no persistence or provider work', async (country, reason) => {
+    const { createAgent, syncKnowledgeBase } = require('../_services/elevenlabsAgentService');
     const { req, res } = mockReqRes({
       ...BASE_BODY,
-      country: undefined,
-      city: undefined,
+      country,
+      // A Brazilian city and phone cannot supply or repair country consent.
+      demo_token: 'demo-must-not-bypass-country',
     });
-
     await handler(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(200);
-    // country undefined → isBrazil is false → Growth trial
-    if (capturedSubscriptionInsert) {
-      expect(capturedSubscriptionInsert.plan_name).toBe('Growth');
-      expect(capturedSubscriptionInsert.status).toBe('trialing');
-    }
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      error: `Invalid country: ${reason}`,
+      field: 'country',
+      reason,
+      details: [{ field: 'country', reason }],
+    });
+    expect(mockSupabaseAdmin.from).not.toHaveBeenCalled();
+    expect(mockSupabaseAdmin.schema).not.toHaveBeenCalled();
+    expect(mockSupabaseAdmin.auth.admin.createUser).not.toHaveBeenCalled();
+    expect(capturedConfigWrite).toBeNull();
+    expect(capturedSubscriptionInsert).toBeNull();
+    expect(createAgent).not.toHaveBeenCalled();
+    expect(syncKnowledgeBase).not.toHaveBeenCalled();
+    expect(global.fetch).not.toHaveBeenCalled();
   });
 
-  test('empty string country creates Growth trial', async () => {
-    const { req, res } = mockReqRes({
-      ...BASE_BODY,
-      country: '',
-      city: '',
-    });
+  test.each(['BR', 'br', ' BR ', 'Brazil', 'brasil', ' BRAZIL '])(
+    'country %p persists Brazil, Sao Paulo timezone, Portuguese and the Free plan', async (country) => {
+      const { verifyAuth } = require('../_lib/auth');
+      const { createAgent } = require('../_services/elevenlabsAgentService');
+      verifyAuth.mockResolvedValueOnce({ user: { sub: 'owner-uuid' } });
+      const { req, res } = mockReqRes({ ...BASE_BODY, country });
+      await handler(req, res);
 
-    await handler(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(200);
-    if (capturedSubscriptionInsert) {
-      expect(capturedSubscriptionInsert.plan_name).toBe('Growth');
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(capturedConfigWrite).toEqual(expect.objectContaining({
+        country: 'BR', city: 'São Paulo', timezone: 'America/Sao_Paulo', agent_language: 'pt',
+      }));
+      expect(createAgent).toHaveBeenCalledWith(expect.objectContaining({ language: 'pt' }));
+      expect(capturedSubscriptionInsert).toEqual(expect.objectContaining({
+        plan_name: 'Free', status: 'active', price_id: 'free',
+      }));
     }
+  );
+
+  test('explicit US country wins over a Brazilian city and phone', async () => {
+    const { verifyAuth } = require('../_lib/auth');
+    verifyAuth.mockResolvedValueOnce({ user: { sub: 'owner-uuid' } });
+    const { req, res } = mockReqRes({ ...BASE_BODY, country: 'US' });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(capturedConfigWrite).toEqual(expect.objectContaining({
+      country: 'US', timezone: 'America/New_York', agent_language: 'en',
+    }));
+    expect(capturedSubscriptionInsert.plan_name).toBe('Growth');
   });
 });
 
@@ -761,14 +800,14 @@ describe('demo_token carrega o conhecimento do demo (G2.1)', () => {
     expect(createAgent).toHaveBeenCalledWith(expect.objectContaining({ language: 'es' }));
   });
 
-  test('carries the demo language to the new agent when country detection falls back to English', async () => {
+  test('carries the demo language to the new agent for a supported English-speaking country', async () => {
     const { createAgent } = require('../_services/elevenlabsAgentService');
     createAgent.mockResolvedValueOnce({ success: true, agent_id: 'agent-portuguese' });
     authComSub();
     comDemo(DEMO);
 
     const { req, res } = mockReqRes({
-      ...BASE_BODY, country: '', phone_number: '+55 11 98765-4321', demo_token: 'tok-1',
+      ...BASE_BODY, country: 'US', phone_number: '+55 11 98765-4321', demo_token: 'tok-1',
     });
     await handler(req, res);
 
@@ -911,11 +950,10 @@ describe('demo_token carrega o conhecimento do demo (G2.1)', () => {
   });
 
   test('idioma do demo só entra quando a resolução pelo país caiu em en', async () => {
-    // País desconhecido → resolvedLanguage 'en'; o demo infere 'pt' pelo
-    // prefixo do telefone (foi o que consertou o demo de Madri em inglês).
+    // País explícito com idioma padrão en; o idioma verificado do demo permanece pt.
     authComSub();
     comDemo(DEMO);
-    const { req, res } = mockReqRes({ ...BASE_BODY, country: '', phone_number: '+55 11 98765-4321', demo_token: 'tok-1' });
+    const { req, res } = mockReqRes({ ...BASE_BODY, country: 'US', phone_number: '+55 11 98765-4321', demo_token: 'tok-1' });
     await handler(req, res);
     expect(capturedConfigWrite.agent_language).toBe('pt');
 
