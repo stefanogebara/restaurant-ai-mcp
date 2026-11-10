@@ -643,6 +643,7 @@ module.exports = {
   logMessage,
   updateConversation,
   ingestCompletedConversation,
+  completedCallLanguage, // Pure resolver for scoped operational reconciliation.
   retryPendingPostCallAnalysis,
   forRestaurant(restaurantId) {
     if (typeof restaurantId !== 'string' || !restaurantId.trim()) throw new Error('Invalid restaurant scope');
