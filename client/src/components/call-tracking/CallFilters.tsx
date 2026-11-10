@@ -133,6 +133,8 @@ export default function CallFilters({ filter, onChange }: Props) {
               <option value="information_only">
                 {t("callTracking.outcomeInfo")}
               </option>
+              <option value="reservation_modified">{t('callTracking.outcomeReservationModified')}</option>
+              <option value="reservation_cancelled">{t('callTracking.outcomeReservationCancelled')}</option>
               <option value="error">{t("callTracking.outcomeErrors")}</option>
               <option value="abandoned">
                 {t("callTracking.outcomeAbandoned")}

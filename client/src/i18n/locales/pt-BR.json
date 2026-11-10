@@ -2266,6 +2266,8 @@
     "thirtyDays": "30 dias",
     "ninetyDays": "90 dias",
     "outcomeReservationCreated": "Reserva Criada",
+    "outcomeReservationModified": "Reserva Remarcada",
+    "outcomeReservationCancelled": "Reserva Cancelada",
     "outcomeInformationOnly": "Apenas Informação",
     "outcomeError": "Erro",
     "outcomeAbandonedLabel": "Abandonada",

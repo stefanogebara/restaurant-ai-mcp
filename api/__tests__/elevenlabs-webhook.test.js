@@ -83,6 +83,14 @@ const mockGetDateTime = jest.fn(() => ({
   time: '14:30',
   timezone: 'America/Sao_Paulo',
 }));
+const mockVerifiedGuest = jest.fn();
+const mockModifiedGuest = jest.fn();
+const mockCancelledGuest = jest.fn();
+jest.mock('../_lib/reservation-mutations', () => ({
+  verifyGuestReservation: (...a) => mockVerifiedGuest(...a),
+  modifyGuestReservation: (...a) => mockModifiedGuest(...a),
+  cancelGuestReservation: (...a) => mockCancelledGuest(...a),
+}), { virtual: true });
 const mockCheckAvailability = jest.fn(() => Promise.resolve({
   success: true,
   available: true,
@@ -371,6 +379,26 @@ describe('Shared voice agent routing', () => {
     await handler(mockReq({ body: { action: 'create_reservation', customer_phone: '+15557654321', customer_email: 'third@example.com' }, headers }), res);
     expect(res.status).toHaveBeenCalledWith(403);
     expect(mockCreateReservation).not.toHaveBeenCalled();
+  });
+
+  test('verified shared receipt lookup never falls through to the phone/name lookup', async () => {
+    mockChain.maybeSingle.mockResolvedValue({ data: bound, error: null });
+    mockVerifiedGuest.mockResolvedValue({ success: false, changed: false, error: 'verification_failed' });
+    const res = mockRes();
+    const code = 'RES-20261110-aB_cD-eF9G12';
+    await handler(mockReq({ body: { action: 'lookup_reservation', reservation_id: code }, headers }), res);
+    expect(mockVerifiedGuest).toHaveBeenCalledWith({ restaurantId: RESTAURANT_A.id, reservationId: code, customerPhone: caller });
+    expect(mockLookupReservation).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false }));
+  });
+
+  test('an idempotent shared cancellation does not repeat metered usage', async () => {
+    mockChain.maybeSingle.mockResolvedValue({ data: bound, error: null });
+    const code = 'RES-20261110-aB_cD-eF9G12';
+    mockCancelledGuest.mockResolvedValue({ success: true, changed: false, reservation: { reservation_id: code } });
+    await handler(mockReq({ body: { action: 'cancel_reservation', reservation_id: code }, headers }), mockRes());
+    expect(require('../_lib/usage-tracking').trackUsage).not.toHaveBeenCalled();
+    expect(mockCancelReservation).not.toHaveBeenCalled();
   });
 
   test('a new booking uses the trusted caller number', async () => {

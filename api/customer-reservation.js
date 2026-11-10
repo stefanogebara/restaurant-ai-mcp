@@ -3,10 +3,10 @@
  *
  * Public endpoint — no JWT required.
  * Customers look up, modify, or cancel their own reservations
- * by providing their reservation ID and/or phone number.
+ * by providing their complete reservation ID and matching phone number.
  *
  * Security: reservation_id is hard to guess (includes random chars).
- * modify + cancel require BOTH reservation_id AND customer_phone to match.
+ * All reservation details and actions require BOTH reservation_id AND customer_phone to match.
  */
 
 const { supabaseAdmin } = require('./_lib/supabase');
@@ -92,46 +92,32 @@ module.exports = async (req, res) => {
 };
 
 /**
- * Look up a reservation by ID or phone number.
- * Returns the most recent non-cancelled reservation when searching by phone.
+ * Look up a reservation only with its complete opaque code and matching phone.
  */
 async function handleLookup(req, res) {
   const { reservation_id, customer_phone, restaurant_id } = req.query;
+  res.setHeader('Cache-Control', 'private, no-store');
 
-  if (!reservation_id && !customer_phone) {
+  if (typeof reservation_id !== 'string' || !reservation_id.trim() || reservation_id.length > 128 ||
+      typeof customer_phone !== 'string' || !customer_phone.trim() || customer_phone.length > 64) {
     return res.status(400).json({
       success: false,
-      message: 'Please provide a reservation ID or phone number',
+      error: 'Reservation ID and phone number are required',
     });
   }
 
-  let query = supabaseAdmin.from('reservations').select(CUSTOMER_FIELDS);
-
-  if (reservation_id) {
-    // L-05: reservation_id lookup is not scoped by restaurant_id. This is acceptable
-    // because reservation_ids (RES-YYYYMMDD-XXXX) are unguessable and include random
-    // characters. Adding restaurant_id scoping here would require the customer to know
-    // their restaurant_id, which they typically don't. The format provides sufficient
-    // entropy to prevent enumeration attacks.
-    if (restaurant_id) {
-      query = query.eq('restaurant_id', restaurant_id);
-    }
-    query = query.eq('reservation_id', reservation_id.trim());
-  } else {
-    // Phone lookup: scope to restaurant_id if provided, otherwise cross-tenant
-    // (customer only gets their own most recent reservation, not others')
-    query = query.eq('customer_phone', customer_phone.trim());
-    if (restaurant_id) {
-      query = query.eq('restaurant_id', restaurant_id);
-    }
-    query = query.order('date', { ascending: false })
-      .order('time', { ascending: false });
-  }
+  // Trim paste whitespace only. Code case, underscores and hyphens are opaque.
+  const code = reservation_id.trim();
+  const phone = customer_phone.trim();
+  let query = supabaseAdmin.from('reservations').select(CUSTOMER_FIELDS)
+    .eq('reservation_id', code)
+    .eq('customer_phone', phone);
+  if (restaurant_id) query = query.eq('restaurant_id', restaurant_id);
 
   const { data, error } = await query.limit(1).single();
 
-  if (error || !data) {
-    logger.info('Reservation lookup — not found', { reservation_id, customer_phone: customer_phone ? '[redacted]' : undefined });
+  if (error || !data || data.reservation_id !== code || data.customer_phone !== phone) {
+    logger.info('Reservation lookup — supplied credentials did not match');
     return res.status(404).json({ success: false, error: 'Reservation not found' });
   }
 

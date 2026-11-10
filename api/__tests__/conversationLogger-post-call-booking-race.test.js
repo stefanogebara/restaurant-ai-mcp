@@ -92,6 +92,17 @@ test('a completed competing ingestion prevents a second enrichment', async () =>
   expect(mockExtract).not.toHaveBeenCalled();
 });
 
+test.each(['reservation_modified', 'reservation_cancelled'])('a concurrent %s is preserved and never counted as a new booking', async outcome => {
+  mockRows[0].reservation_id = 'RES-EXISTING';
+  mockRows[0].outcome = 'reservation_created';
+  mockBeforeWrite = async (_write, attempt) => {
+    if (attempt === 1) Object.assign(mockRows[0], { outcome, successful_booking: false });
+  };
+  await expect(ingestCompletedConversation(provider)).resolves.toEqual({ ingested: true });
+  expect(mockWrites).toHaveLength(2);
+  expect(mockRows[0]).toMatchObject({ outcome, successful_booking: false, reservation_id: 'RES-EXISTING' });
+});
+
 test.each([
   ['restaurant_info_id', 'rest-b'],
   ['agent_id', 'agent-b'],

@@ -304,7 +304,7 @@ async function handleGetStats(req, res, user) {
     // A booking outcome can be recorded while the call is still in progress.
     const completedCalls = conversations.filter(c =>
       typeof c.ended_at === 'string' && Number.isFinite(Date.parse(c.ended_at)) &&
-      ['reservation_created', 'information_only'].includes(c.outcome)).length;
+      ['reservation_created', 'reservation_modified', 'reservation_cancelled', 'information_only'].includes(c.outcome)).length;
     // Active calls and missing/invalid durations are not zero-second samples.
     // Ended error calls still have a duration, independently of completion rate.
     const durationSamples = conversations.filter(c =>

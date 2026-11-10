@@ -13,6 +13,49 @@ const { HANDOFF_TOOL, isHandoffEnabled } = require('./handoff');
 // AI provider: OpenRouter (or direct Anthropic fallback)
 const { getAI, AI_MODEL, AI_MODEL_FAST } = require('../../_lib/ai-client');
 
+const MAX_TOOL_ROUNDS = 6;
+const BOOKING_MUTATIONS = new Set(['create_reservation', 'modify_reservation', 'cancel_reservation']);
+const MUTATION_TOOLS = new Set([...BOOKING_MUTATIONS, 'join_waitlist', 'handoff_to_human', 'identify_restaurant']);
+const MUTATION_POLICY = `
+EXISTING RESERVATION CHANGES AND RESULT HONESTY:
+- Before discussing an existing reservation, request the complete confirmation code and use lookup_reservation. Never discover a code by phone or name. The tools verify ownership against the authenticated sender; model-supplied phone or name is not proof.
+- Before modify_reservation or cancel_reservation, read back the complete latest guest name, restaurant, date, time and party size, plus the proposed change or cancellation. Ask whether to apply it. STOP and wait for a subsequent user turn with an explicit yes before calling the mutation tool.
+- An earlier booking/lookup confirmation is not mutation consent. A correction, unclear reply or no requires a fresh full readback and a new subsequent yes. Never create a replacement booking to reschedule.
+- Exception: an authenticated [BUTTON_ACTION: cancel_reservation id=<id>] carries explicit cancellation consent for that exact id. Execute that cancellation directly; tools must still verify ownership. A button without an id is not this exception.
+- Report success only from a tool result with success=true. With changed=false, explain that no additional change was made; do not claim a new mutation or repeat it.
+- A missing result, timeout or mutation_unavailable can mean a change committed without a confirmed response. Never claim the original booking is unchanged, and never blindly retry a mutation. Obtain a fresh verified lookup and report its current state, or explain uncertainty and refer to restaurant staff if verification is unavailable.
+- Do not claim an email or WhatsApp was sent or delivered unless the tool explicitly proves that outcome.
+`;
+
+// Used when no reliable final model reply is available. A confirmed write stays
+// confirmed; an ambiguous write must not become an invitation to repeat it.
+function mutationFallback(language, mutation) {
+  const lang = language?.startsWith('es') ? 'es' : language?.startsWith('en') ? 'en' : 'pt';
+  if (!mutation) return {
+    en: 'I could not complete this request. Please contact the restaurant team to check its result before trying again.',
+    es: 'No pude completar esta solicitud. Contacta al restaurante para comprobar el resultado antes de intentarlo de nuevo.',
+    pt: 'Não consegui concluir este pedido. Fale com a equipe do restaurante para conferir o resultado antes de tentar novamente.',
+  }[lang];
+  if (mutation?.result?.success === true && BOOKING_MUTATIONS.has(mutation.name)) {
+    const confirmations = {
+      en: { create_reservation: 'Your reservation is confirmed.', modify_reservation: 'The requested change was applied.', cancel_reservation: 'Your reservation was cancelled.' },
+      es: { create_reservation: 'Tu reserva está confirmada.', modify_reservation: 'Se aplicó el cambio solicitado.', cancel_reservation: 'Tu reserva fue cancelada.' },
+      pt: { create_reservation: 'Sua reserva está confirmada.', modify_reservation: 'A alteração solicitada foi aplicada.', cancel_reservation: 'Sua reserva foi cancelada.' },
+    };
+    if (mutation.result.changed === false) return {
+      en: 'No additional change was made. Please ask me to verify your reservation if you need its current details.',
+      es: 'No se realizó ningún cambio adicional. Pídeme verificar tu reserva si necesitas sus datos actuales.',
+      pt: 'Nenhuma alteração adicional foi feita. Peça para verificar sua reserva se precisar dos dados atuais.',
+    }[lang];
+    return confirmations[lang][mutation.name];
+  }
+  return {
+    en: 'I cannot confirm the result of your request. Please ask me to verify the current reservation with your complete confirmation code before another change, or contact the restaurant for help.',
+    es: 'No puedo confirmar el resultado de tu solicitud. Pídeme verificar la reserva actual con tu código de confirmación completo antes de otro cambio, o contacta al restaurante.',
+    pt: 'Não consigo confirmar o resultado do seu pedido. Peça para verificar a reserva atual com seu código de confirmação completo antes de outra alteração, ou entre em contato com o restaurante.',
+  }[lang];
+}
+
 /**
  * Call Anthropic Claude and return response in OpenAI-compatible format.
  * Converts OpenAI tool format -> Anthropic tool format, and response back.
@@ -286,9 +329,9 @@ ANTI-HALLUCINATION (CRITICAL):
   prompt += `\nBUTTON ACTIONS:
 - [BUTTON_ACTION: confirm_reservation id=<id>] → Customer confirmed their reservation. Reply warmly that you're looking forward to seeing them. No tool call needed.
 - [BUTTON_ACTION: cancel_reservation id=<id>] → Call cancel_reservation with that reservation id immediately. No confirmation needed.
-- [BUTTON_ACTION: cancel_reservation] (no id) → Customer wants to cancel but you don't know which reservation. Ask for their name to look it up, then cancel.
+- [BUTTON_ACTION: cancel_reservation] (no id) → Ask for the complete confirmation code, verify the reservation, then follow the full readback and subsequent-yes rule.
 - [BUTTON_ACTION: make_reservation] → Customer wants to make a new reservation. Start the booking flow: ask for date, time, party size.
-- [BUTTON_ACTION: change_reservation] → Customer wants to modify an existing reservation. Ask for their name to find it, then ask what they'd like to change.
+- [BUTTON_ACTION: change_reservation] → Ask for the complete confirmation code and verify the reservation, then ask what they'd like to change. Require full readback and a subsequent yes before mutation.
 - For all BUTTON_ACTION messages, act directly without asking the customer to rephrase — they already chose the action by tapping.
 `;
 
@@ -310,7 +353,7 @@ ANTI-HALLUCINATION (CRITICAL):
   // Graceful failure handling
   prompt += `\nWHEN THINGS GO WRONG:
 - If a tool call fails (reservation not found, system error), apologize briefly and suggest an alternative
-- If you can't help after 2 attempts, say something like "Desculpe, não consegui completar isso agora. Posso ajudar com outra coisa?"
+- If you can't help after 2 read-only attempts, offer to connect with the restaurant. Never retry an uncertain mutation.
 - Never leave the customer hanging — always close with a helpful next step or offer to try again later
 - CRITICAL: If a reservation was successfully created or cancelled (tool returned success), your response MUST be a positive confirmation. NEVER say you had difficulties when the action succeeded.
 `;
@@ -495,6 +538,9 @@ async function processWithAI(userMessage, session, conversationHistory = [], inb
     logger.warn('Guest context injection failed (non-fatal):', guestCtxResult.reason?.message);
   }
 
+  // Apply to both configured and fallback prompts, after optional memory text.
+  systemPrompt += MUTATION_POLICY;
+
   logger.info(`processWithAI: systemPrompt starts with: "${systemPrompt.substring(0, 80).replace(/\n/g, ' ')}"`);
 
   // Build messages array with system prompt as first message
@@ -525,6 +571,10 @@ async function processWithAI(userMessage, session, conversationHistory = [], inb
   const baseMessages = [...messages];
 
   let lastError = null;
+  let toolRounds = 0;
+  let mutationAttempted = false;
+  let lastMutation = null;
+  let bookingMutationAttempted = false;
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const msgs = [...baseMessages];
@@ -533,18 +583,39 @@ async function processWithAI(userMessage, session, conversationHistory = [], inb
 
       // Handle tool use loop
       while (choice?.finish_reason === 'tool_calls') {
+        if (toolRounds >= MAX_TOOL_ROUNDS) return mutationFallback(language, lastMutation);
         const toolCalls = choice.message.tool_calls;
         if (!toolCalls || toolCalls.length === 0) break;
+        toolRounds++;
 
         msgs.push(choice.message);
 
         for (const toolCall of toolCalls) {
           const toolName = toolCall.function.name;
           const toolInput = JSON.parse(toolCall.function.arguments);
+          // One booking mutation per inbound turn. Any correction or new
+          // proposal needs another user turn, never an automatic tool replay.
+          if (BOOKING_MUTATIONS.has(toolName) && bookingMutationAttempted) {
+            return mutationFallback(language, lastMutation);
+          }
+          if (MUTATION_TOOLS.has(toolName)) {
+            mutationAttempted = true;
+            if (BOOKING_MUTATIONS.has(toolName)) {
+              lastMutation = { name: toolName, result: null };
+              bookingMutationAttempted = true;
+            }
+          }
           const toolResult = await executeTool(toolName, toolInput, session, {
             ...inboundContext, timezone, language,
             averageDiningDurationMinutes: restaurantConfig?.average_dining_duration_minutes,
           });
+          if (BOOKING_MUTATIONS.has(toolName)) {
+            lastMutation.result = toolResult;
+            if (typeof toolResult?.success !== 'boolean' || toolResult?.error?.code === 'mutation_unavailable' ||
+                toolResult?.error === 'mutation_unavailable') {
+              return mutationFallback(language, lastMutation);
+            }
+          }
 
           if (toolName === 'identify_restaurant' && toolResult.found && toolResult.restaurant) {
             session = await getSessionByPhone(session?.sender_phone,
@@ -564,7 +635,8 @@ async function processWithAI(userMessage, session, conversationHistory = [], inb
         choice = data.choices?.[0];
       }
 
-      return choice?.message?.content || 'Desculpe, tive dificuldade em processar isso. Pode tentar novamente?';
+      return choice?.message?.content || (mutationAttempted ? mutationFallback(language, lastMutation)
+        : 'Desculpe, tive dificuldade em processar isso. Pode tentar novamente?');
 
     } catch (error) {
       lastError = error;
@@ -572,6 +644,7 @@ async function processWithAI(userMessage, session, conversationHistory = [], inb
       const statusMatch = errMsg.match(/API error (\d+)/);
       logger.error(`AI error attempt=${attempt + 1} status=${statusMatch?.[1] || 'N/A'} model=${AI_MODEL_FAST}`);
       logger.error(`AI error detail: ${errMsg.substring(0, 150)}`);
+      if (mutationAttempted) return mutationFallback(language, lastMutation);
       if (attempt === 0) {
         await new Promise(r => setTimeout(r, 1500));
       }

@@ -163,6 +163,8 @@ test.each([
   { name: 'unfinished booked call', outcome: 'reservation_created', ended_at: null, booked: true, completed: 0, average: 0 },
   { name: 'finalized booked call', outcome: 'reservation_created', ended_at: '2026-11-07T12:01:20Z', booked: true, completed: 1 },
   { name: 'completed information call', outcome: 'information_only', ended_at: '2026-11-07T12:01:20Z', booked: false, completed: 1 },
+  { name: 'completed reschedule', outcome: 'reservation_modified', ended_at: '2026-11-07T12:01:20Z', booked: false, completed: 1 },
+  { name: 'completed cancellation', outcome: 'reservation_cancelled', ended_at: '2026-11-07T12:01:20Z', booked: false, completed: 1 },
   { name: 'zero-second completed call', outcome: 'information_only', ended_at: '2026-11-07T12:00:00Z', duration_seconds: 0, booked: false, completed: 1, average: 0 },
   { name: 'completed call without recorded duration', outcome: 'reservation_created', ended_at: '2026-11-07T12:01:20.000+00:00', duration_seconds: null, booked: true, completed: 1, average: 0 },
   { name: 'ended error call', outcome: 'error', ended_at: '2026-11-07T12:01:20Z', booked: false, completed: 0 },

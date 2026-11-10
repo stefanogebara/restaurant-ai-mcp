@@ -5,6 +5,8 @@ import { type Conversation, type CallChannel, type CallFilter, formatCallTime, g
 function callIconStyle(outcome?: string): string {
   switch (outcome) {
     case 'reservation_created': return 'bg-emerald-600/[8%] text-emerald-700';
+    case 'reservation_modified': return 'bg-emerald-600/[8%] text-emerald-700';
+    case 'reservation_cancelled': return 'bg-amber-600/[8%] text-amber-700';
     case 'information_only':    return 'bg-stone-500/[8%] text-stone-500';
     case 'error':               return 'bg-red-600/[8%] text-red-600';
     case 'abandoned':           return 'bg-amber-600/[8%] text-amber-600';

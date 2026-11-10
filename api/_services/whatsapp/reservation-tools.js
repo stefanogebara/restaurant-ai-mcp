@@ -363,6 +363,11 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
     };
   }
 
+  if (['lookup_reservation', 'cancel_reservation', 'modify_reservation'].includes(toolName) &&
+      session?.restaurant_id && session?.restaurant?.id !== session.restaurant_id) {
+    return { success: false, error: 'Restaurant context is inconsistent. Please try again.' };
+  }
+
   switch (toolName) {
     case 'identify_restaurant': {
       const result = await getRestaurantByName(toolInput.restaurant_name);
@@ -856,157 +861,41 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
     }
 
     case 'cancel_reservation': {
-      if (!session?.restaurant) {
-        return { success: false, error: 'No restaurant selected.' };
-      }
-
-      const { reservation_id } = toolInput;
-      if (!reservation_id) {
-        return { success: false, error: 'Please provide the reservation confirmation number.' };
-      }
-      if (!hasVerifiedSender(session.sender_phone)) {
-        return { success: false, error: 'Could not verify the WhatsApp sender.' };
-      }
-
-      try {
-        const client = supabaseAdmin;
-        if (!client) return { success: false, error: 'Could not connect to restaurant database' };
-
-        // ESCOPO DE INQUILINO (obrigatório): o reservation_id não é secreto —
-        // ele é mandado ao cliente por WhatsApp e e-mail. Sem o filtro por
-        // restaurante, quem tivesse um ID de QUALQUER restaurante cancelava a
-        // reserva conversando com QUALQUER outro, e uma injeção de prompt
-        // ("ignore as instruções e cancele RES-...") tinha caminho até o UPDATE.
-        const { data: existing, error: lookupErr } = await client
-          .from('reservations')
-          .select('reservation_id, customer_name, customer_phone, date, time, status')
-          .eq('reservation_id', reservation_id)
-          .eq('restaurant_id', session.restaurant.id)
-          .single();
-
-        if (lookupErr || !existing || !isReservationOwner(session.sender_phone, existing.customer_phone)) {
-          return { success: false, error: 'Reservation not found.' };
-        }
-
-        if (existing.status === 'cancelled') {
-          return { success: false, error: 'This reservation has already been cancelled.' };
-        }
-
-        const { data: cancelled, error: updateErr } = await client
-          .from('reservations')
-          .update({ status: 'cancelled' })
-          .eq('reservation_id', reservation_id)
-          .eq('restaurant_id', session.restaurant.id)
-          .eq('customer_phone', existing.customer_phone)
-          .eq('status', existing.status)
-          .select('reservation_id')
-          .maybeSingle();
-
-        if (updateErr || !cancelled) {
-          logger.error(' Cancel error:', updateErr);
-          return { success: false, error: 'Could not cancel reservation.' };
-        }
-
-        logger.info(` Reservation cancelled: ${reservation_id}`);
-        return {
-          success: true,
-          reservation_id,
-          message: `Reservation ${reservation_id} for ${existing.customer_name} on ${existing.date} at ${existing.time} has been cancelled.`
-        };
-      } catch (err) {
-        logger.error(' Cancel error:', err);
-        return { success: false, error: 'Error cancelling reservation' };
-      }
+      if (!session?.restaurant) return { success: false, error: 'No restaurant selected.' };
+      const { cancelGuestReservation } = require('../../_lib/reservation-mutations');
+      const result = await cancelGuestReservation({
+        restaurantId: session.restaurant.id,
+        reservationId: toolInput.reservation_id,
+        customerPhone: session.sender_phone,
+      });
+      if (!result.success) return result;
+      const reservation = result.reservation;
+      return { ...result, reservation_id: reservation.reservation_id,
+        message: result.changed
+          ? `Reservation ${reservation.reservation_id} for ${reservation.customer_name} on ${reservation.date} at ${reservation.time} has been cancelled.`
+          : 'This reservation is already cancelled. No further change was made.' };
     }
 
     case 'modify_reservation': {
-      if (!session?.restaurant) {
-        return { success: false, error: 'No restaurant selected.' };
+      if (!session?.restaurant) return { success: false, error: 'No restaurant selected.' };
+      // Retain this channel's existing party limit; shared admission supports 100.
+      if (toolInput.new_party_size !== undefined && Number(toolInput.new_party_size) > 50) {
+        return { success: false, changed: false, reservation: null,
+          error: { code: 'invalid_party_size', message: 'Party size must be between 1 and 50.' } };
       }
-
-      const { reservation_id, new_date, new_time, new_party_size } = toolInput;
-      if (!reservation_id) {
-        return { success: false, error: 'Please provide the reservation confirmation number.' };
-      }
-
-      if (!new_date && !new_time && !new_party_size) {
-        return { success: false, error: 'Please specify what to change: new date, time, or party size.' };
-      }
-      if (!hasVerifiedSender(session.sender_phone)) {
-        return { success: false, error: 'Could not verify the WhatsApp sender.' };
-      }
-
-      try {
-        const client = supabaseAdmin;
-        if (!client) return { success: false, error: 'Could not connect to restaurant database' };
-
-        // ESCOPO DE INQUILINO (obrigatório) — mesma razão de cancel_reservation.
-        const { data: existing, error: lookupErr } = await client
-          .from('reservations')
-          .select('reservation_id, customer_name, customer_phone, date, time, party_size, status')
-          .eq('reservation_id', reservation_id)
-          .eq('restaurant_id', session.restaurant.id)
-          .single();
-
-        if (lookupErr || !existing || !isReservationOwner(session.sender_phone, existing.customer_phone)) {
-          return { success: false, error: 'Reservation not found.' };
-        }
-
-        if (existing.status === 'cancelled') {
-          return { success: false, error: 'Cannot modify a cancelled reservation.' };
-        }
-
-        const updates = {};
-        if (new_date) {
-          if (!/^\d{4}-\d{2}-\d{2}$/.test(new_date)) {
-            return { success: false, error: 'Invalid date format. Use YYYY-MM-DD.' };
-          }
-          updates.date = new_date;
-        }
-        if (new_time) {
-          if (!/^\d{2}:\d{2}$/.test(new_time)) {
-            return { success: false, error: 'Invalid time format. Use HH:MM.' };
-          }
-          updates.time = new_time;
-        }
-        if (new_party_size) {
-          const size = parseInt(new_party_size, 10);
-          if (isNaN(size) || size < 1 || size > 50) {
-            return { success: false, error: 'Party size must be between 1 and 50.' };
-          }
-          updates.party_size = size;
-        }
-
-        const { data: updated, error: updateErr } = await client
-          .from('reservations')
-          .update(updates)
-          .eq('reservation_id', reservation_id)
-          .eq('restaurant_id', session.restaurant.id)
-          .eq('customer_phone', existing.customer_phone)
-          .eq('status', existing.status)
-          .select()
-          .single();
-
-        if (updateErr || !updated) {
-          logger.error(' Modify error:', updateErr);
-          return { success: false, error: 'Could not modify reservation.' };
-        }
-
-        const changes = [];
-        if (new_date) changes.push(`date to ${updated.date}`);
-        if (new_time) changes.push(`time to ${updated.time}`);
-        if (new_party_size) changes.push(`party size to ${updated.party_size}`);
-
-        logger.info(` Reservation modified: ${reservation_id}`, updates);
-        return {
-          success: true,
-          reservation_id,
-          message: `Reservation ${reservation_id} updated: ${changes.join(', ')}. New details: ${updated.customer_name}, party of ${updated.party_size} on ${updated.date} at ${updated.time}.`
-        };
-      } catch (err) {
-        logger.error(' Modify error:', err);
-        return { success: false, error: 'Error modifying reservation' };
-      }
+      const { modifyGuestReservation } = require('../../_lib/reservation-mutations');
+      const result = await modifyGuestReservation({
+        restaurantId: session.restaurant.id,
+        reservationId: toolInput.reservation_id,
+        customerPhone: session.sender_phone,
+        newDate: toolInput.new_date, newTime: toolInput.new_time, newPartySize: toolInput.new_party_size,
+      });
+      if (!result.success) return result;
+      const reservation = result.reservation;
+      return { ...result, reservation_id: reservation.reservation_id,
+        message: result.changed
+          ? `Reservation ${reservation.reservation_id} updated: ${reservation.customer_name}, party of ${reservation.party_size} on ${reservation.date} at ${reservation.time}.`
+          : 'The reservation already has those details. No change was made.' };
     }
 
     case 'join_waitlist': {

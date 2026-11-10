@@ -5,6 +5,15 @@ import { renderWithProviders as render } from '../../../test/renderWithProviders
 import CallConversationList from '../CallConversationList';
 import CallConversationModal from '../CallConversationModal';
 
+it.each([['reservation_modified', 'Reservation Updated'], ['reservation_cancelled', 'Reservation Cancelled']])('shows an explicit outcome for %s', (outcome, label) => {
+  render(<CallConversationList channel="phone" conversations={[{
+    id: 'changed', conversation_id: 'changed-provider', caller_phone: '+15551234567', called_phone: '+15559876543',
+    started_at: '2026-11-10T13:00:00Z', ended_at: '2026-11-10T13:01:00Z', duration_seconds: 60, language: 'en', outcome,
+  }]} filter={{ period: '7d', outcome: 'all', language: 'all' }} onOutcomeChange={vi.fn()} onConversationClick={vi.fn()} timeZoneLabel="São Paulo" />);
+  expect(screen.getAllByText(label).length).toBeGreaterThan(0);
+  expect(screen.queryByText('Unknown')).not.toBeInTheDocument();
+});
+
 it('explains an empty phone history when no line is assigned, but keeps filter feedback when filters are active', () => {
   const baseProps = {
     channel: 'phone' as const,

@@ -169,7 +169,7 @@ test('model retry sees committed booking without duplicate billing or outbound c
   expect(mockButtons).toHaveBeenCalledTimes(1);
 });
 
-test('conversation retry after model failure reuses the committed reservation', async () => {
+test('model failure after a committed booking never restarts a mutation', async () => {
   mockRpc
     .mockResolvedValueOnce({ data: { status: 'created', reservation_id: 'RES-REAL' }, error: null })
     .mockResolvedValueOnce({ data: {
@@ -190,14 +190,13 @@ test('conversation retry after model failure reuses the committed reservation', 
     .mockResolvedValueOnce({ content: [{ type: 'text', text: 'A reserva está confirmada.' }], stop_reason: 'end_turn' });
 
   const reply = await processWithAI('Confirme para Alice', session, [], context);
-  expect(reply).toBe('A reserva está confirmada.');
-  expect(mockRpc).toHaveBeenCalledTimes(2);
-  expect(mockRpc.mock.calls[0][1].p_external_id).toBe(mockRpc.mock.calls[1][1].p_external_id);
-  expect(mockRpc.mock.calls[0][1].p_time).not.toBe(mockRpc.mock.calls[1][1].p_time);
+  expect(reply).toBe('Sua reserva está confirmada.');
+  expect(mockRpc).toHaveBeenCalledTimes(1);
+  expect(mockCreate).toHaveBeenCalledTimes(2);
   expect(mockUsage).toHaveBeenCalledTimes(1);
   expect(mockEmail).toHaveBeenCalledTimes(1);
   expect(mockButtons).toHaveBeenCalledTimes(1);
-  const finalMessages = mockCreate.mock.calls[3][0].messages;
+  const finalMessages = mockCreate.mock.calls[1][0].messages;
   const retryResult = finalMessages.find(message => Array.isArray(message.content)
     && message.content.some(block => block.type === 'tool_result'));
   expect(JSON.parse(retryResult.content[0].content).reservation.time).toBe('19:00');

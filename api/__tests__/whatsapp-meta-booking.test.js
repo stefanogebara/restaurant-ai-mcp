@@ -75,7 +75,7 @@ jest.mock('../_lib/whatsapp-sessions', () => ({
 jest.mock('../_lib/restaurant-registry', () => ({
   getRestaurantByName: jest.fn().mockResolvedValue({ match: null, confidence: 0 }),
   getAllActiveRestaurants: jest.fn().mockResolvedValue([
-    { id: 'rest-123', restaurant_name: 'Test Restaurant', whatsapp_phone_number_id: '123456789012345' },
+    { id: '11111111-1111-4111-8111-111111111111', restaurant_name: 'Test Restaurant', whatsapp_phone_number_id: '123456789012345' },
   ]),
 }));
 
@@ -248,15 +248,16 @@ function makeSession(opts = {}) {
   return {
     id: 'sess-456',
     sender_phone: '+15551234567',
-    restaurant_id: 'rest-123',
+    restaurant_id: '11111111-1111-4111-8111-111111111111',
     inbound_provider: 'meta',
     inbound_receiver: '123456789012345',
     restaurant_confirmed: true,
     conversation_history: [],
     expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
     restaurant: opts.noRestaurant ? null : {
-      id: 'rest-123',
+      id: '11111111-1111-4111-8111-111111111111',
       restaurant_name: 'Test Restaurant',
+      timezone: 'UTC',
       supabase_url: 'https://test.supabase.co',
       supabase_anon_key: 'test-anon-key',
       language: 'en',
@@ -570,25 +571,10 @@ describe('whatsapp-webhook (Meta Cloud API)', () => {
       id: 1, reservation_id: 'RES-TEST-001',
       customer_name: 'Test User', date: '2026-03-01',
       time: '19:00', party_size: 4, status: 'confirmed',
+      customer_phone: '+15551234567', table_ids: ['table-1'],
     };
-
-    function localBuilder(row) {
-      const b = {};
-      b.select = jest.fn().mockReturnValue(b);
-      b.eq = jest.fn().mockReturnValue(b);
-      b.update = jest.fn().mockReturnValue(b);
-      b.single = jest.fn().mockResolvedValue({ data: row, error: null });
-      b.then = (resolve, reject) =>
-        Promise.resolve({ data: row ? [row] : [], error: null }).then(resolve, reject);
-      return b;
-    }
-
-    // First from() → lookup, second from() → update (no error)
-    const baseFrom = mockFrom.getMockImplementation();
-    let reservationCalls = 0;
-    mockFrom.mockImplementation(table => table === 'reservations'
-      ? localBuilder(reservationCalls++ === 0 ? existingRes : null)
-      : baseFrom(table));
+    mockSupabaseAdmin.rpc.mockResolvedValue({ data: { success: true, changed: true,
+      reservation: { ...existingRes, restaurant_id: makeSession().restaurant_id, status: 'cancelled', table_ids: [] } }, error: null });
 
     let aiCallCount = 0;
     mockAnthropicCreate.mockImplementation(async () => {
@@ -614,37 +600,26 @@ describe('whatsapp-webhook (Meta Cloud API)', () => {
 
     // AI called twice: cancel_reservation tool + end_turn
     expect(aiCallCount).toBe(2);
-    // Lookup + update both called
-    expect(mockFrom).toHaveBeenCalledWith('reservations');
+    expect(mockSupabaseAdmin.rpc).toHaveBeenCalledWith('mutate_guest_reservation', {
+      p_restaurant_id: makeSession().restaurant_id, p_customer_phone: '15551234567',
+      p_reservation_id: existingRes.reservation_id, p_action: 'cancel', p_changes: {},
+    });
+    const cancelResult = mockAnthropicCreate.mock.calls[1][0].messages.at(-1).content[0];
+    expect(JSON.parse(cancelResult.content)).toMatchObject({ success: true, reservation_id: existingRes.reservation_id });
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
   // ── 8. modify_reservation tool → success ───────────────────────────────────
   it('modifies a reservation via modify_reservation tool', async () => {
+    jest.setSystemTime(new Date('2026-02-28T12:00:00Z'));
     const existingRes = {
       id: 1, reservation_id: 'RES-TEST-001',
       customer_name: 'Test User', date: '2026-03-01',
       time: '19:00', party_size: 4, status: 'confirmed',
+      customer_phone: '+15551234567',
     };
-    const updatedRes = { ...existingRes, date: '2026-03-08', time: '20:00' };
-
-    function localBuilder(row) {
-      const b = {};
-      b.select = jest.fn().mockReturnValue(b);
-      b.eq = jest.fn().mockReturnValue(b);
-      b.update = jest.fn().mockReturnValue(b);
-      b.single = jest.fn().mockResolvedValue({ data: row, error: null });
-      b.then = (resolve, reject) =>
-        Promise.resolve({ data: row ? [row] : [], error: null }).then(resolve, reject);
-      return b;
-    }
-
-    // First from() → lookup, second from() → update+select+single returning updatedRes
-    const baseFrom = mockFrom.getMockImplementation();
-    let reservationCalls = 0;
-    mockFrom.mockImplementation(table => table === 'reservations'
-      ? localBuilder(reservationCalls++ === 0 ? existingRes : updatedRes)
-      : baseFrom(table));
+    mockSupabaseAdmin.rpc.mockResolvedValue({ data: { success: true, changed: true,
+      reservation: { ...existingRes, restaurant_id: makeSession().restaurant_id, date: '2026-03-08', time: '20:00', table_ids: [] } }, error: null });
 
     let aiCallCount = 0;
     mockAnthropicCreate.mockImplementation(async () => {
@@ -671,7 +646,13 @@ describe('whatsapp-webhook (Meta Cloud API)', () => {
     await handler(req, res);
 
     expect(aiCallCount).toBe(2);
-    expect(mockFrom).toHaveBeenCalledWith('reservations');
+    expect(mockSupabaseAdmin.rpc).toHaveBeenCalledWith('mutate_guest_reservation', {
+      p_restaurant_id: makeSession().restaurant_id, p_customer_phone: '15551234567',
+      p_reservation_id: existingRes.reservation_id, p_action: 'modify',
+      p_changes: { date: '2026-03-08', time: '20:00' },
+    });
+    const modifyResult = mockAnthropicCreate.mock.calls[1][0].messages.at(-1).content[0];
+    expect(JSON.parse(modifyResult.content)).toMatchObject({ success: true, reservation_id: existingRes.reservation_id });
     expect(res.status).toHaveBeenCalledWith(200);
   });
 

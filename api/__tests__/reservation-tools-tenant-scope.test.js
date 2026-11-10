@@ -18,8 +18,8 @@
  * contrato nas três que ficaram para trás.
  */
 
-const REST_A = 'rest-aaa';
-const REST_B = 'rest-bbb';
+const REST_A = '11111111-1111-4111-8111-111111111111';
+const REST_B = '22222222-2222-4222-8222-222222222222';
 
 /**
  * Construtor de query falso que REGISTRA os filtros aplicados. É isso que
@@ -84,13 +84,14 @@ const LINHAS = [
 ];
 
 let clienteFalso;
+const mockRpc = jest.fn();
 
 // O módulo sob teste faz `const { supabaseAdmin } = require(...)` no topo, ou
 // seja, captura o VALOR uma única vez no carregamento. Um getter no mock não
 // adianta: quando ele roda, o duble do teste ainda não existe. Por isso o mock
 // devolve um objeto ESTÁVEL que só delega `from` para o duble corrente.
 jest.mock('../_lib/supabase', () => ({
-  supabaseAdmin: { from: (tabela) => global.__clienteFalso.from(tabela) },
+  supabaseAdmin: { rpc: (...args) => mockRpc(...args), from: (tabela) => global.__clienteFalso.from(tabela) },
   canAccommodateParty: jest.fn().mockResolvedValue({ canAccommodate: true }),
 }));
 
@@ -98,14 +99,20 @@ const { executeTool } = require('../_services/whatsapp/reservation-tools');
 
 /** Sessão do cliente falando COM o restaurante A, do número compartilhado. */
 const sessaoNoA = {
-  restaurant: { id: REST_A, name: 'Restaurante A' },
+  restaurant: { id: REST_A, name: 'Restaurante A', timezone: 'UTC' },
   sender_phone: '5511999998888',
 };
 
 beforeEach(() => {
+  jest.useFakeTimers({ now: new Date('2026-07-31T12:00:00Z') });
   clienteFalso = criarClienteFalso(LINHAS);
   global.__clienteFalso = clienteFalso;
+  // Deliberately return by code without tenant filtering: the API must refuse
+  // an incoherent cross-tenant RPC success as well as send the trusted scope.
+  mockRpc.mockReset().mockImplementation(async (_, args) => ({ data: { success: true, changed: true,
+    reservation: LINHAS.find(row => row.reservation_id === args.p_reservation_id) }, error: null }));
 });
+afterEach(() => jest.useRealTimers());
 
 /** Todo filtro aplicado em qualquer query desta chamada. */
 const filtrouRestaurante = () => clienteFalso.chamadas.filtros
@@ -142,7 +149,7 @@ describe('cancel_reservation — ID conhecido não cancela em outra casa', () =>
   test('cancelar reserva do próprio restaurante funciona', async () => {
     const r = await executeTool('cancel_reservation', { reservation_id: 'RES-DO-A' }, sessaoNoA);
     expect(r.success).toBe(true);
-    expect(filtrouRestaurante()).toBe(true);
+    expect(mockRpc).toHaveBeenCalledWith('mutate_guest_reservation', expect.objectContaining({ p_restaurant_id: REST_A }));
   });
 
   test('cancelar reserva de OUTRO restaurante é recusado', async () => {
@@ -151,10 +158,10 @@ describe('cancel_reservation — ID conhecido não cancela em outra casa', () =>
     expect(clienteFalso.chamadas.update).toHaveLength(0); // nenhum UPDATE disparado
   });
 
-  test('o UPDATE em si também é escopado — não só a verificação anterior', async () => {
-    await executeTool('cancel_reservation', { reservation_id: 'RES-DO-A' }, sessaoNoA);
-    const filtrosDoUpdate = clienteFalso.chamadas.update[0] || [];
-    expect(filtrosDoUpdate.some(([coluna]) => coluna === 'restaurant_id')).toBe(true);
+  test('a mutação delega ao RPC escopado sem UPDATE direto', async () => {
+    await executeTool('cancel_reservation', { reservation_id: 'RES-DO-A', restaurant_id: REST_B }, sessaoNoA);
+    expect(mockRpc).toHaveBeenCalledWith('mutate_guest_reservation', expect.objectContaining({ p_restaurant_id: REST_A, p_action: 'cancel' }));
+    expect(clienteFalso.chamadas.update).toHaveLength(0);
   });
 });
 
@@ -165,10 +172,10 @@ describe('modify_reservation — mesma regra', () => {
     expect(clienteFalso.chamadas.update).toHaveLength(0);
   });
 
-  test('alterar a própria reserva funciona e o UPDATE é escopado', async () => {
+  test('alterar a própria reserva funciona e o RPC é escopado', async () => {
     const r = await executeTool('modify_reservation', { reservation_id: 'RES-DO-A', new_time: '22:00' }, sessaoNoA);
     expect(r.success).toBe(true);
-    const filtrosDoUpdate = clienteFalso.chamadas.update[0] || [];
-    expect(filtrosDoUpdate.some(([coluna]) => coluna === 'restaurant_id')).toBe(true);
+    expect(mockRpc).toHaveBeenCalledWith('mutate_guest_reservation', expect.objectContaining({ p_restaurant_id: REST_A, p_action: 'modify' }));
+    expect(clienteFalso.chamadas.update).toHaveLength(0);
   });
 });
