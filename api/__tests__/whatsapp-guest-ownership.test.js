@@ -23,7 +23,7 @@ jest.mock('../_services/whatsapp/waitlist-handler', () => ({
 }));
 
 const { executeTool } = require('../_services/whatsapp/reservation-tools');
-const restaurant = { id: 'restaurant-1' };
+const restaurant = { id: 'restaurant-1', timezone: 'UTC' };
 const sender = { restaurant, sender_phone: '5511999002121' };
 const otherGuest = {
   reservation_id: 'RES-KNOWN', customer_name: 'Private Guest',
@@ -43,7 +43,11 @@ function chain({ row = null, rows = row ? [row] : [], result = row } = {}) {
   return query;
 }
 
-beforeEach(() => mockFrom.mockReset());
+beforeEach(() => {
+  mockFrom.mockReset();
+  jest.useFakeTimers({ now: new Date('2026-10-29T12:00:00Z') });
+});
+afterEach(() => jest.useRealTimers());
 
 test.each(['lookup_reservation', 'cancel_reservation', 'modify_reservation'])(
   '%s rejects a known reservation ID belonging to another sender', async tool => {

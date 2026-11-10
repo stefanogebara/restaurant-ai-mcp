@@ -363,6 +363,11 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
     };
   }
 
+  if (['lookup_reservation', 'cancel_reservation', 'modify_reservation'].includes(toolName) &&
+      session?.restaurant_id && session?.restaurant?.id !== session.restaurant_id) {
+    return { success: false, error: 'Restaurant context is inconsistent. Please try again.' };
+  }
+
   switch (toolName) {
     case 'identify_restaurant': {
       const result = await getRestaurantByName(toolInput.restaurant_name);
@@ -894,7 +899,7 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
 
         const { data: cancelled, error: updateErr } = await client
           .from('reservations')
-          .update({ status: 'cancelled' })
+          .update({ status: 'cancelled', table_ids: [] })
           .eq('reservation_id', reservation_id)
           .eq('restaurant_id', session.restaurant.id)
           .eq('customer_phone', existing.customer_phone)
@@ -929,7 +934,7 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
         return { success: false, error: 'Please provide the reservation confirmation number.' };
       }
 
-      if (!new_date && !new_time && !new_party_size) {
+      if (new_date === undefined && new_time === undefined && new_party_size === undefined) {
         return { success: false, error: 'Please specify what to change: new date, time, or party size.' };
       }
       if (!hasVerifiedSender(session.sender_phone)) {
@@ -956,25 +961,28 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
           return { success: false, error: 'Cannot modify a cancelled reservation.' };
         }
 
+        const date = new_date === undefined ? existing.date : new_date;
+        const time = new_time === undefined ? String(existing.time || '').slice(0, 5) : new_time;
+        const { validateReservationInput } = require('../../_lib/reservation-validator');
+        const validation = validateReservationInput({ date, party_size: new_party_size === undefined ? existing.party_size : new_party_size });
+        if (!validation.valid) return { success: false, error: validation.message };
+        if (validation.partySize > 50) return { success: false, error: 'Party size must be between 1 and 50.' };
+        if (typeof time !== 'string' || time.length !== 5 || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) {
+          return { success: false, error: 'Invalid time format. Use HH:MM.' };
+        }
+
         const updates = {};
-        if (new_date) {
-          if (!/^\d{4}-\d{2}-\d{2}$/.test(new_date)) {
-            return { success: false, error: 'Invalid date format. Use YYYY-MM-DD.' };
-          }
-          updates.date = new_date;
+        if (date !== existing.date) updates.date = date;
+        if (time !== String(existing.time).slice(0, 5)) updates.time = time;
+        if (validation.partySize !== Number(existing.party_size)) updates.party_size = validation.partySize;
+        if (Object.keys(updates).length === 0) {
+          return { success: true, reused: true, reservation_id, message: 'The reservation already has those details. No change was made.' };
         }
-        if (new_time) {
-          if (!/^\d{2}:\d{2}$/.test(new_time)) {
-            return { success: false, error: 'Invalid time format. Use HH:MM.' };
-          }
-          updates.time = new_time;
-        }
-        if (new_party_size) {
-          const size = parseInt(new_party_size, 10);
-          if (isNaN(size) || size < 1 || size > 50) {
-            return { success: false, error: 'Party size must be between 1 and 50.' };
-          }
-          updates.party_size = size;
+        const timezone = inboundContext.timezone || session.restaurant.timezone;
+        if (!timezone) return { success: false, error: 'Could not verify the restaurant timezone. No change was made.' };
+        const now = getCurrentDateTime(inboundContext.language || session.restaurant.language, timezone);
+        if (`${date}T${time}` < `${now.date}T${now.time}`) {
+          return { success: false, error: 'That date and time have passed. Please choose a future time.' };
         }
 
         const { data: updated, error: updateErr } = await client
@@ -984,6 +992,9 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
           .eq('restaurant_id', session.restaurant.id)
           .eq('customer_phone', existing.customer_phone)
           .eq('status', existing.status)
+          .eq('date', existing.date)
+          .eq('time', existing.time)
+          .eq('party_size', existing.party_size)
           .select()
           .single();
 

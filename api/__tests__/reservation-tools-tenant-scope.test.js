@@ -98,14 +98,16 @@ const { executeTool } = require('../_services/whatsapp/reservation-tools');
 
 /** Sessão do cliente falando COM o restaurante A, do número compartilhado. */
 const sessaoNoA = {
-  restaurant: { id: REST_A, name: 'Restaurante A' },
+  restaurant: { id: REST_A, name: 'Restaurante A', timezone: 'UTC' },
   sender_phone: '5511999998888',
 };
 
 beforeEach(() => {
+  jest.useFakeTimers({ now: new Date('2026-07-31T12:00:00Z') });
   clienteFalso = criarClienteFalso(LINHAS);
   global.__clienteFalso = clienteFalso;
 });
+afterEach(() => jest.useRealTimers());
 
 /** Todo filtro aplicado em qualquer query desta chamada. */
 const filtrouRestaurante = () => clienteFalso.chamadas.filtros
