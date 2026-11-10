@@ -127,7 +127,7 @@ export default function CallTrackingDashboard() {
   return (
     <DashboardLayout>
       <div className="min-h-screen p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-6 sm:gap-12">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:gap-12">
 
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -139,7 +139,7 @@ export default function CallTrackingDashboard() {
               <button
                 type="button"
                 onClick={refreshAll}
-                className="px-4 py-2 border border-glass-border-dark bg-white/50 backdrop-blur-glass-chip text-stone-gray hover:border-deep-charcoal hover:bg-white/80 rounded-full text-[13px] font-medium transition-colors"
+                className="min-h-11 px-4 py-2 border border-glass-border-dark bg-white/50 backdrop-blur-glass-chip text-stone-gray hover:border-deep-charcoal hover:bg-white/80 rounded-full text-[13px] font-medium transition-colors sm:min-h-0"
               >
                 {t('callTracking.refresh')}
               </button>
@@ -163,7 +163,7 @@ export default function CallTrackingDashboard() {
                 disabled={!conversations.length}
                 aria-label={t('callTracking.exportPage')}
                 title={!conversations.length ? t('callTracking.noCallsToExport', 'No calls to export') : ''}
-                className={`px-4 py-2 border border-glass-border-dark bg-white/50 backdrop-blur-glass-chip rounded-full text-[13px] font-medium transition-colors ${
+                className={`min-h-11 px-4 py-2 border border-glass-border-dark bg-white/50 backdrop-blur-glass-chip rounded-full text-[13px] font-medium transition-colors sm:min-h-0 ${
                   conversations.length ? 'text-stone-gray hover:bg-white/80 hover:border-deep-charcoal' : 'text-muted-stone cursor-not-allowed opacity-40'
                 }`}
               >
@@ -185,9 +185,10 @@ export default function CallTrackingDashboard() {
               {(['phone', 'unclassified'] as const).map((value) => (
                 <button key={value} type="button" aria-pressed={channel === value}
                   onClick={() => { setChannel(value); setPage(0); setFilter(prev => ({ ...prev, outcome: 'all' })); }}
-                  className={`rounded-full px-4 py-2 text-sm transition-colors ${channel === value
+                  className={`min-h-11 shrink-0 whitespace-nowrap rounded-full px-3 py-2 text-[13px] transition-colors sm:min-h-0 sm:px-4 sm:text-sm ${channel === value
                     ? 'bg-deep-charcoal text-white' : 'border border-glass-border-dark text-stone-gray hover:text-deep-charcoal'}`}>
-                  {t(value === 'phone' ? 'callTracking.phoneCallsTab' : 'callTracking.otherConversationsTab')}
+                  {value === 'phone' ? <><span className="sm:hidden">{t('callTracking.phoneCallsTabShort')}</span><span className="hidden sm:inline">{t('callTracking.phoneCallsTab')}</span></>
+                    : t('callTracking.otherConversationsTab')}
                 </button>
               ))}
             </div>

@@ -2141,6 +2141,8 @@
     "titleShort": "Calls",
     "channelFilter": "Conversation type",
     "phoneCallsTab": "Phone calls",
+    "phoneCallsTabShort": "Phone",
+    "phoneDetails": "View phone details",
     "otherConversationsTab": "Other conversations",
     "unclassifiedExplanation": "No phone data was recorded for these conversations. They may be browser tests or calls with missing metadata, so they are excluded from phone call metrics.",
     "unclassifiedInPeriod": "Conversations without phone data",

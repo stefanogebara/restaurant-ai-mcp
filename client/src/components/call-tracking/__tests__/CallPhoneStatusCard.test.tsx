@@ -1,6 +1,7 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { act, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { renderWithProviders as render } from '../../../test/renderWithProviders';
 import i18n from 'i18next';
 import CallPhoneStatusCard from '../CallPhoneStatusCard';
@@ -63,11 +64,23 @@ it.each([
     name: 'Sandbox', has_agent: false, agent_id: null, phone_number: null, phone_number_id: null,
     status: 'not_configured', shared_routing_enabled: true, error: null, configured_at: null,
   }} phoneStatusLoading={false} phoneStatusError={false} onRefreshStatus={() => {}} /></MemoryRouter>);
+  const user = userEvent.setup();
+  const disclosure = screen.getByRole('button', { name: `${i18n.t('callTracking.configured')} ${i18n.t('callTracking.phoneDetails')}` });
+  expect(disclosure).toHaveAttribute('aria-expanded', 'false');
+  const panel = document.getElementById(disclosure.getAttribute('aria-controls')!);
+  expect(panel).toContainElement(screen.getByText(i18n.t('phoneIntegration.sharedConfiguredDescription')));
+  disclosure.focus();
+  await user.keyboard('{Enter}');
+  expect(disclosure).toHaveAttribute('aria-expanded', 'true');
+  expect(screen.getByRole('link', { name: i18n.t('callTracking.openPhoneSettings') })).toHaveAttribute('href', '/host-dashboard/voice-settings#voice-settings:phone');
   expect(screen.getByRole('heading', { name: title })).toBeVisible();
   expect(screen.getByText(i18n.t('phoneIntegration.sharedConfiguredDescription'))).toBeVisible();
   expect(screen.queryByText(i18n.t('phoneIntegration.notConnectedTitle'))).not.toBeInTheDocument();
   expect(screen.queryByText(i18n.t('phoneIntegration.notConnectedDescription'))).not.toBeInTheDocument();
   expect(screen.queryByText(/5028-9356/)).not.toBeInTheDocument();
+  await user.keyboard(' ');
+  expect(disclosure).toHaveAttribute('aria-expanded', 'false');
+  expect(disclosure).toHaveFocus();
 });
 
 it('does not hide a failed status request behind cached shared setup', () => {
@@ -77,4 +90,22 @@ it('does not hide a failed status request behind cached shared setup', () => {
   }} phoneStatusLoading={false} phoneStatusError={true} onRefreshStatus={() => {}} /></MemoryRouter>);
   expect(screen.getByRole('alert')).toBeVisible();
   expect(screen.queryByRole('heading', { name: 'Shared routing configured' })).not.toBeInTheDocument();
+});
+
+
+it('keeps a failed refresh prominent when the saved shared setup was collapsed', () => {
+  const phoneStatus = {
+    name: 'Sandbox', has_agent: false, agent_id: null, phone_number: null, phone_number_id: null,
+    status: 'not_configured' as const, shared_routing_enabled: true, error: null, configured_at: null,
+  };
+  const refresh = vi.fn();
+  const view = (failed: boolean) => <MemoryRouter><CallPhoneStatusCard phoneStatus={phoneStatus}
+    phoneStatusLoading={false} phoneStatusError={failed} onRefreshStatus={refresh} /></MemoryRouter>;
+  const { rerender } = render(view(false));
+  expect(screen.getByRole('button', { name: 'Configured View phone details' })).toHaveAttribute('aria-expanded', 'false');
+  rerender(view(true));
+  expect(screen.queryByRole('button', { name: 'Configured View phone details' })).not.toBeInTheDocument();
+  expect(screen.getByRole('alert')).toHaveTextContent(i18n.t('phoneIntegration.statusUnavailable'));
+  expect(screen.getByRole('link', { name: 'View phone setup' })).toBeVisible();
+  expect(refresh).not.toHaveBeenCalled();
 });

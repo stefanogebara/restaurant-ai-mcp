@@ -2147,6 +2147,8 @@
     "titleShort": "Chamadas",
     "channelFilter": "Tipo de conversa",
     "phoneCallsTab": "Chamadas telefônicas",
+    "phoneCallsTabShort": "Telefone",
+    "phoneDetails": "Ver detalhes do telefone",
     "otherConversationsTab": "Outras conversas",
     "unclassifiedExplanation": "Estas conversas não têm dados de telefone. Podem ser testes no navegador ou chamadas sem metadados, por isso não entram nas métricas telefônicas.",
     "unclassifiedInPeriod": "Conversas sem dados de telefone",
