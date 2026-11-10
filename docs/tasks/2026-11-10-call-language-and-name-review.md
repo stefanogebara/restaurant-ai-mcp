@@ -7,7 +7,10 @@ A real English booking also retained an earlier ASR surname after a later correc
 - [x] Reproduce primary-language metadata mismatch and cover decoded/raw DTO forms, native flags, malformed/conflicting data and later failed switches.
 - [x] Validate actual provider snapshots with the same pure language resolver; plan a scoped repair for three sandbox records without resetting fetched markers or replaying analysis/usage side effects.
 - [x] Validate the complete-name policy in 18 controlled actual-trace checks; compare the exact resulting prompt to the accepted candidate.
-- [ ] Verify the complete combined source, independently review, merge passing checks and release tested main.
+- [x] Verify language/policy source: 5,122 backend tests, 1,426 frontend tests, build, syntax/static audits and two independent operator reviews.
+- [x] Fix two browser-reproduced UI issues: keyboard focus reaches the offscreen mobile sidebar, and a failed list refresh unmounts open call details. Preserve cached calls, show an inline retry warning and keep desktop navigation usable.
+- [x] Verify final combined source: 5,122 backend tests (6 existing skips), 1,431 frontend tests, build, static audits and independent UI review. The menu resize regression also releases focus, scroll lock and dialog semantics at desktop width.
+- [ ] Merge passing checks and release tested main. Record runtime verification on the release pull request.
 - [ ] Apply the guarded policy from tested main with a fresh serving version and exclusive private journal; verify protected readback.
 - [ ] Confirm actual corrected-name booking, refusal and EN/ES stored-language behavior in production.
 - [ ] Correct only the reviewed historical sandbox language fields from verified provider events, clean tagged bookings, preserve delivery history and remove temporary credentials.
