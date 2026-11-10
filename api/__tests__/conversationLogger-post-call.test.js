@@ -181,10 +181,102 @@ test.each([undefined, '', 'und', null])(
       metadata: { main_language: providerLanguage },
     })).resolves.toEqual({ ingested: true });
     expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ ended_at: expect.any(String) }));
-    for (const [update] of mockUpdate.mock.calls) expect(update).not.toHaveProperty('language');
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ language: null }));
     expect(mockInsert).not.toHaveBeenCalled();
   },
 );
+
+describe('verified native output-language results', () => {
+  const result = (language, overrides = {}, payloadOverrides = {}) => ({
+    tool_name: 'language_detection', is_error: false,
+    result: JSON.stringify({ result_type: 'language_detection_success', status: 'success', language, ...payloadOverrides }),
+    ...overrides,
+  });
+  const turn = (...tool_results) => ({ role: 'agent', message: null, tool_results });
+  async function ingest(transcript, metadataLanguage = 'pt') {
+    process.env.ELEVENLABS_SHARED_AGENT_ID = 'shared-agent';
+    Object.assign(mockRow, { agent_id: 'shared-agent', language: null });
+    await expect(ingestCompletedConversation({
+      conversation_id: 'conv-1', agent_id: 'shared-agent', status: 'done', transcript,
+      metadata: { main_language: metadataLanguage },
+      analysis: { sentiment_analysis: { overall_label: 'neutral' } },
+    })).resolves.toEqual({ ingested: true });
+    expect(mockRestaurantById).toHaveBeenCalledWith('rest-1');
+    expect(mockRestaurant).not.toHaveBeenCalled();
+    expect(mockInsert).not.toHaveBeenCalled();
+    expect(mockCreateAnalysis).not.toHaveBeenCalled();
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
+      restaurant_info_id: 'rest-1', agent_id: 'shared-agent',
+      elevenlabs_fetched_at: expect.any(String), ended_at: expect.any(String),
+    }));
+    return mockUpdate.mock.calls[0][0];
+  }
+
+  test.each(['en', 'es'])('stores verified %s despite metadata pt, matching calls 112/113', async language => {
+    const update = await ingest([turn(result(language))]);
+    expect(update.language).toBe(language);
+    expect(update).toMatchObject({ outcome: 'information_only', successful_booking: false });
+    expect(update.transcript).toEqual([{ role: 'assistant', content: '', timestamp: null }]);
+  });
+
+  test.each([[' EN-us ', 'en'], ['es_ES', 'es'], ['pt-BR', 'pt']])('normalizes verified %s to %s', async (raw, expected) => {
+    expect((await ingest([turn(result(raw))])).language).toBe(expected);
+  });
+
+  test.each([
+    result('en', { is_error: true }), result('en', { is_error: 'false' }),
+    result('en', { is_error: undefined }), result('en', { tool_name: 'check_availability' }),
+    result('en', {}, { result_type: 'language_detection_error' }),
+    result('en', {}, { status: 'failed' }), result('en', {}, { status: undefined }),
+    result('unknown'), result('und'), result('en-US junk'), result(null), result(1),
+    result('en', { result: 'not JSON' }), result('en', { result: 'null' }),
+    result('en', { result: '[]' }), result('en', { result: '"en"' }),
+  ])('ignores failed, malformed or unrelated results %#', async event => {
+    expect((await ingest([turn(event)])).language).toBe('pt');
+  });
+
+  test('uses the last verified success across turns and results, ignoring later failures', async () => {
+    expect((await ingest([
+      turn(result('en')), turn(result('pt'), result('es')),
+      turn(result('en', { is_error: true })),
+    ])).language).toBe('es');
+  });
+
+  test('ignores malformed turn/result containers without losing a verified language', async () => {
+    expect((await ingest([null, {}, { role: 'agent', tool_results: 'invalid' },
+      turn(null, result('en')), turn(result('es', { result: '{}' }))])).language).toBe('en');
+  });
+
+  test.each(['user', 'system', 'assistant'])('ignores language-result imitations on %s turns', async role => {
+    expect((await ingest([{ ...turn(result('en')), role }])).language).toBe('pt');
+  });
+
+  test('ignores spoken text and tool-call arguments, retaining a prior verified language', async () => {
+    expect((await ingest([turn(result('es')), {
+      role: 'agent', message: JSON.stringify(result('en')),
+      tool_calls: [{ tool_name: 'language_detection', params_as_json: '{"language":"en"}' }],
+    }, { role: 'user', message: '{"language":"en"}' }])).language).toBe('es');
+  });
+
+  test.each([['pt', 'pt'], ['en-US', 'en'], [' ES_es ', 'es'], [null, null],
+    ['unknown', null], ['und', null], ['', null], ['en-US junk', null], [7, null]])(
+    'falls back to validated metadata %s when no switch exists', async (metadata, expected) => {
+      expect((await ingest([turn()], metadata)).language).toBe(expected);
+    },
+  );
+
+  test('preserves booking and dedup behavior while selecting verified output language', async () => {
+    mockRow.reservation_id = 'booking-1';
+    const update = await ingest([turn(result('en'))]);
+    expect(update).toMatchObject({ language: 'en', outcome: 'reservation_created', successful_booking: true });
+    expect(update).not.toHaveProperty('reservation_id');
+    mockRow.elevenlabs_fetched_at = '2026-11-10T00:00:00Z';
+    mockUpdate.mockClear();
+    await expect(ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'shared-agent',
+      status: 'done', transcript: [turn(result('es'))] })).resolves.toEqual({ ingested: false });
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+});
 
 test('preserves a reservation outcome and skips a duplicate delivery', async () => {
   mockRow.reservation_id = 'booking-1';

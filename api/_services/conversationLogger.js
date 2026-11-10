@@ -222,6 +222,31 @@ async function endConversation(conversationId, outcomeData) {
   }
 }
 
+function normalizedCallLanguage(value) {
+  if (typeof value !== 'string') return null;
+  const tag = value.trim().toLowerCase().replace(/_/g, '-');
+  return /^[a-z]{2}(?:-[a-z0-9]{2,8})*$/.test(tag) ? tag.split('-')[0] : null;
+}
+
+function completedCallLanguage(provider) {
+  let selected = null;
+  // Metadata can describe the agent's primary language after a successful switch.
+  // Only native successes on agent turns establish the last selected language.
+  for (const turn of Array.isArray(provider.transcript) ? provider.transcript : []) {
+    if (turn?.role !== 'agent' || !Array.isArray(turn.tool_results)) continue;
+    for (const tool of turn.tool_results) {
+      if (tool?.tool_name !== 'language_detection' || tool.is_error !== false) continue;
+      let result;
+      try { result = typeof tool.result === 'string' ? JSON.parse(tool.result) : tool.result; }
+      catch { continue; }
+      if (!result || result.result_type !== 'language_detection_success' || result.status !== 'success') continue;
+      const language = normalizedCallLanguage(result.language);
+      if (language) selected = language;
+    }
+  }
+  return selected || normalizedCallLanguage(provider.metadata?.main_language);
+}
+
 /** Persist a completed provider call once, whether it arrived via webhook or polling. */
 async function ingestCompletedConversation(provider, { restaurantId } = {}) {
   const { conversation_id: conversationId, agent_id: agentId, status } = provider;
@@ -296,7 +321,7 @@ async function ingestCompletedConversation(provider, { restaurantId } = {}) {
   }
 
   const transcript = Array.isArray(provider.transcript)
-    ? provider.transcript.filter(turn => ['agent', 'user'].includes(turn.role)).map(turn => ({
+    ? provider.transcript.filter(turn => ['agent', 'user'].includes(turn?.role)).map(turn => ({
       role: turn.role === 'agent' ? 'assistant' : 'user',
       content: String(turn.message || ''),
       timestamp: turn.time_in_call_secs ?? null,
@@ -305,13 +330,12 @@ async function ingestCompletedConversation(provider, { restaurantId } = {}) {
   const duration = Number(provider.metadata?.call_duration_secs);
   const now = new Date().toISOString();
   // ElevenLabs already scores many completed calls. Use its result before
-  // spending another LLM call, and keep the language actually heard on the
-  // call instead of the initial English placeholder.
+  // spending another LLM call. Native language-switch results take precedence
+  // over metadata that can retain the agent's primary language.
   const providerSentiment = provider.analysis?.sentiment_analysis?.overall_label;
   const sentiment = ['positive', 'neutral', 'negative'].includes(providerSentiment)
     ? providerSentiment : null;
-  const providerLanguage = typeof provider.metadata?.main_language === 'string'
-    ? provider.metadata.main_language.trim().toLowerCase().split('-')[0] : null;
+  const providerLanguage = completedCallLanguage(provider);
   const endedAt = providerStartedAt && Number.isFinite(duration) && duration >= 0
     ? new Date((start + duration) * 1000).toISOString() : now;
   const update = {
@@ -320,10 +344,8 @@ async function ingestCompletedConversation(provider, { restaurantId } = {}) {
     updated_at: now,
     agent_id: agentId,
     restaurant_info_id: restaurantId,
+    language: providerLanguage,
   };
-  if (providerLanguage && /^[a-z]{2}$/.test(providerLanguage)) {
-    update.language = providerLanguage;
-  }
   if (sentiment) {
     update.customer_sentiment = sentiment;
     update.post_call_analysis_done_at = now;
