@@ -108,8 +108,8 @@ function expectNoBookingEffects() {
   expect(sendReservationConfirmationEmail).not.toHaveBeenCalled();
 }
 
-test('a canonical suggestion cannot authorize create, even with its restaurant ID supplied by the model', async () => {
-  const suggestion = await invoke({ action: 'identify_restaurant', restaurant_name: 'Seatable e CI Sandbox', city: 'São Paulo' });
+test.each(['Seatable e CI Sandbox', 'Setable CI Sandbox'])('a candidate for %s cannot authorize create, even with its restaurant ID supplied by the model', async spoken => {
+  const suggestion = await invoke({ action: 'identify_restaurant', restaurant_name: spoken, city: 'São Paulo' });
   expect(suggestion).toMatchObject({ status: 200, body: {
     success: false, restaurant_identified: false, needs_confirmation: true,
     suggested_restaurant: { restaurant_name: mockRestaurant.restaurant_name, city: mockRestaurant.city },
@@ -126,8 +126,8 @@ test('a canonical suggestion cannot authorize create, even with its restaurant I
   expectNoBookingEffects();
 });
 
-test('confirming the official candidate binds identity; checking a slot still creates no reservation', async () => {
-  await invoke({ action: 'identify_restaurant', restaurant_name: 'Seatable e CI Sandbox', city: 'São Paulo' });
+test.each(['Seatable e CI Sandbox', 'Setable CI Sandbox'])('confirming the candidate for %s runs full identification; checking a slot creates no reservation', async spoken => {
+  await invoke({ action: 'identify_restaurant', restaurant_name: spoken, city: 'São Paulo' });
   const identity = await invoke({ action: 'identify_restaurant', restaurant_name: mockRestaurant.restaurant_name, city: mockRestaurant.city });
   expect(identity).toMatchObject({ status: 200, body: { success: true, restaurant_identified: true, restaurant_id: mockRestaurant.id } });
   expect(mockInserted).toHaveBeenCalledTimes(1);

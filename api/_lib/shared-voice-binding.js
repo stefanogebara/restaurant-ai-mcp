@@ -50,8 +50,35 @@ function matchesSpokenName(row, name) {
     .some(alias => normalizedName(alias) === name);
 }
 
+function oneCharacterEdit(spoken, canonical) {
+  const a = [...spoken], b = [...canonical];
+  if (a.length === b.length) {
+    const changed = a.flatMap((char, index) => char === b[index] ? [] : [index]);
+    if (changed.length === 1) return true;
+    return changed.length === 2 && changed[1] === changed[0] + 1 &&
+      a[changed[0]] === b[changed[1]] && a[changed[1]] === b[changed[0]];
+  }
+  if (Math.abs(a.length - b.length) !== 1) return false;
+  const shorter = a.length < b.length ? a : b, longer = a.length < b.length ? b : a;
+  let index = 0;
+  while (index < shorter.length && shorter[index] === longer[index]) index++;
+  return shorter.slice(index).join('') === longer.slice(index + 1).join('');
+}
+
+const GENERIC_NAME_WORDS = new Set(['and', 'the', 'for', 'with', 'del', 'los', 'las', 'dos', 'das', 'com', 'con',
+  'restaurant', 'restaurante', 'ristorante', 'cafe', 'bar', 'bistro', 'bistrot', 'grill']);
+function anchoredWordEdit(spokenWords, officialWords) {
+  if (officialWords.length < 2 || spokenWords.length !== officialWords.length) return false;
+  const changed = officialWords.flatMap((word, index) => word === spokenWords[index] ? [] : [index]);
+  if (changed.length !== 1) return false;
+  const index = changed[0], canonical = officialWords[index];
+  return [...canonical].length >= 5 && oneCharacterEdit(spokenWords[index], canonical) &&
+    officialWords.some((word, i) => i !== index && word !== canonical &&
+      (word.match(/\p{L}/gu) || []).length >= 3 && !GENERIC_NAME_WORDS.has(word));
+}
+
 // Recovery suggestions are not identity matches. Only an extra standalone
-// connector between otherwise identical canonical words can produce a candidate.
+// connector or one anchored character edit can produce a canonical candidate.
 // Caller confirmation is an agent turn contract, not backend-verified speech.
 function suggestCanonicalRestaurant(rows, name, cityName) {
   if (!cityName) return null;
@@ -62,10 +89,10 @@ function suggestCanonicalRestaurant(rows, name, cityName) {
   const spokenWords = name.split(' ');
   const candidates = sameCity.filter(row => {
     const officialWords = normalizedName(row.restaurant_name).split(' ');
-    return spokenWords.length === officialWords.length + 1 &&
+    return anchoredWordEdit(spokenWords, officialWords) || (spokenWords.length === officialWords.length + 1 &&
       spokenWords.some((word, index) => index > 0 && index < spokenWords.length - 1 &&
         ['e', 'and', 'y'].includes(word) &&
-        spokenWords.filter((_, i) => i !== index).join(' ') === officialWords.join(' '));
+        spokenWords.filter((_, i) => i !== index).join(' ') === officialWords.join(' ')));
   });
   // An opted-out canonical name can still explain the utterance. Count every
   // plausible owner first; only a unique, explicitly opted-in candidate is safe.
@@ -74,6 +101,11 @@ function suggestCanonicalRestaurant(rows, name, cityName) {
   if (candidate.ai_config?.phone?.shared_routing_enabled !== true) return null;
   const official = normalizedName(candidate.restaurant_name);
   if (sameCity.filter(row => matchesSpokenName(row, official)).length !== 1) return null;
+  // A nearby configured alias is another plausible owner, including opt-outs.
+  // It may block steering but can never supply a suggested canonical name.
+  if (sameCity.some(row => row !== candidate && Array.isArray(row.ai_config?.phone?.shared_name_aliases) &&
+    row.ai_config.phone.shared_name_aliases.slice(0, 10).some(alias =>
+      anchoredWordEdit(spokenWords, normalizedName(alias).split(' '))))) return null;
   return {
     success: false, restaurant_identified: false, needs_confirmation: true,
     suggested_restaurant: { restaurant_name: candidate.restaurant_name, city: candidate.city },
