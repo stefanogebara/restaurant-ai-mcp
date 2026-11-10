@@ -8,14 +8,9 @@
  * - Advance booking limits
  */
 
-/**
- * Validate a reservation request against restaurant configuration
- * @param {object} params - Reservation parameters
- * @param {object} restaurant - Restaurant configuration from registry
- * @returns {object} Validation result with success/error
- */
-function validateReservation(params, restaurant) {
-  const { date, time, party_size } = params;
+// Shared input shape only. Availability must not acquire create-only booking
+// windows or business-hours policy by calling the full validator.
+function validateReservationInput({ date, party_size }) {
   const errors = [];
 
   // Keep legacy digit strings, but never truncate fractions or numeric prefixes.
@@ -41,6 +36,21 @@ function validateReservation(params, restaurant) {
   if (errors.length > 0) {
     return { valid: false, errors, message: errors[0].message };
   }
+  return { valid: true, partySize };
+}
+
+/**
+ * Validate a reservation request against restaurant configuration
+ * @param {object} params - Reservation parameters
+ * @param {object} restaurant - Restaurant configuration from registry
+ * @returns {object} Validation result with success/error
+ */
+function validateReservation(params, restaurant) {
+  const { date, time } = params;
+  const input = validateReservationInput(params);
+  if (!input.valid) return input;
+  const { partySize } = input;
+  const errors = [];
 
   // Get restaurant config with defaults
   const config = {
@@ -283,6 +293,7 @@ function buildVoiceConfirmation(params, restaurant, reservationId, { whatsappAcc
 }
 
 module.exports = {
+  validateReservationInput,
   validateReservation,
   buildConfirmationMessage,
   buildVoiceConfirmation,
