@@ -223,6 +223,63 @@ describe('verified native output-language results', () => {
     expect((await ingest([turn(result(raw))])).language).toBe(expected);
   });
 
+  test.each(['en', 'es'])('accepts a native %s result_value-only webhook DTO', async language => {
+    const event = result(language, { type: 'system', tool_has_been_called: true });
+    event.result_value = event.result;
+    delete event.result;
+    expect((await ingest([turn(event)])).language).toBe(language);
+  });
+
+  test.each(['en', 'es'])('accepts matching decoded/raw %s results, matching full calls 112/113', async language => {
+    const event = result(language, { type: 'system', tool_has_been_called: true });
+    event.result_value = event.result;
+    event.result = JSON.parse(event.result);
+    expect((await ingest([turn(event)])).language).toBe(language);
+  });
+
+  test.each([
+    { type: 'webhook' }, { type: 'client' }, { type: null },
+    { tool_has_been_called: false }, { tool_has_been_called: 'true' }, { tool_has_been_called: null },
+  ])('rejects contradictory explicit native flags %j', async flags => {
+    expect((await ingest([turn(result('es')), turn(result('en', flags))])).language).toBe('es');
+  });
+
+  test.each(['not JSON', 'null', '[]', '"en"', '{"language":"en"}',
+    '{"result_type":"language_detection_success","status":"failed","language":"en"}']) (
+    'ignores malformed or unsuccessful raw-only payload %s', async result_value => {
+      expect((await ingest([turn(result('es')), turn(result('en', { result: undefined, result_value }))])).language).toBe('es');
+    },
+  );
+
+  test('uses raw result_value when the decoded result is null', async () => {
+    const event = result('en');
+    expect((await ingest([turn({ ...event, result: null, result_value: event.result })])).language).toBe('en');
+  });
+
+  test('does not replace a malformed present decoded result with raw data', async () => {
+    const event = result('en');
+    expect((await ingest([turn(result('es')),
+      turn({ ...event, result: 'not JSON', result_value: event.result })])).language).toBe('es');
+  });
+
+  test('ignores conflicting verified representations and keeps the previous valid switch', async () => {
+    const event = result('en', { result_value: result('pt').result });
+    expect((await ingest([turn(result('es')), turn(event)])).language).toBe('es');
+  });
+
+  test('falls back to metadata when the only language event has conflicting representations', async () => {
+    expect((await ingest([turn(result('en', { result_value: result('es').result }))])).language).toBe('pt');
+  });
+
+  test('accepts equivalent normalized representations', async () => {
+    expect((await ingest([turn(result('en-US', { result_value: result('en').result }))])).language).toBe('en');
+  });
+
+  test('ignores a dual representation when raw payload validation fails', async () => {
+    expect((await ingest([turn(result('es')),
+      turn(result('en', { result_value: 'not JSON' }))])).language).toBe('es');
+  });
+
   test.each([
     result('en', { is_error: true }), result('en', { is_error: 'false' }),
     result('en', { is_error: undefined }), result('en', { tool_name: 'check_availability' }),

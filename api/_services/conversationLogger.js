@@ -228,6 +228,15 @@ function normalizedCallLanguage(value) {
   return /^[a-z]{2}(?:-[a-z0-9]{2,8})*$/.test(tag) ? tag.split('-')[0] : null;
 }
 
+function successfulLanguageResult(value) {
+  let result;
+  try { result = typeof value === 'string' ? JSON.parse(value) : value; }
+  catch { return null; }
+  if (!result || typeof result !== 'object' || Array.isArray(result) ||
+      result.result_type !== 'language_detection_success' || result.status !== 'success') return null;
+  return normalizedCallLanguage(result.language);
+}
+
 function completedCallLanguage(provider) {
   let selected = null;
   // Metadata can describe the agent's primary language after a successful switch.
@@ -236,11 +245,13 @@ function completedCallLanguage(provider) {
     if (turn?.role !== 'agent' || !Array.isArray(turn.tool_results)) continue;
     for (const tool of turn.tool_results) {
       if (tool?.tool_name !== 'language_detection' || tool.is_error !== false) continue;
-      let result;
-      try { result = typeof tool.result === 'string' ? JSON.parse(tool.result) : tool.result; }
-      catch { continue; }
-      if (!result || result.result_type !== 'language_detection_success' || result.status !== 'success') continue;
-      const language = normalizedCallLanguage(result.language);
+      // Legacy DTOs may omit these flags; explicit non-native/unexecuted results fail closed.
+      if ((tool.type !== undefined && tool.type !== 'system') ||
+          (tool.tool_has_been_called !== undefined && tool.tool_has_been_called !== true)) continue;
+      const language = successfulLanguageResult(tool.result ?? tool.result_value);
+      // Full responses carry decoded and raw payloads. Neither may contradict the other.
+      if (tool.result != null && tool.result_value != null &&
+          successfulLanguageResult(tool.result_value) !== language) continue;
       if (language) selected = language;
     }
   }

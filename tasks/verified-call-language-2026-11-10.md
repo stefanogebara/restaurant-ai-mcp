@@ -37,3 +37,19 @@ source changes are needed, and completed-row deduplication is unchanged.
 The full backend/frontend/build/API-syntax checks are run separately; results are
 reported with the commit handoff. No external provider API, database row,
 historical repair, or provider/model/operator setting is changed by this task.
+
+## DTO compatibility follow-up
+
+Full archives 112/113 contain both decoded `result` objects and JSON `result_value`
+strings, with `type=system` and `tool_has_been_called=true`. When decoded result is
+absent/null, the same positive payload validation applies to raw result_value.
+When both are present, both must validate to the same normalized language;
+malformed or conflicting representations preserve the previous valid switch.
+An invalid present decoded result is not rescued by a raw alternative.
+
+Explicit non-system type or any present non-true execution flag is rejected.
+Missing flags remain compatible with legacy/sanitized DTOs, while the agent-turn,
+tool-name, explicit is_error=false, result_type, status and language checks remain
+mandatory. Twelve compatibility regressions failed before the follow-up fix.
+After the fix, all 114 focused tests across six ingestion/guard suites passed,
+as did the changed logger syntax and whitespace checks.
