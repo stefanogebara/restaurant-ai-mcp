@@ -1,6 +1,6 @@
 'use strict';
 const { TARGET } = require('../../scripts/_lib/shared-voice-vocabulary.cjs');
-const { BEFORE, AFTER } = require('../../scripts/_lib/shared-voice-date-policy.cjs');
+const { BEFORE, DATE_ONLY, AFTER } = require('../../scripts/_lib/shared-voice-date-policy.cjs');
 const { HEADER, FINAL_REPLY, repairedPrompt, languageState } = require('../../scripts/repair-shared-voice-language.cjs');
 const { SOURCE_MODEL, TARGET_MODEL, upgradedState, protectedHash, createModelApi, upgrade } = require('../../scripts/upgrade-shared-voice-model-policy.cjs');
 
@@ -39,6 +39,20 @@ test('replaces exactly the date paragraph without changing tenant, consent or la
   expect(next.prompt).toContain('Treat INVALID_DATE, INVALID_TIME, INVALID_PARTY_SIZE, and PAST_DATE as input validation errors');
   expect(next.prompt).toContain('On the first clear English or Spanish user turn');
   expect(prompt.llm).toBe(SOURCE_MODEL);
+});
+
+test('updates the known date-only state without changing its configured model or unrelated instructions', () => {
+  const f = fixture(), prompt = f.agent.conversation_config.agent.prompt;
+  prompt.prompt = prompt.prompt.replace(BEFORE, DATE_ONLY); prompt.llm = TARGET_MODEL;
+  expect(upgradedState(f.agent)).toEqual({ model: TARGET_MODEL, prompt: prompt.prompt.replace(DATE_ONLY, AFTER) });
+  expect(upgradedState(f.agent).prompt).toContain('ENTIRE latest customer_name');
+  expect(upgradedState(f.agent).prompt).toContain('including every surname word');
+  expect(upgradedState(f.agent).prompt).toContain('A yes accompanied by changed data is a correction');
+});
+
+test('refuses mixed policy states rather than partially rewriting the prompt', () => {
+  const f = fixture(); f.agent.conversation_config.agent.prompt.prompt += '\n' + DATE_ONLY;
+  expect(() => upgradedState(f.agent)).toThrow(/ambiguous/);
 });
 
 test.each(['unprepared language', 'foreign model', 'unknown dates', 'duplicate dates'])('fails closed on %s', kind => {

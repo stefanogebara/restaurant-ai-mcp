@@ -2118,6 +2118,7 @@
     "detailsLoadFailed": "We couldn't load this call. Try again.",
     "detailsUnavailable": "This call is no longer available.",
     "detailsRefreshFailed": "We couldn't update these call details. The last loaded version is shown.",
+    "listRefreshFailed": "We couldn't update the call list. The last loaded calls are shown.",
     "durationPendingShort": "Pending",
     "openCall": "Open call from {{name}} at {{time}}",
     "viewGuest": "View guest details for {{phone}}",

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import { renderWithProviders } from '../../test/renderWithProviders';
 import CallTrackingDashboard from '../CallTrackingDashboard';
 
@@ -14,7 +14,7 @@ const call = {
   started_at: '2026-11-09T13:00:32Z', ended_at: '2026-11-09T13:01:36Z',
   duration_seconds: 64, language: 'pt', outcome: 'information_only', transcript: [], customer_name: 'Beatriz Costa',
 };
-const listState = vi.hoisted(() => ({ populated: false, total: 0, fetching: false }));
+const listState = vi.hoisted(() => ({ populated: false, total: 0, fetching: false, failed: false, noData: false }));
 const observedPages = vi.hoisted(() => [] as number[]);
 const phoneState = vi.hoisted(() => ({ enabled: false, shared: false }));
 
@@ -27,9 +27,9 @@ vi.mock('../../hooks/useCallTracking', () => ({
     observedChannels.push(channel);
     observedPages.push(page);
     return ({
-    data: { conversations: listState.populated && (page === 0 || page * 50 < listState.total) ? [call] : [], pagination: { total: listState.total, limit: 50, offset: page * 50, has_more: (page + 1) * 50 < listState.total } },
+    data: listState.noData ? undefined : { conversations: listState.populated && (page === 0 || page * 50 < listState.total) ? [call] : [], pagination: { total: listState.total, limit: 50, offset: page * 50, has_more: (page + 1) * 50 < listState.total } },
     isLoading: false,
-    isError: false,
+    isError: listState.failed,
     isFetching: listState.fetching,
     refetch: refetchConversations,
   }); },
@@ -46,7 +46,7 @@ beforeEach(() => {
   phoneState.shared = false;
   listState.populated = false;
   listState.total = 0;
-  listState.fetching = false;
+  listState.fetching = false; listState.failed = false; listState.noData = false; refetchConversations.mockClear();
   observedPages.length = 0;
   detailState.data = null;
   detailState.isPending = false;
@@ -180,4 +180,37 @@ it('does not explain an empty shared-call history as an unassigned phone line', 
   renderWithProviders(<CallTrackingDashboard />);
   expect(screen.getByText('No calls match these filters')).toBeVisible();
   expect(screen.queryByText(/This restaurant has no assigned phone line/)).not.toBeInTheDocument();
+});
+
+
+it('keeps cached calls and the focused dialog when a pending list refresh fails', () => {
+  listState.populated = true; detailState.data = { ...call, summary: 'Recorded summary' };
+  const { rerender } = renderWithProviders(<CallTrackingDashboard />);
+  fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+  listState.fetching = true; rerender(<CallTrackingDashboard />);
+  fireEvent.click(screen.getByRole('button', { name: /open call.*Beatriz Costa/i }));
+  const dialog = screen.getByRole('dialog');
+  const close = within(dialog).getAllByRole('button', { name: 'Close' })[0]; close.focus();
+  listState.fetching = false; listState.failed = true; rerender(<CallTrackingDashboard />);
+  expect(screen.getByRole('dialog')).toBe(dialog); expect(close).toHaveFocus();
+  expect(screen.getByText('Recorded summary')).toBeVisible();
+  expect(screen.getByRole('button', { name: /open call.*Beatriz Costa/i })).toBeVisible();
+  const alert = screen.getByRole('alert');
+  expect(alert).toHaveTextContent("We couldn't update the call list. The last loaded calls are shown.");
+  fireEvent.click(within(alert).getByRole('button', { name: 'Retry' }));
+  expect(refetchConversations).toHaveBeenCalledTimes(2);
+  listState.fetching = true; rerender(<CallTrackingDashboard />);
+  expect(within(screen.getByRole('alert')).getByRole('button', { name: 'Retry' })).toBeDisabled();
+  listState.fetching = false; listState.failed = false; rerender(<CallTrackingDashboard />);
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  expect(screen.getByRole('dialog')).toBe(dialog); expect(close).toHaveFocus();
+});
+
+it('keeps the full first-load error screen when no cached calls exist', () => {
+  listState.failed = true; listState.noData = true;
+  renderWithProviders(<CallTrackingDashboard />);
+  expect(screen.getByText('Error loading data')).toBeVisible();
+  expect(screen.queryByRole('button', { name: 'Refresh' })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+  expect(refetchConversations).toHaveBeenCalledOnce();
 });

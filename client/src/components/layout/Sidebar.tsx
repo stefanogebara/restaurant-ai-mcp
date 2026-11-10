@@ -10,6 +10,7 @@ import { usePermission } from '../../hooks/usePermission';
 import { hasFeatureAccess, type PlanFeatures, type PlanType } from '../../config/planFeatures';
 import { languageOptions, preloadAndSwitchLanguage } from '../../i18n/config';
 import { LS_LANGUAGE } from '../../config/localStorageKeys';
+import { useDialogLifecycle } from '../../hooks/useDialogLifecycle';
 
 interface NavItem {
   path: string;
@@ -64,6 +65,17 @@ export default function Sidebar() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
+  const mobileDialogRef = useRef<HTMLDivElement>(null);
+  useDialogLifecycle(mobileDialogRef, () => setIsMobileOpen(false), isMobileOpen);
+
+  useEffect(() => {
+    if (!isMobileOpen || typeof window.matchMedia !== 'function') return;
+    const desktop = window.matchMedia('(min-width: 1024px)');
+    const closeOnDesktop = () => { if (desktop.matches) setIsMobileOpen(false); };
+    desktop.addEventListener('change', closeOnDesktop);
+    closeOnDesktop();
+    return () => desktop.removeEventListener('change', closeOnDesktop);
+  }, [isMobileOpen]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -156,13 +168,15 @@ export default function Sidebar() {
           lg:rounded-[26px] lg:bg-deep-charcoal/90 lg:backdrop-blur-xl
           lg:border lg:border-white/10 lg:shadow-[0_8px_32px_rgba(28,25,23,0.25)]
           lg:overflow-hidden
-          transition-all duration-300 ease-in-out
+          transition-[transform,width] duration-300 ease-in-out
           ${isCollapsed ? 'w-20' : 'w-[260px]'}
-          ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
-          lg:translate-x-0
+          ${isMobileOpen ? 'visible translate-x-0' : 'invisible -translate-x-full'}
+          lg:visible lg:translate-x-0
         `}
       >
-        <div className="flex flex-col h-full">
+        <div ref={mobileDialogRef} tabIndex={-1} role={isMobileOpen ? 'dialog' : undefined}
+          aria-modal={isMobileOpen ? true : undefined} aria-label={isMobileOpen ? t('common.more') : undefined}
+          className="flex flex-col h-full focus:outline-none">
           {/* Logo */}
           <div className={`py-6 ${isCollapsed ? 'px-6' : 'px-6'} flex items-center justify-between`}>
             {!isCollapsed ? (
