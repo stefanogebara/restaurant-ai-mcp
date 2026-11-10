@@ -28,17 +28,21 @@ test('passes only the bound tenant and native phone to the receipt verifier', as
   expect(await runGuestAction(args)).toEqual({ success: false, error: 'not_found' });
   expect(mockVerify).toHaveBeenCalledWith({ restaurantId: 'tenant-a', reservationId: code, customerPhone: context.callerNumber });
 });
-test('preserves invalid values for the deterministic mutation validator instead of coercing them', async () => {
+test('phone changes refuse before the mutation validator, including invalid requested changes', async () => {
   mockModify.mockResolvedValue({ success: false, error: 'invalid_party_size' });
-  await runGuestAction({ ...args, action: 'modify_reservation', data: { reservation_id: code, new_party_size: '2junk', new_time: '25:99' } });
-  expect(mockModify).toHaveBeenCalledWith(expect.objectContaining({ newPartySize: '2junk', newTime: '25:99' }));
+  expect(await runGuestAction({ ...args, action: 'modify_reservation', data: { reservation_id: code, new_party_size: '2junk', new_time: '25:99' } }))
+    .toMatchObject({ success: false, changed: false, action_unavailable: true, requires_secure_confirmation: true });
+  expect(mockModify).not.toHaveBeenCalled();
 });
-test('logs one verified mutation outcome without raw proof or phone', async () => {
+test('logs a failed phone-change refusal without raw proof, outcome changes or reservation links', async () => {
   mockCancel.mockResolvedValue({ success: true, changed: true, reservation: { reservation_id: code } });
   const logToolCall = jest.fn(), updateConversation = jest.fn();
-  await runGuestAction({ ...args, action: 'cancel_reservation', conversationId: 'conv-native', conversationLogger: { logToolCall, updateConversation } });
-  expect(logToolCall).toHaveBeenCalledWith('conv-native', { tool_name: 'cancel_reservation', parameters: {}, success: true, result: { changed: true } });
-  expect(updateConversation).toHaveBeenCalledWith('conv-native', { reservation_id: code, outcome: 'reservation_cancelled', successful_booking: false });
+  const result = await runGuestAction({ ...args, action: 'cancel_reservation', conversationId: 'conv-native', conversationLogger: { logToolCall, updateConversation } });
+  expect(result).toMatchObject({ success: false, changed: false, action_unavailable: true, requires_secure_confirmation: true });
+  expect(logToolCall).toHaveBeenCalledWith('conv-native', expect.objectContaining({ tool_name: 'cancel_reservation', parameters: {}, success: false }));
+  expect(JSON.stringify(logToolCall.mock.calls)).not.toContain(code);
+  expect(JSON.stringify(logToolCall.mock.calls)).not.toContain(context.callerNumber);
+  expect(updateConversation).not.toHaveBeenCalled(); expect(mockCancel).not.toHaveBeenCalled();
 });
 test('never calls a mutation or verifier when proof is incomplete', async () => {
   const r = await runGuestAction({ ...args, action: 'cancel_reservation', data: {} });
@@ -52,6 +56,33 @@ const actionServices = [
   ['lookup_reservation', mockVerify], ['modify_reservation', mockModify], ['cancel_reservation', mockCancel],
 ];
 const spelling = 'uppercase Romeo uppercase Echo uppercase Sierra hyphen two zero two six one one one zero hyphen lowercase Alpha uppercase Bravo underscore lowercase Charlie uppercase Delta hyphen lowercase Echo uppercase Foxtrot digit nine uppercase Golf digit one digit two';
+
+// Receipt ownership is necessary, but it does not attest a later user yes.
+// Until that trusted signal exists, no proof/LLM consent flag can unlock writes.
+test.each([
+  ['modify_reservation', { reservation_id: code }], ['cancel_reservation', { reservation_id: code }],
+  ['modify_reservation', { reservation_code_spelling: spelling }], ['cancel_reservation', { reservation_code_spelling: spelling }],
+])('%s refuses a valid full proof without any reservation-service invocation', async (action, proof) => {
+  const conversationLogger = logger();
+  const result = await runGuestAction({ ...args, action, data: { ...proof, new_time: '21:00', user_confirmed: true,
+    confirmation: 'yes', requires_secure_confirmation: false }, conversationId: 'conv-native', conversationLogger });
+  expect(result).toMatchObject({ success: false, changed: false, action_unavailable: true, requires_secure_confirmation: true,
+    error: { code: 'action_unavailable' } });
+  expect(result.message).toMatch(/unavailable by phone/i);
+  expect(result.message).toMatch(/customer portal or contact the restaurant/i);
+  expect(result).not.toHaveProperty('reservation'); expect(result).not.toHaveProperty('reservation_id');
+  expect(mockVerify).not.toHaveBeenCalled(); expect(mockModify).not.toHaveBeenCalled(); expect(mockCancel).not.toHaveBeenCalled();
+  expect(conversationLogger.logToolCall).toHaveBeenCalledWith('conv-native', expect.objectContaining({ tool_name: action, success: false }));
+  expect(conversationLogger.updateConversation).not.toHaveBeenCalled();
+});
+
+test('logging failure cannot turn a deterministic safety refusal into a system outage', async () => {
+  const conversationLogger = { logToolCall: jest.fn().mockRejectedValue(new Error('telemetry unavailable')), updateConversation: jest.fn() };
+  await expect(runGuestAction({ ...args, action: 'cancel_reservation', conversationId: 'conv-native', conversationLogger }))
+    .resolves.toMatchObject({ success: false, action_unavailable: true, requires_secure_confirmation: true });
+  expect(mockVerify).not.toHaveBeenCalled(); expect(mockModify).not.toHaveBeenCalled(); expect(mockCancel).not.toHaveBeenCalled();
+  expect(conversationLogger.updateConversation).not.toHaveBeenCalled();
+});
 
 test('verified lookup enriches the name and party without linking or claiming a booking/mutation', async () => {
   const conversationLogger = logger();
@@ -72,22 +103,19 @@ test('verified lookup enriches the name and party without linking or claiming a 
 test.each([
   ['modify_reservation', mockModify, 'reservation_modified'],
   ['cancel_reservation', mockCancel, 'reservation_cancelled'],
-])('%s combines returned guest fields and existing operation metadata in exactly one update', async (action, service, outcome) => {
+])('%s cannot publish a successful outcome from a service that must never be called', async (action, service) => {
   const conversationLogger = logger();
   service.mockResolvedValue({ success: true, changed: true,
     reservation: { reservation_id: code, customer_name: 'QA PhoneChange', party_size: 2 } });
-  await runGuestAction({ ...args, action, data: { reservation_id: code, customer_name: 'Wrong model name', party_size: 99 },
+  const result = await runGuestAction({ ...args, action, data: { reservation_id: code, customer_name: 'Wrong model name', party_size: 99 },
     conversationId: 'conv-native', conversationLogger });
-  expect(conversationLogger.updateConversation).toHaveBeenCalledTimes(1);
-  expect(conversationLogger.updateConversation).toHaveBeenCalledWith('conv-native', {
-    customer_name: 'QA PhoneChange', party_size: 2, reservation_id: code, outcome, successful_booking: false,
-  });
-  expect(conversationLogger.logToolCall).toHaveBeenCalledWith('conv-native', {
-    tool_name: action, parameters: {}, success: true, result: { changed: true },
-  });
+  expect(result).toMatchObject({ success: false, changed: false, requires_secure_confirmation: true });
+  expect(service).not.toHaveBeenCalled();
+  expect(conversationLogger.updateConversation).not.toHaveBeenCalled();
+  expect(conversationLogger.logToolCall).toHaveBeenCalledWith('conv-native', expect.objectContaining({ tool_name: action, parameters: {}, success: false }));
 });
 
-test.each(actionServices)('successful unchanged %s records only verified guest metadata', async (action, service) => {
+test.each([['lookup_reservation', mockVerify]])('successful unchanged %s records only verified guest metadata', async (action, service) => {
   const conversationLogger = logger();
   service.mockResolvedValue({ success: true, changed: false, reservation: { reservation_id: code, customer_name: '李', party_size: 2 } });
   await runGuestAction({ ...args, action, conversationId: 'conv-native', conversationLogger });
@@ -95,7 +123,7 @@ test.each(actionServices)('successful unchanged %s records only verified guest m
   expect(conversationLogger.updateConversation).toHaveBeenCalledWith('conv-native', { customer_name: '李', party_size: 2 });
 });
 
-test.each(actionServices)('failed %s cannot populate metadata even if a failed result contains guest fields', async (action, service) => {
+test.each([['lookup_reservation', mockVerify]])('failed %s cannot populate metadata even if a failed result contains guest fields', async (action, service) => {
   const conversationLogger = logger();
   service.mockResolvedValue({ success: false, changed: false, error: { code: 'verification_failed' },
     reservation: { reservation_id: code, customer_name: 'Private Guest', party_size: 2, customer_phone: context.callerNumber } });

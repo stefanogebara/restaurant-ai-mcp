@@ -89,19 +89,26 @@ async function runGuestAction({ action, data, context, restaurantId, conversatio
     return { success: false, verification_required: true,
       message: 'Please provide the complete confirmation code from your receipt. If it is unavailable, contact the restaurant for help.' };
   }
-  const service = require('./reservation-mutations');
-  const args = { restaurantId, ...proof };
-  let result;
-  if (action === 'lookup_reservation') {
-    result = await service.verifyGuestReservation(args);
-  } else if (action === 'modify_reservation') {
-    result = await service.modifyGuestReservation({ ...args,
-      newDate: data.new_date ?? data.date,
-      newTime: data.new_time ?? data.time,
-      newPartySize: data.new_party_size ?? data.party_size });
-  } else {
-    result = await service.cancelGuestReservation(args);
+  if (action === 'modify_reservation' || action === 'cancel_reservation') {
+    // Receipt ownership and caller/tenant binding do not prove a subsequent
+    // user yes after verified readback. No trusted consent mechanism exists in
+    // this native adapter, so neither model parameters nor env flags can unlock
+    // writes. Keep the shared mutation service available to other channels.
+    const message = 'Reservation changes and cancellations are currently unavailable by phone. Please use the customer portal or contact the restaurant.';
+    if (conversationId && typeof conversationLogger?.logToolCall === 'function') {
+      try {
+        await conversationLogger.logToolCall(conversationId, {
+          tool_name: action, parameters: {}, success: false, error_message: message,
+        });
+      } catch {
+        // Telemetry failure must not turn this policy refusal into an outage.
+      }
+    }
+    return { success: false, changed: false, action_unavailable: true, requires_secure_confirmation: true,
+      error: { code: 'action_unavailable', message }, message };
   }
+  const service = require('./reservation-mutations');
+  const result = await service.verifyGuestReservation({ restaurantId, ...proof });
   if (conversationId && conversationLogger) {
     // Omit phone/code from parameters. The verified reservation is sufficient
     // to link the result; failed verification exposes no booking facts.
@@ -118,13 +125,6 @@ async function runGuestAction({ action, data, context, restaurantId, conversatio
         updates.customer_name = name;
       }
       if (Number.isSafeInteger(party) && party >= 1 && party <= 100) updates.party_size = party;
-      if (result.changed === true && action !== 'lookup_reservation') {
-        Object.assign(updates, {
-          reservation_id: result.reservation.reservation_id,
-          outcome: action === 'modify_reservation' ? 'reservation_modified' : 'reservation_cancelled',
-          successful_booking: false,
-        });
-      }
       if (Object.keys(updates).length) await conversationLogger.updateConversation(conversationId, updates);
     }
   }
