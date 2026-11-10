@@ -217,7 +217,7 @@ export default function BookingConfirmation() {
 
           <h1 className="font-serif text-4xl font-medium text-deep-charcoal tracking-tight mb-2">{t('reservations.reservationConfirmed')}</h1>
           <p className="text-[15px] text-warm-stone font-light mb-10">
-            {t('reservations.confirmationSent')}
+            {t('reservations.reservationRecorded')}
           </p>
 
           {/* Details Card */}
@@ -326,7 +326,7 @@ export default function BookingConfirmation() {
                 <span className="leading-snug">
                   {restaurantInfo?.whatsapp_enabled
                     ? t('reservations.confirmation.reminder', "We'll send you a WhatsApp reminder 24 hours before your reservation.")
-                    : t('reservations.confirmation.saveConfirmation', "Save this confirmation — the restaurant has your phone number if anything changes.")}
+                    : t('reservations.confirmation.saveConfirmation')}
                 </span>
               </li>
               {restaurantInfo?.phone && (

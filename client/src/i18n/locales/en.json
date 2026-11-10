@@ -610,9 +610,10 @@
     "noReservationFoundDesc": "We couldn't find the details for this reservation. You may have visited this page directly, or the link has expired. Make a new reservation below.",
     "makeReservation": "Make a Reservation",
     "reservationConfirmed": "Reservation Confirmed",
-    "confirmationSent": "We've sent a confirmation to your email and phone.",
+    "reservationRecorded": "Your reservation is recorded. The details are below.",
     "confirmation": {
       "whatsNext": "What's next?",
+      "saveConfirmation": "Save this confirmation and your reservation ID.",
       "reminder": "We'll send you a WhatsApp reminder 24 hours before your reservation.",
       "pushTeaserTitle": "Get a reminder on the day",
       "pushTeaserBody": "We'll ping your browser an hour before your reservation. No email spam.",
