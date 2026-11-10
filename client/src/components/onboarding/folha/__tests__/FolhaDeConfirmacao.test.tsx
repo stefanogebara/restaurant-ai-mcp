@@ -136,7 +136,7 @@ describe('FolhaDeConfirmacao', () => {
 
 test('dados manuais não são atribuídos ao Google', () => {
   montar({}, { origem: 'manual' });
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Confira os dados do Mocotó.');
+  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Confira os dados: Mocotó.');
   expect(screen.getByText('Horário inicial — confirme')).toBeVisible();
   expect(screen.queryByText(/Google/)).not.toBeInTheDocument();
 });

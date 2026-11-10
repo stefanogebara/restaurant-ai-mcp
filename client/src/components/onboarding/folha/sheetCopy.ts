@@ -21,9 +21,9 @@ const en = {
 type Copy = Record<keyof typeof en, string>;
 const pt: Copy = {
   optional: 'opcional', essentialDetails: 'Informe os dados essenciais da casa para continuar.',
-  manualTitle: 'Confira os dados do {{name}}.', manualEmptyTitle: 'Vamos montar sua recepcionista.',
+  manualTitle: 'Confira os dados: {{name}}.', manualEmptyTitle: 'Vamos montar sua recepcionista.',
   manualIntro: 'Confirme os dados da casa e ajuste a configuração inicial antes de receber reservas.',
-  demoTitle: 'Confira a configuração do demo do {{name}}.', initialHours: 'Horário inicial — confirme',
+  demoTitle: 'Confira a configuração do demo: {{name}}.', initialHours: 'Horário inicial — confirme',
   initialLayout: 'Salão inicial — confirme', estimatedLayout: 'Proposta pelo porte estimado — confirme',
   acceptLayout: 'Usar este salão', confirmLayout: 'confirmar o salão', layoutAccepted: 'Este salão será salvo com seu restaurante.',
   layoutHint: 'Confirme este salão inicial ou use o formulário completo abaixo para configurar mesa por mesa.',
