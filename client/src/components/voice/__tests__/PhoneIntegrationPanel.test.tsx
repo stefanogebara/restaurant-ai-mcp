@@ -1,12 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import { renderWithProviders as render } from '../../../test/renderWithProviders';
 import PhoneIntegrationPanel from '../PhoneIntegrationPanel';
 
-const mockPhoneStatus = vi.hoisted(() => ({ status: 'needs_review', shared: false, hasAgent: true, failed: false }));
+const mockPhoneStatus = vi.hoisted(() => ({ status: 'needs_review', shared: false, hasAgent: true, failed: false, fetching: false }));
+const refetchPhone = vi.hoisted(() => vi.fn());
 vi.mock('../../../hooks/usePhoneIntegration', () => ({
   usePhoneIntegration: () => ({
     isLoading: false,
+    isFetching: mockPhoneStatus.fetching,
+    refetch: refetchPhone,
     isError: mockPhoneStatus.failed,
     status: {
       restaurant: { status: mockPhoneStatus.status, has_agent: mockPhoneStatus.hasAgent, shared_routing_enabled: mockPhoneStatus.shared },
@@ -15,7 +18,7 @@ vi.mock('../../../hooks/usePhoneIntegration', () => ({
   }),
 }));
 
-beforeEach(() => { Object.assign(mockPhoneStatus, { status: 'needs_review', shared: false, hasAgent: true, failed: false }); });
+beforeEach(() => { Object.assign(mockPhoneStatus, { status: 'needs_review', shared: false, hasAgent: true, failed: false, fetching: false }); refetchPhone.mockClear(); });
 
 describe('PhoneIntegrationPanel', () => {
   it('does not present a shared platform number as the restaurant line or allow self-service activation', () => {
@@ -50,4 +53,35 @@ it('describes shared setup without claiming the line is disconnected or an indiv
   expect(screen.queryByText(/No individual agent is linked/)).not.toBeInTheDocument();
   expect(screen.queryByRole('link', { name: 'Ask Seatable to connect the phone' })).not.toBeInTheDocument();
   expect(screen.queryByText(/5028-9356/)).not.toBeInTheDocument();
+});
+
+
+it('retries a local fetch failure while preserving the support link', () => {
+  mockPhoneStatus.failed = true;
+  render(<PhoneIntegrationPanel />);
+  expect(screen.getByRole('heading', { name: 'Phone status unavailable' })).toBeVisible();
+  const retry = screen.getByRole('button', { name: 'Retry' });
+  expect(retry.className).toContain('min-h-11');
+  expect(retry.className).toContain('focus-visible:ring-2');
+  fireEvent.click(retry);
+  expect(refetchPhone).toHaveBeenCalledOnce();
+  expect(screen.getByRole('link', { name: 'Ask Seatable to verify phone routing' })).toHaveAttribute('href', 'mailto:hello@seatable.one?subject=Voice%20phone%20setup');
+});
+
+it('disables retry and announces a pending fetch', () => {
+  Object.assign(mockPhoneStatus, { failed: true, fetching: true });
+  render(<PhoneIntegrationPanel />);
+  const retry = screen.getByRole('button', { name: 'Retry' });
+  expect(retry).toBeDisabled();
+  expect(retry).toHaveAttribute('aria-busy', 'true');
+  fireEvent.click(retry);
+  expect(refetchPhone).not.toHaveBeenCalled();
+});
+
+it('keeps a saved setup failure distinct from a fetch failure', () => {
+  mockPhoneStatus.status = 'error';
+  render(<PhoneIntegrationPanel />);
+  expect(screen.getByRole('heading', { name: 'Phone connection needs attention' })).toBeVisible();
+  expect(screen.getByRole('link', { name: 'Ask Seatable to verify phone routing' })).toBeVisible();
+  expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
 });

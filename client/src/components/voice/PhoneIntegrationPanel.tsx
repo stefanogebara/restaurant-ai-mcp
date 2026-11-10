@@ -4,9 +4,9 @@ import ThiingsIcon from '../common/ThiingsIcon';
 import { usePhoneIntegration } from '../../hooks/usePhoneIntegration';
 import { resolvePhoneSetupState } from '../../lib/phoneSetupState';
 
-export default function PhoneIntegrationPanel() {
+export default function PhoneIntegrationPanel({ showAgentWarning = true }: { showAgentWarning?: boolean }) {
   const { t } = useTranslation();
-  const { status, isLoading, isError } = usePhoneIntegration();
+  const { status, isLoading, isError, refetch, isFetching } = usePhoneIntegration();
   const state = resolvePhoneSetupState(status?.restaurant?.status, { failed: isError, sharedRoutingEnabled: status?.restaurant?.shared_routing_enabled });
   const needsReview = state === 'needs_review';
   const titleKey = state === 'shared_configured' ? 'phoneIntegration.sharedConfiguredTitle'
@@ -48,16 +48,30 @@ export default function PhoneIntegrationPanel() {
         </div>
       )}
 
-      {!status?.restaurant?.has_agent && status?.restaurant?.shared_routing_enabled !== true && !isError && (
+      {showAgentWarning && status?.restaurant?.has_agent === false && status?.restaurant?.shared_routing_enabled !== true && !isError && (
         <p className="text-sm text-muted-stone">{t('phoneIntegration.noAgentWarning')}</p>
       )}
 
-      <a
-        href="mailto:hello@seatable.one?subject=Voice%20phone%20setup"
-        className="inline-flex items-center gap-2 text-sm font-medium text-burgundy underline underline-offset-2 hover:text-burgundy-dark"
-      >
-        {t(state === 'not_configured' ? 'phoneIntegration.requestSetup' : 'phoneIntegration.requestHelp')}
-      </a>
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+        {state === 'unavailable' && (
+          <button
+            type="button"
+            onClick={() => { void refetch(); }}
+            disabled={isFetching}
+            aria-busy={isFetching}
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full bg-burgundy px-5 py-2.5 text-sm font-medium text-white hover:bg-burgundy-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-burgundy/60 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60"
+          >
+            {t('common.retry')}
+          </button>
+        )}
+
+        <a
+          href="mailto:hello@seatable.one?subject=Voice%20phone%20setup"
+          className="inline-flex items-center gap-2 text-sm font-medium text-burgundy underline underline-offset-2 hover:text-burgundy-dark"
+        >
+          {t(state === 'not_configured' ? 'phoneIntegration.requestSetup' : 'phoneIntegration.requestHelp')}
+        </a>
+      </div>
     </section>
   );
 }

@@ -15,7 +15,6 @@ import { useVoiceSettings, useSaveVoiceSettings } from '../hooks/useVoiceSetting
 import { useVoiceEngineSettings, useSaveVoiceEngine } from '../hooks/useVoiceEngineSettings';
 import type { VoiceEngineSettings } from '../hooks/useVoiceEngineSettings';
 import { useFeatureAccess } from '../hooks/useSubscription';
-import UpgradePrompt from '../components/common/UpgradePrompt';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { useVoiceBrowser } from '../hooks/useVoiceBrowser';
 import { useAudioPlayback } from '../hooks/useAudioPlayback';
@@ -80,7 +79,7 @@ export default function VoiceSettingsPage() {
   // ─── Voice browser ────────────────────────────────────────────────────────────
 
   const { voices, isLoadingVoices, isLoadingMore, hasMore, voicesSource, error: voiceBrowserError, refetch: refetchVoices, filters, setFilters, handleLoadMore } = useVoiceBrowser({
-    isOpen: isBrowserOpen,
+    isOpen: canLoadVoiceData && isBrowserOpen,
     language: currentLanguage,
     restaurantName: config?.restaurant_name || undefined,
   });
@@ -95,7 +94,7 @@ export default function VoiceSettingsPage() {
     currentLanguage,
     restaurantName: config?.restaurant_name || undefined,
     currentSettings,
-    enabled: currentEngine === 'elevenlabs' && activeVoicePane === 'voice',
+    enabled: canLoadVoiceData && currentEngine === 'elevenlabs' && activeVoicePane === 'voice',
     onError: (error) => toast.error(t(`voiceSettings.${error}`)),
   });
 
@@ -215,13 +214,7 @@ export default function VoiceSettingsPage() {
   }
 
   if (!isLoadingAccess && !hasAccess) {
-    return (
-      <UpgradePrompt
-        requiredPlan="growth"
-        feature={t('voiceSettings.upgradeFeature')}
-        description={t('voiceSettings.upgradeDescription')}
-      />
-    );
+    return <DashboardLayout><VoicePhoneOnlyState accessRestricted /></DashboardLayout>;
   }
 
   if (isLoadingConfig || isLoadingAccess || isLoadingEngine) {

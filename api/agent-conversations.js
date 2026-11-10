@@ -281,7 +281,7 @@ async function handleGetStats(req, res, user) {
     // Build query with restaurant filter (always applied)
     let query = supabaseAdmin
       .from('agent_conversations')
-      .select('id, started_at, duration_seconds, outcome, successful_booking, customer_sentiment, language')
+      .select('id, started_at, ended_at, duration_seconds, outcome, successful_booking, customer_sentiment, language')
       .eq('restaurant_info_id', restaurant_id)
       .gte('started_at', startDate.toISOString())
       .lte('started_at', endDate.toISOString());
@@ -301,7 +301,9 @@ async function handleGetStats(req, res, user) {
     // Calculate statistics
     const totalCalls = conversations.length;
     const successfulBookings = conversations.filter(c => c.successful_booking).length;
+    // A booking outcome can be recorded while the call is still in progress.
     const completedCalls = conversations.filter(c =>
+      typeof c.ended_at === 'string' && Number.isFinite(Date.parse(c.ended_at)) &&
       ['reservation_created', 'information_only'].includes(c.outcome)).length;
     const averageDuration = conversations.reduce((sum, c) => sum + (c.duration_seconds || 0), 0) / totalCalls || 0;
 

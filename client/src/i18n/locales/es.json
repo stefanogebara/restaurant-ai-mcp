@@ -2547,6 +2547,7 @@
     "pageTitle": "Voz y llamadas",
     "pageIntro": "Ajusta la voz de tu recepcionista y verifica la conexión del teléfono antes de recibir llamadas.",
     "noIndividualAgentIntro": "Consulta la configuración guardada del teléfono y el historial de llamadas. Pide ayuda a Seatable para ajustar la atención.",
+    "planRestrictedMessage": "Tu plan actual no incluye cambios de voz.",
     "otherChannels": "Otros canales:",
     "upgradeFeature": "Agente de Voz con IA",
     "upgradeDescription": "Configura tu agente de voz con IA para gestionar reservas por teléfono automáticamente. Disponible en el plan Profesional.",

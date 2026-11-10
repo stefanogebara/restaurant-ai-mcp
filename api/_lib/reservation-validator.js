@@ -18,6 +18,30 @@ function validateReservation(params, restaurant) {
   const { date, time, party_size } = params;
   const errors = [];
 
+  // Keep legacy digit strings, but never truncate fractions or numeric prefixes.
+  const partySize = typeof party_size === 'string' && party_size.length > 0 && !/\D/.test(party_size)
+    ? Number(party_size) : party_size;
+  if (!Number.isSafeInteger(partySize) || partySize < 1) {
+    errors.push({
+      code: 'INVALID_PARTY_SIZE',
+      message: 'Party size must be a whole number of at least 1 person.'
+    });
+  }
+
+  // JavaScript normalizes dates such as November 31. Round-trip the calendar
+  // day in UTC before applying the existing timezone and booking-window rules.
+  const calendarDate = typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)
+    ? new Date(`${date}T00:00:00Z`) : null;
+  if (!calendarDate || !Number.isFinite(calendarDate.getTime()) || calendarDate.toISOString().slice(0, 10) !== date) {
+    errors.push({
+      code: 'INVALID_DATE',
+      message: 'Please provide a valid calendar date in YYYY-MM-DD format.'
+    });
+  }
+  if (errors.length > 0) {
+    return { valid: false, errors, message: errors[0].message };
+  }
+
   // Get restaurant config with defaults
   const config = {
     business_hours: restaurant.business_hours || getDefaultBusinessHours(),
@@ -62,18 +86,10 @@ function validateReservation(params, restaurant) {
 
   // 4. Check party size — only enforce if restaurant has set an explicit cap.
   // Physical table capacity is checked separately via canAccommodateParty().
-  const partySize = parseInt(party_size);
   if (config.max_party_size && partySize > config.max_party_size) {
     errors.push({
       code: 'PARTY_TOO_LARGE',
       message: `We can accommodate parties up to ${config.max_party_size} guests. For larger groups, please call us directly.`
-    });
-  }
-
-  if (partySize < 1) {
-    errors.push({
-      code: 'INVALID_PARTY_SIZE',
-      message: 'Party size must be at least 1 person.'
     });
   }
 

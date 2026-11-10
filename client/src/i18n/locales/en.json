@@ -2942,6 +2942,7 @@
     "pageTitle": "Voice & calls",
     "pageIntro": "Set up how your receptionist sounds, then verify the phone connection before receiving calls.",
     "noIndividualAgentIntro": "Review your saved phone setup and call history. Contact Seatable for help with voice changes.",
+    "planRestrictedMessage": "Voice changes are not included in your current plan.",
     "otherChannels": "Other channels:",
     "upgradeFeature": "Voice AI Agent",
     "upgradeDescription": "Configure your AI voice agent to handle phone reservations automatically. Available on the Profissional plan.",

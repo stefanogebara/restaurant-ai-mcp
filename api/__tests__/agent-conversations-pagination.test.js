@@ -144,9 +144,9 @@ test('statistics use the same exact rolling window across daylight saving change
 
 test('an information call counts as completed without being called a booking', async () => {
   queryResult = { data: [
-    { id: 'info', started_at: '2026-11-07T12:00:00Z', duration_seconds: 80, outcome: 'information_only', successful_booking: false, language: 'pt', customer_sentiment: 'neutral' },
-    { id: 'booking', started_at: '2026-11-07T12:01:00Z', duration_seconds: 100, outcome: 'reservation_created', successful_booking: true, language: 'es', customer_sentiment: 'positive' },
-    { id: 'failed', started_at: '2026-11-07T12:02:00Z', duration_seconds: 10, outcome: 'error', successful_booking: false, language: 'en', customer_sentiment: null },
+    { id: 'info', started_at: '2026-11-07T12:00:00Z', ended_at: '2026-11-07T12:01:20Z', duration_seconds: 80, outcome: 'information_only', successful_booking: false, language: 'pt', customer_sentiment: 'neutral' },
+    { id: 'booking', started_at: '2026-11-07T12:01:00Z', ended_at: '2026-11-07T12:02:40Z', duration_seconds: 100, outcome: 'reservation_created', successful_booking: true, language: 'es', customer_sentiment: 'positive' },
+    { id: 'failed', started_at: '2026-11-07T12:02:00Z', ended_at: '2026-11-07T12:02:10Z', duration_seconds: 10, outcome: 'error', successful_booking: false, language: 'en', customer_sentiment: null },
   ], error: null };
   const res = response();
   await handler({ method: 'GET', query: { action: 'stats', period: '90d' } }, res);
@@ -157,6 +157,49 @@ test('an information call counts as completed without being called a booking', a
     total_calls: 3, successful_bookings: 1, completed_calls: 2, completion_rate: 66.7,
   }));
   expect(body.stats.breakdowns.by_language).toEqual({ pt: 1, es: 1, en: 1 });
+});
+
+test.each([
+  { name: 'unfinished booked call', outcome: 'reservation_created', ended_at: null, booked: true, completed: 0 },
+  { name: 'finalized booked call', outcome: 'reservation_created', ended_at: '2026-11-07T12:01:20Z', booked: true, completed: 1 },
+  { name: 'completed information call', outcome: 'information_only', ended_at: '2026-11-07T12:01:20Z', booked: false, completed: 1 },
+  { name: 'zero-second completed call', outcome: 'information_only', ended_at: '2026-11-07T12:00:00Z', duration_seconds: 0, booked: false, completed: 1 },
+  { name: 'completed call without recorded duration', outcome: 'reservation_created', ended_at: '2026-11-07T12:01:20.000+00:00', duration_seconds: null, booked: true, completed: 1 },
+  { name: 'ended error call', outcome: 'error', ended_at: '2026-11-07T12:01:20Z', booked: false, completed: 0 },
+  { name: 'unfinished information call', outcome: 'information_only', ended_at: null, booked: false, completed: 0 },
+  ...[undefined, '', '   ', 'not-a-date', '2026-99-07T12:01:20Z', 0, true, {}].map(ended_at => ({
+    name: `booked call with invalid end time ${JSON.stringify(ended_at)}`,
+    outcome: 'reservation_created', ended_at, booked: true, completed: 0,
+  })),
+])('completion statistics: $name', async ({ outcome, ended_at, duration_seconds = 80, booked, completed }) => {
+  const row = {
+    id: 'call', started_at: '2026-11-07T12:00:00Z', duration_seconds,
+    outcome, successful_booking: booked, language: 'pt',
+    ...(ended_at === undefined ? {} : { ended_at }),
+  };
+  // Match the Data API projection so the test also requires selecting ended_at.
+  mockQuery.then.mockImplementationOnce(resolve => {
+    const columns = mockQuery.select.mock.calls[0][0].split(',').map(column => column.trim());
+    return resolve({
+      data: [Object.fromEntries(columns.filter(column => column in row).map(column => [column, row[column]]))],
+      error: null,
+    });
+  });
+  const res = response();
+  await handler({ method: 'GET', query: { action: 'stats', period: '90d', channel: 'phone' } }, res);
+
+  expect(res.status).toHaveBeenCalledWith(200);
+  expect(mockQuery.eq).toHaveBeenCalledWith('restaurant_info_id', 'owned');
+  expect(mockQuery.or).toHaveBeenCalledWith('caller_phone.not.is.null,called_phone.not.is.null');
+  expect(res.json.mock.calls[0][0].stats.overview).toEqual({
+    total_calls: 1,
+    successful_bookings: Number(booked),
+    success_rate: booked ? 100 : 0,
+    completed_calls: completed,
+    completion_rate: completed * 100,
+    average_duration_seconds: duration_seconds || 0,
+    average_duration_formatted: duration_seconds ? '1m 20s' : '0s',
+  });
 });
 
 test('conversation detail can load against the deployed call schema', async () => {

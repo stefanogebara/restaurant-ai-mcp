@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import ThiingsIcon from '../common/ThiingsIcon';
 import PhoneIntegrationPanel from './PhoneIntegrationPanel';
 
-/** No individual agent means no voice writes. Saved phone setup is still readable. */
-export default function VoicePhoneOnlyState() {
+/** Saved phone setup stays readable when voice changes are unavailable. */
+export default function VoicePhoneOnlyState({ accessRestricted = false }: { accessRestricted?: boolean }) {
   const { t } = useTranslation();
   return (
     <div className="p-6 mt-14 lg:mt-0 lg:p-8 max-w-5xl">
@@ -26,8 +26,20 @@ export default function VoicePhoneOnlyState() {
           {t('navigation.callHistory')}
         </Link>
       </div>
-      <div className="border-t border-glass-border-dark">
-        <PhoneIntegrationPanel />
+      {accessRestricted && (
+        <div className="mb-6 space-y-2">
+          <p className="max-w-2xl text-[15px] leading-relaxed text-muted-stone">
+            {t('voiceSettings.planRestrictedMessage')}
+          </p>
+          <Link to="/precos"
+            className="inline-flex min-h-11 items-center text-sm font-medium text-burgundy underline underline-offset-2 hover:text-burgundy-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-burgundy/60 focus-visible:ring-offset-2">
+            {t('dashboard.viewPlans')}
+          </Link>
+        </div>
+      )}
+      {accessRestricted && <div className="hairline" />}
+      <div className={accessRestricted ? undefined : 'border-t border-glass-border-dark'}>
+        <PhoneIntegrationPanel showAgentWarning={!accessRestricted} />
       </div>
     </div>
   );
