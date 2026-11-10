@@ -32,7 +32,9 @@ jest.mock('../_lib/supabase', () => ({
       if (schema !== 'restaurant') throw new Error('Unexpected schema');
       return { from: table => {
         if (table !== 'restaurant_config') throw new Error('Unexpected table');
-        const q = { select: () => q, eq: () => q, limit: async () => ({ data: mockRestaurants, error: null }) };
+        const filters = [];
+        const q = { select: () => q, eq: (field, value) => { filters.push([field, value]); return q; },
+          limit: async () => ({ data: mockRestaurants.filter(row => filters.every(([field, value]) => row[field] === value)), error: null }) };
         return q;
       } };
     },
@@ -65,8 +67,8 @@ beforeEach(() => {
   mockInsertError = null;
   mockRaceWinner = null;
   mockRestaurants = [
-    { id: 'rest-1', restaurant_name: 'Café Primavera', city: 'São Paulo', ai_config: { phone: { shared_routing_enabled: true } } },
-    { id: 'rest-2', restaurant_name: 'Café Primavera', city: 'Campinas', ai_config: { phone: { shared_routing_enabled: true } } },
+    { is_active: true, onboarding_completed: true, is_demo: false, id: 'rest-1', restaurant_name: 'Café Primavera', city: 'São Paulo', ai_config: { phone: { shared_routing_enabled: true } } },
+    { is_active: true, onboarding_completed: true, is_demo: false, id: 'rest-2', restaurant_name: 'Café Primavera', city: 'Campinas', ai_config: { phone: { shared_routing_enabled: true } } },
   ];
   mockGetRestaurantById.mockResolvedValue({ id: 'rest-1', is_demo: false, onboarding_completed: true, ai_config: { phone: { shared_routing_enabled: true } } });
 });
@@ -127,7 +129,7 @@ test('refuses an alias that collides with another restaurant name in the same ci
   const ctx = readSharedContext(request());
   mockRestaurants[0].ai_config.phone.shared_name_aliases = ['Seatable C1 Sandbox'];
   mockRestaurants[0].restaurant_name = 'Seatable CI Sandbox';
-  mockRestaurants.push({ id: 'rest-3', restaurant_name: 'Seatable C1 Sandbox', city: 'São Paulo',
+  mockRestaurants.push({ is_active: true, onboarding_completed: true, is_demo: false, id: 'rest-3', restaurant_name: 'Seatable C1 Sandbox', city: 'São Paulo',
     ai_config: { phone: { shared_routing_enabled: false } } });
   expect(await identifySharedRestaurant(ctx, 'Seatable C1 Sandbox', 'São Paulo'))
     .toEqual(expect.objectContaining({ success: false, restaurant_identified: false }));
@@ -147,7 +149,7 @@ test('does not route restaurants without an explicit shared-phone opt-in', async
 test('refuses to identify from a truncated directory that could hide a duplicate name', async () => {
   const ctx = readSharedContext(request());
   mockRestaurants = Array.from({ length: 1000 }, (_, index) => ({
-    id: `rest-${index}`, restaurant_name: index === 0 ? 'Café Primavera' : `Other ${index}`,
+    is_active: true, onboarding_completed: true, is_demo: false, id: `rest-${index}`, restaurant_name: index === 0 ? 'Café Primavera' : `Other ${index}`,
     city: 'São Paulo', ai_config: { phone: { shared_routing_enabled: true } },
   }));
   await expect(identifySharedRestaurant(ctx, 'Cafe Primavera', 'Sao Paulo'))
@@ -190,4 +192,108 @@ test('a racing duplicate is accepted only when the winning binding matches', asy
   expect(mockInserted).toHaveBeenCalledTimes(1);
   mockBinding.restaurant_info_id = 'rest-2';
   await expect(identifySharedRestaurant(ctx, 'Cafe Primavera', 'Sao Paulo')).rejects.toThrow('Shared conversation binding conflict');
+});
+
+describe('nonbinding canonical connector suggestions', () => {
+  const canonical = (overrides = {}) => ({ id: 'rest-1', restaurant_name: 'Seatable CI Sandbox', city: 'São Paulo',
+    is_active: true, onboarding_completed: true, is_demo: false,
+    ai_config: { phone: { shared_routing_enabled: true } }, ...overrides });
+  beforeEach(() => { mockRestaurants = [canonical()]; });
+  const identify = (spoken, city = 'São Paulo') => identifySharedRestaurant(readSharedContext(request()), spoken, city);
+  function expectUnbound(result) {
+    expect(result).toMatchObject({ success: false, restaurant_identified: false });
+    expect(result).not.toHaveProperty('restaurant_id');
+    expect(mockInserted).not.toHaveBeenCalled(); expect(mockGetRestaurantById).not.toHaveBeenCalled();
+  }
+  test.each(['e', 'and', 'y'])('suggests only the official name for a single inserted %s', async connector => {
+    const result = await identify(`Seatable ${connector} CI Sandbox`, 'Sao Paulo');
+    expectUnbound(result);
+    expect(result).toMatchObject({ needs_confirmation: true,
+      suggested_restaurant: { restaurant_name: 'Seatable CI Sandbox', city: 'São Paulo' } });
+    expect(Object.keys(result.suggested_restaurant).sort()).toEqual(['city', 'restaurant_name']);
+    expect(result.message).toContain('Seatable CI Sandbox'); expect(result.message).toContain('São Paulo');
+    expect(result.message).toMatch(/wait.*next.*user.*turn/i);
+  });
+  test('suggestion leaves resolve blocked until a later exact canonical identification', async () => {
+    const ctx = readSharedContext(request());
+    expect((await identify('Seatable e CI Sandbox')).needs_confirmation).toBe(true);
+    await expect(resolveSharedRestaurant(ctx)).rejects.toThrow('Shared conversation is not bound');
+    expect(mockInserted).not.toHaveBeenCalled();
+    expect(await identifySharedRestaurant(ctx, 'Seatable CI Sandbox', 'São Paulo')).toMatchObject({ success: true, restaurant_id: 'rest-1' });
+    expect(mockInserted).toHaveBeenCalledTimes(1);
+    expect(await resolveSharedRestaurant(ctx)).toMatchObject({ id: 'rest-1' });
+  });
+  test.each(['', 'Campinas', 'São'])('no suggestion without the exact city: %s', async city => {
+    const result = await identify('Seatable e CI Sandbox', city); expectUnbound(result);
+    expect(result).not.toHaveProperty('suggested_restaurant');
+  });
+  test.each(['Sandbox', 'Seatable C1 Sandbox', 'Setable CI Sandbox', 'Seatable CI',
+    'e Seatable CI Sandbox', 'Seatable CI Sandbox and', 'Seatable e CI y Sandbox',
+    'CI e Seatable Sandbox', 'Seatable with CI Sandbox', 'Completely Unknown'])('no broad fuzzy suggestion: %s', async spoken => {
+    const result = await identify(spoken); expectUnbound(result); expect(result).not.toHaveProperty('suggested_restaurant');
+  });
+  test.each([{ is_active: false }, { onboarding_completed: false }, { is_demo: true },
+    { ai_config: { phone: { shared_routing_enabled: false } } }, { ai_config: { phone: { shared_routing_enabled: 'true' } } }])('ineligible directory row cannot become a suggestion: %j', async change => {
+    mockRestaurants = [canonical(change)];
+    const result = await identify('Seatable e CI Sandbox'); expectUnbound(result); expect(result).not.toHaveProperty('suggested_restaurant');
+  });
+  test('aliases cannot be the candidate source', async () => {
+    mockRestaurants = [canonical({ restaurant_name: 'Different Official Name', ai_config: { phone: {
+      shared_routing_enabled: true, shared_name_aliases: ['Seatable CI Sandbox'] } } })];
+    const result = await identify('Seatable e CI Sandbox'); expectUnbound(result); expect(result).not.toHaveProperty('suggested_restaurant');
+  });
+  test.each(['official', 'alias'])('spoken-name ownership by an opted-out row suppresses suggestion: %s', async mode => {
+    mockRestaurants.push(canonical({ id: 'rest-foreign', restaurant_name: mode === 'official' ? 'Seatable e CI Sandbox' : 'Other Restaurant',
+      ai_config: { phone: { shared_routing_enabled: false, shared_name_aliases: mode === 'alias' ? ['Seatable e CI Sandbox'] : [] } } }));
+    const result = await identify('Seatable e CI Sandbox'); expectUnbound(result); expect(result).not.toHaveProperty('suggested_restaurant');
+  });
+  test.each(['official', 'alias'])('canonical-name collision with an opted-out row suppresses suggestion: %s', async mode => {
+    mockRestaurants.push(canonical({ id: 'rest-foreign', restaurant_name: mode === 'official' ? 'Seatable CI Sandbox' : 'Other Restaurant',
+      ai_config: { phone: { shared_routing_enabled: false, shared_name_aliases: mode === 'alias' ? ['Seatable CI Sandbox'] : [] } } }));
+    const result = await identify('Seatable e CI Sandbox'); expectUnbound(result); expect(result).not.toHaveProperty('suggested_restaurant');
+  });
+  test('multiple connector-removal candidates remain ambiguous', async () => {
+    mockRestaurants = [canonical({ restaurant_name: 'Alpha e Bravo' }), canonical({ id: 'rest-2', restaurant_name: 'Alpha and Bravo' })];
+    const result = await identify('Alpha e and Bravo'); expectUnbound(result); expect(result).not.toHaveProperty('suggested_restaurant');
+  });
+  test('a same-city duplicate canonical candidate cannot be suggested', async () => {
+    mockRestaurants.push(canonical({ id: 'rest-2' }));
+    const result = await identify('Seatable e CI Sandbox'); expectUnbound(result); expect(result).not.toHaveProperty('suggested_restaurant');
+  });
+  test.each([false, 'true', undefined])('an opted-out or nonboolean-opted candidate still makes the utterance ambiguous: %j', async enabled => {
+    mockRestaurants = [canonical({ restaurant_name: 'Alpha e Bravo' }), canonical({ id: 'rest-2', restaurant_name: 'Alpha and Bravo',
+      ai_config: { phone: { shared_routing_enabled: enabled } } })];
+    const result = await identify('Alpha e and Bravo'); expectUnbound(result); expect(result).not.toHaveProperty('suggested_restaurant');
+  });
+  test('ambiguity across enabled and opted-out candidates preserves accent/case/space and exact-city normalization', async () => {
+    mockRestaurants = [canonical({ restaurant_name: 'Café e Bravo' }), canonical({ id: 'rest-2', restaurant_name: ' CAFE   and BRAVO ', city: ' SAO   PAULO ',
+      ai_config: { phone: { shared_routing_enabled: false } } })];
+    const result = await identify(' cafe E and bravo ', ' São  Paulo '); expectUnbound(result); expect(result).not.toHaveProperty('suggested_restaurant');
+  });
+  test.each(['spoken', 'canonical'])('opted-out alias ownership is normalized before suppressing a %s collision', async mode => {
+    mockRestaurants.push(canonical({ id: 'rest-2', restaurant_name: 'Other Restaurant', city: ' SAO   PAULO ',
+      ai_config: { phone: { shared_routing_enabled: false, shared_name_aliases: [mode === 'spoken' ? ' SEATABLE   E ci SANDBOX ' : ' SEATABLE ci   SANDBOX '] } } }));
+    const result = await identify(' seatable e CI sandbox ', 'São Paulo'); expectUnbound(result); expect(result).not.toHaveProperty('suggested_restaurant');
+  });
+  test('a rejected suggestion and an arbitrary yes never create a binding', async () => {
+    expect((await identify('Seatable e CI Sandbox')).needs_confirmation).toBe(true);
+    expectUnbound(await identify('No, another restaurant'));
+    expectUnbound(await identify('yes'));
+    await expect(resolveSharedRestaurant(readSharedContext(request()))).rejects.toThrow('Shared conversation is not bound');
+  });
+});
+
+test('connector recovery preserves accent/space normalization and permits either internal gap only', async () => {
+  mockRestaurants = [{ id: 'rest-1', restaurant_name: 'Café CI Sandbox', city: 'São Paulo',
+    is_active: true, onboarding_completed: true, is_demo: false, ai_config: { phone: { shared_routing_enabled: true } } }];
+  const result = await identifySharedRestaurant(readSharedContext(request()), '  CAFE   CI  AND Sandbox ', ' Sao Paulo ');
+  expect(result).toMatchObject({ success: false, restaurant_identified: false, needs_confirmation: true,
+    suggested_restaurant: { restaurant_name: 'Café CI Sandbox', city: 'São Paulo' } });
+  expect(mockInserted).not.toHaveBeenCalled();
+});
+test('suggestion still refuses a capped directory before choosing a candidate', async () => {
+  mockRestaurants = Array.from({ length: 1000 }, (_, i) => ({ id: `rest-${i}`, restaurant_name: i ? `Other ${i}` : 'Seatable CI Sandbox',
+    city: 'São Paulo', is_active: true, onboarding_completed: true, is_demo: false, ai_config: { phone: { shared_routing_enabled: true } } }));
+  await expect(identifySharedRestaurant(readSharedContext(request()), 'Seatable e CI Sandbox', 'São Paulo')).rejects.toThrow('Shared restaurant directory is incomplete');
+  expect(mockInserted).not.toHaveBeenCalled(); expect(mockGetRestaurantById).not.toHaveBeenCalled();
 });
