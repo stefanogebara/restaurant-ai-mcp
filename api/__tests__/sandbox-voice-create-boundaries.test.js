@@ -44,6 +44,9 @@ beforeEach(() => {
 afterEach(() => { jest.useRealTimers(); });
 
 function expectNoBookingEffects() {
+  expect(db.getReservations).not.toHaveBeenCalled();
+  expect(db.canAccommodateParty).not.toHaveBeenCalled();
+  expect(db.generateReservationId).not.toHaveBeenCalled();
   expect(db.createReservation).not.toHaveBeenCalled();
   expect(beginConfirmation).not.toHaveBeenCalled();
   expect(finishConfirmation).not.toHaveBeenCalled();
@@ -54,9 +57,15 @@ test.each([
   ['zero guests', { party_size: 0 }],
   ['negative guests', { party_size: -1 }],
   ['fractional guests', { party_size: 2.5 }],
+  ['fractional guest string', { party_size: '2.5' }],
   ['numeric prefix with junk', { party_size: '2people' }],
+  ['boolean guests', { party_size: true }],
+  ['array guests', { party_size: [2] }],
+  ['non-finite guests', { party_size: Infinity }],
   ['past date', { date: '2026-11-09' }],
   ['impossible calendar date', { date: '2026-11-31' }],
+  ['invalid calendar month', { date: '2026-13-01' }],
+  ['unresolved relative date', { date: 'tomorrow' }],
   ['missing guest name', { customer_name: '' }],
 ])('voice create refuses %s without persisting or sending', async (_label, invalid) => {
   const result = await book(invalid);
@@ -64,6 +73,30 @@ test.each([
   expectNoBookingEffects();
   expect(result.success).toBe(false);
   expect(result).not.toHaveProperty('reservation_id');
+});
+
+test.each(['2', '02'])('a legacy digit-string party size %s is still stored as an integer', async party_size => {
+  const result = await book({ party_size });
+  expect(result.success).toBe(true);
+  expect(db.canAccommodateParty).toHaveBeenCalledWith('sandbox-restaurant', 2, expect.any(Object));
+  expect(db.createReservation).toHaveBeenCalledWith('sandbox-restaurant', expect.objectContaining({ party_size: 2 }));
+  expect(sendTemplateMessage).toHaveBeenCalledTimes(1);
+});
+
+test.each(['2028', '2000'])('a valid leap day in %s remains bookable', async year => {
+  jest.setSystemTime(new Date(`${year}-02-28T12:00:00Z`));
+  const date = `${year}-02-29`;
+  const result = await book({ date });
+  expect(result.success).toBe(true);
+  expect(db.createReservation).toHaveBeenCalledWith('sandbox-restaurant', expect.objectContaining({ date }));
+  expect(sendTemplateMessage).toHaveBeenCalledTimes(1);
+});
+
+test.each(['2027', '2100'])('a non-leap February 29 in %s fails before availability or confirmation', async year => {
+  jest.setSystemTime(new Date(`${year}-02-28T12:00:00Z`));
+  const result = await book({ date: `${year}-02-29` });
+  expect(result).toMatchObject({ success: false, error: 'INVALID_DATE' });
+  expectNoBookingEffects();
 });
 
 test('a voice confirmation transport exception keeps the booking and makes no second send attempt', async () => {
