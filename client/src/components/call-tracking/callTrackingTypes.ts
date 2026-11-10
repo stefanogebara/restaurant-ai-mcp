@@ -164,6 +164,8 @@ export function getOutcomeColor(outcome?: string): string {
 export function getOutcomeLabelKey(outcome?: string): string {
   switch (outcome) {
     case 'reservation_created': return 'callTracking.outcomeReservationCreated';
+    case 'reservation_modified': return 'callTracking.outcomeReservationModified';
+    case 'reservation_cancelled': return 'callTracking.outcomeReservationCancelled';
     case 'information_only':    return 'callTracking.outcomeInformationOnly';
     case 'error':               return 'callTracking.outcomeError';
     case 'abandoned':           return 'callTracking.outcomeAbandonedLabel';
@@ -193,6 +195,8 @@ export function getSentimentLabelKey(sentiment?: string): string {
 export function getOutcomePillColor(outcome?: string): string {
   switch (outcome) {
     case 'reservation_created': return 'bg-emerald-600/[8%] text-emerald-700';
+    case 'reservation_modified': return 'bg-emerald-600/[8%] text-emerald-700';
+    case 'reservation_cancelled': return 'bg-amber-600/[8%] text-amber-700';
     case 'information_only':    return 'bg-stone-500/[8%] text-stone-500';
     case 'error':               return 'bg-red-600/[8%] text-red-600';
     case 'abandoned':           return 'bg-amber-600/[8%] text-amber-600';

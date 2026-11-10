@@ -29,6 +29,7 @@ const { getSessionByPhone } = require('./_lib/whatsapp-sessions');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { sendConfirmationVoiceNote } = require('./_services/whatsapp/voice-note-trigger');
 const { isSharedToolAuth, readSharedContext, identifySharedRestaurant, resolveSharedRestaurant } = require('./_lib/shared-voice-binding');
+const { ACTIONS: GUEST_ACTIONS, guestProof, runGuestAction } = require('./_lib/shared-voice-guest');
 
 const logger = createSecureLogger('ElevenLabs');
 
@@ -192,12 +193,34 @@ module.exports = async (req, res) => {
         const result = await identifySharedRestaurant(context, data?.restaurant_name, data?.city);
         return res.status(200).json(result);
       }
-      // Caller ID alone does not prove guest ownership. Keep personal data,
-      // changes and cancellations unavailable until a verification flow exists.
-      if (!['get_current_datetime', 'check_availability', 'create_reservation', 'get_wait_time'].includes(action)) {
+      // Guest changes use their own receipt + native-caller verification path.
+      // They must never fall through to the legacy name/phone lookup handlers.
+      const guestAction = GUEST_ACTIONS.has(action);
+      const data = req.method === 'POST' ? req.body : req.query;
+      if (guestAction && (!guestProof(data, context) ||
+          [req.query?.phone, req.query?.customer_phone, req.query?.caller_phone, req.query?.sender_phone]
+            .some(phone => phone !== undefined && phone !== context.callerNumber) ||
+          (req.query?.reservation_id !== undefined && req.query.reservation_id !== data.reservation_id))) {
+        return res.status(403).json({ success: false, verification_required: true,
+          error: 'Complete receipt code and native caller verification required' });
+      }
+      if (!guestAction && !['get_current_datetime', 'check_availability', 'create_reservation', 'get_wait_time'].includes(action)) {
         return res.status(403).json({ error: 'Guest verification required for this action' });
       }
       const restaurant = await resolveSharedRestaurant(context);
+      const claimedIds = [req.query?.restaurant_id, req.query?.restaurantId, req.body?.restaurant_id, req.body?.restaurantId];
+      if (claimedIds.some(id => id !== undefined && id !== restaurant.id)) {
+        return res.status(403).json({ error: 'Restaurant scope mismatch' });
+      }
+      if (guestAction) {
+        const result = await runGuestAction({ action, data, context, restaurantId: restaurant.id,
+          conversationId: context.conversationId, conversationLogger: conversationLogger.forRestaurant(restaurant.id) });
+        if (action === 'cancel_reservation' && result.success === true && result.changed === true) {
+          try { await trackUsage(restaurant.id, 'reservation_cancelled'); }
+          catch { logger.warn('Verified cancellation usage tracking unavailable'); }
+        }
+        return res.status(200).json(result);
+      }
       req.restaurant = restaurant;
       authenticatedRestaurantId = restaurant.id;
       req.voiceBookingContext = { conversationId: context.conversationId };

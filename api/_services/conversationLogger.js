@@ -379,13 +379,14 @@ async function ingestCompletedConversation(provider, { restaurantId } = {}) {
   // A booking can be linked after the read above. Commit its outcome and the
   // completed metadata together only while that snapshot still owns the row.
   // A changed booking/binding gets one fresh attempt; a completed rival wins.
-  const guardedFields = ['reservation_id', 'restaurant_info_id', 'agent_id'];
+  const guardedFields = ['reservation_id', 'restaurant_info_id', 'agent_id', 'outcome'];
   let completed = false;
   for (let attempt = 0; attempt < 2; attempt++) {
     let completion = supabaseAdmin.from('agent_conversations').update({
       ...update,
-      outcome: existing.reservation_id ? 'reservation_created' : status === 'failed' ? 'error' : 'information_only',
-      successful_booking: !!existing.reservation_id,
+      outcome: ['reservation_modified', 'reservation_cancelled'].includes(existing.outcome)
+        ? existing.outcome : existing.reservation_id ? 'reservation_created' : status === 'failed' ? 'error' : 'information_only',
+      successful_booking: !!existing.reservation_id && !['reservation_modified', 'reservation_cancelled'].includes(existing.outcome),
     }).eq('id', existing.id).is('elevenlabs_fetched_at', null);
     for (const field of guardedFields) {
       completion = existing[field] == null
