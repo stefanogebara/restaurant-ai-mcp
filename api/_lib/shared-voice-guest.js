@@ -11,8 +11,8 @@ const NATO = new Map(Object.entries({
   romeo: 'r', sierra: 's', tango: 't', uniform: 'u', victor: 'v', whiskey: 'w', 'x-ray': 'x', yankee: 'y', zulu: 'z',
 }));
 const CASE_WORDS = new Map([
-  ...['uppercase', 'maiúscula', 'maiuscula', 'mayúscula', 'mayuscula'].map(word => [word, 'uppercase']),
-  ...['lowercase', 'minúscula', 'minuscula'].map(word => [word, 'lowercase']),
+  ...['uppercase', 'maiúscula', 'maiuscula', 'maiúsculas', 'maiusculas', 'mayúscula', 'mayuscula'].map(word => [word, 'uppercase']),
+  ...['lowercase', 'minúscula', 'minuscula', 'minúsculas', 'minusculas'].map(word => [word, 'lowercase']),
 ]);
 const DIGIT_MARKERS = new Set(['digit', 'dígito', 'digito']);
 const HYPHENS = new Set(['hyphen', 'hífen', 'hifen', 'guion', 'guión']);
