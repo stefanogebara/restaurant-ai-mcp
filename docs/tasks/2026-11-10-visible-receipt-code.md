@@ -28,3 +28,11 @@ No backend, API contract, CustomerPortal mutation rules, receipt metadata shape,
 [The failed PR check](https://github.com/stefanogebara/restaurant-ai-mcp/actions/runs/42896711904/job/130111615643) passed backend tests and failed exactly one frontend assertion: warmPalette.test.ts:89 expected emerald but received an empty source slice. Its search for the old inline t('reservations.confirmed') call returned -1 after the badge moved into ReceiptStatus. This is deterministic test drift, not a flake. The guard now renders the extracted component and requires both emerald background and text, rejects rose/burgundy status colors, and covers eight non-confirmed/unverified cases. An intentional temporary burgundy badge mutation failed the new guard; the production component was restored exactly. No guard was skipped or weakened, and no production code or workflow configuration changed in this correction.
 
 All 165 focused tests pass across the five palette/receipt/handoff files, with zero skips. Focused ESLint and git diff --check also pass.
+
+## Fresh creation versus a retained query cache
+
+React Query initialData does not replace an existing query's data or error state. The receipt now snapshots whether that ID already had query state on entry. Only an uncached matching creation response takes the fast path; any reused query revalidates the public GET before its status is treated as current. The page reports an error only from a read completed during this visit, so an older cached error cannot override a pending or successful new read. A new failed read remains unverified even when creation and cached data say confirmed.
+
+Six new regressions failed before the fix and pass afterward. They retain same-ID cached Confirmed against fresh pending/cancelled/unknown, cached Cancelled against fresh confirmed, an old cached error during a deferred successful read, and a current failed read despite cached/fresh confirmation. No cache is cleared to make those cases pass, and no API or DTO changes are introduced.
+
+All 171 focused tests pass across the five receipt/palette/handoff files, with zero skips. Focused ESLint and git diff --check pass. The uncached creation test still proves immediate rendering without a redundant GET.

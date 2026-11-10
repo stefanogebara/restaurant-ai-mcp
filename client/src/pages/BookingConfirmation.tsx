@@ -23,8 +23,9 @@ export default function BookingConfirmation() {
   const restaurantIdParam = searchParams.get('rid') || state?.restaurant_id;
 
   const freshCreation = Boolean(handoff && handoff.receiptId === id && handoff.reservation.id === id);
-  const { data: reservation, isLoading, isError, isFetching, isFetchedAfterMount, refetch } = useReservationById(id, state?.reservation, freshCreation);
-  const verified = reservation?.id === id && !isError && !isFetching && (freshCreation || isFetchedAfterMount);
+  const { data: reservation, isLoading, isError, isFetching, isFetchedAfterMount, hasFreshCreationData, refetch } = useReservationById(id, state?.reservation, freshCreation);
+  const verified = reservation?.id === id && !isError && !isFetching && (hasFreshCreationData || isFetchedAfterMount);
+  const readError = isError && !isFetching && isFetchedAfterMount;
   const confirmed = Boolean(verified && typeof reservation?.status === 'string' && isConfirmed(reservation.status));
   const postedReceipt = useRef<string | null>(null);
   // Fetch the restaurant alongside the reservation so the confirmation page
@@ -188,12 +189,12 @@ export default function BookingConfirmation() {
               <ThiingsIcon name="calendar" pxSize={36} className="text-burgundy" />
             </div>
             <h1 className="font-serif text-3xl sm:text-4xl font-medium text-deep-charcoal tracking-tight mb-3">
-              {t(isError ? 'reservations.confirmation.statusUnavailable' : 'reservations.noReservationFoundTitle')}
+              {t(readError ? 'reservations.confirmation.statusUnavailable' : 'reservations.noReservationFoundTitle')}
             </h1>
             <p className="text-[15px] text-warm-stone font-light mb-8">
-              {t(isError ? 'reservations.confirmation.statusError' : 'reservations.noReservationFoundDesc')}
+              {t(readError ? 'reservations.confirmation.statusError' : 'reservations.noReservationFoundDesc')}
             </p>
-            {isError && <button type="button" onClick={() => { void refetch(); }}
+            {readError && <button type="button" onClick={() => { void refetch(); }}
               className="min-h-[44px] px-5 mb-4 rounded-full text-sm font-medium text-burgundy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-burgundy focus-visible:ring-offset-2">
               {t('reservations.confirmation.retryStatus')}
             </button>}
@@ -225,7 +226,7 @@ export default function BookingConfirmation() {
       {/* Confirmation */}
       <main className="flex-1 flex items-center justify-center p-6 sm:p-12">
         <div className="max-w-[480px] w-full text-center">
-          <ReceiptStatus status={reservation.status} verification={isError ? 'error' : verified ? 'verified' : 'checking'}
+          <ReceiptStatus status={reservation.status} verification={readError ? 'error' : verified ? 'verified' : 'checking'}
             onRetry={() => { void refetch(); }} />
 
           {/* Details Card */}

@@ -129,11 +129,61 @@ it('does not post a booking event for a confirmed receipt loaded without fresh c
 });
 
 it('does not post a widget booking event or offer reminders for a fresh cancelled receipt', async () => {
-  queryClient.removeQueries();
   // The receipt returned by creation itself can never override a terminal status.
   renderReceipt(true, 'cancelled');
   expect(await screen.findByText('Cancelled', { exact: true })).toBeVisible();
   expectNoConfirmation();
+  expect(postMessage).not.toHaveBeenCalled();
+});
+
+it.each([['pending', 'Pending'], ['cancelled', 'Cancelled'], ['unknown', 'Status unavailable']])(
+  'revalidates fresh %s against a conflicting same-ID confirmed cache without displaying stale confirmation', async (status, label) => {
+    queryClient.setQueryData(['reservation', receipt.id], receipt);
+    serverStatus = status;
+    renderReceipt(true, status);
+    expectNoConfirmation();
+    expect(await screen.findByText(label, { exact: true })).toBeVisible();
+    expectNoConfirmation();
+    expect(reads()).toHaveLength(1);
+    expect(postMessage).not.toHaveBeenCalled();
+  },
+);
+
+it('revalidates fresh confirmed creation against the old cancelled cache', async () => {
+  queryClient.setQueryData(['reservation', receipt.id], { ...receipt, status: 'cancelled' });
+  renderReceipt(true);
+  expectNoConfirmation();
+  expect(await screen.findByRole('heading', { name: 'Reservation Confirmed' })).toBeVisible();
+  expect(reads()).toHaveLength(1);
+  expect(screen.queryByText('Cancelled', { exact: true })).not.toBeInTheDocument();
+  await waitFor(() => expect(postMessage).toHaveBeenCalledTimes(1));
+});
+
+it('does not let a cached error override fresh creation while its new read is pending or successful', async () => {
+  const key = ['reservation', receipt.id];
+  queryClient.setQueryData(key, { ...receipt, status: 'cancelled' });
+  await queryClient.fetchQuery({ queryKey: key, queryFn: async () => { throw new Error('Old cached read failure'); }, retry: false }).catch(() => {});
+  expect(queryClient.getQueryState(key)?.status).toBe('error');
+  let finish!: () => void;
+  waitForRead = new Promise<void>(resolve => { finish = resolve; });
+  renderReceipt(true);
+  expectNoConfirmation();
+  expect(screen.queryByRole('button', { name: 'Retry status' })).not.toBeInTheDocument();
+  expect(screen.getByText('Checking reservation status…')).toBeVisible();
+  await act(async () => { finish(); });
+  expect(await screen.findByRole('heading', { name: 'Reservation Confirmed' })).toBeVisible();
+  expect(screen.queryByRole('button', { name: 'Retry status' })).not.toBeInTheDocument();
+  expect(reads()).toHaveLength(1);
+});
+
+it('does not let matching cached confirmation or fresh creation override a new read failure', async () => {
+  queryClient.setQueryData(['reservation', receipt.id], receipt);
+  serverError = true;
+  renderReceipt(true);
+  expectNoConfirmation();
+  expect(await screen.findByRole('button', { name: 'Retry status' })).toBeEnabled();
+  expectNoConfirmation();
+  expect(reads()).toHaveLength(1);
   expect(postMessage).not.toHaveBeenCalled();
 });
 

@@ -1,4 +1,5 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { RestaurantInfo, TimeSlot } from '../components/booking/BookingForm';
 import reservationContract from '../../../shared/reservation-contract.js';
 import type { ReservationCreateInput, ReservationSummary } from '../../../shared/reservation-contract.js';
@@ -31,7 +32,13 @@ export function useRestaurantBySlug(slug: string | undefined) {
 export type ReservationData = ReservationSummary;
 
 export function useReservationById(id: string | null, initialData?: ReservationData, freshCreation = false) {
-  return useQuery<ReservationData>({
+  const queryClient = useQueryClient();
+  // React Query prefers an existing query (including its error) to initialData.
+  // Only an uncached, matching creation response can skip mount verification.
+  const [freshCreationId] = useState(() => freshCreation && initialData?.id === id
+    && !queryClient.getQueryState(['reservation', id]) ? id : null);
+  const hasFreshCreationData = Boolean(freshCreation && freshCreationId === id && initialData?.id === id);
+  const query = useQuery<ReservationData>({
     queryKey: ['reservation', id],
     queryFn: async () => {
       const res = await fetch(`${PORTAL_API}?action=reservation&id=${encodeURIComponent(id!)}`);
@@ -46,9 +53,10 @@ export function useReservationById(id: string | null, initialData?: ReservationD
     staleTime: 0,
     // A creation response is already current. Every later mount/Back/reload
     // verifies the public summary; cached details alone cannot prove status.
-    refetchOnMount: freshCreation ? false : 'always',
+    refetchOnMount: hasFreshCreationData ? false : 'always',
     retry: false,
   });
+  return { ...query, hasFreshCreationData };
 }
 
 // ─── Availability ─────────────────────────────────────────────────────────────
