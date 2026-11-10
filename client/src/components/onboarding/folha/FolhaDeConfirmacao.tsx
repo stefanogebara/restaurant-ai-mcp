@@ -41,6 +41,8 @@ export interface FolhaDeConfirmacaoProps {
   origem?: 'manual' | 'demo' | 'google';
 }
 
+const RESTAURANT_TYPES = ['fine-dining', 'casual-dining', 'fast-casual', 'cafe', 'bar', 'bistro', 'pizzeria', 'steakhouse', 'seafood', 'other'];
+
 /** Só o que o banco exige (NOT NULL sem default) + a voz. */
 type Pendencia = { campo: string; rotulo: string };
 
@@ -58,6 +60,10 @@ export function FolhaDeConfirmacao({
   const { t, i18n } = useTranslation();
   const copy = getSheetCopy(i18n.language);
   const source = origem ?? (veioDoDemo ? 'demo' : 'manual');
+  const restaurantType = (data.restaurant_type || '').replace(/_/g, '-');
+  const typeLabel = restaurantType
+    ? t(`onboarding.restaurantTypes.${RESTAURANT_TYPES.includes(restaurantType) ? restaurantType : 'other'}`, 'Other')
+    : '';
   const countryNames = useMemo(() => new Intl.DisplayNames([i18n.language || 'en'], { type: 'region' }), [i18n.language]);
   const fonte = source === 'demo'
     ? t('onboarding.folha.fonteDemo', 'você configurou no demo')
@@ -135,7 +141,7 @@ export function FolhaDeConfirmacao({
               {data.restaurant_name || t('onboarding.folha.semNome', 'Sem nome ainda')}
               {data.city ? ` · ${data.city}` : ''}
               {data.country_code && getCountryByCode(data.country_code) ? ` · ${countryNames.of(data.country_code) || data.country}` : ''}
-              {data.restaurant_type ? ` · ${data.restaurant_type}` : ''}
+              {typeLabel ? ` · ${typeLabel}` : ''}
             </>
           }
         >
@@ -167,10 +173,10 @@ export function FolhaDeConfirmacao({
             </label>
             <label className="block text-sm text-muted-stone">
               {copy.type} <span>({copy.optional})</span>
-              <select aria-label={copy.type} className={`${entrada} mt-1`} value={(data.restaurant_type || '').replace(/_/g, '-')}
+              <select aria-label={copy.type} className={`${entrada} mt-1`} value={restaurantType}
                 onChange={e => updateData({ restaurant_type: e.target.value })}>
                 <option value="">{copy.selectType}</option>
-                {['fine-dining', 'casual-dining', 'fast-casual', 'cafe', 'bar', 'bistro', 'pizzeria', 'steakhouse', 'seafood', 'other'].map(type =>
+                {RESTAURANT_TYPES.map(type =>
                   <option key={type} value={type}>{t(`onboarding.restaurantTypes.${type}`, type)}</option>)}
               </select>
             </label>
