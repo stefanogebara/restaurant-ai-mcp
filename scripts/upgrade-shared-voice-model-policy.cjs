@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 const { TARGET, digest, fingerprint } = require('./_lib/shared-voice-vocabulary.cjs');
-const { BEFORE, AFTER } = require('./_lib/shared-voice-date-policy.cjs');
+const { BEFORE, DATE_ONLY, AFTER } = require('./_lib/shared-voice-date-policy.cjs');
 const { parseArgs, createApi, createDb, inspect } = require('./sync-shared-voice-vocabulary.cjs');
 const { assertProject, createJournal } = require('./migrate-elevenlabs-date-tools.cjs');
 const { languageState } = require('./repair-shared-voice-language.cjs');
@@ -16,10 +16,11 @@ function upgradedState(agent) {
   }
   if (![SOURCE_MODEL, TARGET_MODEL].includes(current.llm)) throw new Error('Unexpected source model');
   const beforeCount = current.prompt.split(BEFORE).length - 1;
+  const dateOnlyCount = current.prompt.split(DATE_ONLY).length - 1;
   const afterCount = current.prompt.split(AFTER).length - 1;
-  if (beforeCount === 0 && afterCount === 1) return { model: TARGET_MODEL, prompt: current.prompt };
-  if (beforeCount !== 1 || afterCount !== 0) throw new Error('Unknown or ambiguous date policy');
-  return { model: TARGET_MODEL, prompt: current.prompt.replace(BEFORE, AFTER) };
+  if (beforeCount + dateOnlyCount + afterCount !== 1) throw new Error('Unknown or ambiguous date/readback policy');
+  if (afterCount === 1) return { model: TARGET_MODEL, prompt: current.prompt };
+  return { model: TARGET_MODEL, prompt: current.prompt.replace(beforeCount === 1 ? BEFORE : DATE_ONLY, AFTER) };
 }
 
 function protectedHash(agent, phones) {
