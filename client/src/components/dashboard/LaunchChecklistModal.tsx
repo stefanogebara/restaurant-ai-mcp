@@ -68,10 +68,10 @@ export default function LaunchChecklistModal({ bookingSlug, onDismiss }: Props) 
         <div className="px-7 pt-7 pb-5 border-b border-glass-border-dark">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-burgundy mb-1">
+              <p className="text-xs font-semibold uppercase tracking-widest text-emerald-700 mb-1">
                 {t('launch.badge', 'Setup complete')}
               </p>
-              <h2 className="text-xl font-bold text-deep-charcoal tracking-tight">
+              <h2 className="font-serif text-3xl font-normal text-deep-charcoal tracking-tight text-balance">
                 {t('launch.title', 'Ready to launch? 3 quick steps')}
               </h2>
             </div>
