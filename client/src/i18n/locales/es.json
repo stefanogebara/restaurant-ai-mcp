@@ -3149,7 +3149,7 @@
     "totalCallsToday": "Llamadas de Hoy",
     "totalCallsPeriod": "Llamadas en el período",
     "successfulBookings": "reservas realizadas",
-    "completionRate": "Tasa de Finalización",
+    "completionRate": "Llamadas finalizadas",
     "callsCompleted": "{{completed}} de {{total}} llamadas finalizadas",
     "avgDuration": "Duración Promedio",
     "minutesPerCall": "minutos por llamada",
