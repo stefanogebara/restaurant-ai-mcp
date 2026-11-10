@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getDashboardReservationDays } from '../dashboardReservationDays';
+import { getDashboardDateContext, getDashboardReservationDays } from '../dashboardReservationDays';
 
 describe('restaurant dashboard reservation calendar', () => {
   it('uses the restaurant date when a host in Madrid is already on the next day', () => {
@@ -34,5 +34,25 @@ describe('restaurant dashboard reservation calendar', () => {
 
   it.each([undefined, null, '', '  ', 'not/a-zone'])('falls back to the API UTC calendar for a missing or invalid zone: %s', zone => {
     expect(getDashboardReservationDays(zone, new Date('2026-11-09T23:30:00Z'))).toEqual({ today: '2026-11-09', tomorrow: '2026-11-10', weekEnd: '2026-11-16' });
+  });
+});
+
+
+describe('shared restaurant clock for header and greeting', () => {
+  it.each([
+    ['America/Sao_Paulo', '2026-11-09T23:30:00Z', 20, '2026-11-09', '2026-11-10', '2026-11-16'],
+    ['America/Sao_Paulo', '2026-11-10T03:00:00Z', 0, '2026-11-10', '2026-11-11', '2026-11-17'],
+    ['Europe/Madrid', '2026-03-29T01:30:00Z', 3, '2026-03-29', '2026-03-30', '2026-04-05'],
+    ['Europe/Madrid', '2026-10-25T01:30:00Z', 2, '2026-10-25', '2026-10-26', '2026-11-01'],
+  ] as const)('keeps the instant, validated zone, hour and days together for %s at %s', (timeZone, instant, hour, today, tomorrow, weekEnd) => {
+    const now = new Date(instant);
+    expect(getDashboardDateContext(timeZone, now)).toEqual({ now, timeZone, hour, today, tomorrow, weekEnd });
+  });
+
+  it.each([undefined, 'invalid/zone'])('shares UTC fallback with every header field for zone %s', zone => {
+    const now = new Date('2026-11-09T23:30:00Z');
+    expect(getDashboardDateContext(zone, now)).toEqual({
+      now, timeZone: 'UTC', hour: 23, today: '2026-11-09', tomorrow: '2026-11-10', weekEnd: '2026-11-16',
+    });
   });
 });

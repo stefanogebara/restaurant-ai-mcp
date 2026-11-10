@@ -1,6 +1,6 @@
-/** Calendar boundaries for reservation dates returned by the restaurant dashboard. */
-export function getDashboardReservationDays(timeZone?: string | null, now = new Date()) {
-  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: '2-digit', day: '2-digit' };
+/** One restaurant clock for the dashboard header, greeting and reservation days. */
+export function getDashboardDateContext(timeZone?: string | null, now = new Date()) {
+  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hourCycle: 'h23' };
   let formatter: Intl.DateTimeFormat;
   try {
     formatter = new Intl.DateTimeFormat('en-CA', { ...options, timeZone: timeZone?.trim() || 'UTC' });
@@ -19,5 +19,15 @@ export function getDashboardReservationDays(timeZone?: string | null, now = new 
     const date = new Date(Date.UTC(year, month - 1, day + offset));
     return date.toISOString().slice(0, 10);
   };
-  return { today: calendarDay(0), tomorrow: calendarDay(1), weekEnd: calendarDay(7) };
+  return {
+    now, timeZone: formatter.resolvedOptions().timeZone,
+    hour: Number(parts.find(part => part.type === 'hour')?.value),
+    today: calendarDay(0), tomorrow: calendarDay(1), weekEnd: calendarDay(7),
+  };
+}
+
+/** Calendar-only view; offsets remain calendar arithmetic, not elapsed hours. */
+export function getDashboardReservationDays(timeZone?: string | null, now = new Date()) {
+  const { today, tomorrow, weekEnd } = getDashboardDateContext(timeZone, now);
+  return { today, tomorrow, weekEnd };
 }

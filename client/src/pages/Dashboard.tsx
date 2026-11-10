@@ -52,7 +52,7 @@ import ThiingsIcon from '../components/common/ThiingsIcon';
 import { LS_FIRST_RESERVATION_TRACKED, LS_LAUNCH_CHECKLIST_DONE } from '../config/localStorageKeys';
 import LaunchChecklistModal from '../components/dashboard/LaunchChecklistModal';
 import { useToast } from '../contexts/ToastContext';
-import { getDashboardReservationDays } from '../utils/dashboardReservationDays';
+import { getDashboardDateContext } from '../utils/dashboardReservationDays';
 
 function maybeTrackFirstReservation() {
   if (!localStorage.getItem(LS_FIRST_RESERVATION_TRACKED)) {
@@ -123,7 +123,7 @@ export default function Dashboard() {
   useRealtimeDashboard(restaurantId);
 
   // Reservation dates belong to the restaurant, even when its host is travelling.
-  const { today, tomorrow, weekEnd } = getDashboardReservationDays(restaurantTimezone);
+  const { today, tomorrow, weekEnd, now, timeZone, hour: restaurantHour } = getDashboardDateContext(restaurantTimezone);
   // Day+2..Day+7 so a restaurant sees any booking made up to a week ahead.
   // Before: anything past tomorrow was invisible on the dashboard — caught
   // by an E2E that booked 2 days out and had the reservation vanish.
@@ -194,7 +194,7 @@ export default function Dashboard() {
 
   // ---- Date display ----
   const dateLocale = i18n.language === 'pt-BR' ? 'pt-BR' : i18n.language === 'es' ? 'es-ES' : 'en-US';
-  const fullDateStr = new Date().toLocaleDateString(dateLocale, { weekday: 'long', month: 'long', day: 'numeric' });
+  const fullDateStr = now.toLocaleDateString(dateLocale, { timeZone, weekday: 'long', month: 'long', day: 'numeric' });
 
   // ---- Short date for header ----
 
@@ -325,7 +325,7 @@ export default function Dashboard() {
                   first-name slot when the auth display name isn't set. */}
               <p className="text-sm text-muted-stone mb-0.5">
                 {(() => {
-                  const hour = new Date().getHours();
+                  const hour = restaurantHour;
                   const greetingKey = hour < 12
                     ? 'dashboard.greetingMorning'
                     : hour < 18
