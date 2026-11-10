@@ -154,6 +154,38 @@ test('persists provider language and sentiment without a second LLM call', async
   expect(mockExtract).toHaveBeenCalledWith('conv-1');
 });
 
+test.each([['pt-BR', 'pt'], ['en-US', 'en'], ['es', 'es']])(
+  'completes an unknown-language shared stub with provider language %s', async (providerLanguage, language) => {
+    process.env.ELEVENLABS_SHARED_AGENT_ID = 'shared-agent';
+    Object.assign(mockRow, { agent_id: 'shared-agent', language: null });
+    await expect(ingestCompletedConversation({
+      conversation_id: 'conv-1', agent_id: 'shared-agent', status: 'done',
+      metadata: { main_language: providerLanguage, call_duration_secs: 17 },
+    })).resolves.toEqual({ ingested: true });
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
+      language, ended_at: expect.any(String), elevenlabs_fetched_at: expect.any(String),
+      restaurant_info_id: 'rest-1', agent_id: 'shared-agent',
+    }));
+    expect(mockRestaurantById).toHaveBeenCalledWith('rest-1');
+    expect(mockRestaurant).not.toHaveBeenCalled();
+    expect(mockInsert).not.toHaveBeenCalled();
+  },
+);
+
+test.each([undefined, '', 'und', null])(
+  'does not fabricate a final language when the shared provider reports %s', async providerLanguage => {
+    process.env.ELEVENLABS_SHARED_AGENT_ID = 'shared-agent';
+    Object.assign(mockRow, { agent_id: 'shared-agent', language: null });
+    await expect(ingestCompletedConversation({
+      conversation_id: 'conv-1', agent_id: 'shared-agent', status: 'done',
+      metadata: { main_language: providerLanguage },
+    })).resolves.toEqual({ ingested: true });
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ ended_at: expect.any(String) }));
+    for (const [update] of mockUpdate.mock.calls) expect(update).not.toHaveProperty('language');
+    expect(mockInsert).not.toHaveBeenCalled();
+  },
+);
+
 test('preserves a reservation outcome and skips a duplicate delivery', async () => {
   mockRow.reservation_id = 'booking-1';
   await ingestCompletedConversation({ conversation_id: 'conv-1', agent_id: 'agent-1', status: 'done' });

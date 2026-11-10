@@ -24,7 +24,7 @@ export interface Conversation {
   started_at: string;
   ended_at?: string;
   duration_seconds?: number;
-  language: string;
+  language: string | null;
   outcome?: string;
   reservation_id?: string;
   customer_name?: string;

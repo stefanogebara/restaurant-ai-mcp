@@ -60,6 +60,19 @@ test('repeating confirmation in one conversation returns one booking and sends o
   expect(mockSend).toHaveBeenCalledTimes(1);
 });
 
+test.each([
+  ['Teste Ambar 110', 'Teste Âmbar 110'],
+  ['José Silva', 'Jose Silva'],
+  ['José Silva', 'Jose\u0301 Silva'],
+])('a repeated guest name with only diacritics changed reuses the confirmed booking: %s / %s', async (firstName, repeatedName) => {
+  const first = await createReservation('tenant-a', restaurant, { ...params, customer_name: firstName }, context);
+  const repeated = await createReservation('tenant-a', restaurant, { ...params, customer_name: repeatedName }, context);
+  expect(repeated).toEqual(expect.objectContaining({ success: true, reused: true, reservation_id: first.reservation_id }));
+  expect(mockRows.size).toBe(1); expect(mockCreate).toHaveBeenCalledTimes(1);
+  expect(mockSend).toHaveBeenCalledTimes(1); expect(mockCapacity).toHaveBeenCalledTimes(1);
+  expect(mockRows.values().next().value.customer_name).toBe(firstName);
+});
+
 test('concurrent confirmations resolve a unique-key insert conflict without another send', async () => {
   const results = await Promise.all([createReservation('tenant-a', restaurant, params, context), createReservation('tenant-a', restaurant, params, context)]);
   expect(results.every(r => r.success)).toBe(true);
@@ -122,7 +135,7 @@ test('conflicting durable legacy codes never choose one arbitrarily', async () =
   expect(result.success).toBe(false); expect(mockCreate).not.toHaveBeenCalled(); expect(mockSend).not.toHaveBeenCalled();
 });
 
-test.each([{ party_size: 3 }, { date: '2026-11-11' }, { time: '20:00' }])('changed details cannot silently create a second booking: %p', async changed => {
+test.each([{ party_size: 3 }, { date: '2026-11-11' }, { time: '20:00' }, { customer_name: 'Different Guest' }, { special_requests: 'Different request' }])('changed details cannot silently create a second booking: %p', async changed => {
   await createReservation('tenant-a', restaurant, params, context);
   const result = await createReservation('tenant-a', restaurant, { ...params, ...changed }, context);
   expect(result).toEqual(expect.objectContaining({ success: false, error: 'voice_booking_already_exists' }));

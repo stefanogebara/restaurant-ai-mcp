@@ -145,6 +145,32 @@ async function checkAvailability(restaurantId, restaurant, { date, time, party_s
   }
 
   try {
+    const { validateReservationInput } = require('./reservation-validator');
+    const validation = validateReservationInput({ date, party_size });
+    if (!validation.valid) {
+      return { success: false, available: false, error: validation.errors[0].code, message: validation.message };
+    }
+    if (typeof time !== 'string' || time.length !== 5 || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) {
+      return { success: false, available: false, error: 'INVALID_TIME', message: 'Please provide a valid time in HH:MM format.' };
+    }
+
+    // Stored date/time fields are restaurant-local wall times. Compare against
+    // one local clock snapshot, not the server's day or a date parsed as UTC.
+    const { utcToLocalDate } = require('./timezone');
+    const timezone = restaurant.timezone || 'America/Sao_Paulo';
+    const now = new Date();
+    const today = utcToLocalDate(now, timezone);
+    const localTime = new Intl.DateTimeFormat('en-GB', {
+      timeZone: timezone, hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+    }).format(now);
+    if (`${date}T${time}:00` < `${today}T${localTime}`) {
+      return {
+        success: false, available: false, error: 'PAST_DATE',
+        message: 'The requested date and time is in the past. Please choose a future date.'
+      };
+    }
+    const { partySize } = validation;
+
     logger.info(`AVAILABILITY CHECK for ${restaurant.name}`, {
       language: restaurant.agent_language || restaurant.language,
       voice_id: restaurant.voice_id
@@ -168,7 +194,7 @@ async function checkAvailability(restaurantId, restaurant, { date, time, party_s
 
     // Get business hours for the requested date
     const requestedDate = new Date(date);
-    const dayOfWeek = requestedDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+    const dayOfWeek = requestedDate.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' }).toLowerCase();
     const businessHours = restaurant.business_hours || {};
     // Support both array [{day, open, close, is_open}] and object {monday: {open, close, is_open}}
     const dayHours = Array.isArray(businessHours)
@@ -204,8 +230,6 @@ async function checkAvailability(restaurantId, restaurant, { date, time, party_s
       const s = (r.status || r.fields?.Status || '').toLowerCase();
       return s === 'confirmed' || s === 'seated';
     });
-
-    const partySize = parseInt(party_size);
 
     // Effective capacity = total minus what's physically occupied right now
     const effectiveCapacity = Math.max(0, totalCapacity - currentlyOccupiedSeats);
