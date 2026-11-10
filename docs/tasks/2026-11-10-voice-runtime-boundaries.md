@@ -9,10 +9,12 @@ Real calls used the original official restaurant name, the verified test caller 
 
 - [x] Capture real provider transcripts, DB state and the in-progress/end statistics transition.
 - [x] Cancel the exact tagged booking and release its table references; retain call and delivery history.
-- [ ] Implement each narrow regression, review independently and verify the combined branch.
+- [x] Implement each narrow regression, review independently and verify the combined branch.
 - [ ] Publish passing main through its existing READY Git build, verify exact SHA/alias and authenticated mobile UI.
 - [ ] Repeat actual phone scenarios and confirm zero active QA bookings afterwards.
 
 The first language-only provider repair published correctly but failed implicit-English selection in call 108. An explicit English request in call 111 switched correctly. Spanish call 109 also failed automatic selection. Test model selection with all external tools mocked before any model publication; simulation evidence is not real telephone proof.
 
 Evidence retained privately: English baseline 106 and repeat 108 (safe consultation, wrong response language); canonical suggestion rejection 107 (remained unbound); Spanish 109 (no write, wrong year/language); explicit-language 111 (English success); Portuguese 110 (one booking, no WhatsApp request). Booking 110 was cancelled with exact tenant/code/external-id/name/date/time/party guards. Its live stats rose from 10 to 11 calls, bookings 4 to 5 while completed stayed 10; completed became 11 only after ended_at was populated.
+
+Verification: 5,041 backend tests passed with 6 existing skips; 1,426 frontend tests passed, followed by a type-only nullable-language contract correction verified by the production build. Changed JavaScript syntax, fire-and-forget/phantom-column audits and diff checks passed. Explicitly disabled notices now omit WhatsApp failure/request/delivery claims in the confirmation; enabled and legacy status wording is unchanged. All behavioral changes received independent reviews. The separate provider model comparison has not authorized a model publication.
