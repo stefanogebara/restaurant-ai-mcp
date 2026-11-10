@@ -109,12 +109,23 @@ async function runGuestAction({ action, data, context, restaurantId, conversatio
       tool_name: action, parameters: {}, success: result.success === true,
       result: result.success ? { changed: result.changed === true } : undefined,
     });
-    if (result.success === true && result.changed === true && action !== 'lookup_reservation') {
-      await conversationLogger.updateConversation(conversationId, {
-        reservation_id: result.reservation.reservation_id,
-        outcome: action === 'modify_reservation' ? 'reservation_modified' : 'reservation_cancelled',
-        successful_booking: false,
-      });
+    if (result.success === true) {
+      // Enrich Calls only from the verified row, never model parameters. Keep
+      // the stored name's case/diacritics and omit invalid or absent metadata.
+      const updates = {};
+      const name = result.reservation?.customer_name, party = result.reservation?.party_size;
+      if (typeof name === 'string' && name.trim() && name.length <= 100 && !/[\u0000-\u001f\u007f]/u.test(name)) {
+        updates.customer_name = name;
+      }
+      if (Number.isSafeInteger(party) && party >= 1 && party <= 100) updates.party_size = party;
+      if (result.changed === true && action !== 'lookup_reservation') {
+        Object.assign(updates, {
+          reservation_id: result.reservation.reservation_id,
+          outcome: action === 'modify_reservation' ? 'reservation_modified' : 'reservation_cancelled',
+          successful_booking: false,
+        });
+      }
+      if (Object.keys(updates).length) await conversationLogger.updateConversation(conversationId, updates);
     }
   }
   return result;
