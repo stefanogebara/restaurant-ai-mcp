@@ -2,6 +2,9 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BlocoConfirmavel } from './BlocoConfirmavel';
 import { VozDaCasa } from './VozDaCasa';
+import HoursEditor, { invalidHours } from './HoursEditor';
+import { getSheetCopy } from './sheetCopy';
+import { getAllCountries, getCountryByCode } from '../../../data/countries';
 import type { Preset } from '../../../lib/personaProposta';
 import { proporMesas, resumirMesas } from '../../../lib/proporMesas';
 import type { OnboardingData, BusinessHours } from '../../../types/onboarding.types';
@@ -35,6 +38,7 @@ export interface FolhaDeConfirmacaoProps {
   enviando?: boolean;
   /** De onde vieram os dados: muda a frase da fonte, não o layout. */
   veioDoDemo?: boolean;
+  origem?: 'manual' | 'demo' | 'google';
 }
 
 /** Só o que o banco exige (NOT NULL sem default) + a voz. */
@@ -49,22 +53,31 @@ export function FolhaDeConfirmacao({
   onConcluir,
   enviando = false,
   veioDoDemo = false,
+  origem,
 }: FolhaDeConfirmacaoProps) {
-  const { t } = useTranslation();
-
-  const fonte = veioDoDemo
+  const { t, i18n } = useTranslation();
+  const copy = getSheetCopy(i18n.language);
+  const source = origem ?? (veioDoDemo ? 'demo' : 'manual');
+  const countryNames = useMemo(() => new Intl.DisplayNames([i18n.language || 'en'], { type: 'region' }), [i18n.language]);
+  const fonte = source === 'demo'
     ? t('onboarding.folha.fonteDemo', 'você configurou no demo')
-    : t('onboarding.folha.fonteGoogle', 'do seu Google');
+    : source === 'google' ? t('onboarding.folha.fonteGoogle', 'do seu Google') : undefined;
 
   // O salão proposto vem do porte estimado (avaliações + faixa de preço), que o
-  // prefill do demo já calcula. Sem estimativa NÃO propomos um salão: o dono
-  // preenche no formulário completo, e é melhor admitir isso do que oferecer
-  // um layout fixo fingindo conhecer a casa dele.
+  // prefill do demo já calcula. Sem evidência, oferecemos um salão inicial
+  // declarado como tal e que só entra no payload após aceitação explícita.
   const salaoProposto = useMemo(
     () => proporMesas(data.profile_data?.seat_count),
     [data.profile_data?.seat_count],
   );
   const salaoAtual = useMemo(() => resumirMesas(data.areas), [data.areas]);
+  // A declared starting layout is offered when there is no evidence for an estimate.
+  // Nothing is submitted until the owner explicitly accepts it.
+  const proposta = salaoProposto ?? {
+    areas: [{ name: t('onboarding.areaIndoor', 'Salão'), is_active: true, tables: [
+      { capacity: 4, count: 4, shape: 'square' as const, is_fixed_seating: false, is_joinable: true },
+    ] }], totalMesas: 4, totalLugares: 16,
+  };
 
   const diasAbertos = useMemo(
     () => (data.business_hours ?? []).filter((h: BusinessHours) => h.is_open),
@@ -79,13 +92,15 @@ export function FolhaDeConfirmacao({
     const emailVazio =
       !data.email?.trim() || data.email.toLowerCase().endsWith('@demo.seatable.one');
     if (!data.restaurant_name?.trim()) p.push({ campo: 'restaurant_name', rotulo: t('onboarding.folha.pNome', 'o nome') });
+    if (!data.country?.trim() || !getCountryByCode(data.country_code || '')) p.push({ campo: 'country', rotulo: copy.country });
+    if (!salaoAtual.mesas) p.push({ campo: 'areas', rotulo: copy.confirmLayout });
     if (!data.city?.trim()) p.push({ campo: 'city', rotulo: t('onboarding.folha.pCidade', 'a cidade') });
     if (!data.phone_number?.trim()) p.push({ campo: 'phone_number', rotulo: t('onboarding.folha.pTelefone', 'o telefone') });
     if (emailVazio) p.push({ campo: 'email', rotulo: t('onboarding.folha.pEmail', 'o e-mail') });
-    if (!diasAbertos.length) p.push({ campo: 'business_hours', rotulo: t('onboarding.folha.pHorarios', 'os horários') });
+    if (!diasAbertos.length || diasAbertos.some(invalidHours)) p.push({ campo: 'business_hours', rotulo: t('onboarding.folha.pHorarios', 'os horários') });
     if (!vozEscolhida) p.push({ campo: 'voz', rotulo: t('onboarding.folha.pVoz', 'a voz da recepcionista') });
     return p;
-  }, [data, diasAbertos.length, vozEscolhida, t]);
+  }, [data, diasAbertos, vozEscolhida, t, copy, salaoAtual.mesas]);
 
   const pendente = (campo: string) => pendencias.some((p) => p.campo === campo);
   const entrada =
@@ -95,27 +110,31 @@ export function FolhaDeConfirmacao({
     <div className="max-w-[620px] mx-auto px-6 pb-40">
       <header className="pt-12 pb-2">
         <h1 className="font-serif text-[38px] sm:text-[46px] leading-[1.08] tracking-tight text-deep-charcoal text-balance">
-          {data.restaurant_name
+          {source === 'google'
             ? t('onboarding.folha.titulo', 'Achamos isto sobre o {{nome}}.', { nome: data.restaurant_name })
-            : t('onboarding.folha.tituloSemNome', 'Vamos montar sua recepcionista.')}
+            : data.restaurant_name
+              ? (source === 'demo' ? copy.demoTitle : copy.manualTitle).replace('{{name}}', data.restaurant_name)
+              : copy.manualEmptyTitle}
         </h1>
         <p className="mt-4 text-[17px] leading-[1.6] text-warm-stone">
-          {t(
+          {source === 'manual' ? copy.manualIntro : t(
             'onboarding.folha.subtitulo',
             'Confira o que já está certo e ajuste só o que estiver errado. Não precisa preencher nada que a gente já descobriu.',
           )}
         </p>
       </header>
 
-      <div className="divide-y divide-glass-border-dark">
+      <fieldset disabled={enviando} className="min-w-0 divide-y divide-glass-border-dark">
         <BlocoConfirmavel
           titulo={t('onboarding.folha.aCasa', 'A casa')}
           fonte={fonte}
-          pendente={pendente('restaurant_name') || pendente('city')}
+          textoPendente={source === 'google' ? undefined : copy.essentialDetails}
+          pendente={pendente('restaurant_name') || pendente('city') || pendente('country')}
           resumo={
             <>
               {data.restaurant_name || t('onboarding.folha.semNome', 'Sem nome ainda')}
               {data.city ? ` · ${data.city}` : ''}
+              {data.country_code && getCountryByCode(data.country_code) ? ` · ${countryNames.of(data.country_code) || data.country}` : ''}
               {data.restaurant_type ? ` · ${data.restaurant_type}` : ''}
             </>
           }
@@ -135,16 +154,38 @@ export function FolhaDeConfirmacao({
               placeholder={t('onboarding.folha.pCidade', 'a cidade')}
               aria-label={t('onboarding.folha.pCidade', 'a cidade')}
             />
+            <label className="block text-sm text-muted-stone">
+              {copy.country}
+              <select required aria-label={copy.country} className={`${entrada} mt-1`} value={data.country_code || ''}
+                onChange={e => {
+                  const country = getCountryByCode(e.target.value);
+                  updateData({ country_code: country?.code || '', country: country?.name || '', language: country?.language.split('-')[0] || '' });
+                }}>
+                <option value="">{copy.selectCountry}</option>
+                {getAllCountries().map(country => <option key={country.code} value={country.code}>{countryNames.of(country.code) || country.name}</option>)}
+              </select>
+            </label>
+            <label className="block text-sm text-muted-stone">
+              {copy.type} <span>({copy.optional})</span>
+              <select aria-label={copy.type} className={`${entrada} mt-1`} value={(data.restaurant_type || '').replace(/_/g, '-')}
+                onChange={e => updateData({ restaurant_type: e.target.value })}>
+                <option value="">{copy.selectType}</option>
+                {['fine-dining', 'casual-dining', 'fast-casual', 'cafe', 'bar', 'bistro', 'pizzeria', 'steakhouse', 'seafood', 'other'].map(type =>
+                  <option key={type} value={type}>{t(`onboarding.restaurantTypes.${type}`, type)}</option>)}
+              </select>
+            </label>
           </div>
         </BlocoConfirmavel>
 
         <BlocoConfirmavel
           titulo={t('onboarding.folha.horarios', 'Horários')}
-          fonte={fonte}
+          fonte={fonte || copy.initialHours}
           pendente={pendente('business_hours')}
           resumo={
             diasAbertos.length
-              ? t('onboarding.folha.resumoHorarios', '{{n}} dias abertos, das {{de}} às {{ate}}', {
+              ? !diasAbertos.every(day => day.open_time === diasAbertos[0].open_time && day.close_time === diasAbertos[0].close_time)
+                ? copy.daysOpen.replace('{{n}}', String(diasAbertos.length))
+                : t('onboarding.folha.resumoHorarios', '{{n}} dias abertos, das {{de}} às {{ate}}', {
                   n: diasAbertos.length,
                   de: diasAbertos[0]?.open_time,
                   ate: diasAbertos[0]?.close_time,
@@ -152,38 +193,44 @@ export function FolhaDeConfirmacao({
               : t('onboarding.folha.semHorarios', 'Ainda não sabemos quando vocês abrem')
           }
         >
-          <p className="text-[14px] text-warm-stone">
-            {t('onboarding.folha.horariosDica', 'Você ajusta dia a dia depois, no painel — aqui só precisa estar perto do certo.')}
-          </p>
+          <HoursEditor value={data.business_hours ?? []} onChange={business_hours => updateData({ business_hours })} />
         </BlocoConfirmavel>
 
         <BlocoConfirmavel
           titulo={t('onboarding.folha.salao', 'O salão')}
-          fonte={salaoProposto ? t('onboarding.folha.fonteEstimado', 'estimado pelo porte no seu Google') : undefined}
+          fonte={salaoAtual.mesas ? undefined : salaoProposto ? copy.estimatedLayout : copy.initialLayout}
+          pendente={pendente('areas')}
+          textoPendente={salaoProposto ? copy.estimatedLayout : copy.initialLayout}
+          abertoInicialmente
           resumo={
             salaoAtual.mesas
               ? t('onboarding.folha.resumoSalao', '{{mesas}} mesas · {{lugares}} lugares', salaoAtual)
-              : salaoProposto
-                ? t('onboarding.folha.resumoSalao', '{{mesas}} mesas · {{lugares}} lugares', {
-                    mesas: salaoProposto.totalMesas, lugares: salaoProposto.totalLugares,
-                  })
-                : t('onboarding.folha.salaoDesconhecido', 'A gente não conseguiu estimar seu salão')
+              : t('onboarding.folha.resumoSalao', '{{mesas}} mesas · {{lugares}} lugares', {
+                  mesas: proposta.totalMesas, lugares: proposta.totalLugares,
+                })
           }
         >
-          <p className="text-[14px] text-warm-stone leading-[1.6]">
-            {salaoProposto
-              ? t('onboarding.folha.salaoDica', 'É um chute informado, e serve para começar — a recepcionista já sabe dizer o que tem livre. Você arruma mesa por mesa depois, no painel.')
-              : t('onboarding.folha.salaoSemEstimativa', 'Sem avaliações suficientes no Google não dá para estimar. A recepcionista funciona assim mesmo; você monta o salão depois, no painel.')}
-          </p>
+          <p className="text-[14px] leading-relaxed text-muted-stone">{salaoAtual.mesas ? copy.layoutAccepted : copy.layoutHint}</p>
+          {!salaoAtual.mesas && <>
+            <ul className="mt-3 space-y-1 text-sm text-deep-charcoal">
+              {proposta.areas.flatMap(area => area.tables).map(table => <li key={table.capacity}>
+                {table.count} × {table.capacity}
+              </li>)}
+            </ul>
+            <button type="button" onClick={() => updateData({ areas: proposta.areas })}
+              className="mt-3 inline-flex min-h-11 items-center rounded-full border border-glass-border-dark px-5 py-2 text-sm font-medium text-burgundy hover:bg-soft-gray focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-burgundy/60">
+              {copy.acceptLayout}
+            </button>
+          </>}
         </BlocoConfirmavel>
 
         <BlocoConfirmavel
           titulo={t('onboarding.folha.contato', 'Contato')}
           pendente={pendente('email') || pendente('phone_number')}
           textoPendente={
-            pendente('email') && !pendente('phone_number')
+            source === 'google' && pendente('email') && !pendente('phone_number')
               ? t('onboarding.folha.faltaEmail', 'O telefone veio do Google. O e-mail precisa ser o seu — é por ele que as confirmações saem.')
-              : undefined
+              : copy.manualContact
           }
           abertoInicialmente
           resumo={
@@ -221,7 +268,7 @@ export function FolhaDeConfirmacao({
         >
           <VozDaCasa vibeTags={vibeTags} valor={vozEscolhida} onEscolher={onEscolherVoz} />
         </BlocoConfirmavel>
-      </div>
+      </fieldset>
 
       {/* Rodapé fixo: o que falta, sempre à vista e sempre nomeado. */}
       <div className="fixed bottom-0 left-0 right-0 bg-white/85 backdrop-blur-xl border-t border-glass-border-dark px-6 py-4">

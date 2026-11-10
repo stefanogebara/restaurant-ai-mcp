@@ -45,19 +45,21 @@ function getDefaultVoiceId(language) {
   return DEFAULT_VOICE_IDS[language] || DEFAULT_VOICE_IDS['en'];
 }
 
-// ============ Country + Language Inference ============
+// ============ Explicit Country + Language Resolution ============
 
 // The onboarding form submits country as a display name ("Brazil", "Spain"), not
 // an ISO code. Downstream helpers like suggestTimezone() only recognise ISO
 // codes — without this mapping timezone silently falls back to UTC and
 // agent_language stays 'en' for every non-US restaurant.
+// Keep code/name/language support aligned with client/src/data/countries.ts.
+// The completion tests exercise every offered code and name against this resolver.
 const COUNTRY_NAME_TO_ISO = {
   brazil: 'BR', brasil: 'BR',
   spain: 'ES', espana: 'ES', 'españa': 'ES',
   portugal: 'PT',
-  france: 'FR',
+  france: 'FR', belgium: 'BE', switzerland: 'CH',
   italy: 'IT', italia: 'IT',
-  germany: 'DE', deutschland: 'DE',
+  germany: 'DE', deutschland: 'DE', austria: 'AT',
   'united kingdom': 'GB', uk: 'GB',
   'united states': 'US', usa: 'US',
   canada: 'CA',
@@ -67,28 +69,19 @@ const COUNTRY_NAME_TO_ISO = {
 };
 const COUNTRY_LANGUAGE_MAP = {
   BR: 'pt', PT: 'pt', ES: 'es', MX: 'es', AR: 'es', CO: 'es', CL: 'es', PE: 'es',
-  FR: 'fr', IT: 'it', DE: 'de', JP: 'ja', US: 'en', GB: 'en', CA: 'en', AU: 'en',
+  FR: 'fr', BE: 'fr', CH: 'fr', IT: 'it', DE: 'de', AT: 'de',
+  JP: 'ja', US: 'en', GB: 'en', CA: 'en', AU: 'en',
 };
-const PHONE_PREFIX_TO_ISO = [
-  ['+351', 'PT'], ['+54', 'AR'], ['+55', 'BR'], ['+56', 'CL'], ['+57', 'CO'],
-  ['+52', 'MX'], ['+51', 'PE'], ['+34', 'ES'], ['+33', 'FR'], ['+39', 'IT'],
-  ['+49', 'DE'], ['+44', 'GB'], ['+81', 'JP'], ['+61', 'AU'], ['+1', 'US'],
-];
-
-function countryFromPhone(phone) {
-  if (!phone || typeof phone !== 'string') return null;
-  const digits = phone.replace(/[^\d+]/g, '');
-  if (!digits.startsWith('+')) return null;
-  for (const [p, iso] of PHONE_PREFIX_TO_ISO) if (digits.startsWith(p)) return iso;
-  return null;
-}
-
-function resolveCountryIso(countryInput, phone) {
-  if (!countryInput) return countryFromPhone(phone);
-  const s = String(countryInput).trim();
-  if (/^[A-Z]{2}$/.test(s)) return s;                   // already ISO
-  const iso = COUNTRY_NAME_TO_ISO[s.toLowerCase()];
-  return iso || countryFromPhone(phone);
+// Country must be explicit and supported. City and phone cannot establish it:
+// a wrong default also changes timezone, agent language, and subscription terms.
+function resolveCountryIso(countryInput) {
+  if (typeof countryInput !== 'string') return null;
+  const value = countryInput.trim();
+  const name = value.toLowerCase();
+  const iso = Object.prototype.hasOwnProperty.call(COUNTRY_NAME_TO_ISO, name)
+    ? COUNTRY_NAME_TO_ISO[name]
+    : value.toUpperCase();
+  return Object.prototype.hasOwnProperty.call(COUNTRY_LANGUAGE_MAP, iso) ? iso : null;
 }
 
 // DB enum restaurant.restaurant_type_enum accepts only this whitelist (as of
@@ -265,6 +258,13 @@ module.exports = async (req, res) => {
       fieldErrors.push({ field: 'email', reason: 'placeholder demo email is not a real contact address' });
     }
 
+    const resolvedCountryIso = resolveCountryIso(country);
+    if (country == null || (typeof country === 'string' && !country.trim())) {
+      fieldErrors.push({ field: 'country', reason: 'required' });
+    } else if (!resolvedCountryIso) {
+      fieldErrors.push({ field: 'country', reason: 'unsupported country' });
+    }
+
     if (fieldErrors.length > 0) {
       // Build a user-friendly message that names the first offending field
       // so the client can map it back to a specific input. Keeps the full
@@ -338,12 +338,9 @@ module.exports = async (req, res) => {
       logger.warn(` Invalid restaurant_type "${restaurant_type}". Must be one of: ${ALLOWED_RESTAURANT_TYPES.join(', ')}. Setting to null.`);
     }
 
-    // Resolve ISO country code + language. The form submits the country name
-    // ("Brazil"), not the ISO code; without this, timezone falls back to UTC
-    // and agent_language stays 'en' regardless of where the restaurant is.
-    const resolvedCountryIso = resolveCountryIso(country, phone_number);
-    const resolvedLanguage = COUNTRY_LANGUAGE_MAP[resolvedCountryIso] || 'en';
-    const resolvedTimezone = suggestTimezone(resolvedCountryIso || country, city);
+    // Country has already been validated before any persistence or provisioning.
+    const resolvedLanguage = COUNTRY_LANGUAGE_MAP[resolvedCountryIso];
+    const resolvedTimezone = suggestTimezone(resolvedCountryIso, city);
 
     // ── Conhecimento do demo (G2 — Onboarding do Aha) ────────────────────
     //
@@ -654,8 +651,7 @@ module.exports = async (req, res) => {
       city,
       // Store ISO country code on the config row so downstream consumers
       // (timezone, weekly-report day filter, etc.) get the same answer here.
-      // Fall back to the raw form value if we couldn't resolve.
-      country: resolvedCountryIso || country,
+      country: resolvedCountryIso,
       agent_language: resolvedLanguage,
       // Metadados do cadastro (plano, template, CNPJ confirmado). Ver o bloco
       // onde é montado, lá em cima, para por que fica em metric_profile.
@@ -1101,7 +1097,7 @@ module.exports = async (req, res) => {
     // STEP 5: Create subscription (Brazil gets free plan; all others get 14-day Growth trial)
     logger.info(' Step 5: Creating subscription...');
 
-    const isBrazil = country && country.toLowerCase().includes('brazil') || country && country.toLowerCase() === 'brasil';
+    const isBrazil = resolvedCountryIso === 'BR';
 
     let trialSubscription = null;
     try {

@@ -24,6 +24,7 @@ import Step2Contact from '../components/onboarding/Step2Contact';
 import Step3TablesAndSettings from '../components/onboarding/Step3TablesAndSettings';
 import Step4Review from '../components/onboarding/Step4Review';
 import Step5ImportHistory from '../components/onboarding/Step5ImportHistory';
+import SheetCompletion from '../components/onboarding/folha/SheetCompletion';
 import { FolhaDeConfirmacao } from '../components/onboarding/folha/FolhaDeConfirmacao';
 import type { Preset } from '../lib/personaProposta';
 import OnboardingSuccessModal from '../components/onboarding/OnboardingSuccessModal';
@@ -39,6 +40,24 @@ import { parseOnboardingError } from '../utils/onboardingErrorMessage';
 
 import { STEP_NAME_KEYS, TOTAL_STEPS } from '../components/onboarding/passos';
 
+interface SheetReceipt {
+  restaurantId: string;
+  bookingUrl: string | null;
+  setup: Record<string, string> | null;
+}
+
+function readSheetReceipt(key: string): SheetReceipt | null {
+  try {
+    const receipt = JSON.parse(localStorage.getItem(key) || 'null');
+    if (!receipt || typeof receipt.restaurantId !== 'string' || !receipt.restaurantId) return null;
+    return {
+      restaurantId: receipt.restaurantId,
+      bookingUrl: typeof receipt.bookingUrl === 'string' && receipt.bookingUrl.startsWith('https://seatable.one/book/') ? receipt.bookingUrl : null,
+      setup: receipt.setup && typeof receipt.setup === 'object' && !Array.isArray(receipt.setup) ? receipt.setup : null,
+    };
+  } catch { return null; }
+}
+
 export default function Onboarding() {
   const { t } = useTranslation();
   useDocumentTitle(t('pageTitles.onboarding'));
@@ -46,6 +65,8 @@ export default function Onboarding() {
   const [searchParams] = useSearchParams();
   const { error: showError, success: showSuccessToast } = useToast();
   const { user } = useAuth();
+  const receiptKey = `${lsOnboardingDataKey(user?.id ?? 'anon')}:completed`;
+  const [savedReceipt] = useState(() => readSheetReceipt(receiptKey));
   const showSubscribeBanner = searchParams.get('reason') === 'subscribe';
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Previously this was a bare boolean — the user saw "Setup failed" with no
@@ -54,12 +75,13 @@ export default function Onboarding() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   // Estágio visível da criação (G3.1) e placar da instalação (G3.2).
   const [submitStage, setSubmitStage] = useState<string | null>(null);
-  const [setupScorecard, setSetupScorecard] = useState<Record<string, string> | null>(null);
+  const [setupScorecard, setSetupScorecard] = useState<Record<string, string> | null>(savedReceipt?.setup ?? null);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [sheetCompleted, setSheetCompleted] = useState(Boolean(savedReceipt));
   const [countdown, setCountdown] = useState(5);
   const [ownReferral, setOwnReferral] = useState<{ code: string; url: string } | null>(null);
-  const [bookingUrl, setBookingUrl] = useState<string | null>(null);
+  const [bookingUrl, setBookingUrl] = useState<string | null>(savedReceipt?.bookingUrl ?? null);
   // If the server tells us *which* field is bad we can offer a one-click jump
   // back to the step that owns it instead of making the owner hunt for it.
   const [submitErrorJumpStep, setSubmitErrorJumpStep] = useState<number | null>(null);
@@ -210,7 +232,7 @@ export default function Onboarding() {
   // Once onboarding completes we stop persisting — otherwise the persist
   // effect below immediately re-writes the localStorage keys that
   // completeOnboarding() just cleared, leaving stale data behind.
-  const completedRef = useRef(false);
+  const completedRef = useRef(Boolean(savedReceipt));
 
   // Pre-fill from demo session if user arrived via demo conversion
   useEffect(() => {
@@ -328,6 +350,8 @@ export default function Onboarding() {
   };
 
   const completeOnboarding = async () => {
+    if (isSubmitting || completedRef.current) return;
+    setSubmitError(null);
     setIsSubmitting(true);
     // Estágios otimistas cronometrados pelos tempos reais do backend (mesas
     // e config são rápidos; a recepcionista é uma chamada externa com teto de
@@ -360,7 +384,7 @@ export default function Onboarding() {
 
       const data = await response.json();
 
-      if (!response.ok) {
+      if (!response.ok || data?.success !== true || !data.restaurant?.restaurant_id) {
         // Hand the structured response to parseOnboardingError so the user
         // gets a clean "Your phone number is required" instead of a
         // serialized "[object Object],[object Object]" or a raw Postgres
@@ -408,6 +432,15 @@ export default function Onboarding() {
       }
       if (data.restaurant?.booking_url) {
         setBookingUrl(`https://seatable.one${data.restaurant.booking_url}`);
+      }
+      if (modo === 'folha') {
+        const receipt: SheetReceipt = {
+          restaurantId: data.restaurant.restaurant_id,
+          bookingUrl: data.restaurant.booking_url ? `https://seatable.one${data.restaurant.booking_url}` : null,
+          setup: data.setup && typeof data.setup === 'object' ? data.setup : null,
+        };
+        // A reload after a confirmed creation must show its receipt, never a second launch form.
+        try { localStorage.setItem(receiptKey, JSON.stringify(receipt)); } catch { /* completion still works when storage is unavailable */ }
       }
 
       // Mark complete BEFORE clearing storage so the persist effect doesn't
@@ -467,7 +500,8 @@ export default function Onboarding() {
 
       // Advance to Step 5 (Import History); Step 6 is Teach Your AI and the
       // success modal fires after it.
-      setCurrentStep(5);
+      if (modo === 'folha') setSheetCompleted(true);
+      else setCurrentStep(5);
     } catch (err: unknown) {
       const message = err instanceof Error
         ? err.message
@@ -482,6 +516,10 @@ export default function Onboarding() {
   };
 
   const progressPercent = (currentStep / TOTAL_STEPS) * 100;
+
+  if (sheetCompleted) {
+    return <SheetCompletion setup={setupScorecard} bookingUrl={bookingUrl} />;
+  }
 
   if (modo === 'folha') {
     return (
@@ -499,7 +537,7 @@ export default function Onboarding() {
           onEscolherVoz={setVozEscolhida}
           onConcluir={completeOnboarding}
           enviando={isSubmitting}
-          veioDoDemo={Boolean(localStorage.getItem(LS_PENDING_DEMO_TOKEN))}
+          origem={isPreFilledFromDemo ? 'demo' : hasPrefillFromScrape ? 'google' : 'manual'}
         />
         <div className="text-center pb-28 -mt-24">
           <button
@@ -511,7 +549,7 @@ export default function Onboarding() {
           </button>
         </div>
         {submitError && (
-          <p className="fixed bottom-20 left-1/2 -translate-x-1/2 text-[14px] text-red-700 bg-red-50 border border-red-200 px-4 py-2 rounded-xl">
+          <p role="alert" className="fixed bottom-20 left-1/2 -translate-x-1/2 text-[14px] text-red-700 bg-red-50 border border-red-200 px-4 py-2 rounded-xl">
             {submitError}
           </p>
         )}
