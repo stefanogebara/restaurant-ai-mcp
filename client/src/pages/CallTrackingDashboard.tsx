@@ -100,7 +100,7 @@ export default function CallTrackingDashboard() {
   // A failed conversations fetch must not render as an empty "no calls" page —
   // that tells a restaurant with live call history it has none. Surface the
   // failure explicitly with a retry, matching the dashboard error-card pattern.
-  if (isError) {
+  if (isError && !convsResult) {
     return (
       <DashboardLayout>
         <div className="min-h-[60vh] flex items-center justify-center p-6">
@@ -213,6 +213,16 @@ export default function CallTrackingDashboard() {
           )}
 
           <div className="order-3 min-w-0 sm:order-4">
+            {isError && (
+              <div role="alert" className="flex flex-wrap items-center gap-3 py-4 text-sm text-red-700">
+                <p>{t('callTracking.listRefreshFailed')}</p>
+                <button type="button" onClick={() => void refetchConversations()}
+                  disabled={isFetchingConversations} aria-busy={isFetchingConversations}
+                  className="min-h-11 px-3 font-medium underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-burgundy/60 disabled:opacity-50">
+                  {t('common.retry')}
+                </button>
+              </div>
+            )}
             {isLoading ? (
               <div role="status" className="py-12 text-center text-sm text-stone-gray">{t('common.loading')}</div>
             ) : (

@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { SidebarProvider } from '../../../contexts/SidebarContext';
@@ -134,4 +134,35 @@ describe('Voice overview navigation', () => {
     expect(voiceLink).toHaveAttribute('href', '/host-dashboard/voice-settings');
     expect(voiceLink).toHaveAttribute('aria-current', 'page');
   });
+});
+
+
+afterEach(() => document.getElementById('mobile-test-css')?.remove());
+
+it('skips closed mobile navigation and transfers/restores focus through the actual More drawer', async () => {
+  const css = document.createElement('style'); css.id = 'mobile-test-css';
+  css.textContent = '.invisible { visibility: hidden; } .hidden { display: none; }';
+  document.head.append(css);
+  const { container } = renderNavigation();
+  const drawer = container.querySelector('aside');
+  expect(screen.queryByRole('button', { name: 'Close menu' })).not.toBeInTheDocument();
+  await userEvent.tab();
+  expect(document.activeElement?.closest('aside')).toBeNull();
+  const more = screen.getByRole('button', { name: 'More' });
+  await userEvent.click(more);
+  expect(screen.getByRole('dialog')).toHaveFocus();
+  expect(drawer).toHaveClass('visible');
+  fireEvent.keyDown(document, { key: 'Escape' });
+  expect(more).toHaveFocus();
+  expect(screen.queryByRole('button', { name: 'Close menu' })).not.toBeInTheDocument();
+  await userEvent.click(more);
+  await userEvent.click(screen.getByRole('button', { name: 'Close menu' }));
+  expect(more).toHaveFocus();
+});
+
+it('preserves the desktop visibility override and accessible Voice navigation', () => {
+  const { container } = renderNavigation();
+  expect(container.querySelector('aside')).toHaveClass('lg:visible');
+  const voice = screen.getByRole('link', { name: 'Voice & Calls' });
+  voice.focus(); expect(voice).toHaveFocus();
 });

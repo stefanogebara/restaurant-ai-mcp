@@ -3094,6 +3094,7 @@
     "detailsLoadFailed": "No pudimos cargar esta llamada. Inténtalo de nuevo.",
     "detailsUnavailable": "Esta llamada ya no está disponible.",
     "detailsRefreshFailed": "No pudimos actualizar los detalles de esta llamada. Se muestra la última versión cargada.",
+    "listRefreshFailed": "No pudimos actualizar la lista de llamadas. Se muestra la última versión cargada.",
     "durationPendingShort": "Pendiente",
     "openCall": "Abrir llamada de {{name}} a las {{time}}",
     "viewGuest": "Ver cliente del número {{phone}}",

@@ -2124,6 +2124,7 @@
     "detailsLoadFailed": "Não foi possível carregar esta chamada. Tente novamente.",
     "detailsUnavailable": "Esta chamada não está mais disponível.",
     "detailsRefreshFailed": "Não foi possível atualizar os detalhes desta chamada. A última versão carregada está sendo exibida.",
+    "listRefreshFailed": "Não foi possível atualizar a lista de chamadas. A última versão carregada está sendo exibida.",
     "durationPendingShort": "Pendente",
     "openCall": "Abrir chamada de {{name}} às {{time}}",
     "viewGuest": "Ver cliente do número {{phone}}",
