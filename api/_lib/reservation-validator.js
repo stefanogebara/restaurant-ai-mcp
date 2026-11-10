@@ -261,9 +261,12 @@ function buildVoiceConfirmation(params, restaurant, reservationId, { whatsappAcc
   });
   const formattedTime = lang === 'en' ? formatTime(time) : time.substring(0, 5);
 
+  // Disabled notices never request a send, so omit channel claims entirely.
   // A Meta API acceptance is not proof of delivery; a failed or timed-out
   // request must never become a promise that the guest will receive a message.
-  const whatsappNote = whatsappAccepted ? {
+  const whatsappNote = restaurant.whatsapp_enabled === false ? {
+    'pt-BR': '', es: '', en: '', it: '',
+  } : whatsappAccepted ? {
     'pt-BR': 'Solicitamos o envio dos detalhes pelo WhatsApp. Se não chegarem, sua reserva continua válida. Até logo!',
     es: 'Solicitamos el envío de los detalles por WhatsApp. Si no llegan, su reserva sigue confirmada. ¡Hasta pronto!',
     en: 'We requested your details by WhatsApp. If they do not arrive, your reservation is still confirmed. See you soon!',
@@ -289,7 +292,7 @@ function buildVoiceConfirmation(params, restaurant, reservationId, { whatsappAcc
       whatsappNote.it,
   };
 
-  return confirmations[lang] || confirmations['pt-BR'];
+  return (confirmations[lang] || confirmations['pt-BR']).trimEnd();
 }
 
 module.exports = {
