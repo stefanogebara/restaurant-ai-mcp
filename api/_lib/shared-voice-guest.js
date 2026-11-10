@@ -7,7 +7,7 @@ const E164 = /^\+[1-9]\d{7,14}$/;
 const ACTIONS = new Set(['lookup_reservation', 'modify_reservation', 'cancel_reservation']);
 const NATO = new Map(Object.entries({
   alpha: 'a', alfa: 'a', bravo: 'b', charlie: 'c', delta: 'd', echo: 'e', foxtrot: 'f', golf: 'g', hotel: 'h', india: 'i',
-  juliett: 'j', kilo: 'k', lima: 'l', mike: 'm', november: 'n', oscar: 'o', papa: 'p', quebec: 'q',
+  juliet: 'j', juliett: 'j', kilo: 'k', lima: 'l', mike: 'm', november: 'n', oscar: 'o', papa: 'p', quebec: 'q',
   romeo: 'r', sierra: 's', tango: 't', uniform: 'u', victor: 'v', whiskey: 'w', 'x-ray': 'x', yankee: 'y', zulu: 'z',
 }));
 const CASE_WORDS = new Map([
