@@ -4,7 +4,7 @@
 // This is not part of Jest: running it writes the disposable database. Never
 // use a Supabase URL, production schema, or a shared development database.
 const assert = require('node:assert/strict');
-const { randomUUID } = require('node:crypto');
+const { randomUUID, randomBytes } = require('node:crypto');
 const { readFileSync, realpathSync } = require('node:fs');
 const path = require('node:path');
 const { Client } = require('pg');
@@ -34,15 +34,15 @@ const full = async id => (await admin.query('SELECT to_jsonb(r) AS row FROM publ
 const without = (row, keys) => Object.fromEntries(Object.entries(row).filter(([key]) => !keys.includes(key)));
 const refused = (result, code) => assert.deepEqual(result, { success: false, changed: false, reservation: null, error: { code } });
 
-async function fixture({ capacity = 2, status = 'confirmed' } = {}) {
+async function fixture({ capacity = 2, status = 'confirmed', source = 'voice_ai' } = {}) {
   const tenant = randomUUID();
-  const row = { id: randomUUID(), restaurant_id: tenant, reservation_id: `RES-20990101-${randomUUID()}` };
+  const row = { id: randomUUID(), table_id: randomUUID(), restaurant_id: tenant, reservation_id: `RES-20990101-${randomBytes(9).toString('base64url')}` };
   await admin.query(`INSERT INTO restaurant.restaurant_config VALUES ($1,true,'Europe/Madrid',$2,90,'{"max_party_size":8}')`, [tenant, JSON.stringify(hours)]);
-  await admin.query('INSERT INTO public.tables VALUES ($1,$2,true)', [tenant, capacity]);
+  await admin.query('INSERT INTO public.tables (id,restaurant_id,capacity,is_active) VALUES ($1,$2,$3,true)', [row.table_id, tenant, capacity]);
   await admin.query(`INSERT INTO public.reservations
     (id,restaurant_id,reservation_id,customer_name,customer_phone,date,time,party_size,status,table_ids,special_requests,source,external_id)
-    VALUES ($1,$2,$3,'Guest','+1 (555) 555-0101','2099-01-01','19:00',2,$4,'{old-table}','Window','whatsapp','protected-external-key')`,
-  [row.id, tenant, row.reservation_id, status]);
+    VALUES ($1,$2,$3,'Guest','+1 (555) 555-0101','2099-01-01','19:00',2,$4,ARRAY[$5::text],'Window',$6,'protected-external-key')`,
+  [row.id, tenant, row.reservation_id, status, row.table_id, source]);
   return row;
 }
 
@@ -60,15 +60,22 @@ async function main() {
       CREATE SCHEMA restaurant;
       CREATE TABLE restaurant.restaurant_config (id uuid PRIMARY KEY, is_active boolean, timezone text,
         business_hours jsonb, average_dining_duration_minutes integer, reservation_settings jsonb);
-      CREATE TABLE public.tables (restaurant_id uuid, capacity integer, is_active boolean);
+      CREATE TABLE public.tables (id uuid PRIMARY KEY, restaurant_id uuid, capacity integer, is_active boolean,
+        status text DEFAULT 'available', is_fixed boolean DEFAULT false, location text DEFAULT 'Main',
+        adjacent_tables uuid[] DEFAULT '{}', combination_group text);
       CREATE TABLE public.reservations (id uuid PRIMARY KEY, restaurant_id uuid, reservation_id text,
         customer_name text, customer_phone text, date date, time time, party_size integer, status text,
         table_ids text[], special_requests text, source text, external_id text, created_at timestamptz DEFAULT now());
       GRANT USAGE ON SCHEMA public, restaurant TO service_role, anon, authenticated;
       GRANT SELECT, UPDATE ON restaurant.restaurant_config, public.reservations TO service_role;
-      GRANT SELECT ON public.tables TO service_role;
+      GRANT SELECT, UPDATE ON public.tables TO service_role;
     `);
     await admin.query(readFileSync(path.join(__dirname, '../supabase/migrations/20261110174209_guest_reservation_mutations.sql'), 'utf8'));
+    // Base-only mode demonstrates the regression against the earlier RPC:
+    // the full-capacity reschedule must FAIL its assignment-retention assertion.
+    if (process.env.STB_MUTATIONS_BASE_ONLY !== '1') {
+      await admin.query(readFileSync(path.join(__dirname, '../supabase/migrations/20261110180955_retain_guest_reservation_table_assignment.sql'), 'utf8'));
+    }
     await Promise.all([a.connect(), b.connect()]);
     await Promise.all([a.query('SET ROLE service_role'), b.query('SET ROLE service_role')]);
 
@@ -111,12 +118,12 @@ async function main() {
         assert.deepEqual(await full(owned.id), before);
       });
     }
-    await check('self-exclusion succeeds at full capacity and releases stale table IDs', async () => {
+    await check('self-exclusion succeeds at full capacity and retains the physical assignment', async () => {
       const before = await full(owned.id);
       const result = await rpc(a, owned, 'modify', { time: '19:30', party_size: '02' });
       assert.equal(result.success, true); assert.equal(result.changed, true);
-      assert.equal(result.reservation.id, owned.id); assert.deepEqual(result.reservation.table_ids, []);
-      assert.deepEqual(without(await full(owned.id), ['time', 'table_ids']), without(before, ['time', 'table_ids']));
+      assert.equal(result.reservation.id, owned.id); assert.deepEqual(result.reservation.table_ids, [owned.table_id]);
+      assert.deepEqual(without(await full(owned.id), ['time']), without(before, ['time']));
       const committed = await full(owned.id);
       assert.equal((await rpc(a, owned, 'modify', { time: '19:30' })).changed, false);
       assert.deepEqual(await full(owned.id), committed);
@@ -158,6 +165,111 @@ async function main() {
       await admin.query("UPDATE restaurant.restaurant_config SET timezone='invalid/zone' WHERE id=$1", [row.restaurant_id]);
       refused(await rpc(a, row, 'modify', { time: '00:45' }), 'timezone_unavailable');
     });
+    async function addTable(row, capacity = 2) {
+      const id = randomUUID();
+      await admin.query('INSERT INTO public.tables (id,restaurant_id,capacity,is_active) VALUES ($1,$2,$3,true)', [id, row.restaurant_id, capacity]);
+      return id;
+    }
+    async function assign(row, ids) {
+      await admin.query('UPDATE public.reservations SET table_ids=$2 WHERE id=$1', [row.id, ids]);
+    }
+    async function unchangedRefusal(row, changes = { time: '20:00' }) {
+      const before = await full(row.id);
+      refused(await rpc(a, row, 'modify', changes), 'unavailable');
+      assert.deepEqual(await full(row.id), before, 'Refusal must preserve EVERY original reservation field');
+    }
+    await check('assigned table cannot silently grow beyond its capacity despite spare tables', async () => {
+      const row = await fixture(); await addTable(row, 4);
+      await unchangedRefusal(row, { party_size: 3 });
+    });
+    for (const invalid of ['inactive', 'missing', 'foreign', 'duplicate', 'null']) {
+      await check(`${invalid} assigned table refuses without reassignment`, async () => {
+        const row = await fixture(); await addTable(row, 4);
+        if (invalid === 'inactive') await admin.query('UPDATE public.tables SET is_active=false WHERE id=$1', [row.table_id]);
+        if (invalid === 'missing') await assign(row, [randomUUID()]);
+        if (invalid === 'foreign') { const foreign = await fixture(); await assign(row, [foreign.table_id]); }
+        if (invalid === 'duplicate') await assign(row, [row.table_id, row.table_id]);
+        if (invalid === 'null') await assign(row, [row.table_id, null]);
+        await unchangedRefusal(row);
+      });
+    }
+    for (const status of ['confirmed', 'seated', 'pending']) {
+      await check(`${status} physical overlap refuses even when aggregate seats remain`, async () => {
+        const row = await fixture({ capacity: 4 }); await addTable(row, 4);
+        await admin.query(`INSERT INTO public.reservations
+          (id,restaurant_id,reservation_id,customer_phone,date,time,party_size,status,table_ids)
+          VALUES ($1,$2,$3,'15555550999','2099-01-02','20:30',2,$4,ARRAY[$5::text])`,
+        [randomUUID(), row.restaurant_id, randomUUID(), status, row.table_id]);
+        await unchangedRefusal(row, { date: '2099-01-02', time: '20:00' });
+      });
+    }
+    await check('physical overlap across midnight refuses with the full original row intact', async () => {
+      const row = await fixture({ capacity: 4 }); await addTable(row, 4);
+      const fullDay = Object.fromEntries(weekdays.map(day => [day, { open: '00:00', close: '00:00' }]));
+      await admin.query('UPDATE restaurant.restaurant_config SET business_hours=$2 WHERE id=$1', [row.restaurant_id, JSON.stringify(fullDay)]);
+      await admin.query(`INSERT INTO public.reservations
+        (id,restaurant_id,reservation_id,customer_phone,date,time,party_size,status,table_ids)
+        VALUES ($1,$2,$3,'15555550999','2099-01-01','23:30',2,'confirmed',ARRAY[$4::text])`,
+      [randomUUID(), row.restaurant_id, randomUUID(), row.table_id]);
+      await unchangedRefusal(row, { date: '2099-01-02', time: '00:30' });
+    });
+    for (const [status, otherTime] of [['cancelled', '20:00'], ['confirmed', '21:30']]) {
+      await check(`${status} at ${otherTime} does not block a valid assigned-table move`, async () => {
+        const row = await fixture({ capacity: 4 }); await addTable(row, 4);
+        await admin.query(`INSERT INTO public.reservations
+          (id,restaurant_id,reservation_id,customer_phone,date,time,party_size,status,table_ids)
+          VALUES ($1,$2,$3,'15555550999','2099-01-02',$4,2,$5,ARRAY[$6::text])`,
+        [randomUUID(), row.restaurant_id, randomUUID(), otherTime, status, row.table_id]);
+        const result = await rpc(a, row, 'modify', { date: '2099-01-02', time: '20:00' });
+        assert.equal(result.success, true); assert.deepEqual(result.reservation.table_ids, [row.table_id]);
+      });
+    }
+    await check('current occupied status does not erase a valid future assignment', async () => {
+      const row = await fixture(); await admin.query("UPDATE public.tables SET status='occupied' WHERE id=$1", [row.table_id]);
+      const result = await rpc(a, row, 'modify', { date: '2099-01-02' });
+      assert.equal(result.success, true); assert.deepEqual(result.reservation.table_ids, [row.table_id]);
+    });
+    for (const combo of ['same-location', 'adjacent', 'same-group', 'fixed', 'different-groups', 'explicit-nonadjacent']) {
+      await check(`retained pair validates current native combination rules: ${combo}`, async () => {
+        const row = await fixture(); const second = await addTable(row);
+        await assign(row, [row.table_id, second]);
+        if (combo === 'fixed') await admin.query('UPDATE public.tables SET is_fixed=true WHERE id=$1', [row.table_id]);
+        if (combo === 'adjacent') {
+          await admin.query("UPDATE public.tables SET location='Outside', adjacent_tables=ARRAY[$2::uuid] WHERE id=$1", [row.table_id, second]);
+        }
+        if (combo === 'same-group') {
+          await admin.query("UPDATE public.tables SET combination_group='group-a' WHERE restaurant_id=$1", [row.restaurant_id]);
+          await admin.query("UPDATE public.tables SET location='Outside' WHERE id=$1", [row.table_id]);
+        }
+        if (combo === 'different-groups') {
+          await admin.query("UPDATE public.tables SET combination_group='group-a' WHERE id=$1", [row.table_id]);
+          await admin.query("UPDATE public.tables SET combination_group='group-b' WHERE id=$1", [second]);
+        }
+        if (combo === 'explicit-nonadjacent') {
+          await admin.query("UPDATE public.tables SET combination_group='same' WHERE restaurant_id=$1", [row.restaurant_id]);
+          await admin.query('UPDATE public.tables SET adjacent_tables=ARRAY[$2::uuid] WHERE id=$1', [row.table_id, randomUUID()]);
+        }
+        if (['fixed', 'different-groups', 'explicit-nonadjacent'].includes(combo)) {
+          await unchangedRefusal(row, { party_size: 3 });
+        } else {
+          const result = await rpc(a, row, 'modify', { party_size: 3 });
+          assert.equal(result.success, true); assert.deepEqual(result.reservation.table_ids, [row.table_id, second]);
+        }
+      });
+    }
+    await check('native three-table adjacency chain retains its full assignment', async () => {
+      const row = await fixture(); const second = await addTable(row); const third = await addTable(row);
+      await assign(row, [row.table_id, second, third]);
+      await admin.query('UPDATE public.tables SET adjacent_tables=ARRAY[$2::uuid] WHERE id=$1', [row.table_id, second]);
+      await admin.query('UPDATE public.tables SET adjacent_tables=ARRAY[$2::uuid] WHERE id=$1', [second, third]);
+      const result = await rpc(a, row, 'modify', { party_size: 5 });
+      assert.equal(result.success, true); assert.deepEqual(result.reservation.table_ids, [row.table_id, second, third]);
+    });
+    await check('pre-existing unassigned WhatsApp booking remains aggregate-only', async () => {
+      const row = await fixture({ source: 'whatsapp' }); await assign(row, []);
+      const result = await rpc(a, row, 'modify', { time: '20:00' });
+      assert.equal(result.success, true); assert.deepEqual(result.reservation.table_ids, []);
+    });
     for (const [first, second, secondName] of [[a, b, 'guest-mutations-b'], [b, a, 'guest-mutations-a']]) {
       await check(`same-owner concurrent partial reschedules serialize (${secondName} waits)`, async () => {
         const row = await fixture(); const before = await full(row.id);
@@ -182,12 +294,12 @@ async function main() {
           assert.equal((await pending).success, true);
           const after = await full(row.id);
           assert.equal(after.date, '2099-01-03'); assert.equal(after.time, '20:00:00');
-          assert.deepEqual(without(after, ['date', 'time', 'table_ids']), without(before, ['date', 'time', 'table_ids']));
+          assert.deepEqual(without(after, ['date', 'time']), without(before, ['date', 'time']));
           assert.equal((await admin.query('SELECT count(*)::integer AS n FROM public.reservations WHERE restaurant_id=$1', [row.restaurant_id])).rows[0].n, 1);
         } finally { await first.query('ROLLBACK'); if (pending) await pending.catch(() => {}); }
       });
     }
-    console.log(`PASS ${checks} SQL integration cases. Aggregate seats only; voice direct-create concurrency is not covered.`);
+    console.log(`PASS ${checks} SQL integration cases. Assigned-table retention and aggregate admission; voice direct-create concurrency is not covered.`);
   } finally {
     await Promise.allSettled([a.end(), b.end(), admin.end()]);
   }
