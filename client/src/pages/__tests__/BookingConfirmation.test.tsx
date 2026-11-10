@@ -75,7 +75,7 @@ for (const fromState of [true, false]) {
       expect(screen.getByRole('button', { name: language === 'en' ? 'Copy code' : 'Copiar código' })).toBeVisible();
       // Wait for the real restaurant query, not only router-state reservation data.
       expect(await screen.findByRole('link', { name: restaurant.phone })).toHaveAttribute('href', `tel:${restaurant.phone}`);
-      expect(screen.getByText(recorded)).toBeVisible();
+      expect(await screen.findByText(recorded)).toBeVisible();
       expect(screen.getByText(save)).toBeVisible();
       expect(i18n.getResource(language, 'translation', 'reservations.confirmation.saveConfirmation')).toBe(save);
       const main = screen.getByRole('main');
@@ -84,7 +84,8 @@ for (const fromState of [true, false]) {
       if (language !== 'en') expect(main).not.toHaveTextContent('Save this confirmation');
       await waitFor(() => expect(fetchMock).toHaveBeenCalled());
       const actions = fetchMock.mock.calls.map(([input]) => new URL(String(input), 'http://localhost').searchParams.get('action'));
-      expect(actions).toEqual(fromState ? ['restaurant'] : ['reservation', 'restaurant']);
+      // Saved router data is a fast receipt, not a permanent status assertion.
+      expect(actions).toEqual(['reservation', 'restaurant']);
     });
   });
 }

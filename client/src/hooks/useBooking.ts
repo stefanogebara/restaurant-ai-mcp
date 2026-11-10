@@ -30,7 +30,7 @@ export function useRestaurantBySlug(slug: string | undefined) {
 
 export type ReservationData = ReservationSummary;
 
-export function useReservationById(id: string | null, initialData?: ReservationData) {
+export function useReservationById(id: string | null, initialData?: ReservationData, freshCreation = false) {
   return useQuery<ReservationData>({
     queryKey: ['reservation', id],
     queryFn: async () => {
@@ -38,12 +38,15 @@ export function useReservationById(id: string | null, initialData?: ReservationD
       // EE.3 — guard against non-OK HTML responses.
       if (!res.ok) throw new Error(`Reservation lookup failed (${res.status})`);
       const data = await res.json();
-      if (!data.success || !data.reservation) throw new Error('Reservation not found');
+      if (!data.success || !data.reservation || data.reservation.id !== id) throw new Error('Reservation not found');
       return data.reservation;
     },
-    enabled: !initialData && !!id,
-    initialData,
-    staleTime: Infinity,
+    enabled: !!id,
+    initialData: initialData?.id === id ? initialData : undefined,
+    staleTime: 0,
+    // A creation response is already current. Every later mount/Back/reload
+    // verifies the public summary; cached details alone cannot prove status.
+    refetchOnMount: freshCreation ? false : 'always',
     retry: false,
   });
 }

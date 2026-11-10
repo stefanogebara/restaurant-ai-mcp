@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import ThiingsIcon from '../components/common/ThiingsIcon';
@@ -6,6 +6,8 @@ import { useReservationById, useRestaurantBySlug, type ReservationData } from '.
 import { localizeCancellationPolicy } from '../utils/cancellationPolicy';
 import { useBookingManagementHandoff } from '../hooks/useBookingManagementHandoff';
 import ReceiptCode from '../components/booking/ReceiptCode';
+import ReceiptStatus from '../components/booking/ReceiptStatus';
+import { isConfirmed } from '../utils/reservationStatus';
 
 export default function BookingConfirmation() {
   const { slug } = useParams<{ slug: string }>();
@@ -20,7 +22,11 @@ export default function BookingConfirmation() {
   const handoff = useBookingManagementHandoff(id);
   const restaurantIdParam = searchParams.get('rid') || state?.restaurant_id;
 
-  const { data: reservation, isLoading } = useReservationById(id, state?.reservation);
+  const freshCreation = Boolean(handoff && handoff.receiptId === id && handoff.reservation.id === id);
+  const { data: reservation, isLoading, isError, isFetching, isFetchedAfterMount, refetch } = useReservationById(id, state?.reservation, freshCreation);
+  const verified = reservation?.id === id && !isError && !isFetching && (freshCreation || isFetchedAfterMount);
+  const confirmed = Boolean(verified && typeof reservation?.status === 'string' && isConfirmed(reservation.status));
+  const postedReceipt = useRef<string | null>(null);
   // Fetch the restaurant alongside the reservation so the confirmation page
   // can actually answer Patricia's "where is it / can I cancel / will I get
   // a reminder" questions — previously it was a thin receipt with none of
@@ -66,7 +72,7 @@ export default function BookingConfirmation() {
   const subscribeToPush = async () => {
     const restaurantId = restaurantIdParam;
     const reservationId = id;
-    if (!restaurantId || !reservationId) return;
+    if (!confirmed || !restaurantId || !reservationId) return;
     setPushPromptState('requesting');
     try {
       const permission = await Notification.requestPermission();
@@ -122,7 +128,8 @@ export default function BookingConfirmation() {
   // with a known reservation ID. Derive the parent origin from document.referrer
   // and only post when we have a concrete origin to address.
   useEffect(() => {
-    if (!reservation || !window.parent || window.parent === window) return;
+    if (!freshCreation || !confirmed || !reservation || typeof handoff?.reservation.status !== 'string' || !isConfirmed(handoff.reservation.status)
+      || postedReceipt.current === id || !window.parent || window.parent === window) return;
     let targetOrigin = '';
     try {
       if (document.referrer) targetOrigin = new URL(document.referrer).origin;
@@ -130,6 +137,7 @@ export default function BookingConfirmation() {
       // Malformed referrer — fall through; we won't post.
     }
     if (!targetOrigin) return;
+    postedReceipt.current = id;
     window.parent.postMessage({
       type: 'seatable-booking-confirmed',
       payload: {
@@ -141,7 +149,7 @@ export default function BookingConfirmation() {
         party_size: reservation.party_size,
       },
     }, targetOrigin);
-  }, [reservation, id, slug]);
+  }, [reservation, id, slug, freshCreation, confirmed, handoff]);
 
   const formatTime = (time: string) => {
     const [h, m] = time.split(':').map(Number);
@@ -180,11 +188,15 @@ export default function BookingConfirmation() {
               <ThiingsIcon name="calendar" pxSize={36} className="text-burgundy" />
             </div>
             <h1 className="font-serif text-3xl sm:text-4xl font-medium text-deep-charcoal tracking-tight mb-3">
-              {t('reservations.noReservationFoundTitle')}
+              {t(isError ? 'reservations.confirmation.statusUnavailable' : 'reservations.noReservationFoundTitle')}
             </h1>
             <p className="text-[15px] text-warm-stone font-light mb-8">
-              {t('reservations.noReservationFoundDesc')}
+              {t(isError ? 'reservations.confirmation.statusError' : 'reservations.noReservationFoundDesc')}
             </p>
+            {isError && <button type="button" onClick={() => { void refetch(); }}
+              className="min-h-[44px] px-5 mb-4 rounded-full text-sm font-medium text-burgundy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-burgundy focus-visible:ring-offset-2">
+              {t('reservations.confirmation.retryStatus')}
+            </button>}
             {slug && (
               <button
                 type="button"
@@ -213,21 +225,8 @@ export default function BookingConfirmation() {
       {/* Confirmation */}
       <main className="flex-1 flex items-center justify-center p-6 sm:p-12">
         <div className="max-w-[480px] w-full text-center">
-          {/* Burgundy Checkmark */}
-          <div className="w-20 h-20 rounded-full bg-burgundy/[8%] flex items-center justify-center mx-auto mb-7">
-            <ThiingsIcon name="check" pxSize={36} className="text-burgundy" />
-          </div>
-
-          {/* Status Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-emerald-600/[8%] rounded-[100px] mb-5">
-            <div className="w-2 h-2 rounded-full bg-emerald-600" />
-            <span className="text-[13px] font-semibold text-emerald-700">{t('reservations.confirmed')}</span>
-          </div>
-
-          <h1 className="font-serif text-4xl font-medium text-deep-charcoal tracking-tight mb-2">{t('reservations.reservationConfirmed')}</h1>
-          <p className="text-[15px] text-warm-stone font-light mb-10">
-            {t('reservations.reservationRecorded')}
-          </p>
+          <ReceiptStatus status={reservation.status} verification={isError ? 'error' : verified ? 'verified' : 'checking'}
+            onRetry={() => { void refetch(); }} />
 
           {/* Details Card */}
           <div className="glass-panel p-8 text-left mb-6">
@@ -275,7 +274,7 @@ export default function BookingConfirmation() {
           {/* Push opt-in — only shows when notifications are available and
               not already granted/denied. Renders BEFORE the system prompt
               fires so the customer sees the value proposition first. */}
-          {pushPromptState === 'idle' && (
+          {confirmed && pushPromptState === 'idle' && (
             <div className="bg-burgundy/[0.04] border border-burgundy/15 rounded-2xl p-4 text-left mb-6 flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-start gap-3 min-w-0">
                 <span className="w-9 h-9 rounded-full bg-burgundy/[8%] text-burgundy flex items-center justify-center flex-shrink-0"><ThiingsIcon name="bell" pxSize={16} /></span>
@@ -297,7 +296,7 @@ export default function BookingConfirmation() {
               </button>
             </div>
           )}
-          {pushPromptState === 'requesting' && (
+          {confirmed && pushPromptState === 'requesting' && (
             <div className="bg-burgundy/[0.04] border border-burgundy/15 rounded-2xl p-4 text-left mb-6 flex items-center gap-3">
               <span className="animate-spin rounded-full h-4 w-4 border-2 border-burgundy border-t-transparent" aria-hidden="true" />
               <p className="text-[13px] text-warm-stone">
@@ -305,7 +304,7 @@ export default function BookingConfirmation() {
               </p>
             </div>
           )}
-          {pushPromptState === 'granted' && (
+          {confirmed && pushPromptState === 'granted' && (
             <div className="bg-emerald-600/[7%] border border-emerald-600/20 rounded-2xl p-4 text-left mb-6 flex items-center gap-3">
               <ThiingsIcon name="check-circle" pxSize={16} className="text-emerald-700 flex-shrink-0" />
               <p className="text-[13px] text-emerald-800">
@@ -330,7 +329,7 @@ export default function BookingConfirmation() {
               <li className="flex items-start gap-3">
                 <span className="w-7 h-7 rounded-full bg-emerald-600/[8%] text-emerald-700 flex items-center justify-center flex-shrink-0"><ThiingsIcon name="chat" pxSize={14} /></span>
                 <span className="leading-snug">
-                  {restaurantInfo?.whatsapp_enabled
+                  {confirmed && restaurantInfo?.whatsapp_enabled
                     ? t('reservations.confirmation.reminder', "We'll send you a WhatsApp reminder 24 hours before your reservation.")
                     : t('reservations.confirmation.saveConfirmation')}
                 </span>
