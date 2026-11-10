@@ -37,4 +37,15 @@ function fingerprint(agent, phones) {
   return digest({ config, platform: agent.platform_settings, workflow: agent.workflow, procedures: agent.procedures,
     name: agent.name, tags: agent.tags, access: agent.access_info, agentPhones: agent.phone_numbers, whatsapp: agent.whatsapp_accounts, phones });
 }
-module.exports = { TARGET, buildVocabulary, mergeKeywords, fingerprint, digest };
+function assertNoProcedures(agent, published, draftAware) {
+  const map = agent.procedures;
+  if (!Object.hasOwn(agent, 'procedures') || !map || Array.isArray(map) || typeof map !== 'object' || Object.keys(map).length !== 0) {
+    throw new Error('Published procedure map missing or nonempty; only verified zero-procedure agents are supported');
+  }
+  for (const listing of [published, draftAware]) {
+    if (!listing || !Array.isArray(listing.procedures) || listing.procedures.length !== 0) {
+      throw new Error('Procedure inventory is unknown, nonempty or contains drafts; refusing publication');
+    }
+  }
+}
+module.exports = { assertNoProcedures, TARGET, buildVocabulary, mergeKeywords, fingerprint, digest };

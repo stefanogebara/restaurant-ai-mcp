@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 'use strict';
-const { TARGET, buildVocabulary, mergeKeywords, fingerprint, digest } = require('./_lib/shared-voice-vocabulary.cjs');
+const { TARGET, buildVocabulary, mergeKeywords, fingerprint, digest, assertNoProcedures } = require('./_lib/shared-voice-vocabulary.cjs');
 const { assertProject, assertWorkspace, createJournal } = require('./migrate-elevenlabs-date-tools.cjs');
 const SUPABASE_URL = `https://${TARGET.projectRef}.supabase.co`;
 const BASE = 'https://api.elevenlabs.io/v1';
@@ -35,7 +35,8 @@ function createApi(apiKey, fetcher = fetch) {
     getAgent: branch => call(`${agentPath}?branch_id=${encodeURIComponent(branch)}&include_procedure_generated_workflow_elements=false`),
     getBranch: branch => call(`${agentPath}/branches/${encodeURIComponent(branch)}`),
     getPhones: () => call('/convai/phone-numbers'),
-    patchKeywords: (branch, keywords) => call(`${agentPath}?branch_id=${encodeURIComponent(branch)}&include_procedure_generated_workflow_elements=false`, 'PATCH', { conversation_config: { asr: { keywords } } }),
+    getProcedures: (branch, version) => call(`${agentPath}/branches/${encodeURIComponent(branch)}/procedures${version ? `?agent_version_id=${encodeURIComponent(version)}` : ''}`),
+    patchKeywords: (branch, keywords) => call(`${agentPath}?branch_id=${encodeURIComponent(branch)}&include_procedure_generated_workflow_elements=false`, 'PATCH', { conversation_config: { asr: { keywords } }, procedures: {} }),
   };
 }
 function createDb(serviceKey, fetcher = fetch) {
@@ -60,6 +61,10 @@ async function inspect({ api, db, options }) {
   if (agent.main_branch_id !== options.branchId || agent.branch_id !== options.branchId || branch.id !== options.branchId ||
       branch.agent_id !== TARGET.agentId || branch.name?.toLowerCase() !== 'main' || branch.is_archived !== false || branch.current_live_percentage !== 100) throw new Error('Target must be the live main branch');
   if (!agent.version_id || (options.expectedVersion && agent.version_id !== options.expectedVersion)) throw new Error('Agent version mismatch');
+  // Both views are required: the versioned listing proves the published snapshot,
+  // while the default listing exposes unpublished/new procedures. Never publish or
+  // discard procedure drafts as a side effect of an ASR operation.
+  assertNoProcedures(agent, await api.getProcedures(options.branchId, agent.version_id), await api.getProcedures(options.branchId));
   const matches = Array.isArray(phones) ? phones.filter(p => p.phone_number === TARGET.phone) : [];
   if (matches.length !== 1 || !matches[0].phone_number_id || matches[0].assigned_agent?.agent_id !== TARGET.agentId ||
       (matches[0].assigned_agent.branch_id != null && matches[0].assigned_agent.branch_id !== options.branchId)) throw new Error('Owned phone assignment mismatch');
@@ -73,7 +78,7 @@ async function sync({ api, db, options, openJournal = createJournal }) {
   if (options.apply && !options.expectedVersion) throw new Error('--apply requires --expected-version');
   const state = await inspect({ api, db, options });
   const report = { agentId: TARGET.agentId, branchId: options.branchId, version: state.agent.version_id,
-    before: state.before, after: state.after, protectedHash: state.protectedHash };
+    before: state.before, after: state.after, protectedHash: state.protectedHash, procedures: {} };
   if (digest(state.before) === digest(state.after)) return { ...report, status: 'no-op' };
   if (!options.apply) return { ...report, status: 'dry-run' };
   if (!options.manifest) throw new Error('--apply requires --manifest');
@@ -86,6 +91,7 @@ async function sync({ api, db, options, openJournal = createJournal }) {
     journal.append({ event: 'before', workspaceId: TARGET.workspaceId, projectRef: TARGET.projectRef, ...report, at: new Date().toISOString() });
     await api.patchKeywords(options.branchId, state.after);
     const agent = await api.getAgent(options.branchId); const branch = await api.getBranch(options.branchId); const phones = await api.getPhones();
+    assertNoProcedures(agent, await api.getProcedures(options.branchId, agent.version_id), await api.getProcedures(options.branchId));
     const owned = phones.filter(p => p.phone_number === TARGET.phone);
     if (agent.agent_id !== TARGET.agentId || agent.branch_id !== options.branchId || agent.main_branch_id !== options.branchId || !agent.version_id ||
         digest(agent.conversation_config?.asr?.keywords) !== digest(state.after) || fingerprint(agent, owned) !== state.protectedHash ||

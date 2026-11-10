@@ -10,11 +10,12 @@ function fixture() {
   const agent = { agent_id: TARGET.agentId, name: TARGET.agentName, branch_id: 'main-id', main_branch_id: 'main-id', version_id: 'v1',
     conversation_config: { asr: { provider: 'scribe_realtime', quality: 'high', keywords: ['Custom'], keyterm_libraries: [] },
       agent: { prompt: { prompt: 'Protected', tool_ids: ['tool1'] } } },
-    platform_settings: { overrides: { keywords: false } }, workflow: { nodes: {} } };
+    procedures: {}, platform_settings: { overrides: { keywords: false } }, workflow: { nodes: {} } };
   const phone = { phone_number_id: 'phone1', phone_number: TARGET.phone, provider: 'twilio', assigned_agent: { agent_id: TARGET.agentId, branch_id: null } };
   const api = { getWorkspaceId: jest.fn(async () => TARGET.workspaceId), getAgent: jest.fn(async () => structuredClone(agent)),
     getBranch: jest.fn(async () => ({ id: 'main-id', agent_id: TARGET.agentId, name: 'main', is_archived: false, current_live_percentage: 100 })),
     getPhones: jest.fn(async () => [structuredClone(phone)]),
+    getProcedures: jest.fn(async () => ({ procedures: [] })),
     patchKeywords: jest.fn(async (branch, keywords) => { agent.conversation_config.asr.keywords = keywords; agent.version_id = 'v2'; }) };
   return { api, agent, phone, db: { listRows: jest.fn(async () => [row()]) }, options: { branchId: 'main-id', expectedVersion: 'v1', apply: false } };
 }
@@ -98,11 +99,11 @@ test('journal is exclusive and mode 0600 before any write', () => {
     expect(fs.statSync(file).mode & 0o777).toBe(0o600); expect(() => createJournal(file)).toThrow();
   } finally { fs.rmSync(dir, { recursive: true }); }
 });
-test('adapter sends only ASR keywords to the explicit branch', async () => {
+test('adapter sends ASR keywords and explicit empty procedure pin to the exact branch', async () => {
   const fetcher = jest.fn(async () => ({ ok: true, json: async () => ({}) }));
   await createApi('fake', fetcher).patchKeywords('main-id', ['Seatable']);
   const [url, init] = fetcher.mock.calls[0]; expect(url).toContain('branch_id=main-id');
-  expect(init.method).toBe('PATCH'); expect(JSON.parse(init.body)).toEqual({ conversation_config: { asr: { keywords: ['Seatable'] } } });
+  expect(init.method).toBe('PATCH'); expect(JSON.parse(init.body)).toEqual({ conversation_config: { asr: { keywords: ['Seatable'] } }, procedures: {} });
 });
 test('directory REST projection excludes aliases/guests and requires complete result', async () => {
   const fetcher = jest.fn(async () => ({ ok: true, json: async () => [row()], headers: { get: () => '0-0/1' } }));
@@ -148,4 +149,46 @@ test('incomplete or duplicate directory cannot yield partial vocabulary', async 
   const fetcher = jest.fn(async () => ({ ok: true, json: async () => [row(), row()], headers: { get: () => '0-1/2' } }));
   await expect(createDb('fake', fetcher).listRows()).rejects.toThrow(/incomplete/);
   expect(() => buildVocabulary(Array.from({ length: 1000 }, () => row()))).toThrow(/incomplete/);
+});
+
+test.each([undefined, null, [], { proc1: { version_id: 'p1' } }])('unknown or nonempty published procedure map blocks before write: %j', async procedures => {
+  const f = fixture(); f.agent.procedures = procedures;
+  await expect(sync(f)).rejects.toThrow(/procedure/i); expect(f.api.patchKeywords).not.toHaveBeenCalled();
+});
+test.each([null, {}, { procedures: null }, { procedures: [{ procedure_id: 'draft1', has_draft: true }] },
+  { procedures: [{ procedure_id: 'published1', has_draft: false }] }])('unproven empty procedure inventory blocks: %j', async listing => {
+  const f = fixture(); f.api.getProcedures.mockResolvedValue(listing);
+  await expect(sync(f)).rejects.toThrow(/procedure/i); expect(f.api.patchKeywords).not.toHaveBeenCalled();
+});
+test('published snapshot and draft-aware list are both checked, including the final preflight', async () => {
+  const f = fixture(); f.options = { ...f.options, apply: true, manifest: 'mock' };
+  f.api.getProcedures.mockResolvedValueOnce({ procedures: [] }).mockResolvedValueOnce({ procedures: [] })
+    .mockResolvedValueOnce({ procedures: [] }).mockResolvedValueOnce({ procedures: [{ procedure_id: 'new', has_draft: true }] });
+  await expect(sync(f)).rejects.toThrow(/procedure/i);
+  expect(f.api.getProcedures.mock.calls.slice(0, 2)).toEqual([['main-id', 'v1'], ['main-id']]);
+  expect(f.api.patchKeywords).not.toHaveBeenCalled();
+});
+test('pinning empty published map prevents implicit draft publication before readback', async () => {
+  const f = fixture(); f.options = { ...f.options, apply: true, manifest: 'mock' };
+  let implicitPublications = 0;
+  const provider = createApi('fake', jest.fn(async (_, init) => {
+    const body = JSON.parse(init.body); f.agent.conversation_config.asr.keywords = body.conversation_config.asr.keywords;
+    f.agent.version_id = 'v2';
+    // Publishing without procedures implicitly picks up drafts. This used to write
+    // once, then fail the protected fingerprint, after publication had occurred.
+    if (body.procedures === undefined) implicitPublications++;
+    f.agent.procedures = body.procedures === undefined ? { unpublished: { version_id: 'accidental' } } : body.procedures;
+    return { ok: true, json: async () => f.agent };
+  }));
+  f.api.patchKeywords = jest.fn(provider.patchKeywords);
+  await expect(sync({ ...f, openJournal: () => ({ append() {}, close() {} }) })).resolves.toMatchObject({ status: 'verified' });
+  expect(f.api.patchKeywords).toHaveBeenCalledTimes(1); expect(f.agent.procedures).toEqual({});
+  expect(implicitPublications).toBe(0);
+});
+test('procedure adapter scopes published listing to exact version and separately reads drafts', async () => {
+  const fetcher = jest.fn(async () => ({ ok: true, json: async () => ({ procedures: [] }) }));
+  const api = createApi('fake', fetcher);
+  await api.getProcedures('main-id', 'v1'); await api.getProcedures('main-id');
+  expect(fetcher.mock.calls[0][0]).toContain('/branches/main-id/procedures?agent_version_id=v1');
+  expect(fetcher.mock.calls[1][0]).toMatch(/\/branches\/main-id\/procedures$/);
 });

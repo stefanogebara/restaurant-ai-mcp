@@ -44,7 +44,14 @@ node scripts/sync-shared-voice-vocabulary.cjs \
 
 The existing file must not exist. Its new mode is 0600. The fsynced `before` record
 contains previous and proposed keywords and protected-setting fingerprints before
-PATCH. Only `conversation_config.asr.keywords` is sent, with explicit branch_id.
+PATCH. The payload sends `conversation_config.asr.keywords` and an explicit
+`procedures: {}` pin, with explicit branch_id. This version supports zero
+procedures only: the agent must own a non-null empty procedure map, the official
+procedure listing for the exact published version must be empty, and the default
+draft-aware listing must be empty. Unknown, nonempty or draft-bearing results
+abort before any write. Both listings are checked again immediately before PATCH
+and after readback. Omitting the procedure map would implicitly publish drafts;
+the explicit empty pin prevents that. Do not edit procedures concurrently.
 Readback verifies keywords, main branch, prompts/tools/workflow/security and owned
 phone assignment. A no-op does not PATCH or create a manifest.
 
