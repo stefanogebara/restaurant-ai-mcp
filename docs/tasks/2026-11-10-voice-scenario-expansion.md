@@ -1,9 +1,9 @@
 # Expand sandbox call coverage and refine Voice / Calls
 
 - [x] Verify live production SHA, sandbox identity and unchanged shared routing/aliases.
-- [ ] Run real calls for consultation-only and rejection of a suggested restaurant; confirm no bookings or messages.
+- [x] Run baseline real calls for consultation-only and rejection of a suggested restaurant; confirm no bookings or messages. Language retests remain after the provider repair.
 - [ ] Run a real booking with notices disabled; confirm one booking, no WhatsApp request and truthful spoken status.
-- [ ] Exercise rejected / ambiguous WhatsApp delivery through controlled backend regression tests, without disrupting the live provider.
+- [x] Exercise rejected / ambiguous WhatsApp delivery through controlled backend regression tests, without disrupting the live provider.
 - [ ] Audit authenticated Voice and Calls at desktop, 390 and 320 pixels; lock a bounded design correction from actual evidence.
 - [ ] Implement meaningful fixes with regression coverage, independent review and complete relevant checks.
 - [ ] Merge passing PR, test main, promote only its existing READY build, verify the production alias and actual UI.
@@ -29,3 +29,5 @@ Design decisions will be selected after viewing actual authenticated states. Imp
 Baseline real calls: English consultation `conv_3201m72sheb2ej1t2csh775863vb` checked three people for 2026-11-11 at 20:00, made no reservation/message, but failed spoken-language matching. Rejection `conv_7201m72sw8amfs5rd5xma56zqtsx` received a canonical suggestion then a clear refusal; it stayed unbound, with no reservation/message. The language operation remains dry-run only until reviewed main passes.
 
 Backend boundary tests additionally reproduced fractional/junk guest counts and an impossible calendar date reaching mocked persistence. These must be rejected before any booking or notification effect. Provider rejection/deadline simulations retain the booking, make no second send attempt and never claim delivery.
+
+Local verification: 4,980 backend tests passed (6 existing skips); 1,393 frontend tests passed. Backend party-size/calendar guards, call completion metadata and restricted/read-error UI were independently reviewed. Full production build and final authenticated visual checks remain before release acceptance.
