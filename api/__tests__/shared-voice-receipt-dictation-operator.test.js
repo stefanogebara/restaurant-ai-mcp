@@ -289,3 +289,20 @@ test('journal is exclusive, private and fsynced; unsafe directories and reuse ar
     fs.chmodSync(dir, 0o755); expect(() => m.openPrivateJournal(path.join(dir, 'unsafe'))).toThrow(/private/);
   } finally { sync.mockRestore(); fs.rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('dictation policy permits exact EN/PT/ES aliases without model translation, transliteration or decoding', () => {
+  expect(m.AFTER_POLICY).toContain('English, Portuguese or Spanish');
+  for (const token of ['uppercase Mike', 'maiúscula Mike', 'mayúscula Mike', 'dígito']) expect(m.AFTER_POLICY).toContain(token);
+  expect(m.AFTER_POLICY).toContain('Do not translate or transliterate');
+  expect(m.AFTER_POLICY).toContain('25 decoded characters');
+  expect(m.AFTER_POLICY).toContain('ENTIRELY, including empty or null');
+});
+test.each(m.NAMES)('%s spelling description supports exact PT/ES words with no extra schema authority', name => {
+  const f = fixture(); const source = f.records.find(r => r.tool_config.name === name).tool_config;
+  const tool = m.buildTool(source), spelling = tool.api_schema.request_body_schema.properties.reservation_code_spelling;
+  expect(spelling.type).toBe('string');
+  for (const token of ['English, Portuguese or Spanish', 'maiúscula Mike', 'mayúscula Mike', 'dígito', 'do not translate or transliterate']) expect(spelling.description).toContain(token);
+  expect(tool.api_schema.request_body_schema.properties.reservation_id).toEqual(source.api_schema.request_body_schema.properties.reservation_id);
+  expect(tool.api_schema.request_headers).toEqual(source.api_schema.request_headers);
+  expect(tool.api_schema.request_body_schema.required).toEqual([]);
+});
