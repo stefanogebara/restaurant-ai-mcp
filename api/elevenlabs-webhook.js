@@ -29,7 +29,7 @@ const { getSessionByPhone } = require('./_lib/whatsapp-sessions');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { sendConfirmationVoiceNote } = require('./_services/whatsapp/voice-note-trigger');
 const { isSharedToolAuth, readSharedContext, identifySharedRestaurant, resolveSharedRestaurant } = require('./_lib/shared-voice-binding');
-const { ACTIONS: GUEST_ACTIONS, guestProof, runGuestAction } = require('./_lib/shared-voice-guest');
+const { ACTIONS: GUEST_ACTIONS, guestIdentity, guestProof, runGuestAction } = require('./_lib/shared-voice-guest');
 
 const logger = createSecureLogger('ElevenLabs');
 
@@ -185,6 +185,7 @@ module.exports = async (req, res) => {
   }
 
   if (sharedAuthenticated) {
+    let authenticatedGuestAction = false;
     try {
       const context = readSharedContext(req);
       const action = req.query?.action || req.body?.action;
@@ -196,13 +197,24 @@ module.exports = async (req, res) => {
       // Guest changes use their own receipt + native-caller verification path.
       // They must never fall through to the legacy name/phone lookup handlers.
       const guestAction = GUEST_ACTIONS.has(action);
-      const data = req.method === 'POST' ? req.body : req.query;
-      if (guestAction && (!guestProof(data, context) ||
-          [req.query?.phone, req.query?.customer_phone, req.query?.caller_phone, req.query?.sender_phone]
-            .some(phone => phone !== undefined && phone !== context.callerNumber) ||
-          (req.query?.reservation_id !== undefined && req.query.reservation_id !== data.reservation_id))) {
-        return res.status(403).json({ success: false, verification_required: true,
-          error: 'Complete receipt code and native caller verification required' });
+      authenticatedGuestAction = guestAction;
+      const data = (req.method === 'POST' ? req.body : req.query) || {};
+      if (guestAction) {
+        const codeKeys = ['reservation_id', 'reservation_code_spelling'];
+        const query = req.query || {};
+        const representations = codeKeys.filter(key => Object.hasOwn(data, key) || Object.hasOwn(query, key));
+        if (!guestIdentity(data, context) || !guestIdentity(query, context) || representations.length > 1 ||
+            codeKeys.some(key => Object.hasOwn(query, key) && (!Object.hasOwn(data, key) || query[key] !== data[key]))) {
+          return res.status(403).json({ success: false, verification_required: true,
+            error: 'Conflicting guest proof or native caller scope' });
+        }
+        // Authentication/identity overrides above stay hard failures. A missing
+        // or invalid full code is a business refusal whose body the agent needs
+        // to see; never fall through to legacy name/phone lookup or touch the DB.
+        if (!guestProof(data, context)) {
+          return res.status(200).json({ success: false, verification_required: true,
+            error: 'Complete receipt code required, either literal or explicitly spelled with letter case' });
+        }
       }
       if (!guestAction && !['get_current_datetime', 'check_availability', 'create_reservation', 'get_wait_time'].includes(action)) {
         return res.status(403).json({ error: 'Guest verification required for this action' });
@@ -236,7 +248,7 @@ module.exports = async (req, res) => {
       }
     } catch (error) {
       if (error.message === 'Shared conversation is not bound') {
-        return res.status(409).json({ success: false, requires_restaurant_identification: true });
+        return res.status(authenticatedGuestAction ? 200 : 409).json({ success: false, requires_restaurant_identification: true });
       }
       if (['Invalid shared voice context', 'Shared conversation binding conflict'].includes(error.message)) {
         return res.status(403).json({ error: 'Shared voice scope mismatch' });
