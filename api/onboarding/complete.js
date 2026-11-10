@@ -51,13 +51,15 @@ function getDefaultVoiceId(language) {
 // an ISO code. Downstream helpers like suggestTimezone() only recognise ISO
 // codes — without this mapping timezone silently falls back to UTC and
 // agent_language stays 'en' for every non-US restaurant.
+// Keep code/name/language support aligned with client/src/data/countries.ts.
+// The completion tests exercise every offered code and name against this resolver.
 const COUNTRY_NAME_TO_ISO = {
   brazil: 'BR', brasil: 'BR',
   spain: 'ES', espana: 'ES', 'españa': 'ES',
   portugal: 'PT',
-  france: 'FR',
+  france: 'FR', belgium: 'BE', switzerland: 'CH',
   italy: 'IT', italia: 'IT',
-  germany: 'DE', deutschland: 'DE',
+  germany: 'DE', deutschland: 'DE', austria: 'AT',
   'united kingdom': 'GB', uk: 'GB',
   'united states': 'US', usa: 'US',
   canada: 'CA',
@@ -67,7 +69,8 @@ const COUNTRY_NAME_TO_ISO = {
 };
 const COUNTRY_LANGUAGE_MAP = {
   BR: 'pt', PT: 'pt', ES: 'es', MX: 'es', AR: 'es', CO: 'es', CL: 'es', PE: 'es',
-  FR: 'fr', IT: 'it', DE: 'de', JP: 'ja', US: 'en', GB: 'en', CA: 'en', AU: 'en',
+  FR: 'fr', BE: 'fr', CH: 'fr', IT: 'it', DE: 'de', AT: 'de',
+  JP: 'ja', US: 'en', GB: 'en', CA: 'en', AU: 'en',
 };
 // Country must be explicit and supported. City and phone cannot establish it:
 // a wrong default also changes timezone, agent language, and subscription terms.

@@ -358,6 +358,56 @@ describe('Explicit supported country is required before any writes', () => {
   });
 });
 
+// Read the actual picker vocabulary so a future client addition cannot silently
+// become a selectable country that the completion endpoint rejects.
+const uiCountrySource = require('fs').readFileSync(
+  require('path').join(__dirname, '../../client/src/data/countries.ts'), 'utf8'
+);
+const uiCountries = Array.from(uiCountrySource.matchAll(
+  /code:\s*'([A-Z]{2})',\s*name:\s*'([^']+)',\s*language:\s*'([^']+)'/g
+), ([, code, name, locale]) => ({ code, name, language: locale.split('-')[0] }));
+
+describe('Country resolver stays compatible with the onboarding picker', () => {
+  test('the fixture reads every country offered by the picker', () => {
+    expect(uiCountries.length).toBeGreaterThan(0);
+    expect(uiCountries).toHaveLength(Array.from(uiCountrySource.matchAll(/code:\s*'[A-Z]{2}'/g)).length);
+  });
+
+  test.each(uiCountries.flatMap(({ code, name, language }) => [
+    [code, code, language], [name, code, language],
+  ]))('accepts %s as %s with voice language %s and a mapped timezone', async (input, code, language) => {
+    const { verifyAuth } = require('../_lib/auth');
+    const { createAgent } = require('../_services/elevenlabsAgentService');
+    const { suggestTimezone } = require('../_lib/timezone');
+    verifyAuth.mockResolvedValueOnce({ user: { sub: 'owner-uuid' } });
+    const { req, res } = mockReqRes({ ...BASE_BODY, country: input, city: '' });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(capturedConfigWrite).toEqual(expect.objectContaining({
+      country: code, agent_language: language, timezone: suggestTimezone(code),
+    }));
+    expect(capturedConfigWrite.timezone).not.toBe('UTC');
+    expect(() => new Intl.DateTimeFormat('en', { timeZone: capturedConfigWrite.timezone })).not.toThrow();
+    expect(createAgent).toHaveBeenCalledWith(expect.objectContaining({ language }));
+    expect(capturedSubscriptionInsert.plan_name).toBe(code === 'BR' ? 'Free' : 'Growth');
+  });
+
+  test.each([
+    ['BE', 'Europe/Brussels', 'fr'],
+    ['CH', 'Europe/Zurich', 'fr'],
+    ['AT', 'Europe/Vienna', 'de'],
+    ['JP', 'Asia/Tokyo', 'ja'], // Existing backend support beyond the picker remains valid.
+  ])('persists explicit %s with timezone %s and language %s', async (country, timezone, language) => {
+    const { verifyAuth } = require('../_lib/auth');
+    verifyAuth.mockResolvedValueOnce({ user: { sub: 'owner-uuid' } });
+    const { req, res } = mockReqRes({ ...BASE_BODY, country, city: '' });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(capturedConfigWrite).toEqual(expect.objectContaining({ country, timezone, agent_language: language }));
+  });
+});
+
 describe('Validation', () => {
   test('rejects POST with missing required fields', async () => {
     const { req, res } = mockReqRes({
