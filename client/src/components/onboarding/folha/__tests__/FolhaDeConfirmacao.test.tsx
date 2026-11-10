@@ -17,7 +17,8 @@ vi.mock('react-i18next', () => ({
 
 const COMPLETO: Partial<OnboardingData> = {
   restaurant_name: 'Mocotó',
-  city: 'São Paulo',
+  city: 'São Paulo', country: 'Brazil', country_code: 'BR',
+  areas: [{ name: 'Salão', is_active: true, tables: [{ capacity: 4, count: 4, shape: 'square', is_fixed_seating: false, is_joinable: true }] }],
   restaurant_type: 'casual_dining',
   phone_number: '(11) 2951-4121',
   email: 'contato@mocoto.com.br',
@@ -35,6 +36,7 @@ function montar(over: Partial<OnboardingData> = {}, props: Record<string, unknow
       vozEscolhida="neighborhood"
       onEscolherVoz={onEscolherVoz}
       onConcluir={onConcluir}
+      origem="google"
       {...props}
     />,
   );
@@ -106,7 +108,7 @@ describe('FolhaDeConfirmacao', () => {
   });
 
   test('quando veio do demo, a fonte muda', () => {
-    montar({}, { veioDoDemo: true });
+    montar({}, { origem: 'demo' });
     expect(screen.getAllByText(/você configurou no demo/).length).toBeGreaterThan(0);
   });
 
@@ -129,4 +131,23 @@ describe('FolhaDeConfirmacao', () => {
     fireEvent.change(screen.getByLabelText('o telefone'), { target: { value: '11999999999' } });
     expect(updateData).toHaveBeenCalledWith({ phone_number: '11999999999' });
   });
+});
+
+
+test('dados manuais não são atribuídos ao Google', () => {
+  montar({}, { origem: 'manual' });
+  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Confira os dados do Mocotó.');
+  expect(screen.getByText('Horário inicial — confirme')).toBeVisible();
+  expect(screen.queryByText(/Google/)).not.toBeInTheDocument();
+});
+
+test.each([{ country: '', country_code: undefined }])('exige os dados manuais da casa: %j', missing => {
+  montar(missing);
+  expect(screen.getByRole('button', { name: /Colocar no ar/ })).toBeDisabled();
+});
+
+
+test('o tipo do restaurante é opcional', () => {
+  montar({ restaurant_type: '' });
+  expect(screen.getByRole('button', { name: /Colocar no ar/ })).toBeEnabled();
 });
