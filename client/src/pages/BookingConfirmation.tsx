@@ -4,6 +4,7 @@ import { useLocation, useNavigate, useParams, useSearchParams } from 'react-rout
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { useReservationById, useRestaurantBySlug, type ReservationData } from '../hooks/useBooking';
 import { localizeCancellationPolicy } from '../utils/cancellationPolicy';
+import { useBookingManagementHandoff } from '../hooks/useBookingManagementHandoff';
 
 export default function BookingConfirmation() {
   const { slug } = useParams<{ slug: string }>();
@@ -15,6 +16,7 @@ export default function BookingConfirmation() {
 
   const state = location.state as { reservation?: ReservationData; restaurant_name?: string; restaurant_id?: string } | null;
   const id = searchParams.get('id');
+  const handoff = useBookingManagementHandoff(id);
   const restaurantIdParam = searchParams.get('rid') || state?.restaurant_id;
 
   const { data: reservation, isLoading } = useReservationById(id, state?.reservation);
@@ -24,6 +26,12 @@ export default function BookingConfirmation() {
   // that. The query is cached by useRestaurantBySlug so this is free when
   // arriving from the booking flow.
   const { data: restaurantInfo } = useRestaurantBySlug(slug);
+  const manageReservation = () => {
+    // Proof has already left history. Recheck the current displayed receipt
+    // before forwarding the component-local handoff to the manual lookup form.
+    const matchesReceipt = handoff && handoff.receiptId === reservation?.id && reservation.id === id;
+    navigate('/customer', { state: matchesReceipt ? handoff : null });
+  };
 
   // Push notification opt-in — UX defer (see push prompt state below).
   //
@@ -365,7 +373,7 @@ export default function BookingConfirmation() {
                   {t('reservations.confirmation.howToCancel', 'Need to cancel or change?')}{' '}
                   <button
                     type="button"
-                    onClick={() => navigate('/customer')}
+                    onClick={manageReservation}
                     className="font-medium text-burgundy hover:text-burgundy-dark underline underline-offset-2"
                   >
                     {t('reservations.confirmation.manageHere', 'Manage your reservation')}
@@ -379,7 +387,7 @@ export default function BookingConfirmation() {
           <div className="flex gap-3">
             <button
               type="button"
-              onClick={() => navigate('/customer')}
+              onClick={manageReservation}
               className="flex-1 py-3.5 border border-glass-border-dark bg-white/60 hover:bg-white/85 text-stone-gray font-medium rounded-full text-sm hover:border-muted-stone transition-colors"
             >
               {t('reservations.manageReservation')}
