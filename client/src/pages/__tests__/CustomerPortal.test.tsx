@@ -2,6 +2,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../../test/renderWithProviders';
 import CustomerPortal from '../CustomerPortal';
+import { MemoryRouter } from 'react-router-dom';
 
 const CODE = 'RES-20261110-aB_cD-eF12_X';
 const PHONE = '+15550001234';
@@ -25,7 +26,7 @@ function fillBoth() {
 }
 
 it('requires both fields and never submits a phone-only or code-only lookup', async () => {
-  renderWithProviders(<CustomerPortal />);
+  renderWithProviders(<MemoryRouter><CustomerPortal /></MemoryRouter>);
   const inputs = fields();
   fireEvent.change(inputs.phone, { target: { value: PHONE } });
   submit();
@@ -39,7 +40,7 @@ it('requires both fields and never submits a phone-only or code-only lookup', as
 });
 
 it('submits the pair without changing code case, underscores or hyphens', async () => {
-  renderWithProviders(<CustomerPortal />);
+  renderWithProviders(<MemoryRouter><CustomerPortal /></MemoryRouter>);
   fillBoth(); submit();
   expect(await screen.findByText('Private Guest')).toBeVisible();
   const url = new URL(String(request.mock.calls[0][0]), 'https://seatable.one');
@@ -50,7 +51,7 @@ it('submits the pair without changing code case, underscores or hyphens', async 
 
 it.each(['id', 'reservation_id'])('prefills a receipt %s without fetching details until the phone is supplied', async key => {
   window.history.replaceState({}, '', '/customer?' + new URLSearchParams({ [key]: CODE }));
-  renderWithProviders(<CustomerPortal />);
+  renderWithProviders(<MemoryRouter><CustomerPortal /></MemoryRouter>);
   expect(screen.getByLabelText('Confirmation ID')).toHaveValue(CODE);
   expect(screen.getByLabelText('Phone Number')).toBeRequired();
   expect(screen.getByLabelText('Phone Number')).toHaveAttribute('placeholder', '+5511999999999');
@@ -68,7 +69,7 @@ it.each(['id', 'reservation_id'])('prefills a receipt %s without fetching detail
 });
 
 it('uses required accessible fields and prevents mobile correction of the opaque code', () => {
-  renderWithProviders(<CustomerPortal />);
+  renderWithProviders(<MemoryRouter><CustomerPortal /></MemoryRouter>);
   const code = screen.getByLabelText('Confirmation ID');
   expect(code).toBeRequired();
   expect(code).toHaveAttribute('autocapitalize', 'none');
@@ -79,7 +80,7 @@ it('uses required accessible fields and prevents mobile correction of the opaque
 });
 
 it('refreshes with the same verified pair after modifying the reservation', async () => {
-  renderWithProviders(<CustomerPortal />);
+  renderWithProviders(<MemoryRouter><CustomerPortal /></MemoryRouter>);
   fillBoth(); submit();
   await screen.findByText('Private Guest');
   fireEvent.click(screen.getByRole('button', { name: 'Edit Reservation' }));
@@ -92,7 +93,7 @@ it('refreshes with the same verified pair after modifying the reservation', asyn
 
 it('keeps wrong-pair responses generic and does not show private booking details', async () => {
   request.mockResolvedValue({ ok: false, json: async () => ({ success: false, error: 'Reservation not found' }) });
-  renderWithProviders(<CustomerPortal />);
+  renderWithProviders(<MemoryRouter><CustomerPortal /></MemoryRouter>);
   fillBoth(); submit();
   expect(await screen.findByText('Reservation not found')).toBeVisible();
   expect(screen.queryByText('Private Guest')).not.toBeInTheDocument();

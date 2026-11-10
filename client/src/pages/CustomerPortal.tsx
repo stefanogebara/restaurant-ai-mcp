@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
+import { useLocation, useNavigationType } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { isCancelled, isConfirmed } from '../utils/reservationStatus';
+import { readBookingManagementHandoff } from '../lib/bookingManagementHandoff';
 
 interface Reservation {
   reservation_id: string;
@@ -32,13 +34,18 @@ function parseReservationDateTime(reservation: Reservation) {
 
 export default function CustomerPortal() {
   const { t, i18n } = useTranslation();
+  const location = useLocation();
+  const navigationType = useNavigationType();
+  // POP includes direct entry and reload, even when history retains old state.
+  const handoff = navigationType === 'PUSH' ? readBookingManagementHandoff(location.state) : undefined;
   useDocumentTitle(t('pageTitles.customerPortal', 'Manage Reservation | seatable'));
   const [reservationId, setReservationId] = useState(() => {
+    if (handoff) return handoff.receiptId;
     const params = new URLSearchParams(typeof window === 'undefined' ? '' : window.location.search);
     // A receipt code may prefill the form, but never triggers a details lookup alone.
     return params.get('id') || params.get('reservation_id') || '';
   });
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState(handoff?.customerPhone ?? '');
   const [reservation, setReservation] = useState<Reservation | null>(null);
   const [isModifying, setIsModifying] = useState(false);
   const [modifiedData, setModifiedData] = useState<Partial<Reservation>>({});
@@ -201,9 +208,9 @@ export default function CustomerPortal() {
                     inputMode="tel"
                     autoComplete="tel"
                     required
-                    pattern="^\+?[0-9 ]*$"
+                    pattern="^\+?[0-9 \(\)\-]*$"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/[^\d+ ]/g, ''))}
+                    onChange={(e) => setPhone(e.target.value.replace(/[^\d+ ()-]/g, ''))}
                     placeholder="+5511999999999"
                     className="w-full px-4 py-3 border border-glass-border-input rounded-[10px] text-sm bg-white/60 text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
                   />

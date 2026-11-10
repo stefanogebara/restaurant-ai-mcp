@@ -297,8 +297,8 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
       } : {}),
     }, {
       onSuccess: ({ reservation }) => {
-        navigate(`/book/${slug}/confirmed?id=${reservation.id}&rid=${restaurant.id}`, {
-          state: { reservation, restaurant_name: restaurant.name, restaurant_id: restaurant.id },
+        navigate(`/book/${slug}/confirmed?id=${encodeURIComponent(reservation.id)}&rid=${encodeURIComponent(restaurant.id)}`, {
+          state: { reservation, receiptId: reservation.id, customerPhone, restaurant_name: restaurant.name, restaurant_id: restaurant.id },
         });
       },
     });
@@ -321,8 +321,8 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
       deposit_amount: depositAmount,
     }, {
       onSuccess: ({ reservation }) => {
-        navigate(`/book/${slug}/confirmed?id=${reservation.id}&rid=${restaurant.id}`, {
-          state: { reservation, restaurant_name: restaurant.name, restaurant_id: restaurant.id },
+        navigate(`/book/${slug}/confirmed?id=${encodeURIComponent(reservation.id)}&rid=${encodeURIComponent(restaurant.id)}`, {
+          state: { reservation, receiptId: reservation.id, customerPhone, restaurant_name: restaurant.name, restaurant_id: restaurant.id },
         });
       },
     });
