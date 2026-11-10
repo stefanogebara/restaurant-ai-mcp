@@ -3,6 +3,7 @@
  */
 
 import type { ProfileQuestionnaireData } from './profile.types';
+import type { Preset } from '../lib/personaProposta';
 
 export interface ServicePeriod {
   open: string;
@@ -89,6 +90,7 @@ export interface OnboardingData {
   business_hours: BusinessHours[];
   average_dining_duration: number;
   // Step 2.5: Voice Selection
+  voz_preset?: Preset;
   selected_voice_id?: string;
   selected_voice_language?: string;  // Language code from selected voice (e.g., 'es', 'fr', 'en')
   // Step 3: Table Configuration
