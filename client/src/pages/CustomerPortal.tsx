@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
-import { useLocation, useNavigationType } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { isCancelled, isConfirmed } from '../utils/reservationStatus';
-import { readBookingManagementHandoff } from '../lib/bookingManagementHandoff';
+import { useBookingManagementHandoff } from '../hooks/useBookingManagementHandoff';
 
 interface Reservation {
   reservation_id: string;
@@ -34,10 +33,7 @@ function parseReservationDateTime(reservation: Reservation) {
 
 export default function CustomerPortal() {
   const { t, i18n } = useTranslation();
-  const location = useLocation();
-  const navigationType = useNavigationType();
-  // POP includes direct entry and reload, even when history retains old state.
-  const handoff = navigationType === 'PUSH' ? readBookingManagementHandoff(location.state) : undefined;
+  const handoff = useBookingManagementHandoff();
   useDocumentTitle(t('pageTitles.customerPortal', 'Manage Reservation | seatable'));
   const [reservationId, setReservationId] = useState(() => {
     if (handoff) return handoff.receiptId;

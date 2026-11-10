@@ -1,22 +1,22 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate, useNavigationType, useParams, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { useReservationById, useRestaurantBySlug, type ReservationData } from '../hooks/useBooking';
 import { localizeCancellationPolicy } from '../utils/cancellationPolicy';
-import { readBookingManagementHandoff } from '../lib/bookingManagementHandoff';
+import { useBookingManagementHandoff } from '../hooks/useBookingManagementHandoff';
 
 export default function BookingConfirmation() {
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
   const navigate = useNavigate();
-  const navigationType = useNavigationType();
   const { t, i18n } = useTranslation();
   const dateLocale = i18n.language === 'pt-BR' ? 'pt-BR' : i18n.language === 'es' ? 'es-ES' : 'en-US';
   const [searchParams] = useSearchParams();
 
   const state = location.state as { reservation?: ReservationData; restaurant_name?: string; restaurant_id?: string } | null;
   const id = searchParams.get('id');
+  const handoff = useBookingManagementHandoff(id);
   const restaurantIdParam = searchParams.get('rid') || state?.restaurant_id;
 
   const { data: reservation, isLoading } = useReservationById(id, state?.reservation);
@@ -27,12 +27,10 @@ export default function BookingConfirmation() {
   // arriving from the booking flow.
   const { data: restaurantInfo } = useRestaurantBySlug(slug);
   const manageReservation = () => {
-    // History state can survive reloads. Only a fresh booking navigation may
-    // forward the entered phone, and it must belong to the displayed receipt.
-    const handoff = navigationType === 'PUSH' && reservation?.id === id
-      ? readBookingManagementHandoff(location.state, reservation.id)
-      : undefined;
-    navigate('/customer', { state: handoff ?? null });
+    // Proof has already left history. Recheck the current displayed receipt
+    // before forwarding the component-local handoff to the manual lookup form.
+    const matchesReceipt = handoff && handoff.receiptId === reservation?.id && reservation.id === id;
+    navigate('/customer', { state: matchesReceipt ? handoff : null });
   };
 
   // Push notification opt-in — UX defer (see push prompt state below).
