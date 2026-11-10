@@ -10,6 +10,7 @@ A real English booking also retained an earlier ASR surname after a later correc
 - [x] Verify language/policy source: 5,122 backend tests, 1,426 frontend tests, build, syntax/static audits and two independent operator reviews.
 - [x] Fix two browser-reproduced UI issues: keyboard focus reaches the offscreen mobile sidebar, and a failed list refresh unmounts open call details. Preserve cached calls, show an inline retry warning and keep desktop navigation usable.
 - [x] Verify final combined source: 5,122 backend tests (6 existing skips), 1,431 frontend tests, build, static audits and independent UI review. The menu resize regression also releases focus, scroll lock and dialog semantics at desktop width.
+- [x] Verify compiled local UI with authenticated read-only production API calls: hidden links excluded, actual focus transfer/restoration, desktop resize cleanup, cached call detail preserved on browser-only 503, inline retry recovery and no overflow at 320/390px. Limit sidebar transitions to transform/width because animated visibility prevented initial focus in a real browser. Align the Calls header with its content; add a persistent live-browser focus regression.
 - [ ] Merge passing checks and release tested main. Record runtime verification on the release pull request.
 - [ ] Apply the guarded policy from tested main with a fresh serving version and exclusive private journal; verify protected readback.
 - [ ] Confirm actual corrected-name booking, refusal and EN/ES stored-language behavior in production.

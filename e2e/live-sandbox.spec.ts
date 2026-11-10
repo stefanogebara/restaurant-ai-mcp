@@ -73,6 +73,39 @@ test.describe('Production smoke: isolated CI restaurant', () => {
     }
   });
 
+  test('mobile navigation excludes hidden links and releases focus on desktop', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 844 });
+    await login(page);
+    await page.goto('/host-dashboard/calls');
+    const sidebar = page.locator('#dashboard-sidebar');
+    const more = page.locator('button[aria-controls="dashboard-sidebar"]');
+    await expect(more).toBeVisible();
+    await expect(sidebar).toBeHidden();
+    for (let index = 0; index < 4; index += 1) {
+      await page.keyboard.press('Tab');
+      expect(await sidebar.evaluate(element => element.contains(document.activeElement))).toBe(false);
+    }
+    await more.click();
+    const dialog = sidebar.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(sidebar).toBeHidden();
+    await expect(more).toBeFocused();
+    expect(await page.evaluate(() => document.body.style.overflow)).not.toBe('hidden');
+
+    await more.click();
+    await expect(dialog).toBeFocused();
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await expect(dialog).toHaveCount(0);
+    await expect(sidebar).toBeVisible();
+    expect(await page.evaluate(() => document.body.style.overflow)).not.toBe('hidden');
+    const outsideControl = page.locator('main').last().getByRole('button').first();
+    await outsideControl.focus();
+    await expect(outsideControl).toBeFocused();
+    expect(await sidebar.evaluate(element => element.contains(document.activeElement))).toBe(false);
+  });
+
   test('analytics, coupons and events load without borrowed customer data', async ({ page }) => {
     await login(page);
     const analytics = await authenticatedGet(page, '/api/analytics?period=30d');

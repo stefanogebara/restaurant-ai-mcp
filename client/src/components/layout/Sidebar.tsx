@@ -168,7 +168,7 @@ export default function Sidebar() {
           lg:rounded-[26px] lg:bg-deep-charcoal/90 lg:backdrop-blur-xl
           lg:border lg:border-white/10 lg:shadow-[0_8px_32px_rgba(28,25,23,0.25)]
           lg:overflow-hidden
-          transition-all duration-300 ease-in-out
+          transition-[transform,width] duration-300 ease-in-out
           ${isCollapsed ? 'w-20' : 'w-[260px]'}
           ${isMobileOpen ? 'visible translate-x-0' : 'invisible -translate-x-full'}
           lg:visible lg:translate-x-0

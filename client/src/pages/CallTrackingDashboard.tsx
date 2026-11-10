@@ -130,7 +130,7 @@ export default function CallTrackingDashboard() {
         <div className="mx-auto flex max-w-7xl flex-col gap-6 sm:gap-12">
 
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pl-12 sm:pl-0">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <h1 aria-label={t('callTracking.title')} className="font-serif text-3xl sm:text-4xl text-deep-charcoal tracking-tight">
               <span className="sm:hidden">{t('callTracking.titleShort')}</span>
               <span className="hidden sm:inline">{t('callTracking.title')}</span>
