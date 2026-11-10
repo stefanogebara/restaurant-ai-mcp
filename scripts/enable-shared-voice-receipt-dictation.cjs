@@ -13,7 +13,11 @@ const SOURCE_BRANCH = 'agtbrch_3801ks1anwt6ey6a6mvmnjfvgg2e';
 const SOURCE_PROMPT_HASH = 'c87717a656b9cd420542420302e05014d3ac302588fd817eb5867a8bf818ba69';
 // Deliberately not an argument/env override. Set only in a reviewed follow-up
 // after this exact backend commit passes CI and is verified in production.
-const BACKEND_RELEASE = Object.freeze({ commit: null, ci: null, productionVerified: false });
+const BACKEND_RELEASE = Object.freeze({
+  commit: 'bab12e70db5228788a2f29eb6352131787df9251',
+  ci: 'https://github.com/stefanogebara/restaurant-ai-mcp/actions/runs/42894474135',
+  productionVerified: true,
+});
 const NAMES = Object.freeze(['lookup_reservation', 'modify_reservation', 'cancel_reservation']);
 const SOURCE_TOOLS = Object.freeze([
   {
@@ -231,11 +235,15 @@ async function replaceGuestTools({ api, db, options, openJournal = openPrivateJo
     throw error;
   } finally { journal.close(); }
 }
-async function main(argv = process.argv.slice(2), env = process.env) {
-  const options = parseArgs(argv);
-  if (options.apply && (!BACKEND_RELEASE.productionVerified || !/^[a-f0-9]{40}$/.test(BACKEND_RELEASE.commit || '') || !BACKEND_RELEASE.ci)) {
+function assertBackendRelease(release = BACKEND_RELEASE) {
+  if (!release || release.productionVerified !== true || typeof release.commit !== 'string' ||
+      !/^[a-f0-9]{40}$/.test(release.commit) || typeof release.ci !== 'string' || !release.ci.trim()) {
     throw Error('Publication held: exact backend commit, passing CI and production verification are not pinned');
   }
+}
+async function main(argv = process.argv.slice(2), env = process.env) {
+  const options = parseArgs(argv);
+  if (options.apply) assertBackendRelease();
   assertProject(options.projectRef, env.SUPABASE_URL);
   if (!env.ELEVENLABS_API_KEY || !env.SUPABASE_SERVICE_ROLE_KEY) throw Error('Required credentials unavailable');
   const result = await replaceGuestTools({ api: createDictationApi(env.ELEVENLABS_API_KEY), db: createDb(env.SUPABASE_SERVICE_ROLE_KEY), options });
@@ -244,4 +252,4 @@ async function main(argv = process.argv.slice(2), env = process.env) {
 }
 if (require.main === module) main().catch(e => { console.error(e.message); process.exitCode = 1; });
 module.exports = { SOURCE_VERSION, SOURCE_BRANCH, SOURCE_PROMPT_HASH, SOURCE_TOOLS, SOURCE_PROTECTED_HASH, SOURCE_BRANCH_HASH, SOURCE_POLICY, AFTER_POLICY, REPLACEMENTS,
-  BACKEND_RELEASE, NAMES, buildPrompt, buildTool, recordState, protectedHash, readTools, openPrivateJournal, createDictationApi, replaceGuestTools, main };
+  BACKEND_RELEASE, assertBackendRelease, NAMES, buildPrompt, buildTool, recordState, protectedHash, readTools, openPrivateJournal, createDictationApi, replaceGuestTools, main };

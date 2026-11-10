@@ -1,6 +1,6 @@
 # Shared voice receipt dictation: guarded tool replacement
 
-Status: implemented locally; publication is held. Current production does not accept the new dictation field. No provider operation is authorized by this document.
+Status: backend production is verified and its release metadata is pinned. Provider publication remains held pending review and CI of the operator change. No provider operation is authorized by this document.
 
 ## Exact reviewed source
 
@@ -13,7 +13,9 @@ Status: implemented locally; publication is held. Current production does not ac
 
 ## Backend prerequisite and representation
 
-Locke's PR #310 initially implements the contract in `da46ddef3f75ca3bacb336bde6aeff2d8619ee34`. That commit is not a production-release assertion. The final tested revision must also include the requested sentence-period delimiter support, then pass CI and be verified at the production deployment before publication is considered.
+The final bilingual parser and sentence-period delimiter support from PR #310 are merged in main `bab12e70db5228788a2f29eb6352131787df9251`. [Main CI 42894474135](https://github.com/stefanogebara/restaurant-ai-mcp/actions/runs/42894474135) completed successfully. The parent verified deployment `dpl_5D7tE7knEoJeYjTfSs7a6VWQ4bc4` as READY and independently read both `seatable.one` and `www.seatable.one` alias mappings: both point to that exact deployment. The trusted mode-0600 proof is `/tmp/seatable-reschedule-onboarding-20261110/backend-dictation-release.json`, checked at `2026-11-10T20:32:36.596Z`.
+
+Live Smoke 42894474107 attempt 2 was still running after promotion when this pin was prepared; it is not recorded as passed. This release metadata is a reviewed workflow prerequisite, not a new runtime authentication mechanism or a claim that provider publication/calls were tested.
 
 The guest tool body exposes `reservation_id` and `reservation_code_spelling` as optional strings. Modify additionally retains only `new_date`, `new_time`, and `new_party_size`. `required=[]`; unsupported provider `oneOf` is not emitted. The existing literal property and all modification properties remain unchanged. The spelling field description states the 1500-character bound; the backend enforces that bound, grammar and full code shape. Provider support for `maxLength` is not assumed.
 
@@ -39,7 +41,7 @@ The initial validation used the parent-provided private snapshot, not a live API
 
 ## Publication hold and transaction
 
-`BACKEND_RELEASE` is immutable source data with no command-line/environment override. It is deliberately unset. The CLI rejects `--apply` before creating clients or making requests. A reviewed follow-up must pin the exact backend commit, passing CI evidence and production verification after the final grammar fix. Do not bypass the CLI through the exported low-level transaction; that export exists for mocked acceptance testing. No apply command is supplied while held.
+`BACKEND_RELEASE` is immutable source data with no command-line/environment override. It pins the verified main commit and CI URL above with `productionVerified=true`. On apply, `main` calls pure `assertBackendRelease()` with its default source metadata before creating clients or making requests. Missing verification, a missing/invalid full SHA, or missing/blank CI evidence holds publication. A valid release then still requires project identity and credentials; the CLI test verifies missing credentials stop before fetch. Do not bypass the CLI through the exported low-level transaction; that export exists for mocked acceptance testing. No apply command is supplied while operator review/main CI are pending.
 
 When eventually released, the transaction creates exactly three new guest tool records and replaces only the three attached guest IDs. It keeps seven attached names, retains the original four IDs in place, and never updates/deletes any existing record. Headers, vault references, original mocks, language/system tools, model/backup configuration, ASR, voices, phone assignments, auth, workflow, procedures and other protected fields are unchanged.
 
@@ -49,7 +51,7 @@ Any partial creation, source drift, request failure or readback mismatch stops a
 
 ## Validation
 
-- 92 new mocked operator tests, including exact schema checks for all three guest tools, native authority/source pins, preserved records/mocks, private journal ordering, concurrent drift, created-tool normalization, wire payload, ambiguous failures, no retry/delete and CLI publication hold.
-- 213 tests pass across five related operator/guest suites.
+- 110 mocked operator tests, including exact schema checks for all three guest tools, native authority/source pins, preserved records/mocks, private journal ordering, concurrent drift, created-tool normalization, wire payload, ambiguous failures, no retry/delete and CLI publication hold.
+- 231 tests pass across five related operator/guest suites, including pure release validation and the valid-release/missing-credentials CLI path.
 - Script/test syntax and whitespace checks pass.
-- Real private version-920 offline snapshot dry-run passes without external reads/writes. No provider changes, backend deployment, phone calls or push were performed.
+- Real private version-920 offline snapshot dry-run passes without external reads/writes. This sidecar performed no provider changes, backend deployment, phone calls or push; backend release evidence was supplied by the parent.

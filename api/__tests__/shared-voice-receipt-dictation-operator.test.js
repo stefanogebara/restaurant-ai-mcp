@@ -271,12 +271,45 @@ test('HTTP failure is surfaced once, without retry or response-body disclosure',
   const fetcher = jest.fn(async () => ({ ok: false, status: 403, json: jest.fn() }));
   await expect(m.createDictationApi('fake-key', fetcher).createTool({})).rejects.toThrow('HTTP 403'); expect(fetcher).toHaveBeenCalledTimes(1);
 });
-test('CLI publication hold fails before any fetch even with apply arguments', async () => {
+const validRelease = { commit: 'a'.repeat(40), ci: 'https://github.com/stefanogebara/restaurant-ai-mcp/actions/runs/123', productionVerified: true };
+test.each([
+  null, {}, { ...validRelease, productionVerified: false }, { ...validRelease, productionVerified: 'true' },
+  { ...validRelease, commit: null }, { ...validRelease, commit: '' }, { ...validRelease, commit: 'a'.repeat(39) },
+  { ...validRelease, commit: 'g'.repeat(40) }, { ...validRelease, ci: null }, { ...validRelease, ci: '' },
+  { ...validRelease, ci: '   ' }, { ...validRelease, ci: {} },
+])('pure release gate rejects incomplete or unverified metadata %#', release => {
+  expect(() => m.assertBackendRelease(release)).toThrow(/Publication held/);
+});
+test('pure release gate accepts complete verified metadata without mutating it', () => {
+  const release = Object.freeze({ ...validRelease });
+  expect(() => m.assertBackendRelease(release)).not.toThrow();
+  expect(release).toEqual(validRelease);
+});
+test('default release metadata pins the verified production main and passing CI', () => {
+  expect(m.BACKEND_RELEASE).toEqual({
+    commit: 'bab12e70db5228788a2f29eb6352131787df9251',
+    ci: 'https://github.com/stefanogebara/restaurant-ai-mcp/actions/runs/42894474135',
+    productionVerified: true,
+  });
+  expect(Object.isFrozen(m.BACKEND_RELEASE)).toBe(true);
+  expect(() => m.assertBackendRelease()).not.toThrow();
+});
+test('CLI uses only source release metadata and fails before fetch when credentials are missing', async () => {
   const fetcher = jest.spyOn(global, 'fetch').mockRejectedValue(Error('must not be called'));
   try {
+    // This same test remains meaningful when the reviewed source pin is filled:
+    // a valid release must get past the gate and stop at missing credentials.
+    const released = m.BACKEND_RELEASE.productionVerified === true;
+    if (released) expect(() => m.assertBackendRelease()).not.toThrow();
+    else expect(() => m.assertBackendRelease()).toThrow(/Publication held/);
+    const env = { SUPABASE_URL: `https://${TARGET.projectRef}.supabase.co`,
+      // Neither this environment entry nor the exported object may override
+      // the lexical source constant used by main's default helper call.
+      BACKEND_RELEASE: JSON.stringify(released ? {} : validRelease) };
     await expect(m.main(['--project-ref', TARGET.projectRef, '--workspace-id', TARGET.workspaceId, '--branch-id', m.SOURCE_BRANCH,
-      '--expected-version', m.SOURCE_VERSION, '--apply', '--manifest', '/private/journal'], {})).rejects.toThrow(/Publication held/);
-    expect(fetcher).not.toHaveBeenCalled(); expect(m.BACKEND_RELEASE.productionVerified).toBe(false);
+      '--expected-version', m.SOURCE_VERSION, '--apply', '--manifest', '/private/journal'], env))
+      .rejects.toThrow(released ? 'Required credentials unavailable' : 'Publication held');
+    expect(fetcher).not.toHaveBeenCalled();
   } finally { fetcher.mockRestore(); }
 });
 test('journal is exclusive, private and fsynced; unsafe directories and reuse are refused', () => {
