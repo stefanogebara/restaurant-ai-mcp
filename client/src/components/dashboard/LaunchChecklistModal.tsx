@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { LS_LAUNCH_CHECKLIST_DONE } from '../../config/localStorageKeys';
 
@@ -11,10 +10,36 @@ interface Props {
 
 const BOOKING_BASE = 'https://seatable.one';
 
+interface BookingTestCopy {
+  title: string;
+  hint: string;
+  action: string;
+}
+
+// Local copy replaces the old voice-only task without changing shared locales.
+const BOOKING_TEST_COPY: Record<'en' | 'pt' | 'es', BookingTestCopy> = {
+  en: {
+    title: 'Try your booking page',
+    hint: 'Open your page and make a reservation as a guest. Then check it in your dashboard.',
+    action: 'Open booking page',
+  },
+  pt: {
+    title: 'Teste sua página de reservas',
+    hint: 'Abra sua página e faça uma reserva como cliente. Depois, confira no painel.',
+    action: 'Abrir página de reservas',
+  },
+  es: {
+    title: 'Prueba tu página de reservas',
+    hint: 'Abre tu página y haz una reserva como cliente. Después, compruébala en tu panel.',
+    action: 'Abrir página de reservas',
+  },
+};
+
 export default function LaunchChecklistModal({ bookingSlug, onDismiss }: Props) {
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-  const bookingUrl = `${BOOKING_BASE}/book/${bookingSlug}`;
+  const { t, i18n } = useTranslation();
+  const language = (i18n.resolvedLanguage || i18n.language || 'en').toLowerCase();
+  const firstStep = BOOKING_TEST_COPY[language.startsWith('pt') ? 'pt' : language.startsWith('es') ? 'es' : 'en'];
+  const bookingUrl = bookingSlug.trim() ? `${BOOKING_BASE}/book/${bookingSlug.trim()}` : null;
 
   const [copied, setCopied] = useState(false);
   const [checked, setChecked] = useState<Record<number, boolean>>({});
@@ -22,6 +47,7 @@ export default function LaunchChecklistModal({ bookingSlug, onDismiss }: Props) 
   const toggle = (i: number) => setChecked((prev) => ({ ...prev, [i]: !prev[i] }));
 
   const handleCopy = () => {
+    if (!bookingUrl) return;
     navigator.clipboard.writeText(bookingUrl).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -76,18 +102,25 @@ export default function LaunchChecklistModal({ bookingSlug, onDismiss }: Props) 
             </button>
             <div className="flex-1 min-w-0">
               <p className={`text-sm font-semibold ${checked[0] ? 'line-through text-[#A8A29E]' : 'text-deep-charcoal'}`}>
-                {t('launch.step1Title', 'Test your voice agent')}
+                {firstStep.title}
               </p>
               <p className="text-xs text-[#A8A29E] mt-0.5">
-                {t('launch.step1Hint', 'Call your agent and make a test booking')}
+                {firstStep.hint}
               </p>
-              <button
-                type="button"
-                onClick={() => navigate('/host-dashboard/voice-settings')}
-                className="mt-2 text-xs font-semibold text-burgundy hover:underline"
-              >
-                {t('launch.step1CTA', 'Open Voice Settings →')}
-              </button>
+              {bookingUrl ? (
+                <a
+                  href={bookingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-2 text-xs font-semibold text-burgundy hover:underline"
+                >
+                  {firstStep.action}
+                </a>
+              ) : (
+                <p className="text-xs text-[#A8A29E] mt-2">
+                  {t('launch.step2Loading', 'Loading your booking link…')}
+                </p>
+              )}
             </div>
           </div>
 
@@ -107,7 +140,7 @@ export default function LaunchChecklistModal({ bookingSlug, onDismiss }: Props) 
               <p className={`text-sm font-semibold ${checked[1] ? 'line-through text-[#A8A29E]' : 'text-deep-charcoal'}`}>
                 {t('launch.step2Title', 'Share your booking link')}
               </p>
-              {bookingSlug ? (
+              {bookingUrl ? (
                 <div className="mt-2 flex items-center gap-2 bg-[#FAFAF9] border border-glass-border-dark rounded-lg px-3 py-2">
                   <span className="text-xs text-[#706A65] truncate flex-1">{bookingUrl}</span>
                   <button
