@@ -1,12 +1,13 @@
 'use strict';
 
 const mockFrom = jest.fn();
+const mockRpc = jest.fn();
 
 jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn() }),
 }));
 jest.mock('../_lib/supabase', () => ({
-  supabaseAdmin: { from: (...args) => mockFrom(...args) },
+  supabaseAdmin: { rpc: (...args) => mockRpc(...args), from: (...args) => mockFrom(...args) },
   canAccommodateParty: jest.fn(),
 }));
 jest.mock('../_lib/restaurant-registry', () => ({
@@ -23,14 +24,14 @@ jest.mock('../_services/whatsapp/waitlist-handler', () => ({
 }));
 
 const { executeTool } = require('../_services/whatsapp/reservation-tools');
-const restaurant = { id: 'restaurant-1', timezone: 'UTC' };
+const restaurant = { id: '11111111-1111-4111-8111-111111111111', timezone: 'UTC' };
 const sender = { restaurant, sender_phone: '5511999002121' };
 const otherGuest = {
   reservation_id: 'RES-KNOWN', customer_name: 'Private Guest',
   customer_phone: '+5511988887777', date: '2026-10-30', time: '19:00',
   party_size: 2, status: 'confirmed',
 };
-const ownGuest = { ...otherGuest, customer_phone: '+55 (11) 99900-2121' };
+const ownGuest = { ...otherGuest, id: 'row-1', restaurant_id: restaurant.id, customer_phone: '+55 (11) 99900-2121' };
 
 function chain({ row = null, rows = row ? [row] : [], result = row } = {}) {
   const query = {};
@@ -45,6 +46,7 @@ function chain({ row = null, rows = row ? [row] : [], result = row } = {}) {
 
 beforeEach(() => {
   mockFrom.mockReset();
+  mockRpc.mockReset().mockResolvedValue({ data: { success: false, error: { code: 'verification_failed' } }, error: null });
   jest.useFakeTimers({ now: new Date('2026-10-29T12:00:00Z') });
 });
 afterEach(() => jest.useRealTimers());
@@ -59,7 +61,14 @@ test.each(['lookup_reservation', 'cancel_reservation', 'modify_reservation'])(
     expect(result.success).toBe(false);
     expect(JSON.stringify(result)).not.toContain(otherGuest.customer_name);
     expect(read.update).not.toHaveBeenCalled();
-    expect(mockFrom).toHaveBeenCalledTimes(1);
+    if (tool === 'lookup_reservation') expect(mockFrom).toHaveBeenCalledTimes(1);
+    else {
+      expect(mockFrom).not.toHaveBeenCalled();
+      expect(mockRpc).toHaveBeenCalledWith('mutate_guest_reservation', expect.objectContaining({
+        p_customer_phone: sender.sender_phone, p_restaurant_id: restaurant.id,
+        p_reservation_id: otherGuest.reservation_id,
+      }));
+    }
   },
 );
 
@@ -72,6 +81,7 @@ test.each(['lookup_reservation', 'cancel_reservation', 'modify_reservation'])(
     }, { restaurant });
     expect(result.success).toBe(false);
     expect(mockFrom).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
   },
 );
 
@@ -94,46 +104,27 @@ test('the authenticated sender can look up their own reservation despite phone p
   expect(result).toMatchObject({ success: true, count: 1 });
 });
 
-test('cancel is conditional on tenant, exact stored phone and previous status', async () => {
-  const read = chain({ row: ownGuest });
-  const write = chain({ result: { reservation_id: ownGuest.reservation_id } });
-  mockFrom.mockReturnValueOnce(read).mockReturnValueOnce(write);
-  const result = await executeTool('cancel_reservation', {
-    reservation_id: ownGuest.reservation_id,
+// The SQL harness tests status/ownership inside the atomic UPDATE. These
+// adapter cases prove identity comes from the session and refusal is preserved.
+test.each(['cancel_reservation', 'modify_reservation'])('%s passes only authoritative ownership to the atomic RPC', async tool => {
+  mockRpc.mockResolvedValue({ data: { success: true, changed: true, reservation: ownGuest }, error: null });
+  const result = await executeTool(tool, {
+    reservation_id: ownGuest.reservation_id, new_time: '20:00',
+    customer_phone: otherGuest.customer_phone, restaurant_id: 'attacker', status: 'confirmed',
   }, sender);
   expect(result.success).toBe(true);
-  expect(write.eq).toHaveBeenCalledWith('restaurant_id', restaurant.id);
-  expect(write.eq).toHaveBeenCalledWith('customer_phone', ownGuest.customer_phone);
-  expect(write.eq).toHaveBeenCalledWith('status', ownGuest.status);
-  expect(write.select).toHaveBeenCalledWith('reservation_id');
+  expect(mockRpc).toHaveBeenCalledWith('mutate_guest_reservation', {
+    p_restaurant_id: restaurant.id, p_customer_phone: sender.sender_phone,
+    p_reservation_id: ownGuest.reservation_id,
+    p_action: tool === 'cancel_reservation' ? 'cancel' : 'modify',
+    p_changes: tool === 'cancel_reservation' ? {} : { time: '20:00' },
+  });
+  expect(mockFrom).not.toHaveBeenCalled();
 });
 
-test('cancel does not report success if the guarded update matched no row', async () => {
-  mockFrom.mockReturnValueOnce(chain({ row: ownGuest }))
-    .mockReturnValueOnce(chain({ result: null }));
-  const result = await executeTool('cancel_reservation', {
-    reservation_id: ownGuest.reservation_id,
-  }, sender);
-  expect(result.success).toBe(false);
-});
-
-test('modify is conditional on tenant, exact stored phone and previous status', async () => {
-  const write = chain({ result: { ...ownGuest, time: '20:00' } });
-  mockFrom.mockReturnValueOnce(chain({ row: ownGuest })).mockReturnValueOnce(write);
-  const result = await executeTool('modify_reservation', {
-    reservation_id: ownGuest.reservation_id, new_time: '20:00',
-  }, sender);
-  expect(result.success).toBe(true);
-  expect(write.eq).toHaveBeenCalledWith('restaurant_id', restaurant.id);
-  expect(write.eq).toHaveBeenCalledWith('customer_phone', ownGuest.customer_phone);
-  expect(write.eq).toHaveBeenCalledWith('status', ownGuest.status);
-});
-
-test('modify does not report success if the guarded update matched no row', async () => {
-  mockFrom.mockReturnValueOnce(chain({ row: ownGuest }))
-    .mockReturnValueOnce(chain({ result: null }));
-  const result = await executeTool('modify_reservation', {
-    reservation_id: ownGuest.reservation_id, new_time: '20:00',
-  }, sender);
-  expect(result.success).toBe(false);
+test.each(['cancel_reservation', 'modify_reservation'])('%s propagates atomic ownership refusal without guest data', async tool => {
+  const result = await executeTool(tool, { reservation_id: ownGuest.reservation_id, new_time: '20:00' }, sender);
+  expect(result).toMatchObject({ success: false, changed: false, reservation: null, error: { code: 'verification_failed' } });
+  expect(mockRpc).toHaveBeenCalledTimes(1);
+  expect(mockFrom).not.toHaveBeenCalled();
 });
