@@ -26,7 +26,7 @@ import Step4Review from '../components/onboarding/Step4Review';
 import Step5ImportHistory from '../components/onboarding/Step5ImportHistory';
 import SheetCompletion from '../components/onboarding/folha/SheetCompletion';
 import { FolhaDeConfirmacao } from '../components/onboarding/folha/FolhaDeConfirmacao';
-import type { Preset } from '../lib/personaProposta';
+import { ORDEM_PADRAO } from '../lib/personaProposta';
 import OnboardingSuccessModal from '../components/onboarding/OnboardingSuccessModal';
 import OnboardingStepSidebar from '../components/onboarding/OnboardingStepSidebar';
 import type { OnboardingData } from '../types/onboarding.types';
@@ -170,7 +170,9 @@ export default function Onboarding() {
       // A persisted restaurant_id means the restaurant was already created —
       // never rehydrate into a pre-creation step in that case.
       if (saved.restaurant_id) return fresh;
-      return { step: savedStep, data: { ...fresh.data, ...saved } };
+      return { step: savedStep, data: { ...fresh.data, ...saved,
+        voz_preset: ORDEM_PADRAO.some(preset => preset === saved.voz_preset) ? saved.voz_preset : undefined,
+      } };
     } catch {
       return fresh;
     }
@@ -192,7 +194,6 @@ export default function Onboarding() {
     if (restored.step > 1) return 'formulario';
     return 'folha';
   });
-  const [vozEscolhida, setVozEscolhida] = useState<Preset | null>(null);
   // Passo em que a sessão ABRIU (não o atual): o prefill do demo consulta
   // isto para não clobberar um rascunho retomado.
   const initialStepRef = useRef(restored.step);
@@ -200,6 +201,7 @@ export default function Onboarding() {
   // do banner do Passo 1 — ver G2.6.
   const prefillSubstancialRef = useRef(false);
   const [onboardingData, setOnboardingData] = useState<OnboardingData>(restored.data);
+  const vozEscolhida = onboardingData.voz_preset ?? null;
 
   // Step 0 (Google Places discovery) — runs BEFORE step 1 for fresh signups.
   // Two ways it's bypassed:
@@ -534,7 +536,7 @@ export default function Onboarding() {
           updateData={updateData}
           vibeTags={onboardingData.vibe_tags}
           vozEscolhida={vozEscolhida}
-          onEscolherVoz={setVozEscolhida}
+          onEscolherVoz={preset => updateData({ voz_preset: preset })}
           onConcluir={completeOnboarding}
           enviando={isSubmitting}
           origem={isPreFilledFromDemo ? 'demo' : hasPrefillFromScrape ? 'google' : 'manual'}
