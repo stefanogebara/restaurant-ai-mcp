@@ -1,7 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { afterEach, describe, it, expect } from 'vitest';
+import { createElement } from 'react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { readFileSync } from 'fs';
 import { globSync } from 'glob';
 import { resolve } from 'path';
+import ReceiptStatus from '../ReceiptStatus';
+
+afterEach(cleanup);
 
 /**
  * As telas de reserva e de onboarding foram as últimas a passar pela reforma
@@ -83,11 +88,30 @@ describe('reserva + onboarding seguem a paleta quente', () => {
   });
 
   it('pinta "confirmada" com cor de estado, não com a cor de ação', () => {
-    const src = read('pages/BookingConfirmation.tsx');
-    const at = src.indexOf("t('reservations.confirmed')");
-    const badge = src.slice(at - 400, at + 100);
-    expect(badge).toMatch(/emerald/);
-    expect(badge).not.toMatch(/rose-|bg-burgundy\b/);
+    // The badge lives in ReceiptStatus now. Assert the rendered status,
+    // rather than a source substring near an inline translation call.
+    render(createElement(ReceiptStatus, { status: 'confirmed', verification: 'verified', onRetry: () => {} }));
+    const badge = screen.getByRole('status');
+    expect(badge).toHaveTextContent('Confirmed');
+    expect(badge.className).toMatch(/bg-emerald-/);
+    expect(badge.className).toMatch(/text-emerald-/);
+    expect(badge.className).not.toMatch(/rose-|(?:bg|text)-burgundy\b/);
+  });
+
+  it.each([
+    { status: 'cancelled', verification: 'verified' as const },
+    { status: 'completed', verification: 'verified' as const },
+    { status: 'seated', verification: 'verified' as const },
+    { status: 'no_show', verification: 'verified' as const },
+    { status: 'pending', verification: 'verified' as const },
+    { status: 'unknown', verification: 'verified' as const },
+    { status: 'confirmed', verification: 'checking' as const },
+    { status: 'confirmed', verification: 'error' as const },
+  ])('não pinta como confirmada a reserva $status com verificação $verification', ({ status, verification }) => {
+    render(createElement(ReceiptStatus, { status, verification, onRetry: () => {} }));
+    const badge = screen.getByRole('status');
+    expect(badge).not.toHaveTextContent('Confirmed');
+    expect(badge.className).not.toMatch(/emerald|rose-|(?:bg|text)-burgundy\b/);
   });
 
   it('mantém o Stripe Elements no burgundy do sistema', () => {
