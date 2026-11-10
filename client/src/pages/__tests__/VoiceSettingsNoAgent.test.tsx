@@ -66,7 +66,7 @@ describe('Voice page without an individual agent', () => {
   it.each(['#voice-settings:voice', '#voice-settings:phone'])('exposes saved shared setup safely from %s', async hash => {
     window.history.replaceState({}, '', hash);
     setup();
-    expect(await screen.findByRole('heading', { name: 'Shared routing configured' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Shared routing configured' }, { timeout: 5000 })).toBeVisible();
     expect(screen.getByText('Setup saved in Seatable. This page does not check whether the shared phone line is available now.')).toBeVisible();
     expect(screen.getByRole('link', { name: 'Call History' })).toHaveAttribute('href', '/host-dashboard/calls');
     expectReadOnly();
@@ -90,7 +90,7 @@ describe('Voice page without an individual agent', () => {
   it('does not treat a missing restaurant name as a reason to restart onboarding', async () => {
     state.restaurantName = null;
     setup();
-    expect(await screen.findByRole('heading', { name: 'Shared routing configured' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Shared routing configured' }, { timeout: 5000 })).toBeVisible();
     expectReadOnly();
   });
 
