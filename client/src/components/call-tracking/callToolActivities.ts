@@ -10,12 +10,22 @@ function structurallyEqual(a: unknown, b: unknown): boolean {
     structurallyEqual((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key]));
 }
 
-function hasParameters(tool: ToolUsed): boolean {
+function hasParameters(tool: ToolUsed): tool is ToolUsed & { parameters: Record<string, unknown> } {
   return tool.parameters !== null && typeof tool.parameters === 'object' && !Array.isArray(tool.parameters);
 }
 
 function sameInvocation(a: ToolUsed, b: ToolUsed): boolean {
-  return a.tool_name === b.tool_name && hasParameters(a) && hasParameters(b) && structurallyEqual(a.parameters, b.parameters);
+  if (a.tool_name !== b.tool_name || !hasParameters(a) || !hasParameters(b)) return false;
+  if (structurallyEqual(a.parameters, b.parameters)) return true;
+
+  // Historical creation failures can omit the top-level restaurant-name decoration.
+  // Two explicit names must still agree; every other parameter stays exact.
+  const aHasName = Object.prototype.hasOwnProperty.call(a.parameters, 'restaurant_name');
+  const bHasName = Object.prototype.hasOwnProperty.call(b.parameters, 'restaurant_name');
+  if (aHasName === bHasName) return false;
+  const { restaurant_name, ...parameters } = aHasName ? a.parameters : b.parameters;
+  return typeof restaurant_name === 'string' && restaurant_name.trim() !== '' &&
+    structurallyEqual(parameters, aHasName ? b.parameters : a.parameters);
 }
 
 /** Presentation only: retain raw tool evidence and every actual terminal record. */
@@ -30,15 +40,19 @@ export function normalizeCallToolActivities(tools: readonly ToolUsed[]): ToolUse
       if (tool.success === null) {
         const next = tools[i + 1];
         if (next && typeof next.success === 'boolean' && sameInvocation(tool, next) &&
-            !unresolved.some(start => sameInvocation(start, tool))) {
+            !unresolved.some(start => sameInvocation(start, next))) {
           activities.push(next);
           i++;
           continue;
         }
         unresolved.push(tool);
       } else if (typeof tool.success === 'boolean') {
-        const pendingIndex = unresolved.findIndex(start => sameInvocation(start, tool));
-        if (pendingIndex !== -1) unresolved.splice(pendingIndex, 1);
+        const pending = unresolved.filter(start => sameInvocation(start, tool));
+        // Consume identical pending markers by count, but never choose between
+        // different parameter sets that an omitted name makes ambiguous.
+        if (pending.length > 0 && pending.every(start => structurallyEqual(start.parameters, pending[0].parameters))) {
+          unresolved.splice(unresolved.indexOf(pending[0]), 1);
+        }
       }
     }
     activities.push(tool);

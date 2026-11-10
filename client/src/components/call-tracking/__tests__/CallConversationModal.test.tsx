@@ -151,3 +151,25 @@ describe('reservation tool start/result lifecycle', () => {
     expect(screen.getAllByText('Concluída', { exact: true })).toHaveLength(2);
   });
 });
+
+
+it('shows the PT110 historical retry as two creation results without a fictitious unknown result', async () => {
+  await i18n.changeLanguage('pt-BR');
+  const parameters = { date: '2026-11-11', time: '19:00', phone: '+5511999990000', party_size: 2,
+    customer_name: 'Teste PT110', customer_phone: '+5511999990000', restaurant_name: 'Seatable CI Sandbox', conversation_started: true };
+  const failureParameters: Record<string, unknown> = { ...parameters };
+  delete failureParameters.restaurant_name;
+  renderCall({ tools_used: [
+    { tool_name: 'check_availability', success: true, parameters: { date: parameters.date, time: parameters.time, party_size: 2 } },
+    { tool_name: 'create_reservation', success: null, parameters },
+    { tool_name: 'create_reservation', success: true, parameters: { ...parameters } },
+    { tool_name: 'check_availability', success: true, parameters: { date: parameters.date, time: parameters.time, party_size: 2 } },
+    { tool_name: 'create_reservation', success: null, parameters: { ...parameters } },
+    { tool_name: 'create_reservation', success: false, parameters: failureParameters },
+  ] });
+  expect(screen.getAllByText('Criar reserva', { exact: true })).toHaveLength(2);
+  expect(screen.getAllByText(i18n.t('callTracking.toolNames.checkAvailability'), { exact: true })).toHaveLength(2);
+  expect(screen.getAllByText('Concluída', { exact: true })).toHaveLength(3);
+  expect(screen.getAllByText(i18n.t('callTracking.toolResultFailure'), { exact: true })).toHaveLength(1);
+  expect(screen.queryByText('Resultado não registrado')).not.toBeInTheDocument();
+});
