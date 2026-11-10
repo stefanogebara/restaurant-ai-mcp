@@ -613,6 +613,7 @@
     "reservationConfirmed": "Reserva Confirmada",
     "confirmation": {
       "whatsNext": "E agora?",
+      "saveConfirmation": "Guarde este comprovante e o código da sua reserva.",
       "reminder": "Vamos te enviar um lembrete pelo WhatsApp 24 horas antes da sua reserva.",
       "pushTeaserTitle": "Receba um lembrete no dia",
       "pushTeaserBody": "Avisamos no seu navegador uma hora antes da reserva. Sem e-mails chatos.",
@@ -624,7 +625,7 @@
       "howToCancel": "Precisa cancelar ou alterar?",
       "manageHere": "Gerenciar sua reserva"
     },
-    "confirmationSent": "Enviamos uma confirmação para o seu e-mail e telefone.",
+    "reservationRecorded": "Sua reserva foi registrada. Os detalhes estão abaixo.",
     "reservationDetails": "Detalhes da reserva",
     "guest": "Cliente",
     "confirmationId": "ID de Confirmação",
