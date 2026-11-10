@@ -10,34 +10,53 @@ const NATO = new Map(Object.entries({
   juliett: 'j', kilo: 'k', lima: 'l', mike: 'm', november: 'n', oscar: 'o', papa: 'p', quebec: 'q',
   romeo: 'r', sierra: 's', tango: 't', uniform: 'u', victor: 'v', whiskey: 'w', 'x-ray': 'x', yankee: 'y', zulu: 'z',
 }));
-const DIGITS = new Map(['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'].map((word, i) => [word, String(i)]));
+const CASE_WORDS = new Map([
+  ...['uppercase', 'maiúscula', 'maiuscula', 'mayúscula', 'mayuscula'].map(word => [word, 'uppercase']),
+  ...['lowercase', 'minúscula', 'minuscula'].map(word => [word, 'lowercase']),
+]);
+const DIGIT_MARKERS = new Set(['digit', 'dígito', 'digito']);
+const HYPHENS = new Set(['hyphen', 'hífen', 'hifen', 'guion', 'guión']);
+const UNDERSCORES = new Set(['underscore', 'sublinhado']);
+const DIGITS = new Map([
+  ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'],
+  ['zero', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove'],
+  ['cero', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve'],
+].flatMap(words => words.map((word, i) => [word, String(i)])));
 
 function digit(token) {
   return /^[0-9]$/.test(token || '') ? token : DIGITS.get(token);
 }
 
 // This is an alternate encoding of the SAME full opaque code, never a search,
-// correction or shortened proof. Only spelling/control words are case-insensitive.
+// correction or shortened proof. Known EN/PT/ES dictionary words use NFC and
+// case-insensitive matching. Letter/NATO operands remain raw ASCII only.
 // Every letter needs an explicit case word, even a single ASCII letter. A digit
-// may be 0..9/zero..nine, with optional "digit". Only hyphen/underscore are symbols.
+// may be 0..9/a listed number word, with an optional listed digit marker.
 function decodeReservationCodeSpelling(value) {
   if (typeof value !== 'string' || value.length === 0 || value.length > 1500) return null;
   const tokens = value.split(/[\s,;.]+/).filter(Boolean);
-  if (!tokens.length || tokens.some(token => !/^[A-Za-z0-9-]+$/.test(token))) return null;
+  if (!tokens.length) return null;
+  const words = tokens.map(token => token.normalize('NFC').toLowerCase());
   let decoded = '';
   for (let i = 0; i < tokens.length; i++) {
-    const token = tokens[i].toLowerCase();
+    const token = words[i];
+    const letterCase = CASE_WORDS.get(token);
     let character;
-    if (token === 'uppercase' || token === 'lowercase') {
+    if (letterCase) {
       const next = tokens[++i];
-      if (!next) return null;
+      // Do not normalize or transliterate an opaque letter or NATO operand:
+      // e.g. NFC can turn a Kelvin-sign lookalike into ASCII K.
+      if (!next || !/^[A-Za-z-]+$/.test(next)) return null;
       const letter = /^[A-Za-z]$/.test(next) ? next.toLowerCase() : NATO.get(next.toLowerCase());
       if (!letter) return null;
-      character = token === 'uppercase' ? letter.toUpperCase() : letter;
-    } else if (token === 'digit') {
-      character = digit(tokens[++i]?.toLowerCase());
-    } else if (token === 'hyphen') character = '-';
-    else if (token === 'underscore') character = '_';
+      character = letterCase === 'uppercase' ? letter.toUpperCase() : letter;
+    } else if (DIGIT_MARKERS.has(token)) {
+      character = digit(words[++i]);
+    } else if ((token === 'guion' || token === 'guión') && words[i + 1] === 'bajo') {
+      character = '_';
+      i++;
+    } else if (HYPHENS.has(token)) character = '-';
+    else if (UNDERSCORES.has(token)) character = '_';
     else character = digit(token);
     if (character === undefined) return null;
     decoded += character;
