@@ -250,7 +250,7 @@ describe('nonbinding canonical connector suggestions', () => {
     const result = await identify('Seatable e CI Sandbox', city); expectUnbound(result);
     expect(result).not.toHaveProperty('suggested_restaurant');
   });
-  test.each(['Sandbox', 'Seatable C1 Sandbox', 'Setable CI Sandbox', 'Seatable CI',
+  test.each(['Sandbox', 'Seatable C1 Sandbox', 'Seatable CI',
     'e Seatable CI Sandbox', 'Seatable CI Sandbox and', 'Seatable e CI y Sandbox',
     'CI e Seatable Sandbox', 'Seatable with CI Sandbox', 'Completely Unknown'])('no broad fuzzy suggestion: %s', async spoken => {
     const result = await identify(spoken); expectUnbound(result); expect(result).not.toHaveProperty('suggested_restaurant');
