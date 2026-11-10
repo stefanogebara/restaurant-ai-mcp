@@ -396,15 +396,21 @@ describe('Shared voice agent routing', () => {
   const spelledCode = 'RES-20261110-aB_cD9tTXyzQ';
   const receiptSpelling = 'uppercase R uppercase E uppercase S hyphen two zero two six one one one zero hyphen lowercase Alpha uppercase Bravo underscore lowercase Charlie uppercase Delta digit nine lowercase Tango uppercase Tango uppercase X-ray lowercase Yankee lowercase Zulu uppercase Quebec';
 
-  test.each(['lookup_reservation', 'modify_reservation', 'cancel_reservation'])('decoded %s uses only the native caller and bound tenant', async action => {
+  test.each(['lookup_reservation', 'modify_reservation', 'cancel_reservation'])('decoded %s preserves native scope and refuses phone writes without trusted consent', async action => {
     mockChain.maybeSingle.mockResolvedValue({ data: bound, error: null });
     const service = action === 'lookup_reservation' ? mockVerifiedGuest : action === 'modify_reservation' ? mockModifiedGuest : mockCancelledGuest;
     service.mockResolvedValue({ success: false, changed: false, error: { code: 'verification_failed' } });
     const res = mockRes();
     await handler(mockReq({ body: { action, reservation_code_spelling: receiptSpelling, new_time: '20:00' }, headers }), res);
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(service).toHaveBeenCalledTimes(1);
-    expect(service).toHaveBeenCalledWith(expect.objectContaining({ restaurantId: RESTAURANT_A.id, customerPhone: caller, reservationId: spelledCode }));
+    if (action === 'lookup_reservation') {
+      expect(service).toHaveBeenCalledTimes(1);
+      expect(service).toHaveBeenCalledWith(expect.objectContaining({ restaurantId: RESTAURANT_A.id, customerPhone: caller, reservationId: spelledCode }));
+    } else {
+      expect(service).not.toHaveBeenCalled();
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false, changed: false,
+        action_unavailable: true, requires_secure_confirmation: true }));
+    }
     expect(mockLookupReservation).not.toHaveBeenCalled(); expect(mockModifyReservation).not.toHaveBeenCalled(); expect(mockCancelReservation).not.toHaveBeenCalled();
   });
 
@@ -494,11 +500,16 @@ describe('Shared voice agent routing', () => {
     expect(mockVerifiedGuest).toHaveBeenLastCalledWith({ restaurantId: RESTAURANT_A.id, reservationId: spelledCode, customerPhone: caller });
   });
 
-  test('an idempotent shared cancellation does not repeat metered usage', async () => {
+  test('shared cancellation refuses even if its service would report an idempotent success', async () => {
     mockChain.maybeSingle.mockResolvedValue({ data: bound, error: null });
     const code = 'RES-20261110-aB_cD-eF9G12';
     mockCancelledGuest.mockResolvedValue({ success: true, changed: false, reservation: { reservation_id: code } });
-    await handler(mockReq({ body: { action: 'cancel_reservation', reservation_id: code }, headers }), mockRes());
+    const res = mockRes();
+    await handler(mockReq({ body: { action: 'cancel_reservation', reservation_id: code, user_confirmed: true }, headers }), res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false, changed: false,
+      action_unavailable: true, requires_secure_confirmation: true }));
+    expect(mockCancelledGuest).not.toHaveBeenCalled();
     expect(require('../_lib/usage-tracking').trackUsage).not.toHaveBeenCalled();
     expect(mockCancelReservation).not.toHaveBeenCalled();
   });
