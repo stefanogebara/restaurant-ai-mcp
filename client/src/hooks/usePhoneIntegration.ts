@@ -28,14 +28,19 @@ export function usePhoneIntegration() {
     queryFn: async (): Promise<PhoneIntegrationStatus> => {
       const res = await authFetch('/api/phone-integration-simple?action=status');
       if (!res.ok) throw new Error('Phone status unavailable');
-      return res.json();
+      const result: PhoneIntegrationStatus = await res.json();
+      if (result?.success !== true) throw new Error('Phone status unavailable');
+      return result;
     },
     staleTime: SETTINGS_STALE_TIME,
   });
 
   return {
     status: query.data,
-    isLoading: query.isLoading,
+    // Keep recovery controls visible while retrying a failed initial read.
+    isLoading: query.isLoading && !query.isFetched,
     isError: query.isError,
+    refetch: query.refetch,
+    isFetching: query.isFetching,
   };
 }

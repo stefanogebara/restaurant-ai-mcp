@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import i18n from 'i18next';
 import { renderWithProviders } from '../../test/renderWithProviders';
@@ -12,9 +12,12 @@ const state = vi.hoisted(() => ({
   voiceError: false,
 }));
 const voiceQuery = vi.hoisted(() => vi.fn());
+const engineQuery = vi.hoisted(() => vi.fn());
+const browserQuery = vi.hoisted(() => vi.fn());
+const audioPlayback = vi.hoisted(() => vi.fn());
 const saveVoice = vi.hoisted(() => vi.fn());
 const saveEngine = vi.hoisted(() => vi.fn());
-vi.mock('../../components/layout/DashboardLayout', () => ({ default: ({ children }: { children: React.ReactNode }) => <div>{children}</div> }));
+vi.mock('../../components/layout/DashboardLayout', () => ({ default: ({ children }: { children: React.ReactNode }) => <div data-testid="dashboard-layout">{children}</div> }));
 vi.mock('../../hooks/useSubscription', () => ({ useFeatureAccess: () => ({ hasAccess: state.hasAccess, isLoading: false, isError: false, refetch: vi.fn() }) }));
 vi.mock('../../hooks/useSubscriptionManage', () => ({ useSubscriptionData: () => ({ data: { currency: 'BRL' } }) }));
 vi.mock('../../hooks/useVoiceSettings', () => ({
@@ -25,11 +28,11 @@ vi.mock('../../hooks/useVoiceSettings', () => ({
   useSaveVoiceSettings: () => ({ isPending: false, mutate: saveVoice }),
 }));
 vi.mock('../../hooks/useVoiceEngineSettings', () => ({
-  useVoiceEngineSettings: () => ({ data: { voice_engine: 'elevenlabs', voice_engine_status: 'active', openai_voice_id: 'alloy' }, isLoading: false, isError: false, refetch: vi.fn() }),
+  useVoiceEngineSettings: (options: unknown) => { engineQuery(options); return { data: { voice_engine: 'elevenlabs', voice_engine_status: 'active', openai_voice_id: 'alloy' }, isLoading: false, isError: false, refetch: vi.fn() }; },
   useSaveVoiceEngine: () => ({ isPending: false, mutate: saveEngine }),
 }));
-vi.mock('../../hooks/useVoiceBrowser', () => ({ useVoiceBrowser: () => ({ voices: [], isLoadingVoices: false, isLoadingMore: false, hasMore: false, voicesSource: '', error: null, refetch: vi.fn(), filters: { gender: 'all', language: 'pt', search: '' }, setFilters: vi.fn(), handleLoadMore: vi.fn() }) }));
-vi.mock('../../hooks/useAudioPlayback', () => ({ useAudioPlayback: () => ({ playingVoiceId: null, loadingAudio: null, handlePlayVoice: vi.fn(), handlePreviewWithSettings: vi.fn(), stopPlayback: vi.fn() }) }));
+vi.mock('../../hooks/useVoiceBrowser', () => ({ useVoiceBrowser: (options: unknown) => { browserQuery(options); return { voices: [], isLoadingVoices: false, isLoadingMore: false, hasMore: false, voicesSource: '', error: null, refetch: vi.fn(), filters: { gender: 'all', language: 'pt', search: '' }, setFilters: vi.fn(), handleLoadMore: vi.fn() }; } }));
+vi.mock('../../hooks/useAudioPlayback', () => ({ useAudioPlayback: (options: unknown) => { audioPlayback(options); return { playingVoiceId: null, loadingAudio: null, handlePlayVoice: vi.fn(), handlePreviewWithSettings: vi.fn(), stopPlayback: vi.fn() }; } }));
 vi.mock('../../components/dashboard/VoicePersonaPanel', () => ({ default: () => <div>Individual agent presentation</div> }));
 vi.mock('../../services/api', () => ({ authFetch: vi.fn() }));
 const api = vi.mocked(authFetch);
@@ -128,13 +131,75 @@ describe('Voice page without an individual agent', () => {
     expectReadOnly();
   });
 
-  it('keeps a blocked plan blocked and does not request the phone status', async () => {
+  it.each(['#voice-settings:voice', '#voice-settings:phone'])('keeps saved phone setup readable with a restricted plan from %s', async hash => {
     state.hasAccess = false;
+    // Disabled queries can still return cached paid data.
+    state.agentId = 'cached-agent';
+    window.history.replaceState({}, '', hash);
     setup();
-    expect(screen.getByRole('button', { name: /Upgrade to/i })).toBeVisible();
-    expect(voiceQuery).toHaveBeenCalledWith({ enabled: false });
-    expect(screen.queryByRole('heading', { name: 'Shared routing configured' })).not.toBeInTheDocument();
-    expect(api).not.toHaveBeenCalled();
+    expect(await screen.findByRole('heading', { name: 'Shared routing configured' })).toBeVisible();
+    expect(screen.getByTestId('dashboard-layout')).toContainElement(screen.getByRole('heading', { level: 1 }));
+    expect(screen.getByRole('link', { name: 'Call History' })).toHaveAttribute('href', '/host-dashboard/calls');
+    expect(screen.getByRole('link', { name: 'View Plans' })).toHaveAttribute('href', '/precos');
+    expect(screen.getByText('Voice changes are not included in your current plan.')).toBeVisible();
+    expect(voiceQuery).toHaveBeenLastCalledWith({ enabled: false });
+    expect(engineQuery).toHaveBeenLastCalledWith({ enabled: false });
+    expect(browserQuery).toHaveBeenLastCalledWith(expect.objectContaining({ isOpen: false }));
+    expect(audioPlayback).toHaveBeenLastCalledWith(expect.objectContaining({ enabled: false }));
+    expect(screen.queryByRole('button', { name: /upgrade|checkout/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    expect(api).toHaveBeenCalledTimes(1);
+    expectReadOnly();
+  });
+
+  it('disables an already-open paid voice browser when access becomes restricted', async () => {
+    state.agentId = 'agent-owned';
+    const view = setup();
+    fireEvent.click(screen.getByRole('button', { name: 'Change Voice' }));
+    expect(browserQuery).toHaveBeenLastCalledWith(expect.objectContaining({ isOpen: true }));
+    state.hasAccess = false;
+    view.rerender(<MemoryRouter><VoiceSettingsPage /></MemoryRouter>);
+    expect(await screen.findByRole('heading', { name: 'Shared routing configured' })).toBeVisible();
+    expect(browserQuery).toHaveBeenLastCalledWith(expect.objectContaining({ isOpen: false }));
+    expect(audioPlayback).toHaveBeenLastCalledWith(expect.objectContaining({ enabled: false }));
+    expectReadOnly();
+  });
+
+  it('does not infer individual-agent absence when plan access is restricted', async () => {
+    Object.assign(state, { hasAccess: false, phoneShared: false });
+    setup();
+    expect(await screen.findByRole('heading', { name: 'Phone not connected' })).toBeVisible();
+    expect(screen.queryByText(/No individual agent is linked/)).not.toBeInTheDocument();
+    expectReadOnly();
+  });
+
+  it.each(['pt-BR', 'es'])('localizes the restricted plan message in %s', async language => {
+    state.hasAccess = false;
+    await i18n.changeLanguage(language);
+    setup();
+    const plans = await screen.findByRole('link', { name: i18n.t('dashboard.viewPlans') });
+    expect(plans).toHaveAttribute('href', '/precos');
+    const message = i18n.t('voiceSettings.planRestrictedMessage');
+    expect(message).not.toBe('voiceSettings.planRestrictedMessage');
+    expect(screen.getByText(message)).toBeVisible();
+    expectReadOnly();
+  });
+
+  it('retries only phone status after a restricted-plan fetch fails', async () => {
+    Object.assign(state, { hasAccess: false, phoneError: true });
+    setup();
+    expect(await screen.findByRole('alert')).toHaveTextContent("We couldn't check the phone setup right now.");
+    let finish: (response: Response) => void = () => {};
+    api.mockReturnValueOnce(new Promise<Response>(resolve => { finish = resolve; }));
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Retry' })).toBeDisabled());
+    expect(screen.getByRole('link', { name: 'Ask Seatable to verify phone routing' })).toBeVisible();
+    await act(async () => { finish({ ok: true, json: async () => ({ success: true, restaurant: { status: 'not_configured', shared_routing_enabled: true } }) } as Response); });
+    expect(await screen.findByRole('heading', { name: 'Shared routing configured' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+    expect(api).toHaveBeenCalledTimes(2);
+    expect(api.mock.calls.every(([url, options]) => url === '/api/phone-integration-simple?action=status' && !options)).toBe(true);
+    expectReadOnly();
   });
 
   it('retains the existing individual-agent controls when an owned agent is present', async () => {
