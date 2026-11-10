@@ -76,7 +76,7 @@ const RESERVATION = {
   status: 'Confirmed',
 };
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => { jest.clearAllMocks(); mockSingle.mockReset(); });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Lookup
@@ -88,11 +88,11 @@ describe('customer-reservation: lookup', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  test('returns reservation by reservation_id', async () => {
+  test('returns reservation by complete reservation_id and matching phone', async () => {
     mockSingle.mockResolvedValueOnce({ data: RESERVATION, error: null });
 
     const { req, res } = mkReqRes({
-      query: { action: 'lookup', reservation_id: 'CEL-2026-0218-A7K3' },
+      query: { action: 'lookup', reservation_id: 'CEL-2026-0218-A7K3', customer_phone: '+15550001234' },
     });
     await handler(req, res);
 
@@ -102,7 +102,7 @@ describe('customer-reservation: lookup', () => {
     expect(json.reservation.reservation_id).toBe('CEL-2026-0218-A7K3');
   });
 
-  test('allows phone lookup without restaurant_id (cross-tenant)', async () => {
+  test('refuses phone-only lookup without querying reservations', async () => {
     mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'Not found' } });
 
     const { req, res } = mkReqRes({
@@ -110,11 +110,11 @@ describe('customer-reservation: lookup', () => {
     });
     await handler(req, res);
 
-    // Should proceed to DB lookup and return 404 (no match), not 400 (bad request)
-    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockSingle).not.toHaveBeenCalled();
   });
 
-  test('returns reservation by phone with restaurant_id', async () => {
+  test('restaurant_id does not authorize a phone-only lookup', async () => {
     mockSingle.mockResolvedValueOnce({ data: RESERVATION, error: null });
 
     const { req, res } = mkReqRes({
@@ -122,15 +122,16 @@ describe('customer-reservation: lookup', () => {
     });
     await handler(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json.mock.calls[0][0].success).toBe(true);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json.mock.calls[0][0]).not.toHaveProperty('reservation');
+    expect(mockSingle).not.toHaveBeenCalled();
   });
 
   test('returns 404 when not found', async () => {
     mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'Not found' } });
 
     const { req, res } = mkReqRes({
-      query: { action: 'lookup', reservation_id: 'FAKE-0000' },
+      query: { action: 'lookup', reservation_id: 'FAKE-0000', customer_phone: '+15550001234' },
     });
     await handler(req, res);
 

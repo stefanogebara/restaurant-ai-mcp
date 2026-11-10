@@ -33,14 +33,17 @@ function parseReservationDateTime(reservation: Reservation) {
 export default function CustomerPortal() {
   const { t, i18n } = useTranslation();
   useDocumentTitle(t('pageTitles.customerPortal', 'Manage Reservation | seatable'));
-  const [lookupMethod, setLookupMethod] = useState<'id' | 'phone'>('id');
-  const [reservationId, setReservationId] = useState('');
+  const [reservationId, setReservationId] = useState(() => {
+    const params = new URLSearchParams(typeof window === 'undefined' ? '' : window.location.search);
+    // A receipt code may prefill the form, but never triggers a details lookup alone.
+    return params.get('id') || params.get('reservation_id') || '';
+  });
   const [phone, setPhone] = useState('');
   const [reservation, setReservation] = useState<Reservation | null>(null);
   const [isModifying, setIsModifying] = useState(false);
   const [modifiedData, setModifiedData] = useState<Partial<Reservation>>({});
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const lastLookupRef = useRef<{ method: string; value: string } | null>(null);
+  const lastLookupRef = useRef<{ reservationId: string; phone: string } | null>(null);
   const { success, error: showError } = useToast();
 
   // L2: dismiss the cancel-confirm UI when the user presses Esc. Keeps keyboard
@@ -54,25 +57,24 @@ export default function CustomerPortal() {
 
   // `silent` skips the success toast — used by modify's onSuccess re-lookup so
   // the user doesn't see two green toasts ("Updated" AND "Found") after saving.
-  const lookupMutation = useMutation<Reservation, Error, { method: string; value: string; silent?: boolean } | undefined>({
+  const lookupMutation = useMutation<Reservation, Error, { reservationId: string; phone: string; silent?: boolean } | undefined>({
     mutationFn: async (override) => {
-      const currentMethod = override?.method ?? lookupMethod;
-      const currentValue = override?.value ?? (lookupMethod === 'id' ? reservationId : phone);
+      const code = (override?.reservationId ?? reservationId).trim();
+      const customerPhone = (override?.phone ?? phone).trim();
 
-      if (currentMethod === 'id' && !currentValue.trim()) throw new Error(t('reservations.enterReservationId'));
-      if (currentMethod === 'phone' && !currentValue.trim()) throw new Error(t('reservations.enterPhoneNumber'));
+      if (!code) throw new Error(t('reservations.enterReservationId'));
+      if (!customerPhone) throw new Error(t('reservations.enterPhoneNumber'));
 
-      lastLookupRef.current = { method: currentMethod, value: currentValue };
+      lastLookupRef.current = { reservationId: code, phone: customerPhone };
 
       const params = new URLSearchParams({
         action: 'lookup',
-        ...(currentMethod === 'id'
-          ? { reservation_id: currentValue }
-          : { customer_phone: currentValue }),
+        reservation_id: code,
+        customer_phone: customerPhone,
       });
       const response = await fetch(`/api/customer-reservation?${params}`);
       const data = await response.json();
-      if (!data.success || !data.reservation) throw new Error(data.error || data.message || t('reservations.reservationNotFoundLookup'));
+      if (!response.ok || !data.success || !data.reservation) throw new Error(data.error || data.message || t('reservations.reservationNotFoundLookup'));
       return data.reservation;
     },
     onSuccess: (res, override) => {
@@ -180,53 +182,52 @@ export default function CustomerPortal() {
               {t('reservations.manageTitle')}
             </h1>
             <p className="text-[15px] text-warm-stone font-light">
-              {t('reservations.lookupSubtitle')}
+              {t('reservations.enterReservationId')}. {t('reservations.enterPhoneNumber')}.
             </p>
           </div>
 
           {!reservation ? (
             <>
               {/* Lookup Card */}
-              <div className="glass-panel p-8 mb-6">
+              <form className="glass-panel p-8 mb-6" onSubmit={(event) => { event.preventDefault(); lookupMutation.mutate(undefined); }}>
                 <h3 className="text-[15px] font-semibold text-deep-charcoal mb-5">{t('reservations.findReservation')}</h3>
 
                 {/* Phone Input */}
                 <div className="mb-4">
-                  <label className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('reservations.phoneNumber')}</label>
+                  <label htmlFor="customer-lookup-phone" className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('reservations.phoneNumber')}</label>
                   <input
+                    id="customer-lookup-phone"
                     type="tel"
                     inputMode="tel"
+                    autoComplete="tel"
+                    required
                     pattern="^\+?[0-9 ]*$"
                     value={phone}
-                    onChange={(e) => { setPhone(e.target.value.replace(/[^\d+ ]/g, '')); setLookupMethod('phone'); }}
+                    onChange={(e) => setPhone(e.target.value.replace(/[^\d+ ]/g, ''))}
                     placeholder="+XX XXXXXXXXX"
                     className="w-full px-4 py-3 border border-glass-border-input rounded-[10px] text-sm bg-white/60 text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
-                    onKeyDown={(e) => e.key === 'Enter' && lookupMutation.mutate(undefined)}
                   />
-                </div>
-
-                {/* Divider */}
-                <div className="flex items-center gap-4 my-4">
-                  <div className="flex-1 h-px bg-border-gray" />
-                  <span className="text-xs font-medium text-muted-stone">{t('common.or')}</span>
-                  <div className="flex-1 h-px bg-border-gray" />
                 </div>
 
                 {/* Confirmation ID Input */}
                 <div className="mb-2">
-                  <label className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('reservations.confirmationId')}</label>
+                  <label htmlFor="customer-lookup-code" className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('reservations.confirmationId')}</label>
                   <input
+                    id="customer-lookup-code"
                     type="text"
+                    required
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
                     value={reservationId}
-                    onChange={(e) => { setReservationId(e.target.value); setLookupMethod('id'); }}
-                    placeholder={t('reservations.confirmationIdPlaceholder', 'e.g. CEL-0218-A7K3')}
+                    onChange={(e) => setReservationId(e.target.value)}
+                    placeholder="RES-20261110-aB_cD-eF12_X"
                     className="w-full px-4 py-3 border border-glass-border-input rounded-[10px] text-sm bg-white/60 text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
-                    onKeyDown={(e) => e.key === 'Enter' && lookupMutation.mutate(undefined)}
                   />
                 </div>
 
                 <button
-                  onClick={() => lookupMutation.mutate(undefined)}
+                  type="submit"
                   disabled={lookupMutation.isPending}
                   className="w-full mt-4 py-3.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-full transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
@@ -239,7 +240,7 @@ export default function CustomerPortal() {
                     t('reservations.lookUpReservation')
                   )}
                 </button>
-              </div>
+              </form>
             </>
           ) : (
             <div className="space-y-4">
@@ -363,7 +364,7 @@ export default function CustomerPortal() {
 
               {/* Back Button */}
               <button
-                onClick={() => { setReservation(null); setReservationId(''); setPhone(''); setIsModifying(false); }}
+                onClick={() => { setReservation(null); setReservationId(''); setPhone(''); setIsModifying(false); lastLookupRef.current = null; }}
                 className="w-full text-sm text-warm-stone hover:text-stone-gray transition-colors py-2"
               >
                 &larr; {t('reservations.lookUpAnother')}
