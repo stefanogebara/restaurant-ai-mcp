@@ -5,13 +5,62 @@
 const SECURE_CODE = /^RES-\d{8}-[A-Za-z0-9_-]{12}$/;
 const E164 = /^\+[1-9]\d{7,14}$/;
 const ACTIONS = new Set(['lookup_reservation', 'modify_reservation', 'cancel_reservation']);
+const NATO = new Map(Object.entries({
+  alpha: 'a', alfa: 'a', bravo: 'b', charlie: 'c', delta: 'd', echo: 'e', foxtrot: 'f', golf: 'g', hotel: 'h', india: 'i',
+  juliett: 'j', kilo: 'k', lima: 'l', mike: 'm', november: 'n', oscar: 'o', papa: 'p', quebec: 'q',
+  romeo: 'r', sierra: 's', tango: 't', uniform: 'u', victor: 'v', whiskey: 'w', 'x-ray': 'x', yankee: 'y', zulu: 'z',
+}));
+const DIGITS = new Map(['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'].map((word, i) => [word, String(i)]));
+
+function digit(token) {
+  return /^[0-9]$/.test(token || '') ? token : DIGITS.get(token);
+}
+
+// This is an alternate encoding of the SAME full opaque code, never a search,
+// correction or shortened proof. Only spelling/control words are case-insensitive.
+// Every letter needs an explicit case word, even a single ASCII letter. A digit
+// may be 0..9/zero..nine, with optional "digit". Only hyphen/underscore are symbols.
+function decodeReservationCodeSpelling(value) {
+  if (typeof value !== 'string' || value.length === 0 || value.length > 1500) return null;
+  const tokens = value.split(/[\s,;]+/).filter(Boolean);
+  if (!tokens.length || tokens.some(token => !/^[A-Za-z0-9-]+$/.test(token))) return null;
+  let decoded = '';
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i].toLowerCase();
+    let character;
+    if (token === 'uppercase' || token === 'lowercase') {
+      const next = tokens[++i];
+      if (!next) return null;
+      const letter = /^[A-Za-z]$/.test(next) ? next.toLowerCase() : NATO.get(next.toLowerCase());
+      if (!letter) return null;
+      character = token === 'uppercase' ? letter.toUpperCase() : letter;
+    } else if (token === 'digit') {
+      character = digit(tokens[++i]?.toLowerCase());
+    } else if (token === 'hyphen') character = '-';
+    else if (token === 'underscore') character = '_';
+    else character = digit(token);
+    if (character === undefined) return null;
+    decoded += character;
+    if (decoded.length > 25) return null;
+  }
+  return SECURE_CODE.test(decoded) ? decoded : null;
+}
+
+function guestIdentity(data, context) {
+  if (!data || typeof data !== 'object' || Array.isArray(data) || !context ||
+      typeof context.callerNumber !== 'string' || !E164.test(context.callerNumber)) return false;
+  const phones = [data.phone, data.customer_phone, data.caller_phone, data.sender_phone].filter(v => v !== undefined);
+  return !phones.some(v => v !== context.callerNumber) && !data.customer_email;
+}
 
 function guestProof(data, context) {
-  if (!data || typeof data !== 'object' || !context) return null;
-  const code = typeof data.reservation_id === 'string' ? data.reservation_id.trim() : '';
-  if (!E164.test(context.callerNumber || '') || !SECURE_CODE.test(code)) return null;
-  const phones = [data.phone, data.customer_phone, data.caller_phone, data.sender_phone].filter(v => v !== undefined);
-  if (phones.some(v => v !== context.callerNumber) || data.customer_email) return null;
+  if (!guestIdentity(data, context)) return null;
+  const literal = Object.hasOwn(data, 'reservation_id');
+  const spelled = Object.hasOwn(data, 'reservation_code_spelling');
+  if (literal === spelled) return null; // Exactly one representation, never reconcile two.
+  const code = spelled ? decodeReservationCodeSpelling(data.reservation_code_spelling)
+    : typeof data.reservation_id === 'string' ? data.reservation_id.trim() : null;
+  if (!code || !SECURE_CODE.test(code)) return null;
   return { reservationId: code, customerPhone: context.callerNumber };
 }
 
@@ -52,4 +101,4 @@ async function runGuestAction({ action, data, context, restaurantId, conversatio
   return result;
 }
 
-module.exports = { ACTIONS, guestProof, runGuestAction };
+module.exports = { ACTIONS, decodeReservationCodeSpelling, guestIdentity, guestProof, runGuestAction };

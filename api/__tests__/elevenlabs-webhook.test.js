@@ -363,11 +363,12 @@ describe('Shared voice agent routing', () => {
   });
 
   test.each(['lookup_reservation', 'modify_reservation', 'cancel_reservation'])(
-    'blocks %s until guest identity can be verified', async action => {
+    'returns a visible code-verification refusal for authenticated %s', async action => {
     mockChain.maybeSingle.mockResolvedValue({ data: bound, error: null });
     const res = mockRes();
     await handler(mockReq({ body: { action, reservation_id: 'RES-1' }, headers }), res);
-    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false, verification_required: true }));
     expect(mockLookupReservation).not.toHaveBeenCalled();
     expect(mockModifyReservation).not.toHaveBeenCalled();
     expect(mockCancelReservation).not.toHaveBeenCalled();
@@ -390,6 +391,107 @@ describe('Shared voice agent routing', () => {
     expect(mockVerifiedGuest).toHaveBeenCalledWith({ restaurantId: RESTAURANT_A.id, reservationId: code, customerPhone: caller });
     expect(mockLookupReservation).not.toHaveBeenCalled();
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false }));
+  });
+
+  const spelledCode = 'RES-20261110-aB_cD9tTXyzQ';
+  const receiptSpelling = 'uppercase R uppercase E uppercase S hyphen two zero two six one one one zero hyphen lowercase Alpha uppercase Bravo underscore lowercase Charlie uppercase Delta digit nine lowercase Tango uppercase Tango uppercase X-ray lowercase Yankee lowercase Zulu uppercase Quebec';
+
+  test.each(['lookup_reservation', 'modify_reservation', 'cancel_reservation'])('decoded %s uses only the native caller and bound tenant', async action => {
+    mockChain.maybeSingle.mockResolvedValue({ data: bound, error: null });
+    const service = action === 'lookup_reservation' ? mockVerifiedGuest : action === 'modify_reservation' ? mockModifiedGuest : mockCancelledGuest;
+    service.mockResolvedValue({ success: false, changed: false, error: { code: 'verification_failed' } });
+    const res = mockRes();
+    await handler(mockReq({ body: { action, reservation_code_spelling: receiptSpelling, new_time: '20:00' }, headers }), res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(service).toHaveBeenCalledTimes(1);
+    expect(service).toHaveBeenCalledWith(expect.objectContaining({ restaurantId: RESTAURANT_A.id, customerPhone: caller, reservationId: spelledCode }));
+    expect(mockLookupReservation).not.toHaveBeenCalled(); expect(mockModifyReservation).not.toHaveBeenCalled(); expect(mockCancelReservation).not.toHaveBeenCalled();
+  });
+
+  test.each(['lookup_reservation', 'modify_reservation', 'cancel_reservation'])('unbound authenticated %s returns visible restaurant-identification guidance', async action => {
+    const res = mockRes();
+    await handler(mockReq({ body: { action, reservation_code_spelling: receiptSpelling }, headers }), res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ success: false, requires_restaurant_identification: true });
+    expect(mockVerifiedGuest).not.toHaveBeenCalled(); expect(mockModifiedGuest).not.toHaveBeenCalled(); expect(mockCancelledGuest).not.toHaveBeenCalled();
+    expect(mockFrom).not.toHaveBeenCalledWith('reservations');
+  });
+
+  test.each([{}, { reservation_code_spelling: receiptSpelling.replace('lowercase Tango', 'Tango') },
+    { reservation_code_spelling: receiptSpelling + ' please' }, { reservation_code_spelling: receiptSpelling.replace(' uppercase Quebec', '') },
+    { reservation_id: 'RES-20261110-short' }])('invalid code is a private business refusal before any database access %#', async data => {
+    const res = mockRes();
+    await handler(mockReq({ body: { action: 'lookup_reservation', ...data }, headers }), res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false, verification_required: true }));
+    const response = res.json.mock.calls[0][0];
+    expect(response).not.toHaveProperty('reservation'); expect(response).not.toHaveProperty('reservation_id');
+    expect(JSON.stringify(response)).not.toContain(caller); expect(JSON.stringify(response)).not.toContain(spelledCode);
+    expect(mockFrom).not.toHaveBeenCalled();
+    expect(mockVerifiedGuest).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    [{ reservation_id: spelledCode, reservation_code_spelling: receiptSpelling }, {}],
+    [{ reservation_code_spelling: receiptSpelling }, { reservation_id: spelledCode }],
+    [{ reservation_id: spelledCode }, { reservation_code_spelling: receiptSpelling }],
+    [{ reservation_id: spelledCode }, { reservation_id: 'RES-20261110-differentABC' }],
+    [{ reservation_code_spelling: receiptSpelling }, { reservation_code_spelling: receiptSpelling.toUpperCase() }],
+  ])('conflicting body/query representations stay forbidden before database access %#', async (body, query) => {
+    const res = mockRes();
+    await handler(mockReq({ body: { action: 'lookup_reservation', ...body }, query, headers }), res);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(mockFrom).not.toHaveBeenCalled(); expect(mockVerifiedGuest).not.toHaveBeenCalled();
+  });
+
+  test.each(['phone', 'customer_phone', 'caller_phone', 'sender_phone', 'customer_email'])('spelling cannot bypass body or query %s identity overrides', async key => {
+    for (const inQuery of [false, true]) {
+      const value = key === 'customer_email' ? 'other@example.test' : '+15555550999';
+      const res = mockRes();
+      await handler(mockReq({ body: { action: 'lookup_reservation', reservation_code_spelling: receiptSpelling, ...(!inQuery ? { [key]: value } : {}) },
+        query: inQuery ? { [key]: value } : {}, headers }), res);
+      expect(res.status).toHaveBeenCalledWith(403);
+    }
+    expect(mockFrom).not.toHaveBeenCalled(); expect(mockVerifiedGuest).not.toHaveBeenCalled();
+  });
+
+  test.each(['secret', 'caller', 'missing caller', 'agent', 'conversation'])('business-error responses never weaken the native %s guard', async kind => {
+    const invalidHeaders = { ...headers };
+    if (kind === 'secret') invalidHeaders.authorization = 'Bearer ' + 'x'.repeat(40);
+    if (kind === 'caller') invalidHeaders['x-caller-number'] = 'not-an-E164-number';
+    if (kind === 'missing caller') delete invalidHeaders['x-caller-number'];
+    if (kind === 'agent') invalidHeaders['x-agent-id'] = 'other-agent';
+    if (kind === 'conversation') invalidHeaders['x-conversation-id'] = '../foreign';
+    const res = mockRes();
+    await handler(mockReq({ body: { action: 'lookup_reservation', reservation_code_spelling: receiptSpelling }, headers: invalidHeaders }), res);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(mockFrom).not.toHaveBeenCalled(); expect(mockVerifiedGuest).not.toHaveBeenCalled();
+  });
+
+  test('a valid spelling cannot cross a durable caller binding or a restaurant override', async () => {
+    mockChain.maybeSingle.mockResolvedValue({ data: bound, error: null });
+    for (const request of [
+      { body: { action: 'lookup_reservation', reservation_code_spelling: receiptSpelling }, headers: { ...headers, 'x-caller-number': '+15555550999' } },
+      { body: { action: 'lookup_reservation', reservation_code_spelling: receiptSpelling, restaurant_id: RESTAURANT_B.id }, headers },
+    ]) {
+      const res = mockRes(); await handler(mockReq(request), res);
+      expect(res.status).toHaveBeenCalledWith(403);
+    }
+    expect(mockVerifiedGuest).not.toHaveBeenCalled(); expect(mockFrom).not.toHaveBeenCalledWith('reservations');
+  });
+
+  test('GET spelling and identical query/body representations retain their guarded request contracts', async () => {
+    mockChain.maybeSingle.mockResolvedValue({ data: bound, error: null });
+    mockVerifiedGuest.mockResolvedValue({ success: false, changed: false, error: { code: 'verification_failed' } });
+    for (const request of [
+      { method: 'GET', query: { action: 'lookup_reservation', reservation_code_spelling: receiptSpelling }, headers },
+      { body: { action: 'lookup_reservation', reservation_code_spelling: receiptSpelling }, query: { reservation_code_spelling: receiptSpelling }, headers },
+    ]) {
+      const res = mockRes(); await handler(mockReq(request), res);
+      expect(res.status).toHaveBeenCalledWith(200);
+    }
+    expect(mockVerifiedGuest).toHaveBeenCalledTimes(2);
+    expect(mockVerifiedGuest).toHaveBeenLastCalledWith({ restaurantId: RESTAURANT_A.id, reservationId: spelledCode, customerPhone: caller });
   });
 
   test('an idempotent shared cancellation does not repeat metered usage', async () => {
