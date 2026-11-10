@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it } from 'vitest';
+import { act, render, screen, within } from '@testing-library/react';
+import i18n from 'i18next';
 import type { Stats } from '../callTrackingTypes';
 import CallStatsOverview from '../CallStatsOverview';
 
@@ -19,6 +20,8 @@ function stats(total: number, booked: number): Stats {
   };
 }
 
+afterEach(async () => { await act(async () => { await i18n.changeLanguage('en'); }); });
+
 describe('CallStatsOverview', () => {
   it('does not claim a 0% success rate when there were no calls', () => {
     render(<CallStatsOverview stats={stats(0, 0)} />);
@@ -34,18 +37,25 @@ describe('CallStatsOverview', () => {
     render(<CallStatsOverview stats={stats(5, 2)} />);
 
     expect(screen.getByText('80%')).toBeInTheDocument();
-    expect(screen.getByText('4 of 5 calls completed')).toBeInTheDocument();
+    expect(screen.getByText('4 of 5 calls ended')).toBeInTheDocument();
     expect(screen.getByText('1m')).toBeInTheDocument();
   });
 
-  it('shows a completed information call without implying a booking', () => {
+  it.each([
+    ['en', 'Ended calls', '1 of 1 calls ended', 'Completion Rate'],
+    ['pt-BR', 'Chamadas encerradas', '1 de 1 chamadas encerradas', 'Taxa de Conclusão'],
+    ['es', 'Llamadas finalizadas', '1 de 1 llamadas finalizadas', 'Tasa de Finalización'],
+  ])('labels an ended information call without implying task success in %s', async (language, label, caption, oldLabel) => {
+    await act(async () => { await i18n.changeLanguage(language); });
     const informationCall = stats(1, 0);
     informationCall.overview.completed_calls = 1;
     informationCall.overview.completion_rate = 100;
     render(<CallStatsOverview stats={informationCall} />);
 
-    expect(screen.getByText('100%')).toBeInTheDocument();
-    expect(screen.getByText('1 of 1 calls completed')).toBeInTheDocument();
-    expect(screen.getByText('0% conversion rate')).toBeInTheDocument();
+    const metric = screen.getByText(label).parentElement!;
+    expect(within(metric).getByText('100%')).toBeInTheDocument();
+    expect(within(metric).getByText(caption)).toBeInTheDocument();
+    expect(screen.queryByText(oldLabel)).not.toBeInTheDocument();
+    expect(screen.getByText(i18n.t('callTracking.conversionRate', { rate: 0 }))).toBeInTheDocument();
   });
 });
