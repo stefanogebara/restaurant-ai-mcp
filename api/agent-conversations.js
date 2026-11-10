@@ -311,7 +311,7 @@ async function handleGetStats(req, res, user) {
       typeof c.ended_at === 'string' && Number.isFinite(Date.parse(c.ended_at)) &&
       Number.isFinite(c.duration_seconds) && c.duration_seconds >= 0);
     const averageDuration = durationSamples.length
-      ? durationSamples.reduce((sum, c) => sum + c.duration_seconds, 0) / durationSamples.length
+      ? Math.round(durationSamples.reduce((sum, c) => sum + c.duration_seconds, 0) / durationSamples.length)
       : 0;
 
     // Outcome breakdown
@@ -359,7 +359,7 @@ async function handleGetStats(req, res, user) {
           success_rate: parseFloat(successRate),
           completed_calls: completedCalls,
           completion_rate: parseFloat(completionRate),
-          average_duration_seconds: Math.round(averageDuration),
+          average_duration_seconds: averageDuration,
           average_duration_formatted: formatDuration(averageDuration)
         },
         breakdowns: {

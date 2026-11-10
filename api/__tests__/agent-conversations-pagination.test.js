@@ -257,6 +257,14 @@ describe('average call duration uses ended calls with recorded duration samples'
   });
 
   test.each([
+    { durations: [87, 88], seconds: 88, formatted: '1m 28s' },
+    { durations: [59, 60], seconds: 60, formatted: '1m 0s' },
+  ])('formats the same rounded $seconds seconds returned by the API', async ({ durations, seconds, formatted }) => {
+    expect(await overview(durations.map((duration, i) => endedCall(`call-${i}`, duration))))
+      .toMatchObject({ average_duration_seconds: seconds, average_duration_formatted: formatted });
+  });
+
+  test.each([
     { name: 'no calls', rows: [] },
     { name: 'calls without duration samples', rows: [endedCall('missing', null), endedCall('active', null, { ended_at: null })] },
   ])(
