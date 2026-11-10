@@ -67,6 +67,13 @@ async function ensureVoiceBookingLinked(restaurantId, conversationId, callerPhon
   }
 }
 
+// ASR can add/remove an accent while reconfirming the same guest. This is
+// comparison only inside the existing authenticated call/tenant/phone scope;
+// it never changes the stored guest or matches a restaurant name.
+function comparableGuestName(name) {
+  return name.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
 function replayVoiceBooking(existing, params, restaurant) {
   const language = String(restaurant.agent_language || restaurant.language || 'pt').toLowerCase().split(/[-_]/)[0];
   const copy = !['pt', 'es'].includes(language) ? {
@@ -86,7 +93,7 @@ function replayVoiceBooking(existing, params, restaurant) {
     && /^\d{2}:\d{2}(?::00)?$/.test(String(params.time))
     && String(existing.time).slice(0, 5) === String(params.time).slice(0, 5)
     && Number(existing.party_size) === Number(params.party_size)
-    && existing.customer_name.trim().toLowerCase() === params.customer_name.trim().toLowerCase()
+    && comparableGuestName(existing.customer_name) === comparableGuestName(params.customer_name)
     && (existing.special_requests || '') === (params.special_requests || '');
   if (!same) return { success: false, error: 'voice_booking_already_exists', message: copy.conflict };
   return { success: true, reused: true, reservation_id: existing.reservation_id,
