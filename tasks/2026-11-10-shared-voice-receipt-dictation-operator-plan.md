@@ -1,6 +1,6 @@
 # Plan: replace only the shared voice guest tools with dictation-capable tools
 
-Status: plan only. Implementation and all provider operations are held until the backend contract and exact source snapshot are confirmed.
+Status: implemented locally after the stable backend contract and exact source snapshot were supplied. Provider publication remains held; the CLI rejects apply until a reviewed backend release pin is added.
 Base: origin/main 4b0067da4ad8dcaba8ef1bcdcca2cc90f6770587, in a new isolated worktree.
 
 ## Observed source and coordination
@@ -53,3 +53,11 @@ Base: origin/main 4b0067da4ad8dcaba8ef1bcdcca2cc90f6770587, in a new isolated wo
 - Once implemented, report actual new-operator test count, existing related operator-suite count, syntax results, and the source/deployment evidence separately. No test pass or backend release is claimed by this plan.
 
 No provider/API calls, database writes, telephone calls, push, deployment, or publication were performed for this plan.
+
+## Implementation review
+
+Implemented scripts/enable-shared-voice-receipt-dictation.cjs, its own focused acceptance suite, and docs/operations/shared-voice-receipt-dictation.md. The source snapshot was found at /tmp/seatable-reschedule-onboarding-20261110/shared-920-before-private.json; full version 920 and the full c87717… JSON prompt digest match. All seven records, native identity/vault configuration, mock data, full protected agent/owned phone configuration and normalized branch are pinned.
+
+Locke's finalized contract is /tmp/seatable-reschedule-onboarding-20261110/dictation-contract.json, initially PR #310 da46ddef. Field PRESENCE is significant: both proof fields, even null/empty, are forbidden; when sending spelling, OMIT the literal property. Send proof only in the POST body. The final period-delimiter fix and backend production deployment are still release prerequisites.
+
+Validation: 92 new operator tests pass; 213 tests pass in five related suites. Includes all three full-schema acceptance cases. Script/test syntax and git diff --check pass. An offline dry-run using the actual private snapshot passes with zero external calls/writes, and saves private hash-only evidence plus exact before/after policy. No provider, backend, browser, phone or publication operation was performed.
