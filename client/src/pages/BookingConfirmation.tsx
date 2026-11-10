@@ -5,6 +5,7 @@ import ThiingsIcon from '../components/common/ThiingsIcon';
 import { useReservationById, useRestaurantBySlug, type ReservationData } from '../hooks/useBooking';
 import { localizeCancellationPolicy } from '../utils/cancellationPolicy';
 import { useBookingManagementHandoff } from '../hooks/useBookingManagementHandoff';
+import ReceiptCode from '../components/booking/ReceiptCode';
 
 export default function BookingConfirmation() {
   const { slug } = useParams<{ slug: string }>();
@@ -268,10 +269,7 @@ export default function BookingConfirmation() {
 
             <hr className="border-0 border-t border-dashed border-glass-border-dark my-3" />
 
-            <div className="flex justify-between items-center py-2.5">
-              <span className="text-[13px] text-warm-stone">{t('reservations.confirmationId')}</span>
-              <span className="text-[13px] font-mono font-medium text-burgundy bg-burgundy/[6%] px-2.5 py-0.5 rounded-lg truncate max-w-[180px] sm:max-w-none">{reservation.id}</span>
-            </div>
+            <ReceiptCode code={reservation.id} />
           </div>
 
           {/* Push opt-in — only shows when notifications are available and

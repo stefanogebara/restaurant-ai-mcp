@@ -612,6 +612,9 @@
     "confirmation": {
       "whatsNext": "¿Y ahora qué?",
       "saveConfirmation": "Guarda esta confirmación y el código de tu reserva.",
+      "copyCode": "Copiar código",
+      "codeCopied": "Código copiado.",
+      "copyCodeManual": "No se pudo copiar. Selecciona el código completo de arriba y cópialo manualmente.",
       "reminder": "Te enviaremos un recordatorio por WhatsApp 24 horas antes de tu reserva.",
       "pushTeaserTitle": "Recibe un recordatorio el día",
       "pushTeaserBody": "Te avisaremos en el navegador una hora antes de tu reserva. Sin spam.",

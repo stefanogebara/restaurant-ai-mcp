@@ -614,6 +614,9 @@
     "confirmation": {
       "whatsNext": "E agora?",
       "saveConfirmation": "Guarde este comprovante e o código da sua reserva.",
+      "copyCode": "Copiar código",
+      "codeCopied": "Código copiado.",
+      "copyCodeManual": "Não foi possível copiar. Selecione o código completo acima e copie manualmente.",
       "reminder": "Vamos te enviar um lembrete pelo WhatsApp 24 horas antes da sua reserva.",
       "pushTeaserTitle": "Receba um lembrete no dia",
       "pushTeaserBody": "Avisamos no seu navegador uma hora antes da reserva. Sem e-mails chatos.",

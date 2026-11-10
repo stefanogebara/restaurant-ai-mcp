@@ -9,7 +9,7 @@ import type { ReservationData } from '../../hooks/useBooking';
 // The real portal summary has no guest email or delivery receipt. The guest
 // booked without email and the restaurant has WhatsApp disabled.
 const reservation: ReservationData = {
-  id: 'QA-booking-receipt', name: 'Booking Guest', party_size: 2,
+  id: 'RES-20261110-aB_cD-eF12_X', name: 'Booking Guest', party_size: 2,
   date: '2026-11-11', time: '19:30', status: 'confirmed', restaurant_name: 'Cantina Test',
 };
 const restaurant = {
@@ -67,7 +67,12 @@ for (const fromState of [true, false]) {
         </QueryClientProvider>
       );
 
-      expect(await screen.findByText(reservation.id)).toBeVisible();
+      const code = await screen.findByText(reservation.id);
+      expect(code).toBeVisible();
+      expect(code.tagName).toBe('CODE');
+      expect(code).toHaveClass('break-all', 'whitespace-normal', 'select-all', 'min-w-0', 'max-w-full');
+      expect(code).not.toHaveClass('truncate', 'whitespace-nowrap', 'overflow-hidden');
+      expect(screen.getByRole('button', { name: language === 'en' ? 'Copy code' : 'Copiar código' })).toBeVisible();
       // Wait for the real restaurant query, not only router-state reservation data.
       expect(await screen.findByRole('link', { name: restaurant.phone })).toHaveAttribute('href', `tel:${restaurant.phone}`);
       expect(screen.getByText(recorded)).toBeVisible();
