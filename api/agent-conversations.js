@@ -305,7 +305,14 @@ async function handleGetStats(req, res, user) {
     const completedCalls = conversations.filter(c =>
       typeof c.ended_at === 'string' && Number.isFinite(Date.parse(c.ended_at)) &&
       ['reservation_created', 'information_only'].includes(c.outcome)).length;
-    const averageDuration = conversations.reduce((sum, c) => sum + (c.duration_seconds || 0), 0) / totalCalls || 0;
+    // Active calls and missing/invalid durations are not zero-second samples.
+    // Ended error calls still have a duration, independently of completion rate.
+    const durationSamples = conversations.filter(c =>
+      typeof c.ended_at === 'string' && Number.isFinite(Date.parse(c.ended_at)) &&
+      Number.isFinite(c.duration_seconds) && c.duration_seconds >= 0);
+    const averageDuration = durationSamples.length
+      ? durationSamples.reduce((sum, c) => sum + c.duration_seconds, 0) / durationSamples.length
+      : 0;
 
     // Outcome breakdown
     const outcomeBreakdown = {};

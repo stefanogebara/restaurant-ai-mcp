@@ -160,18 +160,18 @@ test('an information call counts as completed without being called a booking', a
 });
 
 test.each([
-  { name: 'unfinished booked call', outcome: 'reservation_created', ended_at: null, booked: true, completed: 0 },
+  { name: 'unfinished booked call', outcome: 'reservation_created', ended_at: null, booked: true, completed: 0, average: 0 },
   { name: 'finalized booked call', outcome: 'reservation_created', ended_at: '2026-11-07T12:01:20Z', booked: true, completed: 1 },
   { name: 'completed information call', outcome: 'information_only', ended_at: '2026-11-07T12:01:20Z', booked: false, completed: 1 },
-  { name: 'zero-second completed call', outcome: 'information_only', ended_at: '2026-11-07T12:00:00Z', duration_seconds: 0, booked: false, completed: 1 },
-  { name: 'completed call without recorded duration', outcome: 'reservation_created', ended_at: '2026-11-07T12:01:20.000+00:00', duration_seconds: null, booked: true, completed: 1 },
+  { name: 'zero-second completed call', outcome: 'information_only', ended_at: '2026-11-07T12:00:00Z', duration_seconds: 0, booked: false, completed: 1, average: 0 },
+  { name: 'completed call without recorded duration', outcome: 'reservation_created', ended_at: '2026-11-07T12:01:20.000+00:00', duration_seconds: null, booked: true, completed: 1, average: 0 },
   { name: 'ended error call', outcome: 'error', ended_at: '2026-11-07T12:01:20Z', booked: false, completed: 0 },
-  { name: 'unfinished information call', outcome: 'information_only', ended_at: null, booked: false, completed: 0 },
+  { name: 'unfinished information call', outcome: 'information_only', ended_at: null, booked: false, completed: 0, average: 0 },
   ...[undefined, '', '   ', 'not-a-date', '2026-99-07T12:01:20Z', 0, true, {}].map(ended_at => ({
     name: `booked call with invalid end time ${JSON.stringify(ended_at)}`,
-    outcome: 'reservation_created', ended_at, booked: true, completed: 0,
+    outcome: 'reservation_created', ended_at, booked: true, completed: 0, average: 0,
   })),
-])('completion statistics: $name', async ({ outcome, ended_at, duration_seconds = 80, booked, completed }) => {
+])('completion statistics: $name', async ({ outcome, ended_at, duration_seconds = 80, booked, completed, average = 80 }) => {
   const row = {
     id: 'call', started_at: '2026-11-07T12:00:00Z', duration_seconds,
     outcome, successful_booking: booked, language: 'pt',
@@ -197,9 +197,73 @@ test.each([
     success_rate: booked ? 100 : 0,
     completed_calls: completed,
     completion_rate: completed * 100,
-    average_duration_seconds: duration_seconds || 0,
-    average_duration_formatted: duration_seconds ? '1m 20s' : '0s',
+    average_duration_seconds: average,
+    average_duration_formatted: average ? '1m 20s' : '0s',
   });
+});
+
+describe('average call duration uses ended calls with recorded duration samples', () => {
+  const endedCall = (id, duration_seconds, extra = {}) => ({
+    id, started_at: '2026-11-10T12:00:00Z', ended_at: '2026-11-10T12:02:00Z',
+    duration_seconds, outcome: 'information_only', successful_booking: false, ...extra,
+  });
+  async function overview(rows) {
+    queryResult = { data: rows, error: null };
+    const res = response();
+    await handler({ method: 'GET', query: { action: 'stats', channel: 'phone', period: '90d' } }, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(mockQuery.eq).toHaveBeenCalledWith('restaurant_info_id', 'owned');
+    expect(mockQuery.or).toHaveBeenCalledWith('caller_phone.not.is.null,called_phone.not.is.null');
+    return res.json.mock.calls.at(-1)[0].stats.overview;
+  }
+
+  test('starting call 119 changes total calls without lowering the 15-call average', async () => {
+    const completed = Array.from({ length: 15 }, (_, i) => endedCall(`call-${i}`, 92));
+    const before = await overview(completed);
+    expect(before).toMatchObject({ total_calls: 15, completed_calls: 15, average_duration_seconds: 92 });
+
+    const active = endedCall('call-119', null, { ended_at: null });
+    const during = await overview([...completed, active]);
+    expect(during).toMatchObject({
+      total_calls: 16, completed_calls: 15, successful_bookings: 0,
+      average_duration_seconds: 92, average_duration_formatted: '1m 32s',
+    });
+    expect(await overview([...completed, {
+      ...active, ended_at: '2026-11-10T12:01:48Z', duration_seconds: 108,
+    }])).toMatchObject({ total_calls: 16, completed_calls: 16, average_duration_seconds: 93, average_duration_formatted: '1m 33s' });
+  });
+
+  test.each([null, undefined, NaN, Infinity, -1, '180', '', false])(
+    'excludes an ended call with unavailable or invalid duration %p from the denominator', async duration => {
+      expect(await overview([endedCall('valid', 90), endedCall('invalid', duration)]))
+        .toMatchObject({ total_calls: 2, completed_calls: 2, average_duration_seconds: 90, average_duration_formatted: '1m 30s' });
+    },
+  );
+
+  test.each([null, '', 'not-a-date'])('excludes duration recorded before a valid end timestamp: %p', async ended_at => {
+    expect(await overview([endedCall('finished', 90), endedCall('unfinished', 300, { ended_at })]))
+      .toMatchObject({ total_calls: 2, completed_calls: 1, average_duration_seconds: 90 });
+  });
+
+  test('includes an actual zero-second sample and preserves ended error-call duration', async () => {
+    expect(await overview([
+      endedCall('zero', 0),
+      endedCall('error', 120, { outcome: 'error' }),
+      endedCall('booked', 60, { outcome: 'reservation_created', successful_booking: true }),
+    ])).toMatchObject({
+      total_calls: 3, completed_calls: 2, successful_bookings: 1,
+      average_duration_seconds: 60, average_duration_formatted: '1m 0s',
+    });
+  });
+
+  test.each([
+    { name: 'no calls', rows: [] },
+    { name: 'calls without duration samples', rows: [endedCall('missing', null), endedCall('active', null, { ended_at: null })] },
+  ])(
+    'preserves the existing zero-sample fallback for $name', async ({ rows }) => {
+      expect(await overview(rows)).toMatchObject({ average_duration_seconds: 0, average_duration_formatted: '0s' });
+    },
+  );
 });
 
 test('conversation detail can load against the deployed call schema', async () => {
