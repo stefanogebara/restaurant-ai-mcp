@@ -269,25 +269,16 @@ async function handleCreate(req, res) {
   // country field, but 'internationalPhoneNumber' gives us '+34 914…' etc.
   // Without this, a Madrid demo was landing with agent_language='en' because
   // effectiveCountry fell back to 'Unknown' → default 'en'.
-  const COUNTRY_LANGUAGE_MAP = {
-    BR: 'pt', PT: 'pt', ES: 'es', MX: 'es', AR: 'es', CO: 'es', CL: 'es', PE: 'es',
-    FR: 'fr', IT: 'it', DE: 'de', JP: 'ja', US: 'en', GB: 'en', CA: 'en', AU: 'en',
-  };
-  function countryFromPhone(phone) {
-    if (!phone || typeof phone !== 'string') return null;
-    const digits = phone.replace(/[^\d+]/g, '');
-    if (!digits.startsWith('+')) return null;
-    // Order matters: longer prefixes first so '+351' doesn't match '+3'.
-    const prefixes = [
-      ['+351', 'PT'], ['+54', 'AR'], ['+55', 'BR'], ['+56', 'CL'], ['+57', 'CO'],
-      ['+52', 'MX'], ['+51', 'PE'], ['+34', 'ES'], ['+33', 'FR'], ['+39', 'IT'],
-      ['+49', 'DE'], ['+44', 'GB'], ['+81', 'JP'], ['+61', 'AU'], ['+1', 'US'],
-    ];
-    for (const [p, iso] of prefixes) if (digits.startsWith(p)) return iso;
-    return null;
-  }
+  // Same map as the onboarding (api/_lib/country-locale.js). The local copy
+  // lacked BE/CH/AT and uppercased a country NAME ("SPAIN"), so those demos
+  // were born in 'en'. A two-letter code outside the map still counts for
+  // the timezone below; only the language needs a supported country.
+  const { COUNTRY_LANGUAGE_MAP, resolveCountryIso, countryFromPhone } = require('../_lib/country-locale');
+  const countryText = typeof effectiveCountry === 'string' && effectiveCountry.trim() && effectiveCountry !== 'Unknown'
+    ? effectiveCountry.trim() : null;
   const resolvedCountry =
-    (effectiveCountry && effectiveCountry !== 'Unknown' && effectiveCountry.toUpperCase()) ||
+    resolveCountryIso(countryText) ||
+    (countryText && /^[A-Za-z]{2}$/.test(countryText) ? countryText.toUpperCase() : null) ||
     countryFromPhone(effectivePhone) ||
     null;
   const requestedLanguage = typeof demo_language === 'string' ? demo_language.toLowerCase() : '';

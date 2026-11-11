@@ -44,4 +44,5 @@ test.each([
   expect(result.ok).toBe(true);
   expect(mockInsert).toHaveBeenCalledTimes(1);
   expect(mockInsert.mock.calls[0][0].timezone).toBe(zone);
+  expect(mockInsert.mock.calls[0][0].agent_language).toBe('pt');
 });
