@@ -658,19 +658,19 @@ function buildToolDefinitions(baseUrl, restaurantId, webhookSecret) {
     },
     {
       type: 'webhook', name: 'lookup_reservation',
-      description: 'Find an existing reservation by customer phone number or name.',
+      description: 'Find an existing reservation. Requires the complete confirmation code from the receipt AND the phone number used for the booking. A name alone is never enough.',
       api_schema: {
         url: `${baseUrl}/api/elevenlabs-webhook?action=lookup_reservation${rp}`, method: 'POST',
         content_type: 'application/json', request_headers: authHeaders,
         request_body_schema: { type: 'object', properties: {
-          customer_phone: { type: 'string', description: 'Phone number for the reservation' },
-          customer_name: { type: 'string', description: 'Name for the reservation (optional if phone provided)' },
-        } },
+          reservation_id: { type: 'string', description: 'Complete confirmation code exactly as on the receipt, e.g. RES-20261111-AbC123xYz789' },
+          customer_phone: { type: 'string', description: 'Phone number used for the reservation' },
+        }, required: ['reservation_id', 'customer_phone'] },
       },
     },
     {
       type: 'webhook', name: 'cancel_reservation',
-      description: 'Cancel an existing reservation by ID.',
+      description: 'Cancellations are not available by phone. Calling this returns that policy; tell the guest to use the customer portal link from the receipt or contact the restaurant.',
       api_schema: {
         url: `${baseUrl}/api/elevenlabs-webhook?action=cancel_reservation${rp}`, method: 'POST',
         content_type: 'application/json', request_headers: authHeaders,
@@ -681,7 +681,7 @@ function buildToolDefinitions(baseUrl, restaurantId, webhookSecret) {
     },
     {
       type: 'webhook', name: 'modify_reservation',
-      description: 'Change date, time, or party size of an existing reservation.',
+      description: 'Changes are not available by phone. Calling this returns that policy; tell the guest to use the customer portal link from the receipt or contact the restaurant.',
       api_schema: {
         url: `${baseUrl}/api/elevenlabs-webhook?action=modify_reservation${rp}`, method: 'POST',
         content_type: 'application/json', request_headers: authHeaders,

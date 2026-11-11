@@ -734,9 +734,10 @@ async function handleCreateReservation(req, res) {
 async function handleLookupReservation(req, res) {
   const conversationId = req.conversation_id;
   const data = req.method === 'POST' ? req.body : req.query;
-  // Accept both "name" and "customer_name" field names
-  const { phone, reservation_id } = data;
-  const name = data.name || data.customer_name;
+  // The agent's tool schema sends customer_phone; older callers send phone.
+  // A name is never proof of ownership, so it is not forwarded (audit F4).
+  const phone = data.phone || data.customer_phone;
+  const { reservation_id } = data;
   // Get restaurant from session, request, body, or query string restaurant_id (voice agent)
   const _qRid = req.query.restaurant_id || req.query.restaurantId;
   let restaurant = req.restaurant || {};
@@ -748,18 +749,18 @@ async function handleLookupReservation(req, res) {
   if (conversationId) {
     await req.conversationLogger.logToolCall(conversationId, {
       tool_name: 'lookup_reservation',
-      parameters: { phone, name, reservation_id },
+      parameters: { reservation_id },
       success: null
     });
   }
 
-  const result = await toolHandlers.lookupReservation(restaurant.id, { phone, name, reservation_id });
+  const result = await toolHandlers.lookupReservation(restaurant.id, { phone, reservation_id });
 
   // Log result
   if (conversationId) {
     await req.conversationLogger.logToolCall(conversationId, {
       tool_name: 'lookup_reservation',
-      parameters: { phone, name, reservation_id },
+      parameters: { reservation_id },
       success: result.success,
       result: result.found ? { found: true, reservation_id: result.reservations?.[0]?.reservation_id } : { found: false }
     });

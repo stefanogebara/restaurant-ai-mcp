@@ -1686,21 +1686,24 @@ describe('Field name aliases', () => {
     );
   });
 
-  test('lookup_reservation accepts "customer_name" as alias for "name"', async () => {
+  // Audit 2026-11-11, F4: a name is never proof of ownership. The agent's
+  // schema sends customer_phone; it must reach the lookup as the phone proof.
+  test('lookup_reservation forwards customer_phone as the phone and never the name', async () => {
     const body = {
       action: 'lookup_reservation',
       restaurant_id: RESTAURANT_A.id,
       customer_name: 'Maria',
+      customer_phone: '+5511911110000',
+      reservation_id: 'RES-20261111-AAAAAAAAAAAA',
     };
     const req = authenticatedReq({ body });
     const res = mockRes();
 
     await handler(req, res);
 
-    expect(mockLookupReservation).toHaveBeenCalledWith(
-      RESTAURANT_A.id,
-      expect.objectContaining({ name: 'Maria' })
-    );
+    expect(mockLookupReservation).toHaveBeenCalledWith(RESTAURANT_A.id, {
+      phone: '+5511911110000', reservation_id: 'RES-20261111-AAAAAAAAAAAA',
+    });
   });
 
   test('create_reservation accepts "phone" as alias for "customer_phone"', async () => {
