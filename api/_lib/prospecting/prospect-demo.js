@@ -261,6 +261,9 @@ async function criarPreviaDemo(leadId) {
       restaurant_type: sectorToType(lead.sector),
       city: (lead.city || '').trim() || 'São Paulo',
       country: 'BR', // prospecting is Brazil-only
+      // Explicit: the column default was 'UTC', which made the preview's
+      // booking rules run 3 hours off. The column no longer has a default.
+      timezone: require('../timezone').suggestTimezone('BR', (lead.city || '').trim() || 'São Paulo'),
       agent_language: 'pt',
       email: `previa+${String(leadId).slice(0, 8)}@seatable.one`,
       phone: lead.phone || 'N/A',
