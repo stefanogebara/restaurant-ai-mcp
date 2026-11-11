@@ -523,9 +523,10 @@ async function handleCreateReservation(req, res) {
     });
   }
 
-  // Don't allow past dates
-  const today = new Date().toISOString().split('T')[0];
-  if (date < today) {
+  // Cheap early refusal: before yesterday in UTC is the past in every zone.
+  // The exact check uses the restaurant's local date once it is loaded.
+  const utcYesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+  if (date < utcYesterday) {
     return res.status(400).json({
       success: false,
       message: 'Cannot book for a past date.'
@@ -546,6 +547,18 @@ async function handleCreateReservation(req, res) {
     return res.status(404).json({
       success: false,
       message: 'Restaurant not found'
+    });
+  }
+
+  // Don't allow past dates — "today" is the restaurant's local date, not UTC
+  // (after 21:00 in São Paulo the UTC date is already tomorrow).
+  const { getLocalDate } = require('./_lib/timezone');
+  let today;
+  try { today = getLocalDate(restaurant.timezone || 'UTC'); } catch { today = getLocalDate('UTC'); }
+  if (date < today) {
+    return res.status(400).json({
+      success: false,
+      message: 'Cannot book for a past date.'
     });
   }
 
