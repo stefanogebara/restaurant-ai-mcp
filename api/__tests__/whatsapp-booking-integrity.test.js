@@ -96,6 +96,15 @@ test('new booking uses tenant and sender from session, never the model-provided 
   expect(mockButtons.mock.calls[0][3]).toEqual({ phoneNumberId: context.receiver });
 });
 
+// Audit 2026-11-11, F7: the receipt must carry the exact stored code, the only
+// form the portal and the voice line accept.
+test('the confirmation shows the complete stored code', async () => {
+  mockRpc.mockResolvedValueOnce({ data: { status: 'created', reservation_id: 'RES-20991231-AbC123xYz789' }, error: null });
+  await executeTool('create_reservation', input, session, context);
+  const text = mockButtons.mock.calls[0][1];
+  expect(text).toContain('Código: RES-20991231-AbC123xYz789');
+});
+
 test('a Meta send refusal is reported without pretending the committed booking failed', async () => {
   mockButtons.mockResolvedValueOnce({ success: false, error: 'Meta rejected recipient' });
   const result = await executeTool('create_reservation', input, session, context);
