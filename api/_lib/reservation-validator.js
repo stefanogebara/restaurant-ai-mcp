@@ -64,8 +64,18 @@ function validateReservation(params, restaurant) {
     max_advance_days: restaurant.max_advance_days || 90
   };
 
-  // Parse the requested date and time
-  const requestedDateTime = new Date(`${date}T${time}:00`);
+  // The slot is a wall-clock time in the restaurant's zone. Parsing it with
+  // new Date(`${date}T${time}`) read it in the server's zone (UTC in
+  // production): at 17:00 in São Paulo, 19:00 tonight was "in the past".
+  const { localSlotToInstant } = require('./timezone');
+  const requestedDateTime = localSlotToInstant(date, time, config.timezone);
+  if (!requestedDateTime) {
+    return {
+      valid: false,
+      errors: [{ code: 'INVALID_TIME', message: 'Please provide a valid time in HH:MM format for that date.' }],
+      message: 'Please provide a valid time in HH:MM format for that date.'
+    };
+  }
   const now = new Date();
 
   // 1. Check if date is in the past
