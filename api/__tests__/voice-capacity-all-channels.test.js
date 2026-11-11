@@ -92,6 +92,12 @@ describe('canAccommodateParty counts every channel', () => {
     expect(r.table_ids).toEqual([T2]);
   });
 
+  test('a party size sent as text is added, not concatenated', async () => {
+    mockBookings = [booking({ party_size: 4 })];
+    const r = await canAccommodateParty('r-1', '4', { date: '2026-11-26', time: '19:00', durationMinutes: 90 });
+    expect(r.can_accommodate).toBe(true);
+  });
+
   test('an unreadable calendar fails closed instead of looking empty', async () => {
     mockBookingError = { message: 'timeout' };
     const r = await ask(2);
