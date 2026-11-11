@@ -768,40 +768,54 @@ function timeToMinutes(timeStr) {
   return h * 60 + m;
 }
 
+// Statuses that hold seats, compared case-insensitively. Legacy rows carry
+// 'Confirmed'/'Pending'; the guarded SQL transitions use lower(status).
+const SEAT_HOLDING = new Set(['confirmed', 'pending', 'seated']);
+
+function shiftDate(date, days) {
+  const d = new Date(`${date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 /**
- * Get the set of table UUIDs already reserved at a given date/time window.
- * Only considers confirmed/seated reservations whose time slot overlaps.
- * @param {string} restaurantId
- * @param {string} date - YYYY-MM-DD
- * @param {string} time - HH:MM or HH:MM:SS
- * @param {number} durationMinutes - length of reservation slot
- * @returns {Set<string>} occupied table IDs
+ * Seats and tables already held in the window [time, time + duration).
+ * Counts EVERY seat-holding booking from every channel, with or without a
+ * table assignment, over the previous, same and next day (late services cross
+ * midnight). This is the same admission rule as book_whatsapp_reservation and
+ * mutate_guest_reservation; before 2026-11-11 voice skipped unassigned
+ * bookings, so a restaurant filled through WhatsApp still took voice bookings
+ * (audit F2: 12 guests in 8 seats).
+ * @returns {{ ok: boolean, bookedIds: Set<string>, seatsInUse: number }}
  */
-async function getBookedTableIds(restaurantId, date, time, durationMinutes) {
+async function getSlotOccupancy(restaurantId, date, time, durationMinutes) {
   const { data, error } = await supabase
     .from('reservations')
-    .select('table_ids, time')
+    .select('table_ids, date, time, party_size, status')
     .eq('restaurant_id', restaurantId)
-    .eq('date', date)
-    .in('status', ['confirmed', 'seated']);
+    .gte('date', shiftDate(date, -1))
+    .lte('date', shiftDate(date, 1));
 
-  if (error || !data) return new Set();
+  // Fail closed: an unreadable calendar must not look like an empty one.
+  if (error || !Array.isArray(data)) return { ok: false, bookedIds: new Set(), seatsInUse: 0 };
 
+  const day = d => Math.round((Date.parse(`${d}T00:00:00Z`) - Date.parse(`${date}T00:00:00Z`)) / 86400000);
   const newStart = timeToMinutes(time);
   const newEnd = newStart + durationMinutes;
-  const occupied = new Set();
+  const bookedIds = new Set();
+  let seatsInUse = 0;
 
   for (const r of data) {
-    if (!r.table_ids || r.table_ids.length === 0) continue;
-    const rStart = timeToMinutes(r.time);
+    if (!SEAT_HOLDING.has(String(r.status || '').toLowerCase()) || !r.time || !r.date) continue;
+    const rStart = day(String(r.date).slice(0, 10)) * 1440 + timeToMinutes(String(r.time));
     const rEnd = rStart + durationMinutes;
     // Overlap: existing starts before new ends AND existing ends after new starts
-    if (rStart < newEnd && rEnd > newStart) {
-      for (const tid of r.table_ids) occupied.add(tid);
-    }
+    if (!(rStart < newEnd && rEnd > newStart)) continue;
+    seatsInUse += Number(r.party_size) || 0;
+    for (const tid of r.table_ids || []) bookedIds.add(tid);
   }
 
-  return occupied;
+  return { ok: true, bookedIds, seatsInUse };
 }
 
 /**
@@ -892,11 +906,24 @@ const canAccommodateParty = async (restaurantId, partySize, options = {}) => {
   let availableTables = tablesResult.tables;
   const allTables = availableTables; // keep full list for max capacity calc
 
-  // Exclude tables booked at the requested time slot
+  // Exclude tables booked at the requested time slot, and refuse when the
+  // seats already held (assigned or not) leave no room for this party.
   if (date && time) {
-    const bookedIds = await getBookedTableIds(restaurantId, date, time, durationMinutes);
-    if (bookedIds.size > 0) {
-      availableTables = availableTables.filter(t => !bookedIds.has(t.id));
+    const duration = Math.max(30, Math.min(Number(durationMinutes) || 90, 360));
+    const occupancy = await getSlotOccupancy(restaurantId, date, time, duration);
+    if (!occupancy.ok) return { success: false, can_accommodate: false };
+    const totalSeats = allTables.reduce((sum, t) => sum + (Number(t.capacity) || 0), 0);
+    if (occupancy.seatsInUse + partySize > totalSeats) {
+      return {
+        success: true,
+        can_accommodate: false,
+        max_capacity: calcMaxCapacity(allTables),
+        seats_available: Math.max(0, totalSeats - occupancy.seatsInUse),
+        reason: `Only ${Math.max(0, totalSeats - occupancy.seatsInUse)} seats remain at that time.`
+      };
+    }
+    if (occupancy.bookedIds.size > 0) {
+      availableTables = availableTables.filter(t => !occupancy.bookedIds.has(t.id));
     }
   }
 
