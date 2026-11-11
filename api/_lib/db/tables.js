@@ -913,7 +913,8 @@ const canAccommodateParty = async (restaurantId, partySize, options = {}) => {
     const occupancy = await getSlotOccupancy(restaurantId, date, time, duration);
     if (!occupancy.ok) return { success: false, can_accommodate: false };
     const totalSeats = allTables.reduce((sum, t) => sum + (Number(t.capacity) || 0), 0);
-    if (occupancy.seatsInUse + partySize > totalSeats) {
+    // A model-authored party size may arrive as text: add numbers, never concatenate.
+    if (occupancy.seatsInUse + Number(partySize) > totalSeats) {
       return {
         success: true,
         can_accommodate: false,
