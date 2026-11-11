@@ -30,6 +30,16 @@ set -uo pipefail
 construir() { echo "BUILD: $1"; exit 1; }
 pular()     { echo "PULA: $1";  exit 0; }
 
+# SEM PRÉ-VISUALIZAÇÃO (regra do time desde 23/09/2026): só produção constrói.
+# A configuração do projeto na Vercel já dizia isso, mas o `ignoreCommand` do
+# vercel.json passa por cima dela — e este script só olhava caminhos. Em
+# 10–11/11/2026 isso custou cerca de doze builds pagos de ramos de agentes.
+# Sem VERCEL_ENV (fora da Vercel) cai na regra por caminhos abaixo: produção
+# sempre define a variável, então a falha continua para o lado de construir.
+if [ -n "${VERCEL_ENV:-}" ] && [ "$VERCEL_ENV" != "production" ]; then
+  pular "ambiente $VERCEL_ENV — pré-visualização desligada desde 23/09/2026"
+fi
+
 # Caminhos que produzem bytes servidos. Tudo que não casar aqui é ruído para
 # o deploy: docs, tarefas, lições, config de agente, workflows do GitHub.
 DEPLOYAVEL='^(api/|client/src/|client/public/|client/index\.html|client/vite\.config|client/package(-lock)?\.json|package(-lock)?\.json|vercel\.json|vercel-ignore-build\.sh)'
