@@ -155,6 +155,68 @@ function localSlotToInstant(dateStr, timeStr, timezone) {
   return wallOf(instant) === wall ? new Date(instant) : null;
 }
 
+// City -> zone inside countries that span several zones. Matching ignores
+// case and accents, and looks for the name anywhere in the city text
+// ("Vancouver, BC" still matches). First match wins: list specific names first.
+const CITY_ZONES = {
+  US: [
+    [['los angeles', 'san francisco', 'san diego', 'seattle', 'portland', 'las vegas', 'sacramento', 'san jose'], 'America/Los_Angeles'],
+    [['phoenix'], 'America/Phoenix'],
+    [['denver', 'salt lake', 'boise', 'albuquerque'], 'America/Denver'],
+    [['chicago', 'houston', 'dallas', 'austin', 'san antonio', 'nashville', 'new orleans', 'minneapolis', 'kansas city', 'st. louis', 'saint louis'], 'America/Chicago'],
+    [['honolulu'], 'Pacific/Honolulu'],
+    [['anchorage'], 'America/Anchorage'],
+  ],
+  CA: [
+    [['vancouver', 'victoria', 'kelowna', 'whistler'], 'America/Vancouver'],
+    [['calgary', 'edmonton', 'banff'], 'America/Edmonton'],
+    [['regina', 'saskatoon'], 'America/Regina'],
+    [['winnipeg'], 'America/Winnipeg'],
+    [['halifax', 'moncton', 'charlottetown'], 'America/Halifax'],
+    [["st. john's", 'st johns', 'saint john\'s'], 'America/St_Johns'],
+  ],
+  AU: [
+    [['brisbane', 'gold coast', 'cairns', 'sunshine coast', 'townsville'], 'Australia/Brisbane'],
+    [['perth'], 'Australia/Perth'],
+    [['adelaide'], 'Australia/Adelaide'],
+    [['darwin'], 'Australia/Darwin'],
+    [['hobart'], 'Australia/Hobart'],
+    [['melbourne'], 'Australia/Melbourne'],
+  ],
+  MX: [
+    [['tijuana', 'mexicali', 'ensenada'], 'America/Tijuana'],
+    [['cancun', 'playa del carmen', 'tulum', 'cozumel', 'chetumal'], 'America/Cancun'],
+    [['hermosillo'], 'America/Hermosillo'],
+    [['mazatlan', 'la paz', 'los cabos', 'cabo san lucas'], 'America/Mazatlan'],
+  ],
+  CL: [
+    [['punta arenas'], 'America/Punta_Arenas'],
+  ],
+  BR: [
+    [['manaus'], 'America/Manaus'],
+    [['cuiaba', 'campo grande'], 'America/Cuiaba'],
+    [['rio branco'], 'America/Rio_Branco'],
+    [['fernando de noronha'], 'America/Noronha'],
+  ],
+  ES: [
+    [['las palmas', 'tenerife', 'santa cruz de tenerife', 'lanzarote', 'fuerteventura', 'gran canaria'], 'Atlantic/Canary'],
+  ],
+  PT: [
+    [['funchal', 'madeira'], 'Atlantic/Madeira'],
+    [['ponta delgada', 'azores', 'acores'], 'Atlantic/Azores'],
+  ],
+};
+
+function cityTimezone(countryCode, city) {
+  const rules = CITY_ZONES[countryCode];
+  if (!rules || typeof city !== 'string' || !city.trim()) return null;
+  const text = city.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  for (const [names, zone] of rules) {
+    if (names.some(name => text.includes(name))) return zone;
+  }
+  return null;
+}
+
 /**
  * Common timezone mappings by country code for onboarding auto-suggestion.
  * Returns the most common timezone for a given country.
@@ -209,16 +271,14 @@ function suggestTimezone(countryCode, city = '') {
     // US handled specially below
   };
 
-  // US cities to timezone mapping
-  if (countryCode === 'US') {
-    const cityLower = city.toLowerCase();
-    if (cityLower.includes('los angeles') || cityLower.includes('san francisco') || cityLower.includes('seattle') || cityLower.includes('portland')) return 'America/Los_Angeles';
-    if (cityLower.includes('denver') || cityLower.includes('phoenix') || cityLower.includes('salt lake')) return 'America/Denver';
-    if (cityLower.includes('chicago') || cityLower.includes('houston') || cityLower.includes('dallas') || cityLower.includes('austin')) return 'America/Chicago';
-    if (cityLower.includes('honolulu')) return 'Pacific/Honolulu';
-    if (cityLower.includes('anchorage')) return 'America/Anchorage';
-    return 'America/New_York'; // Default for US
-  }
+  // Countries with more than one zone: the city decides. Every city the
+  // onboarding offers (client/src/data/countries.ts) is pinned to its zone in
+  // api/__tests__/timezone.test.js. Before 2026-11-12 only a few US cities
+  // were mapped, so Las Vegas, Vancouver, Perth or Cancún got the capital's
+  // zone and the booking rules ran 1 to 3 hours off.
+  const zone = cityTimezone(countryCode, city);
+  if (zone) return zone;
+  if (countryCode === 'US') return 'America/New_York'; // Default for US
 
   return COUNTRY_TIMEZONES[countryCode] || 'UTC';
 }

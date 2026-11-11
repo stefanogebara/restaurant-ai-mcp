@@ -474,6 +474,7 @@ async function createOutreachDemo(scrapedData) {
     restaurant_type: normalizeRestaurantType(scrapedData.cuisine_type),
     city: 'São Paulo',
     country: 'Brazil',
+    timezone: 'America/Sao_Paulo', // explicit: the column has no default since 2026-11-12
     email: 'stefano@seatable.one',
     phone: scrapedData.phone || 'N/A',
     slug,
