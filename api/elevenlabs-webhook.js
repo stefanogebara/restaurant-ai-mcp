@@ -693,11 +693,23 @@ async function handleCreateReservation(req, res) {
         // WhatsApp interactive confirmation with Confirm/Cancel buttons is already sent
         // inside toolHandlers.createReservation() — do not send a second message here.
 
-        // Email confirmation
+        // Email confirmation. The function takes ONE object; passing the address
+        // as a first string argument left `customerEmail` undefined, so no voice
+        // booking ever got its e-mail (audit 2026-11-11, F5). Awaited with a 2 s
+        // cap: an un-awaited send dies when the function freezes after replying.
         const { sendReservationConfirmationEmail } = require('./_lib/email');
         if (customer_email) {
-          sendReservationConfirmationEmail(customer_email, confirmDetails)
-            .catch(err => logger.warn('Email confirmation failed (non-blocking)', { error: err.message }));
+          let emailTimer;
+          try {
+            await Promise.race([
+              sendReservationConfirmationEmail({ ...confirmDetails, language: restaurant.agent_language || restaurant.language || 'en' }),
+              new Promise(resolve => { emailTimer = setTimeout(resolve, 2000); }),
+            ]);
+          } catch (err) {
+            logger.warn('Email confirmation failed (non-blocking)', { error: err.message });
+          } finally {
+            clearTimeout(emailTimer);
+          }
         }
       }
     } else {
