@@ -705,13 +705,15 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
         // Normalize language: treat 'pt' as 'pt-BR'
         const rawLang = session?.restaurant?.language || 'en';
         const lang = rawLang === 'pt' ? 'pt-BR' : rawLang;
-        // Short confirmation code for display: first 8 chars of reservationId's hex
-        // tail, uppercased (e.g. V90QVJNF). Full UUID preserved in DB.
-        const shortCode = String(reservationId).replace(/[^a-f0-9]/gi, '').slice(-8).toUpperCase();
+        // The receipt shows the COMPLETE stored code. The portal and the voice
+        // line accept only the exact full code (case included); the old 8-char
+        // uppercased hex tail matched nothing, so a WhatsApp guest could not use
+        // their own receipt to manage the booking (audit 2026-11-11, F7).
+        const receiptCode = String(reservationId);
         const buttonConfirmText = {
-          'pt-BR': `✅ Reserva confirmada!\n\n👤 ${customer_name}\n👥 ${party_size} pessoa${party_size > 1 ? 's' : ''}\n📅 ${date} · ${time}\n🔖 Código: ${shortCode}${mapsLine}`,
-          es: `✅ ¡Reserva confirmada!\n\n👤 ${customer_name}\n👥 ${party_size} persona${party_size > 1 ? 's' : ''}\n📅 ${date} · ${time}\n🔖 Código: ${shortCode}${mapsLine}`,
-          en: `✅ Reservation confirmed!\n\n👤 ${customer_name}\n👥 ${party_size} guest${party_size > 1 ? 's' : ''}\n📅 ${date} · ${time}\n🔖 Code: ${shortCode}${mapsLine}`,
+          'pt-BR': `✅ Reserva confirmada!\n\n👤 ${customer_name}\n👥 ${party_size} pessoa${party_size > 1 ? 's' : ''}\n📅 ${date} · ${time}\n🔖 Código: ${receiptCode}${mapsLine}`,
+          es: `✅ ¡Reserva confirmada!\n\n👤 ${customer_name}\n👥 ${party_size} persona${party_size > 1 ? 's' : ''}\n📅 ${date} · ${time}\n🔖 Código: ${receiptCode}${mapsLine}`,
+          en: `✅ Reservation confirmed!\n\n👤 ${customer_name}\n👥 ${party_size} guest${party_size > 1 ? 's' : ''}\n📅 ${date} · ${time}\n🔖 Code: ${receiptCode}${mapsLine}`,
         };
         const cancelLabel = { 'pt-BR': '❌ Cancelar', es: '❌ Cancelar', en: '❌ Cancel' };
         const modifyLabel = { 'pt-BR': '✏️ Alterar', es: '✏️ Modificar', en: '✏️ Modify' };
