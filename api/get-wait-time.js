@@ -61,8 +61,13 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Get today's reservations
-    const today = new Date().toISOString().split('T')[0];
+    // "Today" and "now" are the restaurant's local date and time. The server
+    // runs in UTC, and records carry `time` (the Airtable-era `fields.Time`
+    // shape threw on every restaurant with a booking today — audit F6).
+    const { getLocalDate, getLocalTime } = require('./_lib/timezone');
+    let timezone = restaurant.fields?.Timezone || restaurant.timezone || 'America/Sao_Paulo';
+    try { getLocalDate(timezone); } catch { timezone = 'UTC'; }
+    const today = getLocalDate(timezone);
     const reservationsResult = await getReservations(restaurantId, { date: today });
 
     if (!reservationsResult.success) {
@@ -70,14 +75,13 @@ module.exports = async (req, res) => {
     }
 
     // Calculate current occupancy
-    const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
+    const [currentHour, currentMinute] = getLocalTime(timezone).split(':').map(Number);
     const nowTime = currentHour * 60 + currentMinute;
 
     let upcomingReservations = 0;
     reservationsResult.data.records.forEach(record => {
-      const timeStr = record.fields.Time || '';
+      if (!['confirmed', 'pending', 'seated'].includes(String(record.status || '').toLowerCase())) return;
+      const timeStr = record.time || '';
       if (!timeStr) return;
 
       const [hour, minute] = timeStr.split(':').map(Number);

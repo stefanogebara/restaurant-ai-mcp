@@ -20,30 +20,45 @@ jest.mock('../_lib/cors', () => ({
 
 // ── Supabase mock ────────────────────────────────────────────────────────────
 const mockSingle = jest.fn();
+const mockMaybeSingle = jest.fn();
 const mockUpdate = jest.fn();
+const mockUpdateResult = jest.fn();
 
 jest.mock('../_lib/supabase', () => ({
   supabaseAdmin: {
-    from: jest.fn(() => ({
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-      single: () => mockSingle(),
-      update: (...args) => {
-        mockUpdate(...args);
-        // Source chains .update().eq().select('id') — return a thenable that
-        // supports .select() so the cancel/modify happy paths land on 200.
-        return {
-          eq: jest.fn(() => ({
-            select: jest.fn(() => Promise.resolve({ data: [{ id: 'row-1' }], error: null })),
-            then: (onResolve) => Promise.resolve({ error: null }).then(onResolve),
-          })),
-        };
-      },
-    })),
+    from: jest.fn(() => {
+      const chain = {
+        select: jest.fn(() => chain),
+        eq: jest.fn(() => chain),
+        in: jest.fn(() => chain),
+        order: jest.fn(() => chain),
+        limit: jest.fn(() => chain),
+        single: () => mockSingle(),
+        maybeSingle: () => mockMaybeSingle(),
+        update: (...args) => {
+          mockUpdate(...args);
+          const write = {
+            eq: jest.fn(() => write),
+            in: jest.fn(() => write),
+            select: jest.fn(() => mockUpdateResult()),
+          };
+          return write;
+        },
+      };
+      return chain;
+    }),
   },
 }));
+
+// Guest changes must go through the guarded transition, never a direct write.
+const mockMutations = {
+  verifyGuestReservation: jest.fn(),
+  modifyGuestReservation: jest.fn(),
+  cancelGuestReservation: jest.fn(),
+};
+jest.mock('../_lib/reservation-mutations', () => mockMutations);
+const mockTrackUsage = jest.fn().mockResolvedValue(undefined);
+jest.mock('../_lib/usage-tracking', () => ({ trackUsage: (...a) => mockTrackUsage(...a) }));
 
 const handler = require('../customer-reservation');
 
@@ -76,7 +91,13 @@ const RESERVATION = {
   status: 'Confirmed',
 };
 
-beforeEach(() => { jest.clearAllMocks(); mockSingle.mockReset(); });
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockSingle.mockReset();
+  mockMaybeSingle.mockReset();
+  mockUpdateResult.mockReset();
+  mockUpdateResult.mockResolvedValue({ data: [{ id: 'row-1' }], error: null });
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Lookup
@@ -142,6 +163,15 @@ describe('customer-reservation: lookup', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 // Modify
 // ─────────────────────────────────────────────────────────────────────────────
+const TENANT = '11111111-2222-4333-8444-555555555555';
+const owned = (overrides = {}) => ({
+  success: true, changed: true, error: null,
+  reservation: { id: 'row-1', reservation_id: 'CEL-2026-0218-A7K3', restaurant_id: TENANT, customer_phone: '+15550001234',
+    date: '2026-12-01', time: '19:00', party_size: 6, status: 'confirmed', special_requests: '', ...overrides },
+});
+const refused = (code, message = `refused: ${code}`) => ({ success: false, changed: false, reservation: null, error: { code, message } });
+const post = (action, body) => mkReqRes({ method: 'POST', query: { action }, body });
+
 describe('customer-reservation: modify', () => {
   test('returns 405 for non-POST', async () => {
     const { req, res } = mkReqRes({ method: 'GET', query: { action: 'modify' } });
@@ -150,78 +180,91 @@ describe('customer-reservation: modify', () => {
   });
 
   test('returns 400 when reservation_id or customer_phone missing', async () => {
-    const { req, res } = mkReqRes({
-      method: 'POST',
-      query: { action: 'modify' },
-      body: { reservation_id: 'CEL-2026-0218-A7K3' }, // missing phone
-    });
+    const { req, res } = post('modify', { reservation_id: 'CEL-2026-0218-A7K3', date: '2026-12-01' });
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockMutations.modifyGuestReservation).not.toHaveBeenCalled();
   });
 
-  test('returns 404 when phone does not match (M-02: same as not found)', async () => {
-    mockSingle.mockResolvedValueOnce({
-      data: { id: 'row-1', status: 'Confirmed', customer_phone: '+15550001234' },
-      error: null,
-    });
-
-    const { req, res } = mkReqRes({
-      method: 'POST',
-      query: { action: 'modify' },
-      body: {
-        reservation_id: 'CEL-2026-0218-A7K3',
-        customer_phone: '+19999999999', // wrong phone (10 digits, valid format)
-        date: '2026-03-02',
-      },
-    });
+  test('returns 404 when the code is unknown, without calling the transition', async () => {
+    mockMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
+    const { req, res } = post('modify', { reservation_id: 'RES-NOPE', customer_phone: '+15550001234', date: '2026-12-01' });
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(404);
+    expect(mockMutations.modifyGuestReservation).not.toHaveBeenCalled();
   });
 
-  test('returns 400 when modifying a cancelled reservation', async () => {
-    mockSingle.mockResolvedValueOnce({
-      data: { id: 'row-1', status: 'Cancelled', customer_phone: '+15550001234' },
-      error: null,
-    });
+  test('returns 404 when the transition rejects the phone (M-02: same as not found)', async () => {
+    mockMaybeSingle.mockResolvedValueOnce({ data: { restaurant_id: TENANT }, error: null });
+    mockMutations.modifyGuestReservation.mockResolvedValueOnce(refused('verification_failed'));
+    const { req, res } = post('modify', { reservation_id: 'CEL-2026-0218-A7K3', customer_phone: '+19999999999', date: '2026-12-01' });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json.mock.calls[0][0].error).toBe('Reservation not found or phone number does not match');
+  });
 
-    const { req, res } = mkReqRes({
-      method: 'POST',
-      query: { action: 'modify' },
-      body: {
-        reservation_id: 'CEL-2026-0218-A7K3',
-        customer_phone: '+15550001234',
-        date: '2026-03-02',
-      },
+  test.each([
+    ['unavailable', 409], ['outside_hours', 409], ['too_late', 409], ['past_slot', 409], ['too_far', 409],
+    ['party_too_large', 409], ['invalid_status', 400], ['invalid_time', 400], ['mutation_unavailable', 503],
+  ])('a %s refusal from the transition is %i and writes nothing', async (code, status) => {
+    mockMaybeSingle.mockResolvedValueOnce({ data: { restaurant_id: TENANT }, error: null });
+    mockMutations.modifyGuestReservation.mockResolvedValueOnce(refused(code));
+    const { req, res } = post('modify', { reservation_id: 'CEL-2026-0218-A7K3', customer_phone: '+15550001234', time: '19:30' });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(status);
+    expect(res.json.mock.calls[0][0]).toMatchObject({ success: false, code });
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  test('passes the tenant, code, typed phone and new slot to the transition', async () => {
+    mockMaybeSingle.mockResolvedValueOnce({ data: { restaurant_id: TENANT }, error: null });
+    mockMutations.modifyGuestReservation.mockResolvedValueOnce(owned());
+    const { req, res } = post('modify', {
+      reservation_id: ' CEL-2026-0218-A7K3 ', customer_phone: '+15550001234', date: '2026-12-01', time: '19:00:00', party_size: '6',
     });
+    await handler(req, res);
+    expect(mockMutations.modifyGuestReservation).toHaveBeenCalledWith({
+      restaurantId: TENANT, reservationId: 'CEL-2026-0218-A7K3', customerPhone: '+15550001234',
+      newDate: '2026-12-01', newTime: '19:00', newPartySize: 6,
+    });
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json.mock.calls[0][0]).toMatchObject({ success: true, changed: true });
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  test('keeps the channel party limit of 50', async () => {
+    const { req, res } = post('modify', { reservation_id: 'CEL-2026-0218-A7K3', customer_phone: '+15550001234', party_size: 51 });
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockMutations.modifyGuestReservation).not.toHaveBeenCalled();
   });
 
-  test('updates reservation and returns 200', async () => {
-    mockSingle.mockResolvedValueOnce({
-      data: { id: 'row-1', status: 'Confirmed', customer_phone: '+15550001234' },
-      error: null,
-    });
-
-    // Use a future date so the past-date guard doesn't 400 the test.
-    const futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-      .toISOString().split('T')[0];
-
-    const { req, res } = mkReqRes({
-      method: 'POST',
-      query: { action: 'modify' },
-      body: {
-        reservation_id: 'CEL-2026-0218-A7K3',
-        customer_phone: '+15550001234',
-        date: futureDate,
-        party_size: 6,
-      },
+  test('saves changed special requests only after the verified change', async () => {
+    mockMaybeSingle.mockResolvedValueOnce({ data: { restaurant_id: TENANT }, error: null });
+    mockMutations.modifyGuestReservation.mockResolvedValueOnce(owned({ special_requests: 'old' }));
+    const { req, res } = post('modify', {
+      reservation_id: 'CEL-2026-0218-A7K3', customer_phone: '+15550001234', time: '19:00', special_requests: 'window seat',
     });
     await handler(req, res);
-
+    expect(mockUpdate).toHaveBeenCalledWith({ special_requests: 'window seat' });
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json.mock.calls[0][0].success).toBe(true);
-    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ date: futureDate, party_size: 6 }));
+  });
+
+  test('a notes-only change is verified first and refused for a finished visit', async () => {
+    mockMaybeSingle.mockResolvedValueOnce({ data: { restaurant_id: TENANT }, error: null });
+    mockMutations.verifyGuestReservation.mockResolvedValueOnce(owned({ status: 'completed', changed: false }));
+    const { req, res } = post('modify', { reservation_id: 'CEL-2026-0218-A7K3', customer_phone: '+15550001234', special_requests: 'x' });
+    await handler(req, res);
+    expect(mockMutations.modifyGuestReservation).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  test('rejects special requests over 1000 characters before any lookup', async () => {
+    const { req, res } = post('modify', { reservation_id: 'CEL-2026-0218-A7K3', customer_phone: '+15550001234', special_requests: 'x'.repeat(1001) });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockMaybeSingle).not.toHaveBeenCalled();
   });
 });
 
@@ -229,72 +272,53 @@ describe('customer-reservation: modify', () => {
 // Cancel
 // ─────────────────────────────────────────────────────────────────────────────
 describe('customer-reservation: cancel', () => {
-  test('returns 404 when phone does not match (M-02: same as not found)', async () => {
-    mockSingle.mockResolvedValueOnce({
-      data: { id: 'row-1', status: 'Confirmed', customer_phone: '+15550001234' },
-      error: null,
-    });
+  const body = { reservation_id: 'CEL-2026-0218-A7K3', customer_phone: '+15550001234' };
 
-    const { req, res } = mkReqRes({
-      method: 'POST',
-      query: { action: 'cancel' },
-      body: { reservation_id: 'CEL-2026-0218-A7K3', customer_phone: '+19999999999' },
-    });
+  test('returns 404 when the transition rejects the phone (M-02: same as not found)', async () => {
+    mockMaybeSingle.mockResolvedValueOnce({ data: { restaurant_id: TENANT }, error: null });
+    mockMutations.cancelGuestReservation.mockResolvedValueOnce(refused('verification_failed'));
+    const { req, res } = post('cancel', { ...body, customer_phone: '+19999999999' });
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(404);
+    expect(mockTrackUsage).not.toHaveBeenCalled();
   });
 
-  test('cancels reservation and returns 200', async () => {
-    mockSingle.mockResolvedValueOnce({
-      data: { id: 'row-1', status: 'Confirmed', customer_phone: '+15550001234' },
-      error: null,
-    });
-
-    const { req, res } = mkReqRes({
-      method: 'POST',
-      query: { action: 'cancel' },
-      body: { reservation_id: 'CEL-2026-0218-A7K3', customer_phone: '+15550001234' },
-    });
+  test('cancels through the transition, bills once and returns 200', async () => {
+    mockMaybeSingle.mockResolvedValueOnce({ data: { restaurant_id: TENANT }, error: null });
+    mockMutations.cancelGuestReservation.mockResolvedValueOnce(owned({ status: 'cancelled' }));
+    const { req, res } = post('cancel', body);
     await handler(req, res);
-
+    expect(mockMutations.cancelGuestReservation).toHaveBeenCalledWith({
+      restaurantId: TENANT, reservationId: 'CEL-2026-0218-A7K3', customerPhone: '+15550001234',
+    });
     expect(res.status).toHaveBeenCalledWith(200);
-    // Statuses are stored lowercase everywhere else (api/_lib/db/reservations.js).
-    // Writing 'Cancelled' here produced rows the host dashboard's lowercase
-    // filters never matched, so the restaurant never saw the cancellation.
-    expect(mockUpdate).toHaveBeenCalledWith({ status: 'cancelled' });
-  });
-
-  test('returns 400 when already cancelled', async () => {
-    mockSingle.mockResolvedValueOnce({
-      data: { id: 'row-1', status: 'cancelled', customer_phone: '+15550001234' },
-      error: null,
-    });
-
-    const { req, res } = mkReqRes({
-      method: 'POST',
-      query: { action: 'cancel' },
-      body: { reservation_id: 'CEL-2026-0218-A7K3', customer_phone: '+15550001234' },
-    });
-    await handler(req, res);
-    expect(res.status).toHaveBeenCalledWith(400);
-  });
-
-  test('still blocks legacy rows stored with a capitalised status', async () => {
-    // Rows written before the casing fix carry 'Cancelled'. The guard reads
-    // both cases on purpose — dropping that would let a customer cancel an
-    // already-cancelled legacy reservation and double-count the usage metric.
-    mockSingle.mockResolvedValueOnce({
-      data: { id: 'row-1', status: 'Cancelled', customer_phone: '+15550001234' },
-      error: null,
-    });
-
-    const { req, res } = mkReqRes({
-      method: 'POST',
-      query: { action: 'cancel' },
-      body: { reservation_id: 'CEL-2026-0218-A7K3', customer_phone: '+15550001234' },
-    });
-    await handler(req, res);
-    expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockTrackUsage).toHaveBeenCalledWith(TENANT, 'reservation_cancelled');
     expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  test('a repeated cancel (already cancelled, any casing) is 400 and not billed again', async () => {
+    mockMaybeSingle.mockResolvedValueOnce({ data: { restaurant_id: TENANT }, error: null });
+    mockMutations.cancelGuestReservation.mockResolvedValueOnce({ ...owned({ status: 'Cancelled' }), changed: false });
+    const { req, res } = post('cancel', body);
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockTrackUsage).not.toHaveBeenCalled();
+  });
+
+  test('a finished visit cannot be cancelled (no billing credit)', async () => {
+    mockMaybeSingle.mockResolvedValueOnce({ data: { restaurant_id: TENANT }, error: null });
+    mockMutations.cancelGuestReservation.mockResolvedValueOnce(refused('invalid_status'));
+    const { req, res } = post('cancel', body);
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockTrackUsage).not.toHaveBeenCalled();
+  });
+
+  test('a tenant lookup error is 503 and calls nothing else', async () => {
+    mockMaybeSingle.mockResolvedValueOnce({ data: null, error: { message: 'down' } });
+    const { req, res } = post('cancel', body);
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(mockMutations.cancelGuestReservation).not.toHaveBeenCalled();
   });
 });

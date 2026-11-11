@@ -122,6 +122,40 @@ function localToUtcDate(dateStr, timeStr, timezone = 'UTC') {
 }
 
 /**
+ * The UTC instant of a wall-clock date and time in a restaurant's time zone.
+ * Returns null when the input is malformed, the zone is unknown, or the local
+ * time does not exist that day (a daylight-saving gap). Two passes find the
+ * offset that applies at the local moment itself, not at the same digits in UTC.
+ * Validators must use this instead of `new Date(\`${date}T${time}\`)`, which
+ * reads the slot in the server's zone — UTC in production (audit 2026-11-11, F3).
+ * @param {string} dateStr - YYYY-MM-DD
+ * @param {string} timeStr - HH:MM (or HH:MM:SS)
+ * @param {string} timezone - IANA timezone identifier
+ * @returns {Date|null}
+ */
+function localSlotToInstant(dateStr, timeStr, timezone) {
+  const time = typeof timeStr === 'string' ? timeStr.match(/^([01]\d|2[0-3]):([0-5]\d)(?::00)?$/) : null;
+  if (typeof dateStr !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr) || !time) return null;
+  const wall = Date.parse(`${dateStr}T${time[1]}:${time[2]}:00Z`);
+  if (!Number.isFinite(wall)) return null;
+  let formatter;
+  try {
+    formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: timezone, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+    });
+  } catch {
+    return null;
+  }
+  const wallOf = instant => {
+    const p = Object.fromEntries(formatter.formatToParts(new Date(instant)).map(x => [x.type, x.value]));
+    return Date.parse(`${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:00Z`);
+  };
+  let instant = wall;
+  for (let i = 0; i < 2; i++) instant = wall - (wallOf(instant) - instant);
+  return wallOf(instant) === wall ? new Date(instant) : null;
+}
+
+/**
  * Common timezone mappings by country code for onboarding auto-suggestion.
  * Returns the most common timezone for a given country.
  * @param {string} countryCode - Two-letter country code (e.g., 'ES', 'US')
@@ -195,5 +229,6 @@ module.exports = {
   utcToLocalDate,
   utcToLocalTime,
   localToUtcDate,
+  localSlotToInstant,
   suggestTimezone,
 };
