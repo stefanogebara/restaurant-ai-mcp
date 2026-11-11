@@ -526,215 +526,63 @@ async function createReservation(restaurantId, restaurant, params, trustedContex
  * @param {object} params - { phone, name, reservation_id }
  * @returns {object} Lookup result with reservation details
  */
-async function lookupReservation(restaurantId, { phone, name, reservation_id }) {
-  const { findReservation } = require('./supabase');
+// Guest proof for phone channels (audit 2026-11-11, F4). These handlers serve
+// each restaurant's own ElevenLabs agent and the OpenAI voice server. The
+// caller is whoever is speaking; every argument is model-authored from speech.
+// Before this, a name alone returned another guest's phone, e-mail and code,
+// and a code alone cancelled or rescheduled the booking.
+// - Lookup needs the COMPLETE receipt code AND the booking's phone, verified by
+//   mutate_guest_reservation('verify'); the answer omits phone and e-mail.
+// - Changes and cancellations are refused by phone, exactly like the shared
+//   line (api/_lib/shared-voice-guest.js): no trusted readback consent exists.
+const PHONE_CHANGE_POLICY = 'Reservation changes and cancellations are currently unavailable by phone. Please use the customer portal or contact the restaurant.';
+const LOOKUP_PROOF_REQUIRED = 'To look up a reservation, please give the complete confirmation code from your receipt and the phone number used for the booking.';
 
-  if (!phone && !name && !reservation_id) {
-    return {
-      success: false,
-      error: true,
-      message: 'Please provide either a phone number, name, or reservation ID to lookup your reservation'
-    };
+function phoneChangeRefusal() {
+  return { success: false, changed: false, action_unavailable: true, requires_secure_confirmation: true,
+    error: { code: 'action_unavailable', message: PHONE_CHANGE_POLICY }, message: PHONE_CHANGE_POLICY };
+}
+
+async function lookupReservation(restaurantId, { phone, reservation_id } = {}) {
+  const code = typeof reservation_id === 'string' ? reservation_id.trim() : '';
+  const spoken = typeof phone === 'string' ? phone.trim() : '';
+  if (!restaurantId || !code || !spoken) {
+    return { success: true, found: false, verification_required: true, message: LOOKUP_PROOF_REQUIRED };
   }
-
-  try {
-    // Normalize phone: strip spaces, dashes, parens. Try with and without country code.
-    const normalizePhone = (p) => p ? p.replace(/[\s\-\(\)]/g, '') : undefined;
-    const phoneNorm = normalizePhone(phone);
-
-    // Try multiple lookup strategies: reservation_id > phone > name > phone variants
-    let result = await findReservation(restaurantId, {
-      reservation_id: reservation_id || undefined,
-      customer_phone: !reservation_id ? phoneNorm : undefined,
-      customer_name: !reservation_id && !phoneNorm ? name : undefined
-    });
-
-    // If phone lookup failed, try with +country code variants
-    if (!result.success && phoneNorm && !reservation_id) {
-      const variants = [
-        phoneNorm.startsWith('+') ? phoneNorm.slice(1) : '+' + phoneNorm,
-        phoneNorm.startsWith('+55') ? phoneNorm.slice(3) : '+55' + phoneNorm,
-        phoneNorm.length > 10 ? phoneNorm.slice(-11) : phoneNorm, // last 11 digits
-      ];
-      for (const variant of variants) {
-        result = await findReservation(restaurantId, { customer_phone: variant });
-        if (result.success) break;
-      }
-    }
-
-    // If phone lookup still failed, try by name as fallback
-    if (!result.success && name && !reservation_id) {
-      result = await findReservation(restaurantId, { customer_name: name });
-    }
-
-    if (!result.success) {
-      return {
-        success: true,
-        found: false,
-        message: 'No reservation found with that information'
-      };
-    }
-
-    const r = result.reservation;
-    const reservations = [{
-      id: r.record_id,
-      reservation_id: r.reservation_id,
-      customer_name: r.customer_name,
-      phone: r.customer_phone,
-      email: r.customer_email,
-      party_size: r.party_size,
-      date: r.reservation_time ? r.reservation_time.split(' ')[0] : undefined,
-      time: r.reservation_time ? r.reservation_time.split(' ')[1] : undefined,
-      status: r.status,
-      special_requests: r.special_requests
-    }];
-
-    const response = {
-      success: true,
-      found: true,
-      count: reservations.length,
-      reservations
-    };
-    logger.info('lookup_reservation response:', response);
-    return response;
-  } catch (error) {
-    logger.error('lookup_reservation error:', error);
-    return {
-      success: false,
-      error: true,
-      message: 'Unable to lookup reservation at this time. Please call us directly.'
-    };
+  const { verifyGuestReservation } = require('./reservation-mutations');
+  const attempt = customerPhone => verifyGuestReservation({ restaurantId, reservationId: code, customerPhone });
+  let result = await attempt(spoken);
+  // A Brazilian caller often says the number without the country code.
+  const digits = spoken.replace(/\D/g, '');
+  if (!result.success && result.error?.code === 'verification_failed' && !spoken.startsWith('+') &&
+      (digits.length === 10 || digits.length === 11)) {
+    result = await attempt(`+55${digits}`);
   }
+  if (!result.success) {
+    if (result.error?.code === 'verification_failed') {
+      return { success: true, found: false, verification_required: true,
+        message: 'No reservation matches that confirmation code and phone number.' };
+    }
+    return { success: false, error: true, message: 'Unable to look up the reservation right now. Please call the restaurant directly.' };
+  }
+  const r = result.reservation;
+  return {
+    success: true, found: true, count: 1,
+    reservations: [{ reservation_id: r.reservation_id, customer_name: r.customer_name, party_size: r.party_size,
+      date: r.date, time: r.time, status: r.status }],
+  };
 }
 
 // ============================================================================
-// MODIFY RESERVATION
+// MODIFY / CANCEL RESERVATION — refused by phone (see the policy above)
 // ============================================================================
 
-/**
- * Modify an existing reservation.
- * @param {string} restaurantId - Restaurant UUID
- * @param {object} params - { reservation_id, new_date, new_time, new_party_size }
- * @returns {object} Modification result
- */
-async function modifyReservation(restaurantId, { reservation_id, new_date, new_time, new_party_size }) {
-  const { updateReservation, findReservation } = require('./supabase');
-  const { getLocalDate } = require('./timezone');
-
-  if (!reservation_id) {
-    return {
-      success: false,
-      error: true,
-      message: 'I need your confirmation number to modify your reservation.'
-    };
-  }
-
-  try {
-    // Find the reservation first to verify it exists
-    const lookupResult = await findReservation(restaurantId, { reservation_id });
-    if (!lookupResult.success) {
-      return {
-        success: false,
-        error: true,
-        message: 'I couldn\'t find a reservation with that confirmation number. Could you double-check and try again?'
-      };
-    }
-
-    const updateFields = {};
-    if (new_date) updateFields.date = new_date;
-    if (new_time) updateFields.time = new_time;
-    if (new_party_size) updateFields.party_size = parseInt(new_party_size);
-
-    const result = await updateReservation(restaurantId, reservation_id, updateFields);
-
-    if (!result.success) {
-      return {
-        success: false,
-        error: true,
-        message: 'I couldn\'t update your reservation. Please try again or call us directly.'
-      };
-    }
-
-    const changes = [];
-    if (new_date) changes.push(`date to ${new_date}`);
-    if (new_time) changes.push(`time to ${new_time}`);
-    if (new_party_size) changes.push(`party size to ${new_party_size}`);
-
-    const changesList = changes.length > 0 ? ` I've updated your ${changes.join(', ')}.` : '';
-    return {
-      success: true,
-      message: `Your reservation has been successfully modified!${changesList} Your confirmation number is still ${reservation_id}.`
-    };
-  } catch (error) {
-    logger.error('modify_reservation error:', error);
-    return {
-      success: false,
-      error: true,
-      message: 'I couldn\'t update your reservation. Please try again or call us directly.'
-    };
-  }
+async function modifyReservation() {
+  return phoneChangeRefusal();
 }
 
-// ============================================================================
-// CANCEL RESERVATION
-// ============================================================================
-
-/**
- * Cancel an existing reservation.
- * @param {string} restaurantId - Restaurant UUID
- * @param {object} params - { reservation_id }
- * @returns {object} Cancellation result
- */
-async function cancelReservation(restaurantId, { reservation_id }) {
-  const { cancelReservation: dbCancelReservation, findReservation } = require('./supabase');
-
-  if (!reservation_id) {
-    return {
-      success: false,
-      error: true,
-      message: 'I need your confirmation number to cancel your reservation.'
-    };
-  }
-
-  try {
-    // Try cancel with the given ID first
-    let result = await dbCancelReservation(restaurantId, reservation_id);
-
-    // If it failed and the ID looks like a UUID (not RES-xxx), look up by UUID directly
-    if (!result.success && !reservation_id.startsWith('RES-')) {
-      logger.info('Cancel failed with non-RES ID, trying UUID lookup', { id: reservation_id });
-      const supabaseAdmin = require('./supabase').supabaseAdmin;
-      const { data: row } = await supabaseAdmin
-        .from('reservations')
-        .select('reservation_id')
-        .eq('id', reservation_id)
-        .eq('restaurant_id', restaurantId)
-        .single();
-      if (row?.reservation_id) {
-        result = await dbCancelReservation(restaurantId, row.reservation_id);
-      }
-    }
-
-    if (!result.success) {
-      return {
-        success: false,
-        error: true,
-        message: 'I couldn\'t cancel your reservation. Please try again or call us directly.'
-      };
-    }
-
-    return {
-      success: true,
-      message: `Your reservation has been cancelled. We're sorry we won't see you this time, but we hope you'll visit us in the future!`
-    };
-  } catch (error) {
-    logger.error('cancel_reservation error:', error);
-    return {
-      success: false,
-      error: true,
-      message: 'I couldn\'t cancel your reservation. Please try again or call us directly.'
-    };
-  }
+async function cancelReservation() {
+  return phoneChangeRefusal();
 }
 
 // ============================================================================
