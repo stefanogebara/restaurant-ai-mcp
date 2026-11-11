@@ -144,6 +144,71 @@ async function handleLookup(req, res) {
   return res.status(200).json({ success: true, reservation: { ...reservation, restaurant_name } });
 }
 
+// Guest changes go through the shared guarded transition (mutate_guest_reservation
+// via _lib/reservation-mutations): ownership by full code + phone digits, business
+// hours, capacity, the existing table assignment and the reservation status are
+// checked there, in one transaction under the restaurant lock. This endpoint used
+// to write the row directly and skipped all of that (audit 2026-11-11, F1).
+const GENERIC_NOT_FOUND = 'Reservation not found or phone number does not match';
+const REFUSAL_STATUS = {
+  invalid_input: 400, invalid_date: 400, invalid_time: 400, invalid_party_size: 400, invalid_status: 400,
+  past_slot: 409, outside_hours: 409, too_late: 409, too_far: 409, party_too_large: 409, unavailable: 409,
+  restaurant_unavailable: 409, timezone_unavailable: 503, mutation_unavailable: 503,
+};
+const CHANGEABLE = ['confirmed', 'pending', 'Confirmed', 'Pending'];
+const MAX_SPECIAL_REQUESTS = 1000;
+
+// Validate the proof fields, then find the tenant that owns this code. The code
+// is unique across restaurants (reservations_reservation_id_key); the phone is
+// checked by the transition itself, never here.
+async function resolveGuestRequest(req, res) {
+  const { reservation_id, customer_phone } = req.body || {};
+  if (typeof reservation_id !== 'string' || !reservation_id.trim() ||
+      typeof customer_phone !== 'string' || !customer_phone.trim()) {
+    res.status(400).json({ success: false, error: 'reservation_id and customer_phone are required' });
+    return null;
+  }
+  const code = reservation_id.trim();
+  const phone = customer_phone.trim();
+  if (phone.replace(/\D/g, '').length < 10) {
+    res.status(400).json({ success: false, error: 'Invalid phone number. Must contain at least 10 digits.' });
+    return null;
+  }
+  // M-02: Check per-reservation rate limit before DB query
+  if (checkPhoneVerifyRateLimit(code)) {
+    logger.info('Phone verify rate limited', { reservation_id: code });
+    res.status(429).json({ success: false, error: 'Too many attempts. Please try again later.' });
+    return null;
+  }
+  const { data, error } = await supabaseAdmin
+    .from('reservations')
+    .select('restaurant_id')
+    .eq('reservation_id', code)
+    .maybeSingle();
+  if (error) {
+    logger.error('Reservation tenant lookup failed', error);
+    res.status(503).json({ success: false, error: 'Could not verify that reservation. Please try again.' });
+    return null;
+  }
+  if (!data?.restaurant_id) {
+    // Record a failure even when reservation doesn't exist to avoid timing leaks
+    recordPhoneVerifyFailure(code);
+    res.status(404).json({ success: false, error: GENERIC_NOT_FOUND });
+    return null;
+  }
+  return { code, phone, restaurantId: data.restaurant_id };
+}
+
+function refuse(res, code, error) {
+  if (error?.code === 'verification_failed') {
+    // M-02: same response for "not found" and "phone mismatch".
+    recordPhoneVerifyFailure(code);
+    return res.status(404).json({ success: false, error: GENERIC_NOT_FOUND });
+  }
+  const status = REFUSAL_STATUS[error?.code] || 503;
+  return res.status(status).json({ success: false, error: error?.message || 'Could not complete the reservation request.', code: error?.code });
+}
+
 /**
  * Modify a reservation.
  * Requires reservation_id + customer_phone to match — prevents unauthorized edits.
@@ -152,110 +217,70 @@ async function handleModify(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
-
-  const { reservation_id, customer_phone, date, time, party_size, special_requests } = req.body || {};
-
-  if (!reservation_id || !customer_phone) {
-    return res.status(400).json({ success: false, error: 'reservation_id and customer_phone are required' });
+  const { date, time, party_size, special_requests } = req.body || {};
+  const given = value => value !== undefined && value !== null && value !== '';
+  const slot = {};
+  if (given(date)) slot.newDate = String(date);
+  if (given(time)) {
+    const t = String(time);
+    slot.newTime = /^\d{2}:\d{2}:00$/.test(t) ? t.slice(0, 5) : t;
   }
-
-  // Validate phone number: at least 10 digits after stripping non-numeric chars
-  const phoneDigitsModify = String(customer_phone).replace(/\D/g, '');
-  if (phoneDigitsModify.length < 10) {
-    return res.status(400).json({ success: false, error: 'Invalid phone number. Must contain at least 10 digits.' });
+  if (given(party_size)) {
+    const size = Number(party_size);
+    // Retain this channel's existing party limit; the transition allows 100.
+    if (!Number.isSafeInteger(size) || size < 1 || size > 50) {
+      return res.status(400).json({ success: false, error: 'Invalid party_size (must be 1–50)' });
+    }
+    slot.newPartySize = size;
   }
-
-  // M-02: Check per-reservation rate limit before DB query
-  if (checkPhoneVerifyRateLimit(reservation_id)) {
-    logger.info('Phone verify rate limited', { reservation_id });
-    return res.status(429).json({ success: false, error: 'Too many attempts. Please try again later.' });
+  let notes;
+  if (special_requests !== undefined && special_requests !== null) {
+    if (typeof special_requests !== 'string' || special_requests.length > MAX_SPECIAL_REQUESTS) {
+      return res.status(400).json({ success: false, error: `Special requests must be text of at most ${MAX_SPECIAL_REQUESTS} characters.` });
+    }
+    notes = special_requests;
   }
-
-  // Verify ownership: phone must match the reservation
-  const { data: existing, error: fetchError } = await supabaseAdmin
-    .from('reservations')
-    .select('id, status, customer_phone')
-    .eq('reservation_id', reservation_id)
-    .single();
-
-  // M-02: Return same generic error for both "not found" and "phone mismatch"
-  // to prevent reservation ID enumeration via differing error messages.
-  const GENERIC_NOT_FOUND = 'Reservation not found or phone number does not match';
-
-  if (fetchError || !existing) {
-    // Record a failure even when reservation doesn't exist to avoid timing leaks
-    recordPhoneVerifyFailure(reservation_id);
-    return res.status(404).json({ success: false, error: GENERIC_NOT_FOUND });
-  }
-
-  if (existing.customer_phone !== customer_phone) {
-    recordPhoneVerifyFailure(reservation_id);
-    return res.status(404).json({ success: false, error: GENERIC_NOT_FOUND });
-  }
-
-  // Phone matched — clear any accumulated failures
-  clearPhoneVerifyFailures(reservation_id);
-
-  if (existing.status === 'Cancelled' || existing.status === 'cancelled') {
-    return res.status(400).json({ success: false, error: 'Cannot modify a cancelled reservation' });
-  }
-
-  const updates = {};
-  if (date) updates.date = date;
-  if (time) updates.time = time;
-  if (party_size) updates.party_size = Number(party_size);
-  if (special_requests !== undefined) updates.special_requests = special_requests;
-
-  if (Object.keys(updates).length === 0) {
+  if (!Object.keys(slot).length && notes === undefined) {
     return res.status(400).json({ success: false, error: 'No changes provided' });
   }
 
-  // DD.1 — bounds-check party_size before write (was: Number() with no range).
-  if (Object.prototype.hasOwnProperty.call(updates, 'party_size')) {
-    const ps = Number(updates.party_size);
-    if (!Number.isFinite(ps) || ps < 1 || ps > 50) {
-      return res.status(400).json({ success: false, error: 'Invalid party_size (must be 1–50)' });
-    }
-    updates.party_size = ps;
-  }
-  // DD.1 — date sanity: must be today or future, YYYY-MM-DD.
-  if (Object.prototype.hasOwnProperty.call(updates, 'date')) {
-    const d = String(updates.date);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) {
-      return res.status(400).json({ success: false, error: 'Invalid date format (YYYY-MM-DD)' });
-    }
-    const today = new Date().toISOString().split('T')[0];
-    if (d < today) {
-      return res.status(400).json({ success: false, error: 'Cannot move a reservation to a past date' });
-    }
-  }
-  // DD.1 — time format check (HH:MM, 24-hour).
-  if (Object.prototype.hasOwnProperty.call(updates, 'time')) {
-    if (!/^\d{2}:\d{2}$/.test(String(updates.time))) {
-      return res.status(400).json({ success: false, error: 'Invalid time format (HH:MM)' });
-    }
+  const guest = await resolveGuestRequest(req, res);
+  if (!guest) return undefined;
+  const service = require('./_lib/reservation-mutations');
+  const proof = { restaurantId: guest.restaurantId, reservationId: guest.code, customerPhone: guest.phone };
+  const result = Object.keys(slot).length
+    ? await service.modifyGuestReservation({ ...proof, ...slot })
+    : await service.verifyGuestReservation(proof);
+  if (!result.success) return refuse(res, guest.code, result.error);
+  clearPhoneVerifyFailures(guest.code);
+  const reservation = result.reservation;
+  // A slot change was already refused by the transition for any other status;
+  // a notes-only request was only verified, so check the status here.
+  if (!Object.keys(slot).length && !['confirmed', 'pending'].includes(String(reservation.status).toLowerCase())) {
+    return refuse(res, guest.code, { code: 'invalid_status', message: 'This reservation can no longer be changed through this channel.' });
   }
 
-  // DD.1 — chain .select('id') so a 0-row match surfaces as a failure
-  // instead of a silent success. Without this, a race that already
-  // cancelled or deleted the row returned 200 "updated" to the customer.
-  const { data, error } = await supabaseAdmin
-    .from('reservations')
-    .update(updates)
-    .eq('id', existing.id)
-    .select('id');
-
-  if (error) {
-    logger.error('Failed to update reservation', error);
-    return res.status(500).json({ success: false, error: 'Failed to update reservation' });
+  let notesChanged = false;
+  if (notes !== undefined && notes !== (reservation.special_requests ?? '')) {
+    const { data, error } = await supabaseAdmin
+      .from('reservations')
+      .update({ special_requests: notes })
+      .eq('id', reservation.id)
+      .eq('restaurant_id', guest.restaurantId)
+      .in('status', CHANGEABLE)
+      .select('id');
+    if (error || !data || data.length === 0) {
+      logger.warn('Special requests update failed after a verified change', { reservation_id: guest.code });
+      return res.status(409).json({ success: false, changed: result.changed,
+        error: result.changed
+          ? 'The date, time and party size were saved, but the special requests were not. Please check the reservation.'
+          : 'The special requests could not be saved. Please check the reservation and try again.' });
+    }
+    notesChanged = true;
   }
-  if (!data || data.length === 0) {
-    logger.warn('Reservation modify matched 0 rows — likely cancelled mid-flight', { reservation_id });
-    return res.status(409).json({ success: false, error: 'Reservation no longer modifiable' });
-  }
 
-  logger.info('Reservation modified by customer', { reservation_id });
-  return res.status(200).json({ success: true, message: 'Reservation updated successfully' });
+  logger.info('Reservation modified by customer', { reservation_id: guest.code, changed: result.changed || notesChanged });
+  return res.status(200).json({ success: true, changed: result.changed || notesChanged, message: 'Reservation updated successfully' });
 }
 
 /**
@@ -266,94 +291,31 @@ async function handleCancel(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
-
-  const { reservation_id, customer_phone } = req.body || {};
-
-  if (!reservation_id || !customer_phone) {
-    return res.status(400).json({ success: false, error: 'reservation_id and customer_phone are required' });
-  }
-
-  // Validate phone number: at least 10 digits after stripping non-numeric chars
-  const phoneDigitsCancel = String(customer_phone).replace(/\D/g, '');
-  if (phoneDigitsCancel.length < 10) {
-    return res.status(400).json({ success: false, error: 'Invalid phone number. Must contain at least 10 digits.' });
-  }
-
-  // M-02: Check per-reservation rate limit before DB query
-  if (checkPhoneVerifyRateLimit(reservation_id)) {
-    logger.info('Phone verify rate limited', { reservation_id });
-    return res.status(429).json({ success: false, error: 'Too many attempts. Please try again later.' });
-  }
-
-  // Verify ownership. restaurant_id is pulled so we can record the
-  // cancellation as a billable-usage delta in trackUsage below — daily
-  // Stripe reporter nets cancellations against creations.
-  const { data: existing, error: fetchError } = await supabaseAdmin
-    .from('reservations')
-    .select('id, status, customer_phone, restaurant_id')
-    .eq('reservation_id', reservation_id)
-    .single();
-
-  // M-02: Return same generic error for both "not found" and "phone mismatch"
-  const GENERIC_NOT_FOUND = 'Reservation not found or phone number does not match';
-
-  if (fetchError || !existing) {
-    recordPhoneVerifyFailure(reservation_id);
-    return res.status(404).json({ success: false, error: GENERIC_NOT_FOUND });
-  }
-
-  if (existing.customer_phone !== customer_phone) {
-    recordPhoneVerifyFailure(reservation_id);
-    return res.status(404).json({ success: false, error: GENERIC_NOT_FOUND });
-  }
-
-  // Phone matched — clear any accumulated failures
-  clearPhoneVerifyFailures(reservation_id);
-
-  if (existing.status === 'Cancelled' || existing.status === 'cancelled') {
+  const guest = await resolveGuestRequest(req, res);
+  if (!guest) return undefined;
+  const { cancelGuestReservation } = require('./_lib/reservation-mutations');
+  const result = await cancelGuestReservation({
+    restaurantId: guest.restaurantId, reservationId: guest.code, customerPhone: guest.phone,
+  });
+  if (!result.success) return refuse(res, guest.code, result.error);
+  clearPhoneVerifyFailures(guest.code);
+  if (!result.changed) {
+    // A repeated cancel (lost response) changes nothing and is not billed twice.
     return res.status(400).json({ success: false, error: 'Reservation is already cancelled' });
-  }
-
-  // DD.1 — chain .select('id') so a 0-row match (concurrent cancel /
-  // RLS race) surfaces instead of returning 200 with no rows changed.
-  // The prior version would also fire trackUsage('reservation_cancelled')
-  // below — billing the tenant for a phantom cancellation that nets
-  // against a real prior creation in the Stripe metered reporter.
-  const { data: cancelled, error } = await supabaseAdmin
-    .from('reservations')
-    // Lowercase: every other writer and the host dashboard's filters use it.
-    // 'Cancelled' produced rows the restaurant never saw as cancelled.
-    .update({ status: 'cancelled' })
-    .eq('id', existing.id)
-    .select('id');
-
-  if (error) {
-    logger.error('Failed to cancel reservation', error);
-    return res.status(500).json({ success: false, error: 'Failed to cancel reservation' });
-  }
-  if (!cancelled || cancelled.length === 0) {
-    logger.warn('Reservation cancel matched 0 rows', { reservation_id });
-    return res.status(409).json({ success: false, error: 'Reservation could not be cancelled' });
   }
 
   // Track cancellation for metered billing — Stripe reporter nets these
   // against reservation_created so we don't charge for bookings that
-  // never happened. Fire-and-forget. Guarded against missing restaurant_id
-  // (legacy reservation rows without the FK column populated).
-  if (existing.restaurant_id) {
-    try {
-      const { trackUsage } = require('./_lib/usage-tracking');
-      // AGUARDADO: o res.status(200) vem 7 linhas abaixo sem nenhum await no
-      // meio, então o incremento morria no freeze. Perder um cancelamento
-      // COBRA o restaurante por uma reserva que não aconteceu — o reporter do
-      // Stripe abate cancelamentos dos criados. O try/catch sem await também
-      // era decorativo: só pegava throw síncrono do require, nunca a rejeição.
-      await trackUsage(existing.restaurant_id, 'reservation_cancelled');
-    } catch (e) {
-      logger.warn('trackUsage(reservation_cancelled) failed:', e.message);
-    }
+  // never happened. Only a cancellation the transition committed counts.
+  try {
+    const { trackUsage } = require('./_lib/usage-tracking');
+    // AGUARDADO: sem await o incremento morria no freeze da lambda e o
+    // restaurante era cobrado por uma reserva cancelada.
+    await trackUsage(guest.restaurantId, 'reservation_cancelled');
+  } catch (e) {
+    logger.warn('trackUsage(reservation_cancelled) failed:', e.message);
   }
 
-  logger.info('Reservation cancelled by customer', { reservation_id });
+  logger.info('Reservation cancelled by customer', { reservation_id: guest.code });
   return res.status(200).json({ success: true, message: 'Reservation cancelled successfully' });
 }
