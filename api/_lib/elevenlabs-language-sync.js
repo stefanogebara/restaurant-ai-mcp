@@ -50,7 +50,9 @@ function planLanguageSync(config, agent, deps = {}) {
   const patch = {
     conversation_config: {
       agent: {
-        language: wanted,
+        // The dashboard language selector stores 'pt-BR'; the agent takes the
+        // base language (the region goes to summary_language below).
+        language: base(wanted),
         first_message: buildFirstMessage({
           restaurant_name: config.restaurant_name, language: wanted, custom_greeting: config.agent_greeting,
         }),

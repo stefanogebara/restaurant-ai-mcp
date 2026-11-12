@@ -29,6 +29,13 @@ describe('planLanguageSync', () => {
     });
   });
 
+  test('the dashboard value pt-BR reaches the agent as pt, with the Brazilian summary', () => {
+    const plan = planLanguageSync({ ...osteria, agent_language: 'pt-BR' }, agent('en'), deps);
+    expect(plan.patch.conversation_config.agent.language).toBe('pt');
+    expect(plan.patch.platform_settings.summary_language).toBe('pt-br');
+    expect(plan.patch.conversation_config.agent.first_message).toMatch(/^Obrigado por ligar/);
+  });
+
   test('an owner greeting is kept', () => {
     const plan = planLanguageSync({ ...osteria, agent_greeting: 'Olá, Osteria!' }, agent('en'), deps);
     expect(plan.patch.conversation_config.agent.first_message).toBe('Olá, Osteria!');
