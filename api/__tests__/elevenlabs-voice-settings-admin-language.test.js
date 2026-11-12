@@ -44,8 +44,8 @@ const handler = require('../elevenlabs-voice-settings');
 const OSTERIA = '152dc287-46e6-4139-b8eb-12d1877b121f';
 const CASA = '27b0272b-fd5f-41e2-81c0-e27faca99ac6';
 const agents = {};
-const agentBody = (language, model, summary) => ({
-  conversation_config: { agent: { language, first_message: 'Thank you for calling.', prompt: { prompt: 'secret prompt' } }, tts: { model_id: model } },
+const agentBody = (language, model, summary, prompt = 'secret prompt') => ({
+  conversation_config: { agent: { language, first_message: 'Thank you for calling.', prompt: { prompt } }, tts: { model_id: model } },
   platform_settings: { summary_language: summary },
 });
 const call = async (method, query) => {
@@ -64,14 +64,18 @@ beforeEach(() => {
     { id: CASA, restaurant_name: 'Casa del Sol', country: 'Spain', agent_language: 'es', agent_greeting: null, elevenlabs_agent_id: 'agent_casa_00002', ai_config: {} },
   );
   agents.agent_osteria_0001 = agentBody('en', 'eleven_flash_v2', 'en');
-  agents.agent_casa_00002 = agentBody('es', 'eleven_flash_v2_5', 'es');
+  agents.agent_casa_00002 = agentBody('es', 'eleven_flash_v2_5', 'es', 'PROMPT(es)');
   mockAuth.mockResolvedValue({ user: { email: 'stefanogebara@gmail.com', restaurant_id: 'other' } });
   mockSubscription.mockClear();
   global.fetch = jest.fn(async (url, init = {}) => {
     const id = url.split('/').pop();
     if (init.method === 'PATCH') {
       const body = JSON.parse(init.body);
-      agents[id] = agentBody(body.conversation_config.agent.language, body.conversation_config.tts.model_id, body.platform_settings.summary_language);
+      const current = agents[id];
+      agents[id] = agentBody(body.conversation_config.agent.language ?? current.conversation_config.agent.language,
+        body.conversation_config.tts?.model_id ?? current.conversation_config.tts.model_id,
+        body.platform_settings?.summary_language ?? current.platform_settings.summary_language,
+        body.conversation_config.agent.prompt.prompt);
       return { ok: true, json: async () => ({}), text: async () => '' };
     }
     return { ok: true, json: async () => agents[id] };
@@ -109,6 +113,17 @@ test('sync changes only the named agent and confirms it reads back in sync', asy
   expect(patches).toHaveLength(1);
   expect(patches[0][0]).toMatch(/agent_osteria_0001$/);
   expect(patches[0][1].headers['xi-api-key']).toBe('el-test-key');
+});
+
+test('an agent with old instructions is reported as outdated and gets only the new prompt', async () => {
+  agents.agent_casa_00002 = agentBody('es', 'eleven_flash_v2_5', 'es', 'old instructions');
+  const report = await call('GET', { action: 'admin_language_report' });
+  expect(report.body.rows[1]).toMatchObject({ restaurant_name: 'Casa del Sol', status: 'outdated', reasons: ['prompt outdated'] });
+  expect(JSON.stringify(report.body)).not.toMatch(/old instructions/);
+  const res = await call('POST', { action: 'admin_language_sync', restaurant_id: CASA });
+  expect(res.body).toMatchObject({ success: true, changed: true, after: { status: 'ok', agent: { language: 'es' } } });
+  const patch = JSON.parse(global.fetch.mock.calls.find(([, init]) => init?.method === 'PATCH')[1].body);
+  expect(patch).toEqual({ conversation_config: { agent: { prompt: { prompt: 'PROMPT(es)' } } } });
 });
 
 test('an agent already in sync is not patched', async () => {

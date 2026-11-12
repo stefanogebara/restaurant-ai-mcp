@@ -156,7 +156,7 @@ async function checkAvailability(restaurantId, restaurant, { date, time, party_s
 
     // Stored date/time fields are restaurant-local wall times. Compare against
     // one local clock snapshot, not the server's day or a date parsed as UTC.
-    const { utcToLocalDate } = require('./timezone');
+    const { utcToLocalDate, restaurantTodayHint } = require('./timezone');
     const timezone = restaurant.timezone || 'America/Sao_Paulo';
     const now = new Date();
     const today = utcToLocalDate(now, timezone);
@@ -166,7 +166,7 @@ async function checkAvailability(restaurantId, restaurant, { date, time, party_s
     if (`${date}T${time}:00` < `${today}T${localTime}`) {
       return {
         success: false, available: false, error: 'PAST_DATE',
-        message: 'The requested date and time is in the past. Please choose a future date.'
+        message: `The requested date and time is in the past. ${restaurantTodayHint(timezone, now)}`
       };
     }
     const { partySize } = validation;
@@ -459,7 +459,11 @@ async function createReservation(restaurantId, restaurant, params, trustedContex
       }
       const refusal = BOOKING_REFUSALS[booked.status];
       if (refusal) {
-        return { success: false, error: refusal[0], message: refusal[1], restaurant_name: restaurantName };
+        // A date refusal names today, so the agent can correct a guessed year.
+        const message = ['PAST_DATE', 'TOO_FAR'].includes(refusal[0])
+          ? `${refusal[1]} ${require('./timezone').restaurantTodayHint(restaurant.timezone || 'America/Sao_Paulo')}`
+          : refusal[1];
+        return { success: false, error: refusal[0], message, restaurant_name: restaurantName };
       }
       logger.error('CreateReservation: booking failed:', { status: booked.status, error: booked.error });
       return {

@@ -5,6 +5,12 @@
 // Changing agent_language in the database does not reach ElevenLabs; until
 // 2026-11-12 nothing replayed it (Osteria del Sole: database 'pt', agent 'en').
 //
+// The same comparison covers the instructions (prompt) and the agent's time
+// zone. A prompt is written once, so a fix to buildPersonaPrompt (for example
+// the current-date section of 2026-11-12) only reaches an agent through this
+// sync. Status 'outdated' = right language, old instructions or zone; its
+// patch changes only prompt + timezone, never the language or the greeting.
+//
 // The patch uses the same helpers as the app's own paths:
 // - language + matching TTS model + summary language, as the voice settings
 //   PATCH does (api/elevenlabs-voice-settings.js);
@@ -15,12 +21,14 @@ const { compatibleTtsModel, summaryLanguageFor } = require('./elevenlabs-voice-c
 const { buildFirstMessage } = require('./voice-first-message');
 
 const base = value => String(value || '').trim().toLowerCase().replace(/_/g, '-').split('-')[0];
+// ElevenLabs may trim or change line endings of a stored prompt.
+const sameText = (a, b) => String(a ?? '').replace(/\r\n/g, '\n').trim() === String(b ?? '').replace(/\r\n/g, '\n').trim();
 
 /**
  * @param {object} config restaurant_config row (fields used by buildPersonaPrompt)
  * @param {object} agent  GET /v1/convai/agents/{id} body
  * @param {object} [deps] { buildPersonaPrompt } — injectable for tests
- * @returns {{ status: 'ok'|'mismatch'|'invalid', reasons: string[], current: object, patch: object|null }}
+ * @returns {{ status: 'ok'|'mismatch'|'outdated'|'invalid', reasons: string[], current: object, patch: object|null }}
  */
 function planLanguageSync(config, agent, deps = {}) {
   const wanted = config?.agent_language;
@@ -30,7 +38,9 @@ function planLanguageSync(config, agent, deps = {}) {
     model: agentConfig.tts?.model_id ?? null,
     summary: agent?.platform_settings?.summary_language ?? null,
     first_message: agentConfig.agent?.first_message ?? null,
+    timezone: agentConfig.agent?.prompt?.timezone ?? null,
   };
+  const currentPrompt = agentConfig.agent?.prompt?.prompt ?? null;
   if (typeof wanted !== 'string' || !wanted.trim()) {
     return { status: 'invalid', reasons: ['restaurant has no agent_language'], current, patch: null };
   }
@@ -44,9 +54,21 @@ function planLanguageSync(config, agent, deps = {}) {
   if (model !== current.model) reasons.push(`model ${current.model} cannot speak ${wanted}`);
   const summary = summaryLanguageFor(wanted, current.summary, config);
   if (base(current.summary) !== base(summary)) reasons.push(`summary ${current.summary} != ${summary}`);
-  if (!reasons.length) return { status: 'ok', reasons, current, patch: null };
 
   const buildPersonaPrompt = deps.buildPersonaPrompt || require('./persona-prompt-builder').buildPersonaPrompt;
+  const wantedPrompt = buildPersonaPrompt(config, { channel: 'voice' });
+  // The zone ElevenLabs uses for {{system__time_date}} (unset = UTC).
+  const zone = typeof config.timezone === 'string' && config.timezone.trim() ? config.timezone.trim() : null;
+  const promptPatch = { prompt: wantedPrompt, ...(zone ? { timezone: zone } : {}) };
+
+  if (!reasons.length) {
+    const stale = [];
+    if (!sameText(currentPrompt, wantedPrompt)) stale.push('prompt outdated');
+    if (zone && current.timezone !== zone) stale.push(`timezone ${current.timezone} != ${zone}`);
+    if (!stale.length) return { status: 'ok', reasons, current, patch: null };
+    return { status: 'outdated', reasons: stale, current, patch: { conversation_config: { agent: { prompt: promptPatch } } } };
+  }
+
   const patch = {
     conversation_config: {
       agent: {
@@ -56,7 +78,7 @@ function planLanguageSync(config, agent, deps = {}) {
         first_message: buildFirstMessage({
           restaurant_name: config.restaurant_name, language: wanted, custom_greeting: config.agent_greeting,
         }),
-        prompt: { prompt: buildPersonaPrompt(config, { channel: 'voice' }) },
+        prompt: promptPatch,
       },
       tts: { model_id: model },
     },
@@ -84,10 +106,15 @@ async function patchAgent(agentId, patch, key, fetchImpl = fetch) {
   if (!res.ok) throw new Error(`PATCH agent ${res.status}`);
 }
 
-/** PATCH a mismatched agent, read it back, and fail unless it is now in sync. */
-async function syncAgentLanguage(config, key, { fetchImpl = fetch, deps = {} } = {}) {
+/**
+ * PATCH a mismatched or outdated agent, read it back, and fail unless it is now in sync.
+ * onlyOutdated: update instructions and zone only; an agent whose language
+ * differs is left alone (skipped) — for changes that did not touch the language.
+ */
+async function syncAgentLanguage(config, key, { fetchImpl = fetch, deps = {}, onlyOutdated = false } = {}) {
   const before = planLanguageSync(config, await fetchAgent(config.elevenlabs_agent_id, key, fetchImpl), deps);
-  if (before.status !== 'mismatch') return { changed: false, before, after: before };
+  if (onlyOutdated && before.status === 'mismatch') return { changed: false, skipped: true, before, after: before };
+  if (!before.patch) return { changed: false, before, after: before };
   await patchAgent(config.elevenlabs_agent_id, before.patch, key, fetchImpl);
   const after = planLanguageSync(config, await fetchAgent(config.elevenlabs_agent_id, key, fetchImpl), deps);
   if (after.status !== 'ok') throw new Error(`agent still out of sync: ${after.reasons.join('; ')}`);

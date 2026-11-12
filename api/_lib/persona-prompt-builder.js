@@ -73,6 +73,27 @@ function sanitisePromptInput(value, maxLen = 200) {
   return cleaned;
 }
 
+/**
+ * Today's date for an ElevenLabs agent (options.channel === 'voice').
+ *
+ * Why: the agents never called get_current_datetime, so the model guessed the
+ * year from its training data. On 2026-11-12 it sent 2023-11-14 for "tomorrow,
+ * Friday the 13th" and the booking failed. ElevenLabs fills the system__time_*
+ * variables itself at each turn, in the zone set on the agent
+ * (conversation_config.agent.prompt.timezone, which the sync sets to the
+ * restaurant's zone; unset means UTC). system__time_date changes once a day,
+ * so it keeps prompt caching, unlike system__time_utc.
+ * Only for ElevenLabs: our own voice server (ws-server.js) does not pass a
+ * channel and would show the {{…}} placeholders as text.
+ */
+function voiceDateSection() {
+  return 'Current date:\n'
+    + '- Today is {{system__time_date}} in the restaurant\'s time zone ({{system__timezone}}). The local hour is {{system__time_hour}}h.\n'
+    + '- Work out "today", "tonight", "tomorrow", weekdays and dates said without a year from this date. A date without a year is the next such date that has not passed.\n'
+    + '- Always send dates to tools as YYYY-MM-DD with the full year. Never guess the year.\n'
+    + '- If a tool says a date is in the past or too far ahead, use the date it gives for today and try again.\n\n';
+}
+
 function buildPersonaPrompt(restaurantConfig, options = {}) {
   if (!restaurantConfig) {
     logger.error('buildPersonaPrompt called without restaurantConfig');
@@ -82,7 +103,7 @@ function buildPersonaPrompt(restaurantConfig, options = {}) {
   // If there's a prompt override, use it directly
   const override = options.promptOverride || restaurantConfig.persona_prompt_override;
   if (override) {
-    return override;
+    return options.channel === 'voice' ? `${override}\n\n${voiceDateSection()}` : override;
   }
 
   const language = options.language
@@ -221,14 +242,17 @@ function buildPersonaPrompt(restaurantConfig, options = {}) {
     prompt += 'Reservation Policies:\n' + policyLines.join('\n') + '\n\n';
   }
 
-  // 4. Tool descriptions
+  if (options.channel === 'voice') prompt += voiceDateSection();
+
+  // 4. Tool descriptions. Since the 2026-11-11 audit (F4) the server finds a
+  // booking only by the full code + phone and refuses changes by phone; the
+  // prompt said "by phone, name, or ID" until 2026-11-12.
   prompt += 'Available tools:\n';
-  prompt += '- get_current_datetime: Get current date/time. Use at conversation start.\n';
+  prompt += '- get_current_datetime: Exact current date and time at the restaurant, if you need the minute.\n';
   prompt += '- check_availability: Check if a table is available for a date, time, and party size.\n';
   prompt += '- create_reservation: Book a table after confirming all details with customer.\n';
-  prompt += '- lookup_reservation: Find existing reservation by phone, name, or ID.\n';
-  prompt += '- modify_reservation: Change date, time, or party size of existing reservation.\n';
-  prompt += '- cancel_reservation: Cancel an existing reservation.\n';
+  prompt += '- lookup_reservation: Find an existing booking. Needs the complete confirmation code from the receipt AND the phone number used for the booking. A name alone is never enough.\n';
+  prompt += '- modify_reservation and cancel_reservation: Changes and cancellations are not done by phone. Tell the guest to use the customer portal link from the receipt or to contact the restaurant.\n';
   prompt += '- get_wait_time: Get estimated wait time for walk-in customers.\n\n';
 
   // 5. Voice & Speech Style

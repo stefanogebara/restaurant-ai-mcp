@@ -48,7 +48,7 @@ afterAll(() => { delete process.env.ELEVENLABS_API_KEY; });
 test('a language change syncs the restaurant agent with the saved config', async () => {
   const res = await put({ language: 'pt-BR' });
   expect(res.statusCode).toBe(200);
-  expect(mockSync).toHaveBeenCalledWith(mockConfig, 'el-key');
+  expect(mockSync).toHaveBeenCalledWith(mockConfig, 'el-key', { onlyOutdated: false });
   expect(res.body.agent_language_synced).toBe(true);
 });
 
@@ -60,11 +60,25 @@ test('a failed agent sync keeps the saved setting and reports it', async () => {
   expect(res.body.agent_language_synced).toBe(false);
 });
 
-test('no agent, no key, or no language change means no provider call', async () => {
+// Hours, name, contact, policies and time zone are all in the agent's prompt
+// or zone (2026-11-12), so any settings change replays to the agent.
+test.each([
+  [{ restaurant_name: 'Osteria Nova' }], [{ business_hours: { monday: { is_open: false } } }], [{ timezone: 'Europe/Rome' }],
+])('a settings change %j also syncs the agent, instructions and zone only', async body => {
+  const res = await put(body);
+  expect(mockSync).toHaveBeenCalledWith(mockConfig, 'el-key', { onlyOutdated: true });
+  expect(res.body.agent_language_synced).toBe(true);
+});
+
+test('an agent whose language differs is skipped by a non-language change', async () => {
+  mockSync.mockResolvedValueOnce({ changed: false, skipped: true });
+  expect((await put({ business_hours: { monday: { is_open: false } } })).body.agent_language_synced).toBeNull();
+});
+
+test('no agent or no key means no provider call', async () => {
   mockConfig = { ...mockConfig, elevenlabs_agent_id: null };
   expect((await put({ language: 'pt-BR' })).body.agent_language_synced).toBeNull();
   mockConfig = { ...mockConfig, elevenlabs_agent_id: 'agent_osteria_0001' };
-  expect((await put({ restaurant_name: 'Osteria Nova' })).body.agent_language_synced).toBeNull();
   delete process.env.ELEVENLABS_API_KEY;
   expect((await put({ language: 'pt-BR' })).body.agent_language_synced).toBeNull();
   expect(mockSync).not.toHaveBeenCalled();

@@ -812,7 +812,7 @@ async function createAgent({
       const { data: config, error: configError } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
-        .select('id, restaurant_name, phone, email, website, city, country, business_hours, agent_language, ai_config, agent_name, agent_greeting, voice_id, voice_engine, persona_prompt_override, restaurant_profile, scraped_data, ai_strategy_doc, deposit_config, reservation_settings')
+        .select('id, restaurant_name, phone, email, website, city, country, business_hours, timezone, agent_language, ai_config, agent_name, agent_greeting, voice_id, voice_engine, persona_prompt_override, restaurant_profile, scraped_data, ai_strategy_doc, deposit_config, reservation_settings')
         .eq('id', restaurantId)
         .maybeSingle();
       if (configError) {
@@ -869,7 +869,10 @@ async function createAgent({
         name: `${restaurant_name} AI Host`,
         conversation_config: {
           agent: {
-            prompt: { prompt: systemPrompt, llm: 'gpt-4o-mini', tool_ids: toolIds },
+            // The zone ElevenLabs uses for {{system__time_date}} in the prompt
+            // (unset = UTC). See voiceDateSection in persona-prompt-builder.
+            prompt: { prompt: systemPrompt, llm: 'gpt-4o-mini', tool_ids: toolIds,
+              ...(restaurantConfig?.timezone ? { timezone: restaurantConfig.timezone } : {}) },
             first_message: firstMessage,
             language,
           },
