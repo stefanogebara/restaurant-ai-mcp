@@ -354,16 +354,22 @@ module.exports = async function handler(req, res) {
       // language, compatible TTS model, summary language, greeting and prompt,
       // read back before reporting success. A failure keeps the saved setting
       // and is reported; the founder's "Agentes de voz" tab can repair it.
+      // Every allowed field feeds the agent's prompt (hours, name, contact,
+      // location, policies) or its time zone, so any of them triggers the same
+      // sync; an agent already in step is only read, not patched. Without a
+      // language change only instructions and zone are updated: an agent whose
+      // language differs is left as it is (skipped, reported as null).
       let agentLanguageSynced = null;
-      if (req.body.language !== undefined && process.env.ELEVENLABS_API_KEY) {
+      if (ALLOWED_FIELDS.some(field => req.body[field] !== undefined) && process.env.ELEVENLABS_API_KEY) {
         try {
           const { syncAgentLanguage, CONFIG_COLUMNS } = require('./_lib/elevenlabs-language-sync');
           const { data: config, error: configError } = await supabase
             .schema('restaurant').from('restaurant_config').select(CONFIG_COLUMNS).eq('id', restaurantId).maybeSingle();
           if (configError) throw new Error('config unavailable');
           if (config?.elevenlabs_agent_id) {
-            await syncAgentLanguage(config, process.env.ELEVENLABS_API_KEY);
-            agentLanguageSynced = true;
+            const result = await syncAgentLanguage(config, process.env.ELEVENLABS_API_KEY,
+              { onlyOutdated: req.body.language === undefined });
+            agentLanguageSynced = result?.skipped ? null : true;
           }
         } catch (syncError) {
           agentLanguageSynced = false;

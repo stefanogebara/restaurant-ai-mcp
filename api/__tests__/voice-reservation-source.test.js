@@ -297,6 +297,9 @@ describe('the locked booking function decides the last seats and tables', () => 
     mockBookGuestReservation.mockResolvedValueOnce({ success: false, status, data: { status } });
     const result = await createReservation('sandbox-restaurant', restaurant, details);
     expect(result).toEqual(expect.objectContaining({ success: false, error: code, message: expect.any(String) }));
+    // A date refusal names today, so an agent that guessed the year can fix it.
+    if (code === 'PAST_DATE' || code === 'TOO_FAR') expect(result.message).toMatch(/Today at the restaurant is \w+day, \d{4}-\d{2}-\d{2}/);
+    else expect(result.message).not.toMatch(/Today at the restaurant/);
   });
 
   test('a database error is a generic failure, never a confirmation', async () => {

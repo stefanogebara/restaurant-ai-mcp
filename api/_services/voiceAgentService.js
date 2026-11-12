@@ -51,7 +51,8 @@ async function refreshVoiceAgentPrompt(restaurantId, { syncFirstMessage = false 
   }
 
   const systemPrompt = buildPersonaPrompt(config, { channel: 'voice' });
-  const agent = { prompt: { prompt: systemPrompt } };
+  // The zone sets {{system__time_date}} in the prompt (unset = UTC).
+  const agent = { prompt: { prompt: systemPrompt, ...(config.timezone ? { timezone: config.timezone } : {}) } };
   if (syncFirstMessage) {
     agent.first_message = buildFirstMessage({
       restaurant_name: config.restaurant_name,

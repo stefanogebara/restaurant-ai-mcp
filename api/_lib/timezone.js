@@ -283,7 +283,30 @@ function suggestTimezone(countryCode, city = '') {
   return COUNTRY_TIMEZONES[countryCode] || 'UTC';
 }
 
+/**
+ * Today's date and local time at the restaurant, written for a language model
+ * that has to correct a date.
+ *
+ * Why: on 2026-11-12 a voice agent that never learned today's date sent
+ * 2023-11-14 for "tomorrow, Friday the 13th". The refusal only said "in the
+ * past", so the agent tried other days of 2023 and the guest left without a
+ * booking. A refusal that names today lets the agent fix the year itself.
+ *
+ * @param {string} timezone IANA zone of the restaurant
+ * @param {Date} [now]
+ * @returns {string} e.g. "Today at the restaurant is Thursday, 2026-11-12, 16:26 (America/Sao_Paulo). ..."
+ */
+function restaurantTodayHint(timezone, now = new Date()) {
+  let zone = timezone || 'UTC';
+  try { new Intl.DateTimeFormat('en-US', { timeZone: zone }); } catch { zone = 'UTC'; }
+  const weekday = new Intl.DateTimeFormat('en-US', { timeZone: zone, weekday: 'long' }).format(now);
+  const time = new Intl.DateTimeFormat('en-GB', { timeZone: zone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(now);
+  return `Today at the restaurant is ${weekday}, ${utcToLocalDate(now, zone)}, ${time} (${zone}). `
+    + 'A date said without a year is the next such date from today. Always send the full year.';
+}
+
 module.exports = {
+  restaurantTodayHint,
   getLocalDate,
   getLocalTime,
   utcToLocalDate,

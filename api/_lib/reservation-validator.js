@@ -67,7 +67,7 @@ function validateReservation(params, restaurant) {
   // The slot is a wall-clock time in the restaurant's zone. Parsing it with
   // new Date(`${date}T${time}`) read it in the server's zone (UTC in
   // production): at 17:00 in São Paulo, 19:00 tonight was "in the past".
-  const { localSlotToInstant } = require('./timezone');
+  const { localSlotToInstant, restaurantTodayHint } = require('./timezone');
   const requestedDateTime = localSlotToInstant(date, time, config.timezone);
   if (!requestedDateTime) {
     return {
@@ -82,7 +82,7 @@ function validateReservation(params, restaurant) {
   if (requestedDateTime < now) {
     errors.push({
       code: 'PAST_DATE',
-      message: 'The requested date and time is in the past. Please choose a future date.'
+      message: `The requested date and time is in the past. ${restaurantTodayHint(config.timezone, now)}`
     });
   }
 
@@ -100,7 +100,7 @@ function validateReservation(params, restaurant) {
   if (daysUntilReservation > config.max_advance_days) {
     errors.push({
       code: 'TOO_FAR',
-      message: `Reservations can only be made up to ${config.max_advance_days} days in advance.`
+      message: `Reservations can only be made up to ${config.max_advance_days} days in advance. ${restaurantTodayHint(config.timezone, now)}`
     });
   }
 
