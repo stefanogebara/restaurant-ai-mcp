@@ -98,7 +98,7 @@ function createFakeClient(pool, log = []) {
       const sql = `SELECT ${ident(fn)}(${keys.map((k, i) => `${ident(k)} => $${i + 1}`).join(', ')}) AS result`;
       log.push(sql);
       try {
-        const { rows } = await pool.query(sql, keys.map(k => (args[k] !== null && typeof args[k] === 'object' ? JSON.stringify(args[k]) : args[k])));
+        const { rows } = await pool.query(sql, keys.map(k => (Array.isArray(args[k]) || args[k] === null || typeof args[k] !== 'object' ? args[k] : JSON.stringify(args[k]))));
         return { data: rows[0].result, error: null };
       } catch (e) { return { data: null, error: { code: e.code, message: e.message } }; }
     },

@@ -6,7 +6,7 @@ jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn() }),
 }));
 jest.mock('../_lib/supabase', () => ({
-  getReservations: jest.fn(), canAccommodateParty: jest.fn(), createReservation: jest.fn(),
+  getReservations: jest.fn(), canAccommodateParty: jest.fn(), bookGuestReservation: jest.fn(),
   generateReservationId: jest.fn(() => 'RES-SANDBOX-BOUNDARY'),
 }));
 jest.mock('../_lib/whatsapp-sender', () => ({ sendTemplateMessage: jest.fn() }));
@@ -35,7 +35,7 @@ beforeEach(() => {
   db.getReservations.mockResolvedValue({ success: true, data: { records: [] } });
   db.canAccommodateParty.mockResolvedValue({ can_accommodate: true, table_ids: ['sandbox-table'] });
   db.generateReservationId.mockReturnValue('RES-SANDBOX-BOUNDARY');
-  db.createReservation.mockResolvedValue({ success: true, data: { id: 'sandbox-reservation' } });
+  db.bookGuestReservation.mockResolvedValue({ success: true, status: 'created', data: { id: 'sandbox-reservation' } });
   beginConfirmation.mockResolvedValue(tracking);
   finishConfirmation.mockResolvedValue(undefined);
   sendTemplateMessage.mockResolvedValue({ success: true, messageId: 'wamid.sandbox' });
@@ -47,7 +47,7 @@ function expectNoBookingEffects() {
   expect(db.getReservations).not.toHaveBeenCalled();
   expect(db.canAccommodateParty).not.toHaveBeenCalled();
   expect(db.generateReservationId).not.toHaveBeenCalled();
-  expect(db.createReservation).not.toHaveBeenCalled();
+  expect(db.bookGuestReservation).not.toHaveBeenCalled();
   expect(beginConfirmation).not.toHaveBeenCalled();
   expect(finishConfirmation).not.toHaveBeenCalled();
   expect(sendTemplateMessage).not.toHaveBeenCalled();
@@ -79,7 +79,7 @@ test.each(['2', '02'])('a legacy digit-string party size %s is still stored as a
   const result = await book({ party_size });
   expect(result.success).toBe(true);
   expect(db.canAccommodateParty).toHaveBeenCalledWith('sandbox-restaurant', 2, expect.any(Object));
-  expect(db.createReservation).toHaveBeenCalledWith('sandbox-restaurant', expect.objectContaining({ party_size: 2 }));
+  expect(db.bookGuestReservation).toHaveBeenCalledWith('sandbox-restaurant', expect.objectContaining({ party_size: 2 }), {});
   expect(sendTemplateMessage).toHaveBeenCalledTimes(1);
 });
 
@@ -88,7 +88,7 @@ test.each(['2028', '2000'])('a valid leap day in %s remains bookable', async yea
   const date = `${year}-02-29`;
   const result = await book({ date });
   expect(result.success).toBe(true);
-  expect(db.createReservation).toHaveBeenCalledWith('sandbox-restaurant', expect.objectContaining({ date }));
+  expect(db.bookGuestReservation).toHaveBeenCalledWith('sandbox-restaurant', expect.objectContaining({ date }), {});
   expect(sendTemplateMessage).toHaveBeenCalledTimes(1);
 });
 
@@ -106,7 +106,7 @@ test('a voice confirmation transport exception keeps the booking and makes no se
   expect(result).toMatchObject({ success: true, reservation_id: 'RES-SANDBOX-BOUNDARY' });
   expect(result.message).toMatch(/could not confirm.*WhatsApp/i);
   expect(result.message).not.toMatch(/will receive|requested.*WhatsApp/i);
-  expect(db.createReservation).toHaveBeenCalledTimes(1);
+  expect(db.bookGuestReservation).toHaveBeenCalledTimes(1);
   expect(sendTemplateMessage).toHaveBeenCalledTimes(1);
   await jest.advanceTimersByTimeAsync(30_000);
   expect(sendTemplateMessage).toHaveBeenCalledTimes(1);
@@ -137,7 +137,7 @@ test.each([
   expect(finishConfirmation).toHaveBeenCalledTimes(1);
   expect(finishConfirmation).toHaveBeenCalledWith(tracking, lateResult);
   expect(sendTemplateMessage).toHaveBeenCalledTimes(1);
-  expect(db.createReservation).toHaveBeenCalledTimes(1);
+  expect(db.bookGuestReservation).toHaveBeenCalledTimes(1);
   expect(response).toBe(result);
   expect(response.message).toMatch(/could not confirm.*WhatsApp/i);
 });

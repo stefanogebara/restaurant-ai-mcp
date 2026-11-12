@@ -3,12 +3,16 @@ let mockSerial = 0;
 let mockLookupError = null;
 let mockLegacyBooking = null;
 let mockBindingOverride = null;
+// Mirrors book_guest_reservation: a committed external key returns 'existing'.
 const mockCreate = jest.fn(async (restaurantId, fields, options = {}) => {
   const key = options.externalId && `${restaurantId}:${options.externalId}`;
-  if (key && mockRows.has(key)) return { success: false, code: '23505' };
-  const row = { ...fields, restaurant_id: restaurantId, id: `row-${++mockSerial}` };
+  if (key && mockRows.has(key)) {
+    const row = mockRows.get(key);
+    return { success: false, status: 'existing', data: { id: row.id, reservation_id: row.reservation_id } };
+  }
+  const row = { ...fields, status: 'confirmed', restaurant_id: restaurantId, id: `row-${++mockSerial}` };
   mockRows.set(key || `legacy-${mockSerial}`, row);
-  return { success: true, data: row };
+  return { success: true, status: 'created', data: row };
 });
 const mockSend = jest.fn(async () => ({ success: true, messageId: 'wamid-once' }));
 const mockCapacity = jest.fn(async () => ({ can_accommodate: true, table_ids: ['table-1'] }));
@@ -31,7 +35,7 @@ jest.mock('../_lib/supabase', () => ({
   supabaseAdmin: { from: (...args) => mockFrom(...args) },
   getReservations: jest.fn(async () => ({ success: true, data: { records: [] } })),
   canAccommodateParty: (...args) => mockCapacity(...args),
-  createReservation: (...args) => mockCreate(...args),
+  bookGuestReservation: (...args) => mockCreate(...args),
   generateReservationId: jest.fn(() => `RES-${mockSerial + 1}`),
 }));
 jest.mock('../_lib/reservation-validator', () => ({
@@ -151,7 +155,7 @@ test('same conversation key in another tenant cannot reuse or expose a booking',
 
 test('model-supplied conversation fields cannot choose the durable booking key', async () => {
   await createReservation('tenant-a', restaurant, { ...params, conversation_id: 'conv_forged_123' });
-  expect(mockCreate).toHaveBeenCalledWith('tenant-a', expect.not.objectContaining({ external_id: expect.anything() }));
+  expect(mockCreate).toHaveBeenCalledWith('tenant-a', expect.not.objectContaining({ external_id: expect.anything() }), {});
   expect(mockFrom).not.toHaveBeenCalled();
 });
 

@@ -32,7 +32,7 @@ const voice = (n, phone) => tools.createReservation(h.R, restaurant, { date: DAY
   const w = await whatsapp(8, 'wa-ext-0001', '+5511960000001');
   const v = await voice(4, '+5511970000002');
   out.push({ case: 'R4a WhatsApp 8 seats, then voice 4', expected: 'voice refused, 8 seats',
-    observed: `whatsapp=${JSON.stringify(w).slice(0,60)} voice=${v.success ? 'ACCEPTED' : v.error} seats@19:00=${await seats()} of 8` });
+    observed: `whatsapp=${w.status} voice=${v.success ? 'ACCEPTED' : v.error} seats@19:00=${await seats()} of 8` });
   await fixture();
   const v2 = await voice(8, '+5511970000003');
   const w2 = await whatsapp(4, 'wa-ext-0002', '+5511960000004');

@@ -9,6 +9,7 @@ const mockEq = jest.fn();
 const mockIn = jest.fn();
 const mockSingle = jest.fn();
 const mockInsert = jest.fn();
+const mockBookGuestReservation = jest.fn();
 const mockFrom = jest.fn();
 const mockSchema = jest.fn();
 
@@ -36,6 +37,7 @@ function mockCreateChainableMock() {
 }
 
 jest.mock('../_lib/supabase', () => ({
+  bookGuestReservation: (...args) => mockBookGuestReservation(...args),
   supabaseAdmin: {
     from: (...args) => { mockFrom(...args); return mockCreateChainableMock(); },
     schema: (...args) => {
@@ -504,7 +506,9 @@ describe('Portal: reserve action', () => {
     // Slot available
     mockCheckTimeSlotAvailability.mockReturnValueOnce({ available: true, availableSeats: 38 });
     // Created reservation
-    mockSingle.mockResolvedValueOnce({
+    mockBookGuestReservation.mockResolvedValueOnce({
+      success: true,
+      status: 'created',
       data: {
         id: 'db-uuid-1',
         reservation_id: 'RES-TEST-123',
@@ -512,9 +516,8 @@ describe('Portal: reserve action', () => {
         party_size: 2,
         date: '2027-04-01',
         time: '19:00',
-        status: 'confirmed',
+        reservation_status: 'confirmed',
       },
-      error: null,
     });
 
     const { req, res } = createMockReqRes({
@@ -690,8 +693,8 @@ describe('Portal: reserve - DB insert error', () => {
     mockChainResolve.mockReturnValueOnce({ data: [], error: null });
     mockChainResolve.mockReturnValueOnce({ data: [{ capacity: 40 }], error: null });
     mockCheckTimeSlotAvailability.mockReturnValueOnce({ available: true, availableSeats: 38 });
-    // Insert .single() returns an error
-    mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'insert constraint violation' } });
+    // The booking function returns an error
+    mockBookGuestReservation.mockResolvedValueOnce({ success: false, status: 'error', error: { message: 'insert constraint violation' } });
 
     const { req, res } = createMockReqRes({
       method: 'POST',
@@ -715,6 +718,106 @@ describe('Portal: reserve - DB insert error', () => {
 });
 
 // ============================================================
+// Locked booking (book_guest_reservation): the final, binding check
+// ============================================================
+describe('Portal: reserve - locked booking function', () => {
+  const BODY = {
+    action: 'reserve',
+    restaurant_id: 'r1',
+    customer_name: 'Lock User',
+    customer_phone: ' +5511977777777 ',
+    customer_email: ' lock@example.com ',
+    party_size: 4,
+    date: '2027-04-01',
+    time: '19:00',
+    deposit_payment_intent_id: 'pi_123',
+    deposit_amount: 80,
+  };
+  function setupPreChecksPass() {
+    mockSingle.mockResolvedValueOnce({
+      data: {
+        id: 'r1',
+        restaurant_name: 'Test Restaurant',
+        reservation_settings: { max_party_size: 10, advance_booking_days: 60 },
+        business_hours: {},
+        average_dining_duration_minutes: 90,
+      },
+      error: null,
+    });
+    mockChainResolve.mockReturnValueOnce({ data: [], error: null });
+    mockChainResolve.mockReturnValueOnce({ data: [{ capacity: 8 }], error: null });
+    mockCheckTimeSlotAvailability.mockReturnValueOnce({ available: true, availableSeats: 8 });
+  }
+
+  test('books through the function as online_portal, with no retry key and the deposit', async () => {
+    setupPreChecksPass();
+    mockBookGuestReservation.mockResolvedValueOnce({
+      success: true, status: 'created',
+      data: { id: 'db-1', reservation_id: 'RES-LOCK-1', customer_name: 'Lock User', party_size: 4,
+        date: '2027-04-01', time: '19:00', reservation_status: 'confirmed' },
+    });
+    const { req, res } = createMockReqRes({ method: 'POST', body: BODY });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(mockBookGuestReservation).toHaveBeenCalledTimes(1);
+    const [restaurantId, fields, options] = mockBookGuestReservation.mock.calls[0];
+    expect(restaurantId).toBe('r1');
+    expect(options).toBeUndefined();
+    expect(fields).toEqual(expect.objectContaining({
+      source: 'online_portal', customer_name: 'Lock User', customer_phone: '+5511977777777',
+      customer_email: 'lock@example.com', party_size: 4, date: '2027-04-01', time: '19:00',
+      deposit_payment_intent_id: 'pi_123', deposit_amount: 80,
+    }));
+    expect(fields.reservation_id).toEqual(expect.any(String));
+    expect(mockInsert).not.toHaveBeenCalled();
+  });
+
+  test('a booking that lost the race for the last seats gets 409 with the seats left', async () => {
+    setupPreChecksPass();
+    mockBookGuestReservation.mockResolvedValueOnce({ success: false, status: 'unavailable', data: { status: 'unavailable', seats_available: 2 } });
+    const { req, res } = createMockReqRes({ method: 'POST', body: BODY });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false, available_seats: 2 }));
+    expect(mockSendNewBookingAlertEmail).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ['too_late', /after the last seating/],
+    ['outside_hours', /does not take bookings at that time/],
+    ['past_slot', /already passed/],
+    ['too_far', /up to 60 days/],
+    ['party_too_large', /Maximum party size is 10/],
+    ['invalid_input', /Invalid reservation details/],
+  ])('a %s refusal from the function is a 400 with a clear message', async (status, message) => {
+    setupPreChecksPass();
+    mockBookGuestReservation.mockResolvedValueOnce({ success: false, status, data: { status } });
+    const { req, res } = createMockReqRes({ method: 'POST', body: BODY });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false, message: expect.stringMatching(message) }));
+  });
+
+  test('a restaurant that went inactive meanwhile is a 404', async () => {
+    setupPreChecksPass();
+    mockBookGuestReservation.mockResolvedValueOnce({ success: false, status: 'restaurant_unavailable', data: {} });
+    const { req, res } = createMockReqRes({ method: 'POST', body: BODY });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(404);
+  });
+
+  test('special requests over 1000 characters are refused before any booking', async () => {
+    const { req, res } = createMockReqRes({ method: 'POST', body: { ...BODY, special_requests: 'x'.repeat(1001) } });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockBookGuestReservation).not.toHaveBeenCalled();
+  });
+});
+
+// ============================================================
 // Email confirmation (portal uses _lib/email.js)
 // ============================================================
 describe('Portal: reserve - email confirmation', () => {
@@ -734,7 +837,9 @@ describe('Portal: reserve - email confirmation', () => {
     mockChainResolve.mockReturnValueOnce({ data: [], error: null });
     mockChainResolve.mockReturnValueOnce({ data: [{ capacity: 40 }], error: null });
     mockCheckTimeSlotAvailability.mockReturnValueOnce({ available: true, availableSeats: 38 });
-    mockSingle.mockResolvedValueOnce({
+    mockBookGuestReservation.mockResolvedValueOnce({
+      success: true,
+      status: 'created',
       data: {
         id: 'db-uuid-1',
         reservation_id: 'RES-TEST-123',
@@ -742,9 +847,8 @@ describe('Portal: reserve - email confirmation', () => {
         party_size: 2,
         date: '2027-04-01',
         time: '19:00',
-        status: 'confirmed',
+        reservation_status: 'confirmed',
       },
-      error: null,
     });
   }
 
@@ -993,7 +1097,9 @@ describe('Portal: reserve - WhatsApp owner alert', () => {
     mockChainResolve.mockReturnValueOnce({ data: [], error: null });
     mockChainResolve.mockReturnValueOnce({ data: [{ capacity: 40 }], error: null });
     mockCheckTimeSlotAvailability.mockReturnValueOnce({ available: true, availableSeats: 38 });
-    mockSingle.mockResolvedValueOnce({
+    mockBookGuestReservation.mockResolvedValueOnce({
+      success: true,
+      status: 'created',
       data: {
         id: 'db-uuid-1',
         reservation_id: 'RES-TEST-123',
@@ -1001,9 +1107,8 @@ describe('Portal: reserve - WhatsApp owner alert', () => {
         party_size: 3,
         date: '2027-04-01',
         time: '20:00',
-        status: 'confirmed',
+        reservation_status: 'confirmed',
       },
-      error: null,
     });
   }
 
