@@ -475,6 +475,7 @@ async function createOutreachDemo(scrapedData) {
     city: 'São Paulo',
     country: 'Brazil',
     timezone: 'America/Sao_Paulo', // explicit: the column has no default since 2026-11-12
+    agent_language: 'pt', // explicit: without it the column default made these demos English
     email: 'stefano@seatable.one',
     phone: scrapedData.phone || 'N/A',
     slug,

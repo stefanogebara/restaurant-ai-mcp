@@ -264,7 +264,7 @@ async function criarPreviaDemo(leadId) {
       // Explicit: the column default was 'UTC', which made the preview's
       // booking rules run 3 hours off. The column no longer has a default.
       timezone: require('../timezone').suggestTimezone('BR', (lead.city || '').trim() || 'São Paulo'),
-      agent_language: 'pt',
+      agent_language: require('../country-locale').languageForCountry('BR'), // explicit: the column has no default since 2026-11-12
       email: `previa+${String(leadId).slice(0, 8)}@seatable.one`,
       phone: lead.phone || 'N/A',
       slug: `previa-${token.slice(0, 8)}`,

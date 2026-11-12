@@ -47,42 +47,9 @@ function getDefaultVoiceId(language) {
 
 // ============ Explicit Country + Language Resolution ============
 
-// The onboarding form submits country as a display name ("Brazil", "Spain"), not
-// an ISO code. Downstream helpers like suggestTimezone() only recognise ISO
-// codes — without this mapping timezone silently falls back to UTC and
-// agent_language stays 'en' for every non-US restaurant.
-// Keep code/name/language support aligned with client/src/data/countries.ts.
-// The completion tests exercise every offered code and name against this resolver.
-const COUNTRY_NAME_TO_ISO = {
-  brazil: 'BR', brasil: 'BR',
-  spain: 'ES', espana: 'ES', 'españa': 'ES',
-  portugal: 'PT',
-  france: 'FR', belgium: 'BE', switzerland: 'CH',
-  italy: 'IT', italia: 'IT',
-  germany: 'DE', deutschland: 'DE', austria: 'AT',
-  'united kingdom': 'GB', uk: 'GB',
-  'united states': 'US', usa: 'US',
-  canada: 'CA',
-  mexico: 'MX', 'méxico': 'MX',
-  argentina: 'AR', colombia: 'CO', chile: 'CL', peru: 'PE',
-  japan: 'JP', australia: 'AU',
-};
-const COUNTRY_LANGUAGE_MAP = {
-  BR: 'pt', PT: 'pt', ES: 'es', MX: 'es', AR: 'es', CO: 'es', CL: 'es', PE: 'es',
-  FR: 'fr', BE: 'fr', CH: 'fr', IT: 'it', DE: 'de', AT: 'de',
-  JP: 'ja', US: 'en', GB: 'en', CA: 'en', AU: 'en',
-};
-// Country must be explicit and supported. City and phone cannot establish it:
-// a wrong default also changes timezone, agent language, and subscription terms.
-function resolveCountryIso(countryInput) {
-  if (typeof countryInput !== 'string') return null;
-  const value = countryInput.trim();
-  const name = value.toLowerCase();
-  const iso = Object.prototype.hasOwnProperty.call(COUNTRY_NAME_TO_ISO, name)
-    ? COUNTRY_NAME_TO_ISO[name]
-    : value.toUpperCase();
-  return Object.prototype.hasOwnProperty.call(COUNTRY_LANGUAGE_MAP, iso) ? iso : null;
-}
+// Country -> ISO code -> voice language lives in api/_lib/country-locale.js,
+// shared with the demo so both paths give a restaurant the same language.
+const { COUNTRY_LANGUAGE_MAP, resolveCountryIso } = require('../_lib/country-locale');
 
 // DB enum restaurant.restaurant_type_enum accepts only this whitelist (as of
 // 2026-04 — observed by querying existing rows). The onboarding form surfaces
@@ -630,7 +597,15 @@ module.exports = async (req, res) => {
     };
 
     // Get language-specific messages
-    const voiceLanguage = selected_voice_language || resolvedLanguage || 'en';
+    // The voice choice may pick another language than the country's, but only
+    // one the agent supports: the browser value was saved unchecked before.
+    const chosenVoiceLanguage = typeof selected_voice_language === 'string'
+      && Object.prototype.hasOwnProperty.call(languageToLocale, selected_voice_language)
+      ? selected_voice_language : null;
+    if (selected_voice_language && !chosenVoiceLanguage) {
+      logger.warn('Ignoring unsupported selected_voice_language; using the country language');
+    }
+    const voiceLanguage = chosenVoiceLanguage || resolvedLanguage || 'en';
     const locale = languageToLocale[voiceLanguage] || 'en-US';
     const greetingMessage = greetingMessages[voiceLanguage] || greetingMessages['en'];
     const farewellMessage = farewellMessages[voiceLanguage] || farewellMessages['en'];
@@ -800,7 +775,7 @@ module.exports = async (req, res) => {
     // Keep the real config, greeting, registry and provider on the same
     // language. An explicit voice choice wins; otherwise the demo may refine
     // the country fallback after the initial config object was assembled.
-    const finalVoiceLanguage = selected_voice_language || restaurantConfigData.agent_language || 'en';
+    const finalVoiceLanguage = chosenVoiceLanguage || restaurantConfigData.agent_language || 'en';
     restaurantConfigData.agent_language = finalVoiceLanguage;
     restaurantConfigData.ai_config.language = finalVoiceLanguage === 'pt'
       && (resolvedCountryIso === 'BR' || /^\+55/.test(phone_number))

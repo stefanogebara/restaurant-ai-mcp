@@ -24,7 +24,14 @@ const restaurant: RestaurantInfo = { id: 'restaurant', name: 'Cantina', slug: 'c
   business_hours: Object.fromEntries(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
     .map(day => [day, { is_open: true, open_time: '12:00', close_time: '23:59' }])) };
 const request = vi.fn<typeof fetch>();
+// The form books TODAY and hides slots less than 30 minutes ahead; the only
+// slot here is 23:59. On the real clock the test failed whenever it ran
+// between 23:29 and 23:59 (CI did, at 23:53 UTC on 2026-11-11). Pin "now" to
+// midday, faking only Date so React Query and waitFor keep real timers.
+const MIDDAY = new Date(2027, 1, 26, 12, 0, 0);
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(MIDDAY);
   request.mockReset().mockImplementation(async input => {
     const url = new URL(String(input), 'https://seatable.one');
     if (url.pathname === '/api/booking-token') return Response.json({ token: 'test-token' });
@@ -42,7 +49,7 @@ beforeEach(() => {
   vi.stubGlobal('fetch', request);
   window.history.replaceState({}, '', '/');
 });
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.useRealTimers(); });
 
 function LocationProof() {
   const location = useLocation();

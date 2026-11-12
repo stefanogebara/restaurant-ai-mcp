@@ -883,6 +883,18 @@ describe('demo_token carrega o conhecimento do demo (G2.1)', () => {
     expect(createAgent).toHaveBeenCalledWith(expect.objectContaining({ language: 'fr' }));
   });
 
+  // 2026-11-12: selected_voice_language was saved unchecked. An unsupported
+  // value must not replace the country language.
+  test.each([['xx'], ['pt-BR; DROP'], [''], [42]])('an unsupported voice language %p falls back to the country', async (value) => {
+    authComSub();
+    comDemo(null);
+    const { req, res } = mockReqRes({ ...BASE_BODY, country: 'Spain', selected_voice_language: value });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(capturedConfigWrite.agent_language).toBe('es');
+    expect(capturedConfigWrite.ai_config.language).toBe('es-ES');
+  });
+
   // ── A folha de confirmação ───────────────────────────────────────────────
   //
   // O perfil da IA passa a nascer da PESQUISA em vez das doze perguntas

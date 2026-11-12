@@ -219,6 +219,29 @@ describe('POST ?action=create', () => {
     expect(mockInsert.mock.calls[0][0].agent_language).toBe('pt');
   });
 
+  // 2026-11-12: the demo had its own country map. It lacked BE/CH/AT and
+  // uppercased a country NAME ("SPAIN"), so those demos were born in 'en'.
+  test.each([
+    ['Spain', 'es', 'ES'], ['BE', 'fr', 'BE'], ['CH', 'fr', 'CH'], ['Austria', 'de', 'AT'], ['Brazil', 'pt', 'BR'],
+  ])('country %p gives the demo agent language %p and code %p', async (country, language, code) => {
+    const req = {
+      method: 'POST', query: { action: 'create' }, headers: {},
+      body: { restaurant_name: 'Casa País', city: 'Cidade', country, cuisine_type: 'Restaurant', demo_language: 'en' },
+    };
+    await handler(req, makeRes());
+    expect(mockInsert.mock.calls[0][0].agent_language).toBe(language);
+    expect(mockInsert.mock.calls[0][0].country).toBe(code);
+  });
+
+  test('a phone prefix from Belgium, Switzerland or Austria also sets the language', async () => {
+    const req = {
+      method: 'POST', query: { action: 'create' }, headers: {},
+      body: { restaurant_name: 'Chez Fone', city: 'Bruxelles', cuisine_type: 'Restaurant', scraped_data: { phone: '+32 2 555 0100' } },
+    };
+    await handler(req, makeRes());
+    expect(mockInsert.mock.calls[0][0].agent_language).toBe('fr');
+  });
+
   test('provided contact_email is still validated and stored', async () => {
     const req = {
       method: 'POST',
