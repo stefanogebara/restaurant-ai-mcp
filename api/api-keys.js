@@ -25,6 +25,7 @@ const VALID_PERMISSIONS = [
   'pos:service_completion',
   'pos:reservations_read',
   'pos:table_status',
+  'reservations:import',
   'webhooks:manage',
 ];
 

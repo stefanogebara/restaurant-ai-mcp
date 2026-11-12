@@ -4,9 +4,19 @@
  * POST /api/external-booking-webhook
  *
  * Accepts reservation data from external platforms (OpenTable, Resy, Google, etc.)
- * Auth: X-API-Key header matched against restaurant's API key.
+ * Auth: X-API-Key header, verified against the SHA-256 hashes in
+ * restaurant.api_keys (api/_lib/api-key-auth), with the 'reservations:import'
+ * permission (or '*').
  *
  * Deduplicates by (restaurant_id, source, external_id) to prevent double-booking.
+ *
+ * Deliberately NOT book_guest_reservation (the locked admission every guest
+ * channel uses): these are bookings the guest already holds on the partner
+ * platform. Refusing one for capacity would not cancel it there; the guest
+ * would still arrive and the restaurant would not know. They are recorded as
+ * sent, like a host booking. They are still counted by guest bookings: the
+ * plain INSERT takes FOR KEY SHARE on the restaurant row, which waits for the
+ * guest function's FOR UPDATE.
  *
  * Request body:
  * {
@@ -24,6 +34,8 @@
  */
 
 const { supabaseAdmin } = require('./_lib/supabase');
+const { verifyApiKey, hasPermission } = require('./_lib/api-key-auth');
+const { generateSecureReservationId } = require('./_lib/secure-id');
 const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 const { createSecureLogger } = require('./_lib/secure-logger');
 
@@ -40,26 +52,20 @@ module.exports = async (req, res) => {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
-  // Authenticate via API key
-  const apiKey = req.headers['x-api-key'];
-  if (!apiKey) {
-    return res.status(401).json({ success: false, error: 'X-API-Key header required' });
+  // Authenticate via API key. Until 12/11/2026 this read a public.api_keys
+  // table by the raw key, which does not exist: every call got 403.
+  let auth;
+  try {
+    auth = await verifyApiKey(req);
+  } catch (err) {
+    return res.status(err.status || 401).json({ success: false, error: err.message });
+  }
+  if (!hasPermission(auth.permissions, 'reservations:import')) {
+    return res.status(403).json({ success: false, error: 'API key lacks reservations:import permission' });
   }
 
   try {
-    // Look up API key to get restaurant_id
-    const { data: keyRecord, error: keyError } = await supabaseAdmin
-      .from('api_keys')
-      .select('restaurant_id, is_active')
-      .eq('key_value', apiKey)
-      .eq('is_active', true)
-      .maybeSingle();
-
-    if (keyError || !keyRecord) {
-      return res.status(403).json({ success: false, error: 'Invalid or inactive API key' });
-    }
-
-    const restaurantId = keyRecord.restaurant_id;
+    const restaurantId = auth.restaurant_id;
 
     // Validate request body
     const {
@@ -185,6 +191,8 @@ module.exports = async (req, res) => {
       .from('reservations')
       .insert({
         restaurant_id: restaurantId,
+        // NOT NULL: without it every import failed, even with a valid key.
+        reservation_id: generateSecureReservationId(),
         customer_name: customerName,
         customer_phone: customerPhone || null,
         customer_email: customerEmail || null,
