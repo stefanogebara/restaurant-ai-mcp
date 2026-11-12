@@ -54,6 +54,15 @@ module.exports = async (req, res) => {
   }
   req.user = authResult.user;
 
+  // Founder-only maintenance, not a tenant route: compare every restaurant's
+  // own agent with agent_language, or bring one agent in sync. The ElevenLabs
+  // key exists only on the server (sensitive on Vercel), so this is the only
+  // way to replay a database language change to the agent (2026-11-12).
+  const adminAction = String(req.query?.action || '');
+  if (adminAction === 'admin_language_report' || adminAction === 'admin_language_sync') {
+    return handleAdminLanguage(req, res, adminAction);
+  }
+
   // Check subscription + voice_ai feature access (Growth+ only)
   let subscriptionChecked = false;
   await checkSubscription(req, res, () => { subscriptionChecked = true; });
@@ -197,6 +206,70 @@ async function handleGet(req, res) {
       success: false,
       error: 'Failed to fetch voice settings'
     });
+  }
+}
+
+function voiceAdminEmails() {
+  return String(process.env.VOICE_ADMIN_EMAILS || process.env.PROSPECTING_ADMIN_EMAILS || 'stefanogebara@gmail.com')
+    .split(',').map(value => value.trim().toLowerCase()).filter(Boolean);
+}
+
+function languageRow(config, plan) {
+  // Never return prompts or greetings: the report is for comparison only.
+  return {
+    restaurant_id: config.id,
+    restaurant_name: config.restaurant_name,
+    agent_language: config.agent_language,
+    agent: { language: plan.current?.language ?? null, model: plan.current?.model ?? null, summary: plan.current?.summary ?? null },
+    status: plan.status,
+    reasons: plan.reasons,
+  };
+}
+
+async function handleAdminLanguage(req, res, action) {
+  const email = String(req.user?.email || '').toLowerCase();
+  if (!email || !voiceAdminEmails().includes(email)) {
+    logger.warn('[VoiceSettings] admin language action denied');
+    return res.status(403).json({ success: false, error: 'Forbidden' });
+  }
+  const key = process.env.ELEVENLABS_API_KEY;
+  if (!key) return res.status(503).json({ success: false, error: 'ElevenLabs is unavailable' });
+  const { planLanguageSync, fetchAgent, syncAgentLanguage, CONFIG_COLUMNS } = require('./_lib/elevenlabs-language-sync');
+  const configs = () => supabaseAdmin.schema('restaurant').from('restaurant_config').select(CONFIG_COLUMNS);
+
+  if (action === 'admin_language_report') {
+    if (req.method !== 'GET') return res.status(405).json({ success: false, error: 'Use GET' });
+    const { data, error } = await configs().not('elevenlabs_agent_id', 'is', null);
+    if (error || !Array.isArray(data)) return res.status(500).json({ success: false, error: 'Database error' });
+    const rows = [];
+    for (let i = 0; i < data.length; i += 5) {
+      rows.push(...await Promise.all(data.slice(i, i + 5).map(async config => {
+        try {
+          return languageRow(config, planLanguageSync(config, await fetchAgent(config.elevenlabs_agent_id, key)));
+        } catch (fetchError) {
+          return languageRow(config, { status: 'error', reasons: [fetchError.message], current: {} });
+        }
+      })));
+    }
+    return res.status(200).json({ success: true, rows });
+  }
+
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Use POST' });
+  const restaurantId = String(req.query?.restaurant_id || '');
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(restaurantId)) {
+    return res.status(400).json({ success: false, error: 'restaurant_id must be a UUID' });
+  }
+  const { data: config, error } = await configs().eq('id', restaurantId).maybeSingle();
+  if (error) return res.status(500).json({ success: false, error: 'Database error' });
+  if (!config?.elevenlabs_agent_id) return res.status(404).json({ success: false, error: 'Restaurant has no own agent' });
+  try {
+    const result = await syncAgentLanguage(config, key);
+    logger.info('[VoiceSettings] admin language sync', { restaurant_id: restaurantId, changed: result.changed });
+    return res.status(200).json({ success: true, changed: result.changed,
+      before: languageRow(config, result.before), after: languageRow(config, result.after) });
+  } catch (syncError) {
+    logger.error('[VoiceSettings] admin language sync failed:', syncError.message);
+    return res.status(502).json({ success: false, error: syncError.message });
   }
 }
 
