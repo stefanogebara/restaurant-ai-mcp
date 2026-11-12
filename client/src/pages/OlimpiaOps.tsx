@@ -16,6 +16,7 @@ import { HealthInline, DispatchPausedBanner } from '../components/prospecting/He
 import MotorStrip from '../components/prospecting/MotorStrip';
 import type { ProspectLead, Overview } from '../components/prospecting/types';
 import { fmtTime, httpStatus } from '../components/prospecting/types';
+import VoiceAgentsLanguagePanel from '../components/ops/VoiceAgentsLanguagePanel';
 
 /**
  * Olímpia Ops — the STANDALONE prospecting console (Phase 7 + 8), deliberately
@@ -28,7 +29,7 @@ import { fmtTime, httpStatus } from '../components/prospecting/types';
  * one section fully visible at a time, no accordions).
  */
 
-type Section = 'conversas' | 'descobrir' | 'abordagens' | 'whatsapp' | 'insights' | 'academia';
+type Section = 'conversas' | 'descobrir' | 'abordagens' | 'whatsapp' | 'insights' | 'academia' | 'voz';
 
 const SECTIONS: Array<{ id: Section; label: string }> = [
   { id: 'conversas', label: 'Conversas' },
@@ -37,6 +38,7 @@ const SECTIONS: Array<{ id: Section; label: string }> = [
   { id: 'whatsapp', label: 'Identidade do WhatsApp' },
   { id: 'insights', label: 'Insights' },
   { id: 'academia', label: 'Academia da Olímpia' },
+  { id: 'voz', label: 'Agentes de voz' },
 ];
 
 interface ListData { leads: ProspectLead[]; counts: Record<string, number>; agent_enabled: boolean; dry_run: boolean; }
@@ -318,6 +320,7 @@ export default function OlimpiaOps() {
         {section === 'abordagens' && <VariantsPanel />}
         {section === 'insights' && <InsightsPanel />}
         {section === 'academia' && <GymPanel />}
+        {section === 'voz' && <VoiceAgentsLanguagePanel />}
 
         {section === 'conversas' && (
           <>
