@@ -10,7 +10,7 @@
  *   POST ?action=reserve                     - Create a reservation
  */
 
-const { supabaseAdmin } = require('./_lib/supabase');
+const { supabaseAdmin, bookGuestReservation } = require('./_lib/supabase');
 const { checkTimeSlotAvailability, getSuggestedTimes, getDiningDuration } = require('./_lib/availability-calculator');
 const { generateSecureReservationId } = require('./_lib/secure-id');
 const { checkAndApplyRateLimit, peekFailureCount, bumpFailureCount } = require('./_lib/rate-limit');
@@ -507,6 +507,13 @@ async function handleCreateReservation(req, res) {
   }
   const partySize = party_size;
 
+  if (special_requests && special_requests.length > 1000) {
+    return res.status(400).json({
+      success: false,
+      message: 'Special requests must be 1000 characters or fewer.'
+    });
+  }
+
   // Validate date format
   if (!isValidReservationDate(date)) {
     return res.status(400).json({
@@ -590,7 +597,8 @@ async function handleCreateReservation(req, res) {
     });
   }
 
-  // Re-check availability before creating
+  // Early, friendly refusal with the same rule the availability endpoint shows.
+  // The binding check runs again under the restaurant lock in the booking below.
   const { data: existingRes } = await supabaseAdmin
     .from('reservations')
     .select('time, party_size, status')
@@ -632,36 +640,64 @@ async function handleCreateReservation(req, res) {
     });
   }
 
-  // Create the reservation
+  // Create the reservation. book_guest_reservation locks the restaurant and
+  // re-checks hours and seats from every channel in the same transaction as
+  // the insert: two guests racing for the last seats cannot both get them.
   const reservationId = generateSecureReservationId();
 
-  const { data: newRes, error: createError } = await supabaseAdmin
-    .from('reservations')
-    .insert({
-      restaurant_id,
-      reservation_id: reservationId,
-      customer_name: sanitizedName,
-      customer_phone: customer_phone.trim(),
-      customer_email: customer_email ? customer_email.trim() : null,
-      party_size,
-      date,
-      time,
-      special_requests: special_requests || null,
-      status: 'confirmed',
-      source: 'online_portal',
-      deposit_payment_intent_id: deposit_payment_intent_id || null,
-      deposit_amount: deposit_amount !== undefined ? deposit_amount : null
-    })
-    .select('id, reservation_id, customer_name, party_size, date, time, status')
-    .single();
+  const booked = await bookGuestReservation(restaurant_id, {
+    reservation_id: reservationId,
+    source: 'online_portal',
+    customer_name: sanitizedName,
+    customer_phone: customer_phone.trim(),
+    customer_email: customer_email ? customer_email.trim() : null,
+    party_size,
+    date,
+    time,
+    special_requests: special_requests || null,
+    deposit_payment_intent_id: deposit_payment_intent_id || null,
+    deposit_amount: deposit_amount !== undefined ? deposit_amount : null
+  });
 
-  if (createError) {
-    logger.error('[Portal] Error creating reservation:', createError);
+  if (booked.status !== 'created') {
+    if (booked.status === 'unavailable') {
+      const seatsLeft = booked.data?.seats_available ?? 0;
+      return res.status(409).json({
+        success: false,
+        message: `Sorry, ${time} is no longer available for ${partySize} guests. Only ${seatsLeft} seats remain at that time.`,
+        available_seats: seatsLeft
+      });
+    }
+    const refusal = {
+      past_slot: 'That time has already passed. Please choose a later time.',
+      too_far: `Reservations can only be made up to ${settings.advance_booking_days} days in advance.`,
+      outside_hours: 'The restaurant does not take bookings at that time. Please choose another time.',
+      too_late: 'That time is after the last seating. Please choose an earlier time.',
+      party_too_large: `Maximum party size is ${maxParty}. Please call us for larger groups.`,
+      invalid_input: 'Invalid reservation details. Please check the form and try again.',
+    }[booked.status];
+    if (refusal) {
+      return res.status(400).json({ success: false, message: refusal });
+    }
+    if (booked.status === 'restaurant_unavailable') {
+      return res.status(404).json({ success: false, message: 'Restaurant not found' });
+    }
+    logger.error('[Portal] Error creating reservation:', { status: booked.status, error: booked.error });
     return res.status(500).json({
       success: false,
       message: 'Could not create reservation. Please try again.'
     });
   }
+
+  const newRes = {
+    id: booked.data.id,
+    reservation_id: booked.data.reservation_id,
+    customer_name: booked.data.customer_name,
+    party_size: booked.data.party_size,
+    date: booked.data.date,
+    time: booked.data.time,
+    status: booked.data.reservation_status
+  };
 
   // Confirmation channels — must be awaited before res.json(201). Vercel
   // terminates the Lambda the instant the response is sent, killing any

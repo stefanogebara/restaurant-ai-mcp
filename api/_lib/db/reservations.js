@@ -132,6 +132,48 @@ const createReservation = async (restaurantId, fields, options = {}) => {
   };
 };
 
+/**
+ * Create a guest booking (voice, booking page) through
+ * public.book_guest_reservation. The function locks the restaurant row, checks
+ * hours, notice, party size, seats from every channel and the chosen tables,
+ * and inserts in the same transaction, so two bookings racing for the last
+ * seats cannot both commit. WhatsApp uses the same rule via
+ * book_whatsapp_reservation. Host bookings use createReservation above.
+ *
+ * @param {string} restaurantId
+ * @param {object} fields - reservation_id, source, date, time, party_size,
+ *   customer_name, customer_phone, customer_email?, special_requests?,
+ *   table_ids?, notes?, deposit_payment_intent_id?, deposit_amount?
+ * @param {{ externalId?: string }} [options] - the channel's retry key
+ * @returns {Promise<{ success: boolean, status: string, data?: object, error?: object }>}
+ *   status: created | existing | cancelled_intent | unavailable | table_taken |
+ *   past_slot | too_far | outside_hours | too_late | party_too_large |
+ *   timezone_unavailable | restaurant_unavailable | invalid_input | error
+ */
+const bookGuestReservation = async (restaurantId, fields, options = {}) => {
+  const { data, error } = await supabase.rpc('book_guest_reservation', {
+    p_restaurant_id: restaurantId,
+    p_source: fields.source,
+    p_external_id: options.externalId || null,
+    p_reservation_id: fields.reservation_id,
+    p_date: fields.date,
+    p_time: fields.time,
+    p_party_size: fields.party_size,
+    p_customer_name: fields.customer_name,
+    p_customer_phone: fields.customer_phone,
+    p_customer_email: fields.customer_email || null,
+    p_special_requests: fields.special_requests ?? null,
+    p_table_ids: fields.table_ids ?? null,
+    p_notes: fields.notes ?? null,
+    p_deposit_payment_intent_id: fields.deposit_payment_intent_id ?? null,
+    p_deposit_amount: fields.deposit_amount ?? null,
+  });
+  if (error || !data || typeof data.status !== 'string') {
+    return { success: false, status: 'error', error: error || { message: 'Empty booking result' } };
+  }
+  return { success: data.status === 'created', status: data.status, data };
+};
+
 const updateReservation = async (restaurantId, recordId, fields) => {
   const updates = {};
 
@@ -345,6 +387,7 @@ module.exports = {
   getReservations,
   getReservationById,
   createReservation,
+  bookGuestReservation,
   updateReservation,
   findReservation,
   cancelReservation,

@@ -303,6 +303,12 @@ async function handleCreate(req, res, restaurantId, timezone) {
     notes: source === 'dashboard' ? 'Created from dashboard' : 'Created via AI Phone System'
   };
 
+  // Deliberately NOT book_guest_reservation (the locked admission every guest
+  // channel uses): the host is the authority on the room and may squeeze a party
+  // in past the aggregate seat count, so there is no capacity refusal here.
+  // Guest bookings still count this one: its plain INSERT takes FOR KEY SHARE on
+  // the restaurant row, which conflicts with the guest function's FOR UPDATE, so
+  // a guest booking waits for this insert to commit and then sees it.
   const result = await createReservation(restaurantId, fields);
 
   if (!result.success) {

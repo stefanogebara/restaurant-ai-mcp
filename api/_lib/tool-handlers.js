@@ -325,9 +325,20 @@ async function checkAvailability(restaurantId, restaurant, { date, time, party_s
 // CREATE RESERVATION
 // ============================================================================
 
+// Refusals of public.book_guest_reservation that the JavaScript validator did
+// not already catch (the SQL rule is the final one, checked under the lock).
+const BOOKING_REFUSALS = {
+  past_slot: ['PAST_DATE', 'The requested date and time is in the past. Please choose a future date.'],
+  too_far: ['TOO_FAR', 'That date is further ahead than the restaurant takes bookings. Please choose an earlier date.'],
+  outside_hours: ['CLOSED', 'The restaurant is closed at that time. Please choose another time.'],
+  too_late: ['TOO_LATE', 'That time is after the last seating. Please choose an earlier time.'],
+  party_too_large: ['PARTY_TOO_LARGE', 'That party is larger than the restaurant books. For larger groups, please contact the restaurant directly.'],
+};
+
 /**
- * Create a new reservation. Delegates to the reservations module for the actual
- * DB insert (which includes ML scoring, SMS, customer history, etc.).
+ * Create a new reservation. The tables are chosen here; the booking itself is
+ * admitted by public.book_guest_reservation, which locks the restaurant and
+ * re-checks seats and the chosen tables in the same transaction as the insert.
  * @param {string} restaurantId - Restaurant UUID
  * @param {object} restaurant - Restaurant config object
  * @param {object} params - { date, time, party_size, customer_name, customer_phone, customer_email, special_requests }
@@ -335,11 +346,9 @@ async function checkAvailability(restaurantId, restaurant, { date, time, party_s
  */
 async function createReservation(restaurantId, restaurant, params, trustedContext = {}) {
   const { validateReservation, buildVoiceConfirmation } = require('./reservation-validator');
-  const { checkTimeSlotAvailability } = require('./availability-calculator');
   const {
-    getReservations,
     canAccommodateParty,
-    createReservation: dbCreateReservation,
+    bookGuestReservation,
     generateReservationId
   } = require('./supabase');
 
@@ -384,41 +393,8 @@ async function createReservation(restaurantId, restaurant, params, trustedContex
       };
     }
 
-    // Check availability before creating
-    const reservationsResult = await getReservations(restaurantId, { date });
-    let existingReservations = reservationsResult.success ? (reservationsResult.data.records || []) : [];
-    existingReservations = existingReservations.filter(r => {
-      const s = (r.status || r.fields?.Status || '').toLowerCase();
-      return s === 'confirmed' || s === 'seated';
-    });
-
-    // Check if we can accommodate — pass date/time so booked tables are excluded
     const durationMinutes = restaurant.average_dining_duration_minutes || restaurant.avg_dining_duration_minutes || 90;
-    const accommodationCheck = await canAccommodateParty(
-      restaurantId,
-      parseInt(party_size),
-      { date, time, durationMinutes }
-    );
-    if (!accommodationCheck.can_accommodate) {
-      const committed = await replayCommittedBooking();
-      if (committed) return committed;
-      const maxCap = accommodationCheck.max_capacity;
-      const capacityMsg = maxCap
-        ? `The largest party we can seat is ${maxCap} guests.`
-        : `We cannot accommodate a party of ${party_size}.`;
-      return {
-        success: false,
-        error: 'no_availability',
-        message: `Sorry, ${restaurantName} cannot accommodate a party of ${party_size}. ${capacityMsg} Would you like to book for a smaller group, or would you prefer to call us directly?`,
-        restaurant_name: restaurantName
-      };
-    }
-
-    // Create the reservation via Supabase directly
     const reservationId = generateReservationId();
-    const { getLocalDate } = require('./timezone');
-    const timezone = restaurant.timezone || 'UTC';
-
     const fields = {
       reservation_id: reservationId,
       date: date,
@@ -426,26 +402,66 @@ async function createReservation(restaurantId, restaurant, params, trustedContex
       party_size: parseInt(party_size),
       customer_name: customer_name,
       customer_phone: customer_phone,
-      customer_email: customer_email || '',
+      customer_email: customer_email || null,
       special_requests: special_requests || '',
-      status: 'confirmed',
       source: 'voice_ai',
-      notes: 'Created via AI Voice System',
-      // Link the specific tables that will be used — enables real-time floor plan sync
-      table_ids: accommodationCheck.table_ids || []
+      notes: 'Created via AI Voice System'
     };
 
-    const createResult = bookingKey
-      ? await dbCreateReservation(restaurantId, fields, { externalId: bookingKey })
-      : await dbCreateReservation(restaurantId, fields);
-
-    if (!createResult.success && bookingKey && createResult.code === '23505') {
-      const committed = await replayCommittedBooking();
-      if (committed) return committed;
+    // Choose tables, then book under the restaurant lock. 'table_taken' means a
+    // booking committed in between took a chosen table: choose again with
+    // fresh data (bounded; each retry sees at least one more committed booking).
+    let booked;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const accommodationCheck = await canAccommodateParty(
+        restaurantId,
+        parseInt(party_size),
+        { date, time, durationMinutes }
+      );
+      if (!accommodationCheck.can_accommodate) {
+        const committed = await replayCommittedBooking();
+        if (committed) return committed;
+        const maxCap = accommodationCheck.max_capacity;
+        const capacityMsg = maxCap
+          ? `The largest party we can seat is ${maxCap} guests.`
+          : `We cannot accommodate a party of ${party_size}.`;
+        return {
+          success: false,
+          error: 'no_availability',
+          message: `Sorry, ${restaurantName} cannot accommodate a party of ${party_size}. ${capacityMsg} Would you like to book for a smaller group, or would you prefer to call us directly?`,
+          restaurant_name: restaurantName
+        };
+      }
+      booked = await bookGuestReservation(
+        restaurantId,
+        // Link the specific tables that will be used — enables real-time floor plan sync
+        { ...fields, table_ids: accommodationCheck.table_ids || [] },
+        bookingKey ? { externalId: bookingKey } : {}
+      );
+      if (booked.status !== 'table_taken') break;
     }
 
-    if (!createResult.success) {
-      logger.error('CreateReservation: DB insert failed:', createResult);
+    if (booked.status !== 'created') {
+      // Same conversation already booked (a retry raced this one), or the
+      // last seats went to another booking: the committed booking wins.
+      if (['existing', 'cancelled_intent', 'unavailable', 'table_taken'].includes(booked.status)) {
+        const committed = await replayCommittedBooking();
+        if (committed) return committed;
+      }
+      if (booked.status === 'unavailable' || booked.status === 'table_taken') {
+        // The check above passed; another booking took the room meanwhile.
+        return {
+          success: false,
+          error: 'no_availability',
+          message: `Sorry, ${restaurantName} has just filled up for ${party_size} at ${time} on ${date}. Would you like to try another time?`,
+          restaurant_name: restaurantName
+        };
+      }
+      const refusal = BOOKING_REFUSALS[booked.status];
+      if (refusal) {
+        return { success: false, error: refusal[0], message: refusal[1], restaurant_name: restaurantName };
+      }
+      logger.error('CreateReservation: booking failed:', { status: booked.status, error: booked.error });
       return {
         success: false,
         error: true,
@@ -474,7 +490,7 @@ async function createReservation(restaurantId, restaurant, params, trustedContex
           restaurantName,
           restaurantId,
           reservationId,
-          reservationRecordId: createResult.data?.id,
+          reservationRecordId: booked.data.id,
           customerName: customer_name,
           partySize: party_size,
           date,
