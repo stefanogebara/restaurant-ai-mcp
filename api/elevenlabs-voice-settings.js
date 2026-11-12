@@ -59,7 +59,7 @@ module.exports = async (req, res) => {
   // key exists only on the server (sensitive on Vercel), so this is the only
   // way to replay a database language change to the agent (2026-11-12).
   const adminAction = String(req.query?.action || '');
-  if (adminAction === 'admin_language_report' || adminAction === 'admin_language_sync') {
+  if (['admin_language_report', 'admin_language_sync', 'admin_tools_report', 'admin_tools_sync'].includes(adminAction)) {
     return handleAdminLanguage(req, res, adminAction);
   }
 
@@ -237,6 +237,10 @@ async function handleAdminLanguage(req, res, action) {
   const { planLanguageSync, fetchAgent, syncAgentLanguage, CONFIG_COLUMNS } = require('./_lib/elevenlabs-language-sync');
   const configs = () => supabaseAdmin.schema('restaurant').from('restaurant_config').select(CONFIG_COLUMNS);
 
+  if (action === 'admin_tools_report' || action === 'admin_tools_sync') {
+    return handleAdminTools(req, res, action, { key, configs, fetchAgent });
+  }
+
   if (action === 'admin_language_report') {
     if (req.method !== 'GET') return res.status(405).json({ success: false, error: 'Use GET' });
     const { data, error } = await configs().not('elevenlabs_agent_id', 'is', null);
@@ -269,6 +273,62 @@ async function handleAdminLanguage(req, res, action) {
       before: languageRow(config, result.before), after: languageRow(config, result.after) });
   } catch (syncError) {
     logger.error('[VoiceSettings] admin language sync failed:', syncError.message);
+    return res.status(502).json({ success: false, error: syncError.message });
+  }
+}
+
+// Tools of a restaurant's own agent vs. the current definitions (audit F4).
+// Report: one row per agent, no URLs or secrets. Sync: one restaurant.
+async function handleAdminTools(req, res, action, { key, configs, fetchAgent }) {
+  const { syncAgentTools } = require('./_lib/elevenlabs-tool-sync');
+  const { buildToolDefinitions } = require('./_services/elevenlabsAgentService');
+  const columns = 'id, restaurant_name, elevenlabs_agent_id, elevenlabs_webhook_secret';
+  const toolRow = (config, result) => ({
+    restaurant_id: config.id,
+    restaurant_name: config.restaurant_name,
+    status: result.status,
+    reasons: result.reasons,
+  });
+  const run = async (config, apply) => {
+    const agent = await fetchAgent(config.elevenlabs_agent_id, key);
+    return syncAgentTools(config, agent, key, { buildToolDefinitions, apply });
+  };
+
+  if (action === 'admin_tools_report') {
+    if (req.method !== 'GET') return res.status(405).json({ success: false, error: 'Use GET' });
+    const { data, error } = await supabaseAdmin.schema('restaurant').from('restaurant_config')
+      .select(columns).not('elevenlabs_agent_id', 'is', null);
+    if (error || !Array.isArray(data)) return res.status(500).json({ success: false, error: 'Database error' });
+    const rows = [];
+    for (let i = 0; i < data.length; i += 4) {
+      rows.push(...await Promise.all(data.slice(i, i + 4).map(async config => {
+        try {
+          const { plan } = await run(config, false);
+          return toolRow(config, plan);
+        } catch (readError) {
+          return toolRow(config, { status: 'error', reasons: [readError.message] });
+        }
+      })));
+    }
+    return res.status(200).json({ success: true, rows });
+  }
+
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Use POST' });
+  const restaurantId = String(req.query?.restaurant_id || '');
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(restaurantId)) {
+    return res.status(400).json({ success: false, error: 'restaurant_id must be a UUID' });
+  }
+  const { data: config, error } = await supabaseAdmin.schema('restaurant').from('restaurant_config')
+    .select(columns).eq('id', restaurantId).maybeSingle();
+  if (error) return res.status(500).json({ success: false, error: 'Database error' });
+  if (!config?.elevenlabs_agent_id) return res.status(404).json({ success: false, error: 'Restaurant has no own agent' });
+  try {
+    const result = await run(config, true);
+    logger.info('[VoiceSettings] admin tools sync', { restaurant_id: restaurantId, changed: result.changed });
+    return res.status(200).json({ success: true, changed: result.changed,
+      before: toolRow(config, result.plan), after: toolRow(config, result.after || result.plan) });
+  } catch (syncError) {
+    logger.error('[VoiceSettings] admin tools sync failed:', syncError.message);
     return res.status(502).json({ success: false, error: syncError.message });
   }
 }

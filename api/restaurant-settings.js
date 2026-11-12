@@ -347,11 +347,36 @@ module.exports = async function handler(req, res) {
         kbSynced = result.success;
       }
 
+      // The language screen promises the choice reaches "all customer
+      // communications and AI interactions". The voice agent lives at
+      // ElevenLabs and never followed a database change (2026-11-12: Osteria
+      // del Sole stayed in English for months). Replay it now: one PATCH with
+      // language, compatible TTS model, summary language, greeting and prompt,
+      // read back before reporting success. A failure keeps the saved setting
+      // and is reported; the founder's "Agentes de voz" tab can repair it.
+      let agentLanguageSynced = null;
+      if (req.body.language !== undefined && process.env.ELEVENLABS_API_KEY) {
+        try {
+          const { syncAgentLanguage, CONFIG_COLUMNS } = require('./_lib/elevenlabs-language-sync');
+          const { data: config, error: configError } = await supabase
+            .schema('restaurant').from('restaurant_config').select(CONFIG_COLUMNS).eq('id', restaurantId).maybeSingle();
+          if (configError) throw new Error('config unavailable');
+          if (config?.elevenlabs_agent_id) {
+            await syncAgentLanguage(config, process.env.ELEVENLABS_API_KEY);
+            agentLanguageSynced = true;
+          }
+        } catch (syncError) {
+          agentLanguageSynced = false;
+          logger.error('Agent language sync after settings change failed:', syncError.message);
+        }
+      }
+
       return res.status(200).json({
         success: true,
         message: 'Settings updated successfully',
         data: { language: data.agent_language, restaurant_name: data.restaurant_name },
         kb_synced: kbSynced,
+        agent_language_synced: agentLanguageSynced,
       });
     }
 

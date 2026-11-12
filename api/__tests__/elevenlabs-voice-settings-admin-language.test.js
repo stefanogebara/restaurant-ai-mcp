@@ -81,7 +81,7 @@ afterEach(() => { delete global.fetch; });
 
 test('someone other than the founder is refused before any provider call', async () => {
   mockAuth.mockResolvedValue({ user: { email: 'owner@example.test', restaurant_id: OSTERIA } });
-  for (const [method, action] of [['GET', 'admin_language_report'], ['POST', 'admin_language_sync']]) {
+  for (const [method, action] of [['GET', 'admin_language_report'], ['POST', 'admin_language_sync'], ['GET', 'admin_tools_report'], ['POST', 'admin_tools_sync']]) {
     const res = await call(method, { action, restaurant_id: OSTERIA });
     expect(res.statusCode).toBe(403);
   }
@@ -124,4 +124,55 @@ test('wrong method, bad id, unknown restaurant and missing key are refused', asy
   expect((await call('POST', { action: 'admin_language_sync', restaurant_id: '00000000-0000-4000-8000-000000000000' })).statusCode).toBe(404);
   delete process.env.ELEVENLABS_API_KEY;
   expect((await call('GET', { action: 'admin_language_report' })).statusCode).toBe(503);
+});
+
+describe('tools actions', () => {
+  const { buildToolDefinitions } = jest.requireActual('../_services/elevenlabsAgentService');
+  const toolStore = new Map();
+  beforeEach(() => {
+    process.env.VERCEL_ENV = 'production';
+    mockRows[0].elevenlabs_webhook_secret = 'el_whsec_osteria';
+    mockRows[1].elevenlabs_webhook_secret = 'el_whsec_casa';
+    toolStore.clear();
+    for (const row of mockRows) {
+      const defs = buildToolDefinitions('https://seatable.one', row.id, row.elevenlabs_webhook_secret);
+      const ids = defs.map((def, i) => {
+        const id = `${row.elevenlabs_agent_id}_t${i}`;
+        // Osteria still has the pre-F4 lookup description.
+        const cfg = row.id === OSTERIA && def.name === 'lookup_reservation'
+          ? { ...def, description: 'Find an existing reservation by customer phone number or name.' } : def;
+        toolStore.set(id, { id, tool_config: cfg });
+        return id;
+      });
+      agents[row.elevenlabs_agent_id].conversation_config.agent.prompt = { tool_ids: ids };
+    }
+    global.fetch = jest.fn(async (url, init = {}) => {
+      const id = url.split('/').pop();
+      if (url.includes('/convai/tools/')) {
+        if (init.method === 'PATCH') toolStore.set(id, { id, tool_config: JSON.parse(init.body).tool_config });
+        return { ok: true, json: async () => toolStore.get(id), text: async () => '' };
+      }
+      return { ok: true, json: async () => agents[id] };
+    });
+  });
+
+  test('the report reads the tools of every agent, writes nothing and returns no secret', async () => {
+    const res = await call('GET', { action: 'admin_tools_report' });
+    expect(res.statusCode).toBe(200);
+    expect(res.body.rows).toEqual([
+      expect.objectContaining({ restaurant_name: 'Osteria del Sole', status: 'outdated', reasons: ['lookup_reservation outdated'] }),
+      expect.objectContaining({ restaurant_name: 'Casa del Sol', status: 'ok' }),
+    ]);
+    expect(JSON.stringify(res.body)).not.toMatch(/el_whsec|seatable\.one\/api/);
+    expect(global.fetch.mock.calls.every(([, init]) => !init?.method)).toBe(true);
+  });
+
+  test('sync updates only the outdated tool of the named restaurant and confirms it', async () => {
+    const res = await call('POST', { action: 'admin_tools_sync', restaurant_id: OSTERIA });
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toMatchObject({ success: true, changed: true, after: { status: 'ok' } });
+    const patches = global.fetch.mock.calls.filter(([, init]) => init?.method === 'PATCH');
+    expect(patches).toHaveLength(1);
+    expect(patches[0][0]).toMatch(/agent_osteria_0001_t\d$/);
+  });
 });
