@@ -12,11 +12,21 @@
  *
  * Auth: Bearer token matching GOOGLE_BOOKING_SECRET env var
  *
- * Maps to existing Seatable reservation functions (tool-handlers, availability-calculator).
+ * Bookings follow the same rules as every other guest channel:
+ *   CreateBooking -> public.book_guest_reservation (restaurant lock, hours,
+ *                    notice, seats from every channel), like WhatsApp, voice
+ *                    and the booking page.
+ *   UpdateBooking -> mutate_guest_reservation (api/_lib/reservation-mutations),
+ *                    only for bookings Google itself created.
+ * Slot times become the restaurant's local wall time before they are stored.
  */
 
-const { supabaseAdmin } = require('../_lib/supabase');
+const crypto = require('crypto');
+const { supabaseAdmin, bookGuestReservation } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
+const { secureEquals } = require('../_lib/secure-compare');
+const { generateSecureReservationId } = require('../_lib/secure-id');
+const { modifyGuestReservation, cancelGuestReservation, verifyGuestReservation } = require('../_lib/reservation-mutations');
 
 const logger = createSecureLogger('GoogleBookingServer');
 
@@ -38,7 +48,7 @@ module.exports = async (req, res) => {
     return handleHealthCheck(req, res);
   }
 
-  if (!token || token !== expectedToken) {
+  if (!token || !secureEquals(token, expectedToken)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
@@ -156,8 +166,39 @@ async function handleBatchAvailabilityLookup(req, res) {
 
 // ─── CreateBooking ───────────────────────────────────────────────────────────
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// Refusals that mean "this slot cannot be booked" (book_guest_reservation and
+// mutate_guest_reservation use the same codes).
+const SLOT_REFUSALS = new Set(['unavailable', 'table_taken', 'outside_hours', 'too_late', 'past_slot', 'too_far', 'party_too_large']);
+
+// The retry key Google gives us, hashed: its charset and length never matter,
+// and book_guest_reservation checks the 'google:v1:<sha256>' shape.
+function googleBookingKey(idempotencyToken) {
+  if (idempotencyToken === undefined || idempotencyToken === null || idempotencyToken === '') return null;
+  return `google:v1:${crypto.createHash('sha256').update(String(idempotencyToken)).digest('hex')}`;
+}
+
+function googleStatus(status) {
+  const s = String(status || '').toLowerCase();
+  if (s === 'cancelled') return 'CANCELED';
+  if (s === 'confirmed' || s === 'pending' || s === 'seated') return 'CONFIRMED';
+  return s.toUpperCase();
+}
+
+async function restaurantTimezone(restaurantId) {
+  if (typeof restaurantId !== 'string' || !UUID.test(restaurantId)) return null;
+  const { data } = await supabaseAdmin
+    .schema('restaurant')
+    .from('restaurant_config')
+    .select('id, timezone')
+    .eq('id', restaurantId)
+    .eq('is_active', true)
+    .maybeSingle();
+  return data?.timezone || null;
+}
+
 async function handleCreateBooking(req, res) {
-  const { slot, user_information, idempotency_token } = req.body;
+  const { slot, user_information, idempotency_token } = req.body || {};
 
   if (!slot || !user_information) {
     return res.status(400).json({ error: 'slot and user_information required' });
@@ -165,71 +206,44 @@ async function handleCreateBooking(req, res) {
 
   try {
     const restaurantId = slot.merchant_id;
-
-    // Idempotency check
-    if (idempotency_token) {
-      const { data: existing } = await supabaseAdmin
-        .from('reservations')
-        .select('id')
-        .eq('restaurant_id', restaurantId)
-        .eq('external_id', idempotency_token)
-        .eq('source', 'google')
-        .maybeSingle();
-
-      if (existing) {
-        return res.status(200).json({
-          booking: {
-            booking_id: existing.id,
-            status: 'CONFIRMED',
-          },
-        });
-      }
+    const timezone = await restaurantTimezone(restaurantId);
+    if (!timezone) {
+      return res.status(404).json({ error: 'Merchant not found' });
     }
 
-    // Parse slot time
-    const startTime = new Date(slot.start_time);
-    const reservationDate = startTime.toISOString().split('T')[0];
-    const reservationTime = startTime.toISOString().split('T')[1].substring(0, 5);
-    const partySize = slot.resources?.party_size || 2;
+    const start = localSlot(slot, timezone);
+    if (!start) {
+      return res.status(400).json({ error: 'slot.start_sec or slot.start_time required' });
+    }
+    const partySize = slot.resources?.party_size ?? 2;
+    if (!Number.isInteger(partySize) || partySize < 1 || partySize > 100) {
+      return res.status(400).json({ error: 'slot.resources.party_size must be 1-100' });
+    }
 
     const guestName = [
       user_information.given_name,
       user_information.family_name,
     ].filter(Boolean).join(' ') || 'Google Guest';
+    const externalId = googleBookingKey(idempotency_token);
 
-    const { data: reservation, error: createError } = await supabaseAdmin
-      .from('reservations')
-      .insert({
-        restaurant_id: restaurantId,
-        customer_name: guestName,
-        customer_phone: user_information.telephone || null,
-        customer_email: user_information.email || null,
-        party_size: partySize,
-        date: reservationDate,
-        time: reservationTime,
-        status: 'confirmed',
-        source: 'google',
-        external_id: idempotency_token || null,
-      })
-      .select('id')
-      .single();
+    // Locked admission: hours, notice, party size and seats from every channel,
+    // checked in the same transaction as the insert. A retry of the same
+    // idempotency_token returns the booking it made.
+    const booked = await bookGuestReservation(restaurantId, {
+      reservation_id: generateSecureReservationId(),
+      source: 'google',
+      date: start.date,
+      time: start.time,
+      party_size: partySize,
+      customer_name: guestName,
+      customer_phone: user_information.telephone || null,
+      customer_email: user_information.email || null,
+    }, externalId ? { externalId } : {});
 
-    if (createError) {
-      logger.error('[GoogleBooking] CreateBooking error:', createError.message);
-      return res.status(500).json({
-        booking_failure: {
-          cause: 'SLOT_UNAVAILABLE',
-          description: 'Unable to create reservation',
-        },
-      });
-    }
-
-    logger.info(`[GoogleBooking] Created booking ${reservation.id} for ${guestName}, party of ${partySize}`);
-
-    return res.status(200).json({
+    const bookingBody = (bookingId, status) => ({
       booking: {
-        booking_id: reservation.id,
-        status: 'CONFIRMED',
+        booking_id: bookingId,
+        status,
         merchant_id: restaurantId,
         service_id: 'dining',
         start_time: slot.start_time,
@@ -244,6 +258,27 @@ async function handleCreateBooking(req, res) {
       },
     });
 
+    if (booked.status === 'created' || booked.status === 'existing') {
+      logger.info(`[GoogleBooking] ${booked.status} booking ${booked.data.id}, party of ${partySize}`);
+      return res.status(200).json(bookingBody(booked.data.id, 'CONFIRMED'));
+    }
+    if (booked.status === 'cancelled_intent') {
+      return res.status(200).json(bookingBody(booked.data.id, 'CANCELED'));
+    }
+    if (SLOT_REFUSALS.has(booked.status)) {
+      return res.status(200).json({
+        booking_failure: { cause: 'SLOT_UNAVAILABLE', description: `Slot not bookable (${booked.status})` },
+      });
+    }
+    if (booked.status === 'restaurant_unavailable') {
+      return res.status(404).json({ error: 'Merchant not found' });
+    }
+    if (booked.status === 'invalid_input') {
+      return res.status(400).json({ error: 'Invalid booking details: a guest name and telephone are required' });
+    }
+    logger.error('[GoogleBooking] CreateBooking failed:', { status: booked.status, error: booked.error?.message });
+    return res.status(500).json({ error: 'Internal error' });
+
   } catch (error) {
     logger.error('[GoogleBooking] CreateBooking exception:', error.message);
     return res.status(500).json({ error: 'Internal error' });
@@ -253,49 +288,82 @@ async function handleCreateBooking(req, res) {
 // ─── UpdateBooking ───────────────────────────────────────────────────────────
 
 async function handleUpdateBooking(req, res) {
-  const { booking } = req.body;
+  const { booking } = req.body || {};
 
   if (!booking?.booking_id) {
     return res.status(400).json({ error: 'booking.booking_id required' });
   }
 
   try {
-    const updates = {};
+    // Only a booking Google created can be changed from Google; a WhatsApp,
+    // voice or host booking id is "not found" here.
+    const { data: existing } = UUID.test(String(booking.booking_id))
+      ? await supabaseAdmin
+        .from('reservations')
+        .select('id, restaurant_id, reservation_id, customer_phone')
+        .eq('id', booking.booking_id)
+        .eq('source', 'google')
+        .maybeSingle()
+      : { data: null };
+    if (!existing || (booking.merchant_id && booking.merchant_id !== existing.restaurant_id)) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
 
+    // The shared guest-change rule: restaurant lock, hours, notice, seats and
+    // the booking's tables, the same one WhatsApp, voice and the portal use.
+    const target = {
+      restaurantId: existing.restaurant_id,
+      reservationId: existing.reservation_id,
+      customerPhone: existing.customer_phone,
+    };
+    let result;
     if (booking.status === 'CANCELED' || booking.status === 'CANCELLED') {
-      updates.status = 'cancelled';
-    } else if (booking.status === 'CONFIRMED') {
-      updates.status = 'confirmed';
+      result = await cancelGuestReservation(target);
+    } else {
+      const changes = {};
+      if (booking.start_sec !== undefined || booking.start_time !== undefined) {
+        const timezone = await restaurantTimezone(existing.restaurant_id);
+        const start = timezone && localSlot(booking, timezone);
+        if (!start) {
+          return res.status(400).json({ error: 'booking.start_sec or booking.start_time is invalid' });
+        }
+        changes.newDate = start.date;
+        changes.newTime = start.time;
+      }
+      if (booking.party_size !== undefined) changes.newPartySize = booking.party_size;
+      result = Object.keys(changes).length
+        ? await modifyGuestReservation({ ...target, ...changes })
+        : await verifyGuestReservation(target);
     }
 
-    if (booking.start_time) {
-      const startTime = new Date(booking.start_time);
-      updates.date = startTime.toISOString().split('T')[0];
-      updates.time = startTime.toISOString().split('T')[1].substring(0, 5);
-    }
-
-    if (booking.party_size) {
-      updates.party_size = booking.party_size;
-    }
-
-    updates.updated_at = new Date().toISOString();
-
-    const { error: updateError } = await supabaseAdmin
-      .from('reservations')
-      .update(updates)
-      .eq('id', booking.booking_id);
-
-    if (updateError) {
-      logger.error('[GoogleBooking] UpdateBooking error:', updateError.message);
+    if (!result.success) {
+      const code = result.error?.code;
+      if (SLOT_REFUSALS.has(code)) {
+        return res.status(200).json({
+          booking_failure: { cause: 'SLOT_UNAVAILABLE', description: `Slot not bookable (${code})` },
+        });
+      }
+      if (code === 'invalid_status') {
+        return res.status(200).json({
+          booking_failure: { cause: 'CAUSE_UNSPECIFIED', description: 'This booking can no longer be changed' },
+        });
+      }
+      if (['invalid_date', 'invalid_time', 'invalid_party_size', 'invalid_input'].includes(code)) {
+        return res.status(400).json({ error: result.error.message });
+      }
+      if (code === 'verification_failed') {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+      logger.error('[GoogleBooking] UpdateBooking failed:', { code });
       return res.status(500).json({ error: 'Update failed' });
     }
 
-    logger.info(`[GoogleBooking] Updated booking ${booking.booking_id}: ${JSON.stringify(updates)}`);
-
+    logger.info(`[GoogleBooking] Updated booking ${existing.id} (changed: ${result.changed})`);
     return res.status(200).json({
       booking: {
-        booking_id: booking.booking_id,
-        status: updates.status?.toUpperCase() || booking.status,
+        booking_id: existing.id,
+        status: googleStatus(result.reservation.status),
+        party_size: result.reservation.party_size,
       },
     });
 
@@ -306,6 +374,38 @@ async function handleUpdateBooking(req, res) {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/**
+ * The restaurant's local date and time for a Google slot. Google sends an
+ * instant (start_sec, which proto3 JSON may send as a string, or start_time
+ * with an offset); our availability answer publishes a wall time without an
+ * offset, which is already local. Reservations store local wall times: reading
+ * the instant in UTC stored 19:00 in São Paulo as 22:00.
+ * @returns {{ date: string, time: string } | null}
+ */
+function localSlot({ start_sec: startSec, start_time: startTime } = {}, timezone) {
+  let instant = null;
+  const seconds = typeof startSec === 'string' && /^\d{1,12}$/.test(startSec) ? Number(startSec) : startSec;
+  if (Number.isSafeInteger(seconds) && seconds > 0) {
+    instant = new Date(seconds * 1000);
+  } else if (typeof startTime === 'string') {
+    const wall = /^(\d{4}-\d{2}-\d{2})T(([01]\d|2[0-3]):[0-5]\d)(:[0-5]\d(\.\d+)?)?$/.exec(startTime);
+    if (wall) {
+      const day = new Date(`${wall[1]}T00:00:00Z`);
+      return Number.isFinite(day.getTime()) && day.toISOString().slice(0, 10) === wall[1]
+        ? { date: wall[1], time: wall[2] } : null;
+    }
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/.test(startTime)) {
+      instant = new Date(startTime);
+    }
+  }
+  if (!instant || !Number.isFinite(instant.getTime())) return null;
+  const parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(instant).map(part => [part.type, part.value]));
+  return { date: `${parts.year}-${parts.month}-${parts.day}`, time: `${parts.hour}:${parts.minute}` };
+}
 
 function generateAvailableSlots(startDate, endDate, businessHours, existingReservations, totalCapacity, partySize, diningDuration) {
   const slots = [];
@@ -394,3 +494,6 @@ function timeToMinutes(timeStr) {
   const [h, m] = timeStr.split(':').map(Number);
   return h * 60 + (m || 0);
 }
+
+module.exports.localSlot = localSlot;
+module.exports.googleBookingKey = googleBookingKey;
