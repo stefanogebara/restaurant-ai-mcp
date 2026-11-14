@@ -9,7 +9,8 @@
  */
 
 // Shared input shape only. Availability must not acquire create-only booking
-// windows or business-hours policy by calling the full validator.
+// windows or business-hours policy by calling the full validator. The
+// restaurant's own limits are shared on purpose: restaurantBookingLimits().
 function validateReservationInput({ date, party_size }) {
   const errors = [];
 
@@ -40,6 +41,32 @@ function validateReservationInput({ date, party_size }) {
 }
 
 /**
+ * The restaurant's own booking limits, read where book_guest_reservation reads
+ * them (reservation_settings). Voice availability and voice creation both use
+ * them, so the agent never offers a slot the booking then refuses. Found live
+ * on 14/11/2026: the agent said "temos disponibilidade" 46 days ahead, then the
+ * booking was refused (the restaurant books 30 days ahead).
+ * @returns {{ advanceBookingDays: number|null, maxPartySize: number|null }}
+ */
+function restaurantBookingLimits(restaurant = {}) {
+  const settings = (restaurant && restaurant.reservation_settings) || {};
+  const whole = value => (/^\d{1,5}$/.test(String(value ?? '')) ? Number(value) : null);
+  return { advanceBookingDays: whole(settings.advance_booking_days), maxPartySize: whole(settings.max_party_size) };
+}
+
+/**
+ * The SQL rule: the local date may be at most `days` calendar days after
+ * today in the restaurant's zone. No limit when `days` is null.
+ */
+function isBeyondBookingWindow(date, days, timezone, now = new Date()) {
+  if (days === null || days === undefined) return false;
+  const { utcToLocalDate } = require('./timezone');
+  const last = new Date(`${utcToLocalDate(now, timezone)}T00:00:00Z`);
+  last.setUTCDate(last.getUTCDate() + days);
+  return date > last.toISOString().slice(0, 10);
+}
+
+/**
  * Validate a reservation request against restaurant configuration
  * @param {object} params - Reservation parameters
  * @param {object} restaurant - Restaurant configuration from registry
@@ -52,16 +79,19 @@ function validateReservation(params, restaurant) {
   const { partySize } = input;
   const errors = [];
 
-  // Get restaurant config with defaults
+  // Get restaurant config with defaults. Callers that load the stored config
+  // (voice) pass reservation_settings; the portal and the dashboard pass the
+  // same values as max_party_size / max_advance_days.
+  const limits = restaurantBookingLimits(restaurant);
   const config = {
     business_hours: restaurant.business_hours || getDefaultBusinessHours(),
     holidays: restaurant.holidays || [],
     timezone: restaurant.timezone || 'America/Sao_Paulo',
     // max_party_size is only enforced when explicitly set by the restaurant.
     // Physical capacity limits are enforced by canAccommodateParty() using real table data.
-    max_party_size: restaurant.max_party_size || null,
+    max_party_size: restaurant.max_party_size || limits.maxPartySize || null,
     min_advance_hours: restaurant.min_advance_hours || 1,
-    max_advance_days: restaurant.max_advance_days || 90
+    max_advance_days: restaurant.max_advance_days || (limits.advanceBookingDays ?? 90)
   };
 
   // The slot is a wall-clock time in the restaurant's zone. Parsing it with
@@ -95,9 +125,9 @@ function validateReservation(params, restaurant) {
     });
   }
 
-  // 3. Check maximum advance booking days
-  const daysUntilReservation = (requestedDateTime - now) / (1000 * 60 * 60 * 24);
-  if (daysUntilReservation > config.max_advance_days) {
+  // 3. Check maximum advance booking days, by calendar day in the restaurant's
+  // zone, as book_guest_reservation counts them.
+  if (isBeyondBookingWindow(date, config.max_advance_days, config.timezone, now)) {
     errors.push({
       code: 'TOO_FAR',
       message: `Reservations can only be made up to ${config.max_advance_days} days in advance. ${restaurantTodayHint(config.timezone, now)}`
@@ -307,6 +337,8 @@ function buildVoiceConfirmation(params, restaurant, reservationId, { whatsappAcc
 
 module.exports = {
   validateReservationInput,
+  restaurantBookingLimits,
+  isBeyondBookingWindow,
   validateReservation,
   buildConfirmationMessage,
   buildVoiceConfirmation,

@@ -19,7 +19,7 @@ for m in 20261016184431_whatsapp_booking_integrity 20261109002803_reservation_wh
   psql -h "$SOCK" -p 55441 -U postgres -d audit -v ON_ERROR_STOP=1 -q -f "$REPO/supabase/migrations/$m.sql" >/dev/null 2>&1
 done
 export AUDIT_SOCK="$SOCK" AUDIT_REPO="$REPO" NODE_PATH="$REPO/node_modules"
-for f in r1-portal r2-voz-restaurante c1-concorrencia r4-canais c4-criacao-concorrente r5-google-parceiros; do
+for f in r1-portal r2-voz-restaurante c1-concorrencia r4-canais c4-criacao-concorrente r5-google-parceiros r6-voz-limites; do
   echo "== $f"; TZ=UTC node "$DIR/$f.cjs" 2>/dev/null | grep -E '^[│┌└├{]'
 done
 for tz in UTC America/Sao_Paulo; do echo "== r3-fuso TZ=$tz"; TZ=$tz node "$DIR/r3-fuso.cjs" 2>/dev/null | grep '^{'; done
