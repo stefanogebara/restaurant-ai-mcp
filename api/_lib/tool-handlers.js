@@ -171,6 +171,23 @@ async function checkAvailability(restaurantId, restaurant, { date, time, party_s
     }
     const { partySize } = validation;
 
+    // The restaurant's own limits, the same ones book_guest_reservation
+    // enforces: never offer a slot the booking will refuse.
+    const { restaurantBookingLimits, isBeyondBookingWindow } = require('./reservation-validator');
+    const limits = restaurantBookingLimits(restaurant);
+    if (isBeyondBookingWindow(date, limits.advanceBookingDays, timezone, now)) {
+      return {
+        success: false, available: false, error: 'TOO_FAR',
+        message: `Reservations can only be made up to ${limits.advanceBookingDays} days in advance. ${restaurantTodayHint(timezone, now)}`
+      };
+    }
+    if (limits.maxPartySize !== null && partySize > limits.maxPartySize) {
+      return {
+        success: false, available: false, error: 'PARTY_TOO_LARGE',
+        message: `We can accommodate parties up to ${limits.maxPartySize} guests. For larger groups, please call us directly.`
+      };
+    }
+
     logger.info(`AVAILABILITY CHECK for ${restaurant.name}`, {
       language: restaurant.agent_language || restaurant.language,
       voice_id: restaurant.voice_id

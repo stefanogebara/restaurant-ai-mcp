@@ -112,3 +112,46 @@ test('availability does not acquire the create-only advance-booking limits', asy
   expect(await check({}, { min_advance_hours: 48, max_advance_days: 0.5 }))
     .toMatchObject({ success: true, available: true });
 });
+
+describe("the restaurant's own booking limits (reservation_settings) are shared with creation", () => {
+  const { validateReservation } = require('../_lib/reservation-validator');
+  const settings = { reservation_settings: { advance_booking_days: 30, max_party_size: 6 } };
+  // Fake clock: 2026-11-10T12:00Z, restaurant zone UTC -> the window ends 2026-12-10.
+
+  test('availability refuses a date past the window, before any capacity read', async () => {
+    const result = await check({ date: '2026-12-11' }, settings);
+    expect(result).toMatchObject({ success: false, available: false, error: 'TOO_FAR' });
+    expect(result.message).toMatch(/up to 30 days in advance\. Today at the restaurant is Tuesday, 2026-11-10/);
+    expectNoCapacityRead();
+  });
+
+  test('availability refuses a party above the restaurant limit, before any capacity read', async () => {
+    expect(await check({ party_size: 7 }, settings)).toMatchObject({ success: false, available: false, error: 'PARTY_TOO_LARGE' });
+    expectNoCapacityRead();
+  });
+
+  test('the last day of the window is offered, and creation accepts the same day', async () => {
+    expect(await check({ date: '2026-12-10' }, settings)).toMatchObject({ success: true, available: true });
+    expect(validateReservation({ date: '2026-12-10', time: '20:00', party_size: 2 }, { ...restaurant, ...settings }).valid).toBe(true);
+  });
+
+  test('creation refuses the first day past the window and a party above the limit', () => {
+    const far = validateReservation({ date: '2026-12-11', time: '20:00', party_size: 2 }, { ...restaurant, ...settings });
+    expect(far.errors.map(e => e.code)).toContain('TOO_FAR');
+    expect(far.message).toMatch(/up to 30 days in advance/);
+    const big = validateReservation({ date: '2026-11-20', time: '20:00', party_size: 7 }, { ...restaurant, ...settings });
+    expect(big.errors.map(e => e.code)).toContain('PARTY_TOO_LARGE');
+  });
+
+  test('without stored limits, availability has no window and creation keeps its 90-day default', async () => {
+    expect(await check({ date: '2027-06-01' })).toMatchObject({ success: true, available: true });
+    const far = validateReservation({ date: '2027-02-09', time: '20:00', party_size: 2 }, restaurant);
+    expect(far.errors.map(e => e.code)).toContain('TOO_FAR');
+    expect(validateReservation({ date: '2027-02-08', time: '20:00', party_size: 2 }, restaurant).valid).toBe(true);
+  });
+
+  test.each([[{ advance_booking_days: 'thirty' }], [{ advance_booking_days: -3 }], [{}]])(
+    'an unreadable stored limit %p is no limit, as in the booking function', async stored => {
+      expect(await check({ date: '2027-06-01' }, { reservation_settings: stored })).toMatchObject({ success: true, available: true });
+    });
+});
