@@ -1,0 +1,7 @@
+{
+  "restaurant.confirm_event_booking": {
+    "repo": "6e7e033b2f4b470a47dcb34dcb76a043",
+    "producao": "e9bc6c04e619b6c1d5a0437c56aaf2b8",
+    "motivo": "Medido em 14/11/2026: a produção tem a mesma lógica do 20260331_ticketed_events.sql sem as duas variáveis não usadas (v_max_capacity, v_current). Não reaplicar: um CREATE OR REPLACE apagaria o search_path='' posto pelo endurecimento de 21/05."
+  }
+}

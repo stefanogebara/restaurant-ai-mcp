@@ -97,6 +97,9 @@ jobs:
       # on 2026-04-26: migrations in repo but never applied → cooldown
       # protection silently disabled, voice-experiments endpoint silently
       # broken. Fix by applying the migration in Supabase Studio.
+      # Since 2026-11-14 it also compares every SQL function body in the
+      # migrations with production (comments and whitespace ignored), through
+      # public.audit_function_sources (service_role only).
       - name: Audit migrations applied
         if: env.TEM_SUPABASE == 'true'
         run: npm run audit:migrations
