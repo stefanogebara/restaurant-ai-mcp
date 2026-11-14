@@ -11,6 +11,9 @@
  * repo, table missing in prod, cooldown protection silently disabled, real
  * WA messages dispatched without rate limiting.
  *
+ * Since 2026-11-14 it also compares every SQL function declared in the
+ * migrations with production (see auditFunctions below).
+ *
  * Exit code 1 if drift found.
  */
 const fs = require('fs');
@@ -85,14 +88,53 @@ async function probeTable(schema, table) {
 
   if (missing.length === 0) {
     console.log(`\n\u2713 All ${expected.size} tables present in prod DB.`);
-    process.exit(0);
+  } else {
+    console.log(`\n\u2717 ${missing.length} table(s) declared in migrations but missing in prod:\n`);
+    for (const m of missing) {
+      console.log(`  ${m.key}  \u2192  ${m.migration}`);
+      console.log(`    ${(m.error || '').slice(0, 200)}`);
+    }
+    console.log(`\nFix: apply the missing migration(s) in Supabase SQL editor or via 'supabase db push'.`);
   }
 
-  console.log(`\n\u2717 ${missing.length} table(s) declared in migrations but missing in prod:\n`);
-  for (const m of missing) {
-    console.log(`  ${m.key}  \u2192  ${m.migration}`);
-    console.log(`    ${(m.error || '').slice(0, 200)}`);
-  }
-  console.log(`\nFix: apply the missing migration(s) in Supabase SQL editor or via 'supabase db push'.`);
-  process.exit(1);
+  const functionsOk = await auditFunctions();
+  process.exit(missing.length === 0 && functionsOk ? 0 : 1);
 })();
+
+/**
+ * Functions: the latest body of every function in the migrations must be the
+ * one in production (comments and whitespace ignored). Since 2026-11-14; the
+ * table probe above never saw a function that was merged but not applied.
+ * Known, reviewed differences are frozen in migration-functions.divida.json
+ * with both fingerprints, so any further change on either side fails again.
+ */
+async function auditFunctions() {
+  const { extractFunctions, readMigrations, compareFunctions } = require('./lib/migration-functions');
+  const known = JSON.parse(fs.readFileSync(path.join(__dirname, 'migration-functions.divida.json'), 'utf8'));
+  const expected = extractFunctions(readMigrations(MIGRATIONS_DIR));
+  const keys = [...expected].filter(([, def]) => !def.dropped).map(([key]) => key);
+  console.log(`\nScanning ${keys.length} functions declared across supabase/migrations/...`);
+
+  const client = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const { data, error } = await client.rpc('audit_function_sources', { p_keys: keys });
+  if (error) {
+    console.log(`\u2717 Could not read function sources: ${error.message}`);
+    console.log('  Fix: apply supabase/migrations/20261114120000_audit_function_sources.sql in production.');
+    return false;
+  }
+
+  const result = compareFunctions(expected, data || [], known);
+  for (const m of result.missing) console.log(`  \u2717 missing  ${m.key.padEnd(50)} from ${m.file}`);
+  for (const d of result.differs) console.log(`  \u2717 differs  ${d.key.padEnd(50)} from ${d.file}`);
+  for (const key of result.staleKnown) console.log(`  \u2717 stale    ${key.padEnd(50)} frozen in migration-functions.divida.json but no longer this difference`);
+
+  const failures = result.missing.length + result.differs.length + result.staleKnown.length;
+  if (failures === 0) {
+    console.log(`\u2713 ${result.ok.length} functions match production (${result.known.length} known difference(s) frozen).`);
+    return true;
+  }
+  console.log(`\n\u2717 ${failures} function problem(s). A "missing" or "differs" function usually means a migration`);
+  console.log('  was merged but not applied: apply it. If production is right instead, write a migration that');
+  console.log('  matches it. Remove a "stale" entry from migration-functions.divida.json.');
+  return false;
+}
