@@ -1,183 +1,198 @@
 # Estado do repositório — Seatable
 
-> Reescrito pelo `/intel` de 2026-09-07. Janela: desde o último commit de intel
-> (`0914f9e`/`e12595c`, PR #108, 2026-09-01) até `edda6b0` (2026-09-04), 29
-> commits não-merge em `main`. Fora de `main`: dois PRs abertos (`#140` draft,
-> `#90` parado há 12 dias) e quatro PRs de dependabot abertos hoje de manhã.
-> Reescrito a cada `/intel`. Fonte: o git e o GitHub, não o config.
+> Reescrito pelo `/intel` de 2026-11-09. **Achado que precede o git desta
+> janela: existe uma cadeia de rodadas de `/intel` não mescladas —
+> `intel/2026-09-28` → `intel/2026-10-26` (PR #214) → `intel/2026-11-02`
+> (PR #218) — cada uma herdando a anterior em vez de redigitar o trabalho,
+> exatamente como a própria #218 recomendou fazer na próxima rodada. Esta
+> rodada faz o mesmo: parte de `intel/2026-11-02`, que já cobre `main` até
+> `f6ab5db` (21/10, janela do PR #214) com zero lacuna. A única janela de
+> git real e inédita é, portanto, `f6ab5db`→`63585fc` — de 21/10 a 09/11,
+> 19 dias, dos quais os primeiros 16 (21/10–06/11) são **congelamento
+> total confirmado pelo próprio #218** (zero commit em `main`) e os últimos
+> 3 (07–09/11) concentram 66 commits não-merge / 66 merges — a maior
+> explosão de atividade desta série inteira, toda em segurança de voz e
+> telefonia. Fora de `main`: os mesmos PRs represados de sempre, mais esta
+> própria cadeia de intel represada, agora com dois elos.** Reescrito a
+> cada `/intel`. Fonte: o git e o GitHub, não o config.
 
 ## O parágrafo
 
-A semana não teve feature nova — teve uma auditoria que virou caçada, e a
-caçada achou uma falha de segurança de verdade. O gatilho foi mecânico: o
-PR #111 (31/08) construiu um verificador que compara todo `.select()`/`.from()`
-do repo contra o `information_schema` real do Supabase, em vez de uma lista
-escrita à mão de "problemas já conhecidos". Rodado, ele achou **72 referências
-a colunas fantasma em 22 arquivos** — nomes de coluna que o código lê e que
-não existem na tabela. Quatro rodadas de correção (PRs #114, #129, #131, #132)
-fecharam a lista até zero, e no meio da terceira apareceu o achado sério:
-`verify-session.js` pedia `customer_email` de uma coluna que não existe em
-`restaurant_config` (a real é `email`); o `SELECT` falhava inteiro, o bloco de
-posse era pulado e **qualquer usuário autenticado lia a sessão de checkout do
-Stripe de qualquer outro dono** — e-mail, valor, plano — só por ter o
-`session_id`. Corrigido e testado (7 testes, 3 provados vermelhos contra a
-versão antiga). No mesmo lote: o agente de voz nunca lia a config do
-restaurante (7 colunas erradas, `configForPrompt` sempre caía no fallback
-genérico), as campanhas pós-visita nunca enviaram nada desde sempre
-(`service_records` não tem `customer_email` nem `completed_at`), `whatsapp-
-settings.js` sempre mostrava zero de uso, e `customer_history` — já registrada
-como morta no `CLAUDE.md` — teve o mapeamento confirmado contra produção e o
-erro parou de ser engolido em silêncio (o modelo de no-show continua tratando
-todo cliente como novo; repontar para `customer_ltv` foi deixado como decisão
-de produto, não bug). Em paralelo, a Olímpia teve sua própria rodada de
-correção de mira: a regex de celular inventava número a partir de classe CSS
-e float de JSON (10 de 19 sites testados davam falso positivo), a caça ficava
-travada sem `SCRAPINGDOG_API_KEY` mesmo tendo um leitor grátis, e uma casa de
-culto (2926 avaliações) quase recebeu intro comercial por entrar no ICP pelo
-início do nome. Por baixo disso, duas frentes de custo do `CLAUDE.md` foram
-atacadas de vez: 36 funções de cron viraram 3 despachantes (191→159 funções,
-15min→11min de build) e o build passa a pular quando o commit não toca nada
-servido (medido: 80,8% do CPU do ciclo). E a segurança de dependência foi
-zerada — 50 vulnerabilidades (`npm audit fix`, sem `--force` exceto `sharp`) —
-com scan automático configurado pela primeira vez.
+O congelamento de três semanas que o `/intel` de 02/11 registrou terminou
+em 07/11 com a pior categoria de achado: um vazamento de dado entre
+inquilinos, real, em produção, por dois mecanismos empilhados. O PR #219
+("Close cross-restaurant access to voice and call data") corrigiu os dois.
+Primeiro, `api/_lib/auth.js` derivava `restaurant_id` do JWT preferindo
+`user_metadata` — campo que o próprio usuário autenticado pode editar via
+API padrão do Supabase Auth — e só caía para a consulta no banco se esse
+campo estivesse vazio. Qualquer dono de restaurante podia, em tese, escrever
+o `restaurant_id` de outro inquilino no próprio token e ler as chamadas e
+transcrições de voz de uma casa que não é a sua. Segundo, e independente do
+primeiro: a tabela `public.agent_conversations` (transcrição de chamada e
+telefone de quem ligou) tinha RLS habilitado mas com uma policy
+`authenticated_read_conversations` que concedia leitura a **qualquer**
+usuário autenticado via PostgREST direto — sem gate de `restaurant_id`
+nenhum, nem olhando para o problema do JWT. A correção (migration
+`20261107_agent_conversations_service_role_only.sql`) revoga todo grant de
+`anon`/`authenticated` na tabela; a leitura passa a existir só pela API
+service-role, que agora resolve o inquilino direto do banco (`decoded.role
+= 'authenticated'` por default, nunca herdado do token). Isto é a mesma
+classe de falha do `verify-session.js` registrado no `STATE.md` de
+setembro — erro engolido em silêncio virando acesso cross-tenant — só que
+em voz, não em Stripe, e com uma segunda causa (RLS sem gate) que o
+`verify-session.js` não tinha.
+
+O que vem depois de #219, em 61 PRs entre 07 e 09/11 (`#220`–`#284`), é a
+limpeza de um projeto de produto que mora no mesmo território: Seatable
+introduziu um **número de telefone de voz compartilhado entre várias
+casas** (`ELEVENLABS_SHARED_PHONE`, lido por
+`api/_lib/platform-phone-policy.js`), presumivelmente para casas novas ou
+em demo que ainda não têm número Twilio dedicado. Esse desenho — uma linha,
+N inquilinos, identidade resolvida por conteúdo da ligação/mensagem em vez
+de número — é estruturalmente frágil, e a fiação de `api/_lib/shared-voice-
+binding.js` (150 linhas, criada nesta janela) existe para não deixar a
+ambiguidade virar vazamento: vincular a ferramenta certa à conversa certa
+(#245), rejeitar autenticação legada na linha compartilhada (#246), falhar
+fechado quando a posse do número Twilio é ambígua (#222), aceitar apelido
+falado com desambiguação por cidade (#276), reconhecer texto de prévia sem
+vazar para o restaurante errado (#247/#248/#249), e, no commit mais recente
+desta janela (`8f7b8f5`, PR #284, ainda sem numeração de merge visível no
+log), reservar explicitamente a linha compartilhada **antes** de qualquer
+busca por inquilino dedicado — o inverso da ordem que causava a ambiguidade.
+Ao lado disso, a mesma leva corrige: o servidor de voz da Fly (empacotamento
++ runtime do Node, #258 — nota de bordo: o `fly.toml` apontando para
+caminho de build inexistente, registrado como `known_gap` desde agosto,
+parece finalmente endereçado aqui, a confirmar no código); dashboards que
+dependiam de Realtime passam a ter fallback por refresh (#283); e reservas
+feitas por voz ganham rastreio de entrega de WhatsApp (#281) — o que fecha,
+em parte, o `known_gap` dos dois caminhos de WhatsApp hardcoded e
+divergentes (reminders sempre Twilio, campanhas sempre Meta), mas só para a
+confirmação de reserva por voz, não para os crons.
 
 ## O que shipou
 
-- **A auditoria de colunas fantasma, do gatilho ao zero** (#111→#114→#129→
-  #131→#132): `schema-snapshot.json` (colunas reais de 17 tabelas, tiradas do
-  `information_schema` de produção) substitui o allowlist manual de
-  `audit:phantom-columns`. 72 referências corrigidas em 22 arquivos. A mais
-  séria: `verify-session.js` deixava qualquer usuário logado ler a sessão de
-  checkout do Stripe de outro dono (e-mail, valor, plano) — o `error` do
-  Supabase nunca era lido, o `SELECT` falhava calado, o gate de posse nunca
-  rodava. Também corrigido: o agente de voz nunca lia a config real do
-  restaurante (7 colunas erradas em `elevenlabs-agent-create.js`); campanhas
-  pós-visita e pedido de review no Google nunca saíram (`service_records` sem
-  `customer_email`/`completed_at` — `completed_at` na verdade é
-  `actual_departure`); contador de uso do WhatsApp sempre zero; `handoff_to_
-  human` (do #109) respondia em inglês para cliente brasileiro porque o
-  fallback de restaurante também lia coluna errada (`language`/`restaurant_
-  slug` em vez de `agent_language`/`slug`). `customer_history` confirmada
-  morta (schema `restaurant`, zero linhas, `restaurant_id` não existe) — LGPD
-  deletion corrigido, erro passa a subir em vez de virar "cliente novo" em
-  silêncio; repontar o no-show model para `customer_ltv` fica em aberto, por
-  decisão.
-- **Cron: 36 funções → 3 despachantes** (#135) — `api/_crons/` (não vira
-  função própria) + `run.js`(60s)/`run-2min.js`/`run-5min.js`, agrupados por
-  teto de `maxDuration`. 191→159 funções, build 15min→11min. `health.js`
-  ficou standalone de propósito (não tem cron, mover quebraria `GET /api/
-  cron/health`). **`vercel.json` mudou de rota **e** de cadência** — o
-  `CLAUDE.md` ainda documenta caminhos diretos (`/api/cron/check-late-
-  reservations` etc.) e frequências antigas; hoje `sync-conversation-data` e
-  `validate-conversations` rodam de hora em hora (eram `*/15`), `send-
-  feedback` também (era 30 min), e a tabela do `CLAUDE.md` nem lista boa parte
-  dos 39 crons reais (a maioria da Olímpia). Não é `intel.config.json`, é
-  `CLAUDE.md` — fica registrado aqui, não é deste pipeline corrigir.
-- **Build pulado quando nada servido muda** (#128) — Ignored Build Step mede
-  `vite build` (38s) contra o empacotamento de função (~13min de 191 funções);
-  9 dos últimos 38 commits antes desta mudança eram só doc/lição/intel.
-  Falha para o lado de construir (git raso, sem base, qualquer erro → builda).
-- **Segurança de dependência zerada** (#117, #124, #133, #136 em sequência) —
-  50 vulnerabilidades (20 raiz, 30 client) a zero via `npm audit fix` sem
-  `--force` (exceto `sharp`, dev-only, bump maior testado à mão). Duas
-  dependências fantasma achadas no caminho: `node-fetch` (só transitiva do
-  SDK Anthropic, virou `fetch` nativo — o bump do SDK para 0.122 já tinha
-  quebrado 4 rotas do ElevenLabs por isso) e `jsonwebtoken` (só transitiva do
-  Twilio, autentica todo JWT do repo — um bump de SMS derrubaria login). Scan
-  de dependência (`dependabot.yml`, agrupado por ecossistema) configurado pela
-  primeira vez — o repo tinha três lockfiles e zero scan.
-- **CodeRabbit revisando de verdade** (#116) — `auto_review.drafts` estava
-  `false`; como todo PR desta esteira nasce draft, nada era revisado, sete PRs
-  seguidos saíram verdes por "review skipped" — inclusive PRs mexendo em RLS
-  e WhatsApp. Corrigido. Registrado no cabeçalho: o repo também está abaixo do
-  corte de 10 estrelas que libera revisão automática por padrão do plano —
-  isso não tem correção por YAML.
-- **9 tabelas expostas via RLS fechadas** (#112) — 4 de fato tinham grant para
-  `anon`/`authenticated` (das 9 que o advisor apontou). A mais séria:
-  `restaurant.stripe_connect_accounts` era `SELECT` para qualquer usuário
-  **logado**, vazando `stripe_account_id`/`payouts_enabled` dos 65
-  restaurantes entre inquilinos.
-- **CI: live-smoke falha rápido e sem vazar credencial** (#137) — estava
-  vermelho em 100% das runs desde 02/09 por dois secrets faltando
-  (`SANDBOX_EMAIL`/`SANDBOX_PASSWORD`), e a revisão pegou que a correção
-  original vazava a senha para todo passo do job (`npm ci` incluído). Trocado
-  por flag de presença; valor só chega aos passos de login.
-- **e2e: 536 testes e 0 rodavam** (#90, ainda aberto — ver "em voo") — um spec
-  do Racha lia um `.env` do Windows local no carregamento do módulo; `ENOENT`
-  derrubava a coleta do Playwright inteira antes de qualquer teste existir.
-- **Prospecção — três acertos de mira**: regex de celular parava de inventar
-  número a partir de CSS/JSON (#113, 0%→100% de precisão em 19 sites reais);
-  caça ao celular deixou de depender de `SCRAPINGDOG_API_KEY` como trava dura
-  — leitor grátis primeiro, pago só quando o grátis não achou (#138, 82% dos
-  sites abrem com o grátis); link de WhatsApp do Elementor reconhecido, dedup
-  de intro cruza o lote inteiro (não só dentro da rodada — `+5511946310342`
-  tinha recebido 7 intros em um mês), e ICP para de aceitar casa de culto pelo
-  início do nome (#139).
+- **Vazamento cross-tenant de voz/chamada, corrigido em duas frentes** (#219,
+  07/11): `api/_lib/auth.js` para de confiar em `user_metadata` do JWT (editável
+  pelo usuário) para `restaurant_id` — resolve sempre contra o banco agora;
+  `public.agent_conversations` (transcrição + telefone do ligante) tinha RLS
+  habilitado mas com policy que liberava leitura a qualquer `authenticated`
+  via PostgREST direto, sem olhar `restaurant_id` — revogado por completo
+  (`20261107_agent_conversations_service_role_only.sql`), leitura só via API
+  service-role. Mesma classe de erro do `verify-session.js` de setembro
+  (campo de posse nunca checado), com uma segunda causa independente (RLS sem
+  gate) que aquele incidente não tinha.
+- **Número de telefone de voz compartilhado entre restaurantes — toda a
+  fiação de segurança construída nesta janela** (`#220`–`#249`, `#270`,
+  `#276`–`#280`, `8f7b8f5`/PR #284): `api/_lib/shared-voice-binding.js` (novo,
+  150 linhas) e `api/_lib/platform-phone-policy.js` (novo, 16 linhas, lê
+  `ELEVENLABS_SHARED_PHONE`) resolvem qual conversa/inquilino uma chamada ou
+  texto na linha compartilhada pertence, com reforço progressivo: falhar
+  fechado em posse ambígua de número Twilio (#222), ligar ferramenta a
+  conversa verificada (#245), rejeitar auth legada na linha compartilhada
+  (#246), aceitar apelido falado com desambiguação por cidade e colisão
+  segura (#276), confirmar reserva no idioma certo do agente/restaurante
+  (#277/#279/#280), e — no commit mais recente — **reservar a linha
+  compartilhada antes de procurar inquilino dedicado**, invertendo a ordem
+  de busca que causava a ambiguidade original. Streams de voz do Twilio
+  passam a carregar concessão de inquilino vinculada à própria chamada
+  (#270, "Secure Twilio voice streams with call-bound tenant grants").
+- **Ciclo de vida de chamada ElevenLabs corrigido** (#221, #228, #229,
+  #232–#236, #239–#244): sincronização e retry de pós-chamada, idioma e
+  sentimento preservados com fallback limitado, fuso horário correto nas
+  listas de chamada, métrica de "completude" que mentia corrigida,
+  transcrição retirada de respostas de listagem (só no detalhe), coluna
+  inexistente removida de uma query de detalhe de chamada, ferramenta de
+  data da ElevenLabs passa a ser escopada por restaurante (#228) e migração
+  seletiva de ferramentas de data legadas presas a dois hosts fixos (#234).
+- **Servidor de voz da Fly: empacotamento e runtime do Node corrigidos**
+  (#258, "Fix Fly voice server packaging and Node runtime") — **conferido
+  nesta rodada (via o spike de intel sobre preço da Fly.io, que leu o
+  `fly.toml` real): NÃO resolveu o `known_gap`.** O arquivo na raiz do
+  repo ainda aponta para `api/voice-server/Dockerfile`, caminho que não
+  existe (o diretório real é `api/_voice-server/`). #258 corrigiu outra
+  coisa (empacotamento/runtime do Node dentro do build), não esse caminho.
+  O `known_gap` permanece aberto, sem alteração no `intel.config.json`.
+- **Reserva por voz ganha rastreio de entrega de WhatsApp** (#281, "Track
+  WhatsApp delivery on voice reservations") — toca o `known_gap` dos dois
+  caminhos de WhatsApp hardcoded (reminders=Twilio, campanhas=Meta), mas só
+  para a confirmação pós-reserva por voz; não resolve o roteamento dos crons.
+- **Dashboards deixam de depender só de Realtime** (#283, "Refresh active
+  dashboards without relying on Realtime") — fallback de atualização
+  periódica quando a subscription falha ou não chega.
+- **Verificação de propriedade de número Twilio e rejeição de reivindicação
+  legada na linha compartilhada** (#284, commit mais recente da janela,
+  ainda sem merge de PR numerado visível no log local até o fechamento desta
+  rodada) — ver acima.
 
 ## O que está em voo
 
-- **PR #140** (draft, aberto 06/09, mergeable): landing fotográfica em três
-  tempos (`PhotographicHero`/`LiveServiceCanvas`/`CinematicServiceStory`),
-  teste de envio de WhatsApp que não vira pesquisa, e uma lição registrada —
-  oito rodadas de crítica sem a nota mexer até resolver o laço estrutural
-  (artefato repetido, CTA preso num mock) em vez da lista item a item. Achado
-  lateral que vale registrar: o mock anterior repintava reservas planejadas
-  como se fossem o estado real da noite — sem nenhum no-show numa página que
-  vende exatamente a detecção disso.
-- **PR #90** (aberto desde 26/08, 12 dias, não-draft, `mergeable_state:
-  unknown` — base desatualizada, roda sobre `b33944b`, bem antes desta
-  janela): remove dois specs do Racha que faziam a suíte e2e inteira falhar
-  coleta (0 testes coletados) e que, sem configuração, disparavam contra o
-  ambiente de produção de **outro produto**. Correção pequena (42+/8-, 4
-  arquivos) e isolada; parece só esperando merge.
-- **4 PRs de dependabot** abertos nesta manhã (09-07): #141–#144, bumps de
-  rotina em `producao`/`desenvolvimento`, raiz e client.
-- **Eval do Manager AI** (20 casos, PR #99 de duas semanas atrás) — arnês
-  pronto, ainda não rodado; segue faltando `OPENROUTER_API_KEY` e login neste
-  ambiente.
-- **G5 — onboarding em conversa** segue como estava no `STATE.md` anterior:
-  fundação escrita, endpoint que liga (`api/onboarding/agent.js`) e promoção
-  atômica do demo ainda não existem. Nenhum commit desta janela tocou
-  `onboarding-agent.js`/`onboarding-draft.js`/`agent-loop.js`.
+- **PR #214** (`intel/2026-10-26`) e **PR #218** (`intel/2026-11-02`) —
+  ambas draft, `mergeable_state: clean`, zero review humano desde que
+  abriram. Esta rodada (`intel/2026-11-09`) estende `intel/2026-11-02`.
+  **Recomendação, repetida da rodada anterior e agora mais urgente — são
+  dois elos represados, não um:** fechar #214 e #218 sem merge quando esta
+  PR for revisada; ela herda e supera as duas.
+- **PR #169** (`codex/phone-tenant-safety`, draft, agora 35 dias) —
+  continua autodeclarado "não mesclar" até confirmação manual de qual
+  restaurante é o dono legítimo de um número duplicado. **Isto é
+  literalmente o mesmo território que #219–#284 acabaram de blindar** —
+  vale checar se o #219 (correção de `auth.js`) ou a nova
+  `shared-voice-binding.js` já resolvem o que o #169 pede, antes de
+  continuar represando.
+- **PR #165** (`codex/platform-insights-redesign`, draft, `mergeable_state:
+  dirty`, agora 40 dias) — sem mudança nos três bloqueios já registrados
+  (nota visual, OAuth de Preview, merge de CRM inseguro).
+- **PR #140** (draft, agora 64 dias) — sem mudança; coexiste com a versão
+  já publicada por artefato estático. Fechar é chamada do Stefano.
+- **PR #90** (agora não-draft e `mergeable_state: clean`, 75 dias) — mudou
+  de estado desde a rodada anterior (estava `unknown`); parece mergeável
+  agora e continua sem bloqueio declarado — candidato a merge rápido.
+- **5 PRs de dependabot abertos** (`#198`, `#206`, `#215`–`#217`) — a lista
+  encolheu de 7 para 5 desde 02/11 (dois saíram da fila, provavelmente
+  superados por bump mais novo), mas nenhum foi mesclado; todos tocam `main`
+  antes da explosão de 61 commits de 07–09/11 e provavelmente precisam de
+  rebase.
+- **Eval do Manager AI** e **G5 — onboarding em conversa** seguem
+  intocados: nenhum commit desta janela toca `onboarding-agent.js`/
+  `agent-loop.js`; o arnês de 20 casos do Manager AI não rodou.
 
 ## O que morreu
 
-- Nada foi removido de propósito nesta janela — foi tudo correção de dado
-  errado, não descarte de feature. A exceção é a lista de conhecidos-ruins do
-  `audit:phantom-columns` (3 tabelas escritas à mão), substituída pelo
-  `schema-snapshot.json` gerado do banco real.
+Nada removido de propósito nesta janela — tudo foi correção de segurança ou
+de mecanismo (auth, RLS, roteamento de telefone compartilhado), não
+descarte de feature.
 
 ## Áreas quentes
 
-`api/_lib/audit/phantom-columns` (e o `schema-snapshot.json` que o alimenta),
-`api/_lib/prospecting/*` (regex de celular, caça ao JSON, dedup entre
-rodadas), `api/_crons/*` + `api/cron/run*.js` (a nova forma de todo cron), `.
-github/workflows/live-smoke.yml`, `.github/dependabot.yml`, `api/verify-
-session.js` (segurança — vale revisão extra no próximo toque).
+`api/_lib/auth.js` (resolução de tenant — acabou de ter um incidente real),
+`public.agent_conversations` (RLS — acabou de vazar), `api/_lib/shared-
+voice-binding.js` + `api/_lib/platform-phone-policy.js` (novos, território
+estruturalmente frágil por desenho — 1 número para N inquilinos — vai
+continuar gerando PRs), `api/_voice-server/` (empacotamento Fly, a
+confirmar), e a própria fila de PRs represados (`#214`/`#218`/`#169`/`#165`/
+`#140`/`#90` + 5 de dependabot) — maior há duas rodadas seguidas, agora com
+dois elos de intel empilhados em vez de um.
 
 ## Divergências com o config
 
-Nenhuma linha de `bets`, `known_gaps` ou `settled` foi tocada nesta janela por
-decisão de julgamento — o que segue é o que dá para aplicar sozinho, por ser
-o que o próprio texto do `known_gaps[6]` (customer_history) já previa:
-
-1. **`customer_history` — buraco documentado só em `CLAUDE.md`, faltava em
-   `known_gaps`; acrescentado agora, mecânico.** O `CLAUDE.md` já registrava
-   a tabela como morta ("erra 42P01 em silêncio"), mas o `intel.config.json`
-   não tinha essa entrada. PR #115 (2026-09-02) corrigiu metade do problema:
-   o erro agora sobe para quem chama, em vez de virar `null`/"cliente novo"
-   sem rastro, e a exclusão LGPD (`data-deletion.js`) passou a usar
-   `.schema('restaurant')` e parar de filtrar por uma coluna (`restaurant_id`)
-   que a tabela não tem. O que **não** mudou: o modelo de no-show ainda trata
-   todo cliente como novo — o mapeamento para `customer_ltv` está pronto
-   (`total_visits`, `last_visit_date`, `avg_party_size` existem lá) mas não
-   foi aplicado, por ser decisão de produto e não bug. Acrescentado ao
-   `known_gaps` do `intel.config.json` nesta passada — é adição de fato
-   verificável no git, não remoção nem alteração de entrada existente.
-2. **`CLAUDE.md` (fora do `intel.config.json`, registrado aqui por não ter
-   outro lugar):** a tabela de cron jobs ficou desatualizada pelo próprio
-   #135 desta janela — rotas mudaram de endpoint direto para `/api/cron/
-   run?job=`, e pelo menos três cadências mudaram (`sync-conversation-data`,
-   `validate-conversations`: `*/15`→hora em hora; `send-feedback`: 30min→hora
-   em hora) sem que a doc acompanhasse. Fora do escopo deste pipeline
-   (`docs/intel/` + `intel.config.json`) corrigir — só registrar que existe.
+1. **`known_gap` do `fly.toml` — checado nesta rodada, continua real.** O
+   PR #258 ("Fix Fly voice server packaging and Node runtime") não resolveu
+   o caminho de build quebrado: `fly.toml` na raiz ainda aponta para
+   `api/voice-server/Dockerfile` (confirmado ao ler o arquivo durante o
+   spike de intel sobre o aumento de preço de RAM da Fly.io, nesta mesma
+   passada). Nenhuma mudança no `known_gaps` do config — ele já estava
+   certo; a suspeita de resolução registrada na rodada anterior do
+   `STATE.md` está descartada.
+2. **Processo, de novo — agora com dois elos represados, não um:** a rodada
+   de 02/11 (#218) já tinha recomendado fechar #214 sem merge quando #218
+   fosse revisado. Nenhum dos dois foi revisado. Esta rodada estende #218 em
+   vez de abrir uma quarta linha, pelo mesmo motivo que #218 deu para
+   estender #214 — mas o represamento está crescendo, não encolhendo, e o
+   próprio mecanismo de "a próxima rodada herda a anterior" só funciona
+   enquanto alguém eventualmente revisa e mescla uma delas. **Recomendação
+   explícita para o Stefano, não mecânica:** revisar e mesclar esta PR (ou
+   a próxima) quebra a cadeia; não revisar nenhuma deixa o backlog de intel
+   crescer para sempre em paralelo ao `main`.
+3. **`#169` pode já estar resolvido por `#219`/`#284` e não ter sido
+   fechado** — ver "O que está em voo". Não é divergência de config, mas
+   vale registrar aqui para quem revisar esta rodada decidir.
