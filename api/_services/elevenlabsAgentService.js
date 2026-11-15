@@ -318,37 +318,13 @@ async function deleteAgent(restaurantId) {
       logger.error('Error fetching agent config', { agentId, error: getErr.message });
     }
 
-    // Delete each tool (ignore errors)
-    for (const toolId of toolIds) {
-      try {
-        await fetch(`${ELEVENLABS_BASE}/tools/${encodeURIComponent(toolId)}`, {
-          method: 'DELETE',
-          headers: elevenLabsHeaders(apiKey),
-        });
-        logger.info('Deleted tool', { toolId, agentId });
-      } catch (toolErr) {
-        logger.error('Failed to delete tool', { toolId, error: toolErr.message });
-      }
-    }
-
-    // Delete KB doc if exists
-    if (kbDocId) {
-      try {
-        const kbRes = await fetch(`${ELEVENLABS_BASE}/knowledge-base/${encodeURIComponent(kbDocId)}`, {
-          method: 'DELETE',
-          headers: elevenLabsHeaders(apiKey),
-        });
-        if (kbRes.ok || kbRes.status === 404) {
-          logger.info('Deleted KB doc', { kbDocId });
-        } else {
-          logger.error('Failed to delete KB doc', { kbDocId, status: kbRes.status });
-        }
-      } catch (kbErr) {
-        logger.error('Error deleting KB doc', { kbDocId, error: kbErr.message });
-      }
-    }
-
-    // Delete the agent itself
+    // Order matters (15/11/2026). ElevenLabs refuses to delete a tool that an
+    // agent still uses, and keeps listing a deleted agent as a dependent, so
+    // only `force=true` removes it. This function used to delete the tools
+    // FIRST, without force, and never read the answer: every agent deletion
+    // (including the daily demo cleanup) left its tools behind, silently.
+    // Now: the agent goes first; if it cannot be deleted, nothing else is
+    // touched (its tools are still in use).
     try {
       const delRes = await fetch(`${ELEVENLABS_BASE}/agents/${encodeURIComponent(agentId)}`, {
         method: 'DELETE',
@@ -365,6 +341,64 @@ async function deleteAgent(restaurantId) {
       return { success: false, error: 'Error deleting agent from ElevenLabs' };
     }
 
+    // Then each tool, with force. `force` also strips the tool from ANY other
+    // agent using it, so a tool is deleted only when its webhook points at this
+    // restaurant (createAgent puts `restaurant_id=<id>` in every tool URL).
+    // Anything else is skipped and logged, never forced.
+    const toolsSkipped = [];
+    const toolsFailed = [];
+    let toolsDeleted = 0;
+    for (const toolId of toolIds) {
+      try {
+        const getRes = await fetch(`${ELEVENLABS_BASE}/tools/${encodeURIComponent(toolId)}`, {
+          method: 'GET',
+          headers: elevenLabsHeaders(apiKey),
+        });
+        if (getRes.status === 404) { toolsDeleted += 1; continue; }
+        const tool = getRes.ok ? await getRes.json() : null;
+        const toolUrl = String(tool?.tool_config?.api_schema?.url || '');
+        let owner = null;
+        try { owner = new URL(toolUrl).searchParams.get('restaurant_id'); } catch { owner = null; }
+        if (owner !== restaurantId) {
+          toolsSkipped.push(toolId);
+          logger.warn('Tool not deleted: it does not belong to this restaurant', { toolId, agentId, readable: getRes.ok });
+          continue;
+        }
+        const res = await fetch(`${ELEVENLABS_BASE}/tools/${encodeURIComponent(toolId)}?force=true`, {
+          method: 'DELETE',
+          headers: elevenLabsHeaders(apiKey),
+        });
+        if (res.ok || res.status === 404) {
+          toolsDeleted += 1;
+          logger.info('Deleted tool', { toolId, agentId });
+        } else {
+          toolsFailed.push(toolId);
+          const body = await res.text().catch(() => '');
+          logger.error('Failed to delete tool', { toolId, agentId, status: res.status, body: String(body).substring(0, 200) });
+        }
+      } catch (toolErr) {
+        toolsFailed.push(toolId);
+        logger.error('Failed to delete tool', { toolId, agentId, error: toolErr.message });
+      }
+    }
+
+    // KB doc after the agent, for the same reason as the tools.
+    if (kbDocId) {
+      try {
+        const kbRes = await fetch(`${ELEVENLABS_BASE}/knowledge-base/${encodeURIComponent(kbDocId)}`, {
+          method: 'DELETE',
+          headers: elevenLabsHeaders(apiKey),
+        });
+        if (kbRes.ok || kbRes.status === 404) {
+          logger.info('Deleted KB doc', { kbDocId });
+        } else {
+          logger.error('Failed to delete KB doc', { kbDocId, status: kbRes.status });
+        }
+      } catch (kbErr) {
+        logger.error('Error deleting KB doc', { kbDocId, error: kbErr.message });
+      }
+    }
+
     // Clear agent references from DB
     const { error: clearError } = await supabaseAdmin
       .schema('restaurant')
@@ -377,8 +411,8 @@ async function deleteAgent(restaurantId) {
       // Agent is already deleted — this is non-fatal
     }
 
-    logger.info('Agent fully deleted', { restaurantId, agentId });
-    return { success: true };
+    logger.info('Agent deleted', { restaurantId, agentId, toolsDeleted, toolsFailed: toolsFailed.length, toolsSkipped: toolsSkipped.length });
+    return { success: true, tools_deleted: toolsDeleted, tools_failed: toolsFailed, tools_skipped: toolsSkipped };
   } catch (err) {
     logger.error('deleteAgent error', { restaurantId, error: err.message });
     return { success: false, error: 'Internal error during agent deletion' };
