@@ -356,25 +356,19 @@ async function deleteAgent(restaurantId) {
         });
         if (getRes.status === 404) { toolsDeleted += 1; continue; }
         const tool = getRes.ok ? await getRes.json() : null;
-        const toolUrl = String(tool?.tool_config?.api_schema?.url || '');
-        let owner = null;
-        try { owner = new URL(toolUrl).searchParams.get('restaurant_id'); } catch { owner = null; }
-        if (owner !== restaurantId) {
+        const { toolOwner, forceDeleteTool } = require('../_lib/elevenlabs-tool-cleanup');
+        if (toolOwner(tool).restaurantId !== restaurantId) {
           toolsSkipped.push(toolId);
           logger.warn('Tool not deleted: it does not belong to this restaurant', { toolId, agentId, readable: getRes.ok });
           continue;
         }
-        const res = await fetch(`${ELEVENLABS_BASE}/tools/${encodeURIComponent(toolId)}?force=true`, {
-          method: 'DELETE',
-          headers: elevenLabsHeaders(apiKey),
-        });
-        if (res.ok || res.status === 404) {
+        const deleted = await forceDeleteTool(toolId, apiKey);
+        if (deleted.ok) {
           toolsDeleted += 1;
           logger.info('Deleted tool', { toolId, agentId });
         } else {
           toolsFailed.push(toolId);
-          const body = await res.text().catch(() => '');
-          logger.error('Failed to delete tool', { toolId, agentId, status: res.status, body: String(body).substring(0, 200) });
+          logger.error('Failed to delete tool', { toolId, agentId, status: deleted.status });
         }
       } catch (toolErr) {
         toolsFailed.push(toolId);
