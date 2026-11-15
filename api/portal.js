@@ -345,7 +345,7 @@ async function handleGetAvailability(req, res) {
   const { data: restaurant, error: restError } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('id, restaurant_name, business_hours, reservation_settings')
+    .select('id, restaurant_name, reservation_settings')
     .eq('id', restaurant_id)
     .eq('is_active', true)
     .single();
@@ -494,7 +494,7 @@ async function handleCreateReservation(req, res) {
   const { data: restaurant, error: restError } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('id, restaurant_name, email, whatsapp_enabled, whatsapp_phone_number, agent_language, reservation_settings, business_hours, timezone, average_dining_duration_minutes, table_configuration')
+    .select('id, restaurant_name, email, whatsapp_enabled, whatsapp_phone_number, agent_language, reservation_settings, business_hours, timezone')
     .eq('id', restaurant_id)
     .eq('is_active', true)
     .eq('onboarding_completed', true)
