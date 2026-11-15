@@ -425,6 +425,41 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
         return { success: false, error: 'Invalid date, time, or party size.' };
       }
 
+      // The past and the restaurant's own limits, checked the way the booking
+      // function (book_guest_reservation) checks them: never offer what the
+      // booking then refuses. Until 15/11/2026 this answered "available" for
+      // yesterday, 40 days ahead (limit 30) and 7 guests (limit 6).
+      const refuse = (reason, message) => ({
+        success: true, available: false, provisional: true, reason, message,
+        details: { requested_date: date, requested_time: time, party_size },
+      });
+      const zone = inboundContext.timezone || session.restaurant.timezone;
+      if (zone) {
+        let localNow = null;
+        try {
+          localNow = new Intl.DateTimeFormat('sv-SE', {
+            timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+          }).format(new Date()).replace(' ', 'T');
+        } catch { /* invalid zone: the booking function answers timezone_unavailable */ }
+        if (localNow) {
+          const { restaurantTodayHint } = require('../../_lib/timezone');
+          const { restaurantBookingLimits, isBeyondBookingWindow } = require('../../_lib/reservation-validator');
+          const limits = restaurantBookingLimits({
+            reservation_settings: inboundContext.reservationSettings ?? session.restaurant.reservation_settings,
+          });
+          if (`${date}T${time}` < localNow) {
+            return refuse('PAST_DATE', `That time has already passed. ${restaurantTodayHint(zone)}`);
+          }
+          if (isBeyondBookingWindow(date, limits.advanceBookingDays, zone)) {
+            return refuse('TOO_FAR', `Reservations can only be made up to ${limits.advanceBookingDays} days in advance. ${restaurantTodayHint(zone)}`);
+          }
+          if (limits.maxPartySize !== null && party_size > limits.maxPartySize) {
+            return refuse('PARTY_TOO_LARGE', `We can accommodate parties up to ${limits.maxPartySize} guests. For larger groups, please contact the restaurant directly.`);
+          }
+        }
+      }
+
       // Match the booking RPC's 30–360 minute window. These timestamps are
       // local wall times represented in UTC only for arithmetic, as in SQL.
       const configuredDuration = Number(
@@ -447,7 +482,9 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
           .eq('restaurant_id', session.restaurant.id)
           .gte('date', adjacentDay(-1))
           .lte('date', adjacentDay(1))
-          .in('status', ['confirmed', 'seated']);
+          // Every seat-holding status, as the booking function counts them
+          // (lower(status) in confirmed, seated, pending); legacy rows are capitalized.
+          .in('status', ['confirmed', 'seated', 'pending', 'Confirmed', 'Seated', 'Pending']);
 
         if (error) {
           logger.error(`[TOOL_FAIL] check_availability reservations query: code=${error.code || 'N/A'} msg=${error.message?.slice(0, 150)}`);
