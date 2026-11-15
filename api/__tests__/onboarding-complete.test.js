@@ -1145,3 +1145,113 @@ describe('guarda de restaurante duplicado (G3.3)', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 });
+
+// ============================================================
+// Nada fica pela metade (15/11/2026). A auditoria do onboarding achou três
+// furos no código (não na produção — os 72 órfãos de lá são de demos): as
+// mesas eram gravadas ANTES da guarda de duplicado, um erro entre as mesas e
+// o config não desfazia nada, e o vínculo do agente ao restaurante podia
+// falhar calado com o placar dizendo "ok".
+// ============================================================
+describe('onboarding não deixa nada pela metade', () => {
+  const { supabaseAdmin } = require('../_lib/supabase');
+  const originalFrom = supabaseAdmin.from.getMockImplementation();
+  let ops;
+
+  beforeEach(() => {
+    ops = [];
+    // The endpoint keys the owner by user.sub (as the G3.3 tests above).
+    require('../_lib/auth').verifyAuth.mockResolvedValueOnce({ user: { sub: 'user-1', id: 'user-1' } });
+    supabaseAdmin.from.mockImplementation((table) => {
+      const api = originalFrom(table);
+      if (table !== 'tables') return api;
+      return {
+        ...api,
+        insert: (...a) => { ops.push('insert'); return api.insert(...a); },
+        delete: (...a) => { ops.push('delete'); return api.delete(...a); },
+      };
+    });
+  });
+  afterAll(() => { supabaseAdmin.from.mockImplementation(originalFrom); });
+
+  // restaurant_config: guarda lê `existing`; insert devolve o restaurante
+  // novo ou o erro pedido; o update do vínculo do agente devolve `linkResult`.
+  function configDb({ existing = null, insertError = null, linkResult = { data: null, error: null } } = {}) {
+    supabaseAdmin.schema.mockImplementation(() => ({
+      from: () => {
+        let wrote = null;
+        const chain = {};
+        chain.select = () => chain;
+        chain.limit = () => Promise.resolve({ data: [], error: null });
+        chain.maybeSingle = () => Promise.resolve({ data: null, error: null });
+        chain.insert = (payload) => { wrote = 'insert'; capturedConfigWrite = payload; return chain; };
+        chain.update = (payload) => {
+          wrote = 'update';
+          if ('elevenlabs_agent_id' in payload) return { eq: () => Promise.resolve(linkResult) };
+          capturedConfigWrite = payload;
+          return chain;
+        };
+        chain.eq = () => chain;
+        chain.single = () => {
+          if (wrote === 'insert') return Promise.resolve(insertError
+            ? { data: null, error: insertError }
+            : { data: { id: 'rest-novo', slug: 'test-restaurant' }, error: null });
+          return Promise.resolve({ data: existing, error: null });
+        };
+        return chain;
+      },
+    }));
+  }
+
+  test('conta com restaurante concluído recebe 409 antes de qualquer mesa ser gravada', async () => {
+    configDb({ existing: { id: 'rest-vivo', slug: 'mocoto', onboarding_completed: true } });
+    const { req, res } = mockReqRes({ ...BASE_BODY });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(ops).toEqual([]);
+  });
+
+  test('um erro depois das mesas e antes do restaurante desfaz as mesas', async () => {
+    configDb();
+    // Membro sem papel quebra a montagem do config, depois das mesas gravadas.
+    const { req, res } = mockReqRes({ ...BASE_BODY, team_members: [{ email: 'a@b.test' }] });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(ops).toEqual(['insert', 'delete']);
+  });
+
+  test('falha ao gravar o restaurante desfaz as mesas uma vez', async () => {
+    configDb({ insertError: { message: 'insert failed', code: 'XX000' } });
+    const { req, res } = mockReqRes({ ...BASE_BODY });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(ops).toEqual(['insert', 'delete']);
+  });
+
+  test('cadastro normal grava as mesas uma vez e não apaga nada', async () => {
+    configDb();
+    const { req, res } = mockReqRes({ ...BASE_BODY });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(ops).toEqual(['insert']);
+  });
+
+  test('agente criado mas não vinculado ao restaurante aparece como falha, não "ok"', async () => {
+    const { createAgent } = require('../_services/elevenlabsAgentService');
+    createAgent.mockResolvedValueOnce({ success: true, agent_id: 'agent_novo_0001' });
+    configDb({ linkResult: { data: null, error: { message: 'update failed' } } });
+    const { req, res } = mockReqRes({ ...BASE_BODY });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json.mock.calls[0][0].setup.voice_agent).toBe('failed');
+  });
+
+  test('agente criado e vinculado continua "ok"', async () => {
+    const { createAgent } = require('../_services/elevenlabsAgentService');
+    createAgent.mockResolvedValueOnce({ success: true, agent_id: 'agent_novo_0001' });
+    configDb();
+    const { req, res } = mockReqRes({ ...BASE_BODY });
+    await handler(req, res);
+    expect(res.json.mock.calls[0][0].setup.voice_agent).toBe('ok');
+  });
+});
