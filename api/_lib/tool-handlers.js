@@ -127,14 +127,23 @@ function getDateTime(timezone = 'UTC') {
 
 /**
  * Check table availability for a given date, time, and party size.
+ *
+ * The answer comes from the booking rule itself: public.check_guest_slots
+ * (api/_lib/guest-slots.js) runs the slot checks of book_guest_reservation for
+ * the requested start and the starts around it, so a time offered here is a
+ * time the booking accepts. Until 15/11/2026 this had its own rule (weekday in
+ * UTC, 17:00-22:00 when a day had no hours, tables occupied *now* removed from
+ * every future date, pending bookings not counted, first-open/last-close
+ * alternatives): in scripts/auditoria-reservas/r9-disponibilidade-voz-whatsapp.cjs
+ * the booking refused 30 of its 44 "available" answers and all 18 alternatives.
  * @param {string} restaurantId - Restaurant UUID
- * @param {object} restaurant - Restaurant config object (with business_hours, table_configuration, name, etc.)
+ * @param {object} restaurant - Restaurant config object (with timezone, reservation_settings, name, etc.)
  * @param {object} params - { date, time, party_size }
  * @returns {object} Availability result
  */
 async function checkAvailability(restaurantId, restaurant, { date, time, party_size }) {
-  const { getReservations, getTables, canAccommodateParty } = require('./supabase');
-  const { checkTimeSlotAvailability, getSuggestedTimes } = require('./availability-calculator');
+  const { canAccommodateParty } = require('./supabase');
+  const { checkGuestSlots, slotRefusal } = require('./guest-slots');
 
   if (!date || !time || !party_size) {
     return {
@@ -145,7 +154,7 @@ async function checkAvailability(restaurantId, restaurant, { date, time, party_s
   }
 
   try {
-    const { validateReservationInput } = require('./reservation-validator');
+    const { validateReservationInput, restaurantBookingLimits } = require('./reservation-validator');
     const validation = validateReservationInput({ date, party_size });
     if (!validation.valid) {
       return { success: false, available: false, error: validation.errors[0].code, message: validation.message };
@@ -153,88 +162,27 @@ async function checkAvailability(restaurantId, restaurant, { date, time, party_s
     if (typeof time !== 'string' || time.length !== 5 || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) {
       return { success: false, available: false, error: 'INVALID_TIME', message: 'Please provide a valid time in HH:MM format.' };
     }
-
-    // Stored date/time fields are restaurant-local wall times. Compare against
-    // one local clock snapshot, not the server's day or a date parsed as UTC.
-    const { utcToLocalDate, restaurantTodayHint } = require('./timezone');
-    const timezone = restaurant.timezone || 'America/Sao_Paulo';
-    const now = new Date();
-    const today = utcToLocalDate(now, timezone);
-    const localTime = new Intl.DateTimeFormat('en-GB', {
-      timeZone: timezone, hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
-    }).format(now);
-    if (`${date}T${time}:00` < `${today}T${localTime}`) {
-      return {
-        success: false, available: false, error: 'PAST_DATE',
-        message: `The requested date and time is in the past. ${restaurantTodayHint(timezone, now)}`
-      };
-    }
     const { partySize } = validation;
-
-    // The restaurant's own limits, the same ones book_guest_reservation
-    // enforces: never offer a slot the booking will refuse.
-    const { restaurantBookingLimits, isBeyondBookingWindow } = require('./reservation-validator');
-    const limits = restaurantBookingLimits(restaurant);
-    if (isBeyondBookingWindow(date, limits.advanceBookingDays, timezone, now)) {
-      return {
-        success: false, available: false, error: 'TOO_FAR',
-        message: `Reservations can only be made up to ${limits.advanceBookingDays} days in advance. ${restaurantTodayHint(timezone, now)}`
-      };
-    }
-    if (limits.maxPartySize !== null && partySize > limits.maxPartySize) {
-      return {
-        success: false, available: false, error: 'PARTY_TOO_LARGE',
-        message: `We can accommodate parties up to ${limits.maxPartySize} guests. For larger groups, please call us directly.`
-      };
-    }
+    const timezone = restaurant.timezone || 'America/Sao_Paulo';
 
     logger.info(`AVAILABILITY CHECK for ${restaurant.name}`, {
       language: restaurant.agent_language || restaurant.language,
       voice_id: restaurant.voice_id
     });
 
-    // Calculate total capacity from table configuration or database
-    // Load real tables from DB (snake_case fields)
-    const { getAllTables } = require('./db/tables');
-    const tablesResult = await getAllTables(restaurantId);
-    const dbTables = tablesResult.success ? tablesResult.tables : [];
-
-    // Total seated capacity from active tables
-    const totalCapacity = dbTables.reduce((sum, t) => sum + (t.capacity || 0), 0);
-
-    // Currently occupied seats (tables physically in use right now)
-    const currentlyOccupiedSeats = dbTables
-      .filter(t => t.status === 'Occupied' || t.status === 'Reserved')
-      .reduce((sum, t) => sum + (t.capacity || 0), 0);
-
-    logger.debug(`Total capacity: ${totalCapacity} | currently occupied: ${currentlyOccupiedSeats}`);
-
-    // Get business hours for the requested date
-    const requestedDate = new Date(date);
-    const dayOfWeek = requestedDate.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' }).toLowerCase();
-    const businessHours = restaurant.business_hours || {};
-    // Support both array [{day, open, close, is_open}] and object {monday: {open, close, is_open}}
-    const dayHours = Array.isArray(businessHours)
-      ? businessHours.find(d => d.day && d.day.toLowerCase() === dayOfWeek)
-      : businessHours[dayOfWeek];
-
-    const openTime = dayHours?.open || dayHours?.open_time || '17:00';
-    const closeTime = dayHours?.close || dayHours?.close_time || '22:00';
-    const isOpen = !dayHours || dayHours.is_open !== false;
-
-    // Check if restaurant is closed on this day
-    if (!isOpen) {
-      return {
-        success: true,
-        available: false,
-        message: `Sorry, ${restaurant.restaurant_name || restaurant.name} is closed on ${dayOfWeek}s. Please choose another day.`,
-        details: { day: dayOfWeek, is_closed: true }
-      };
+    // The requested start first, then up to two hours either side on the same
+    // day, every 30 minutes: one call answers the time and the alternatives.
+    const requested = Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
+    const around = [];
+    for (let offset = -120; offset <= 120; offset += 30) {
+      const minutes = requested + offset;
+      if (offset !== 0 && minutes >= 0 && minutes < 24 * 60) around.push(minutes);
     }
-
-    // Get reservations for the requested date (confirmed + seated only)
-    const reservationsResult = await getReservations(restaurantId, { date, status: null });
-    if (!reservationsResult.success) {
+    const clock = minutes => `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+    const starts = [time, ...around.map(clock)].map(t => `${date}T${t}`);
+    const answer = await checkGuestSlots(restaurantId, partySize, starts);
+    if (!answer.ok) {
+      logger.error('check_availability: booking rule unavailable', { status: answer.status });
       return {
         success: false,
         error: true,
@@ -242,53 +190,44 @@ async function checkAvailability(restaurantId, restaurant, { date, time, party_s
       };
     }
 
-    // Normalize records — getReservations returns snake_case objects
-    const existingReservations = (reservationsResult.data.records || []).filter(r => {
-      const s = (r.status || r.fields?.Status || '').toLowerCase();
-      return s === 'confirmed' || s === 'seated';
-    });
+    const [slot, ...others] = answer.slots;
+    const alternative_times = others
+      .filter(other => other.status === 'ok')
+      .sort((x, y) => Math.abs(requested - Number(x.time.slice(0, 2)) * 60 - Number(x.time.slice(3, 5)))
+        - Math.abs(requested - Number(y.time.slice(0, 2)) * 60 - Number(y.time.slice(3, 5))))
+      .slice(0, 3)
+      .map(other => ({ time: other.time, message: `${other.time} is available` }));
 
-    // Effective capacity = total minus what's physically occupied right now
-    const effectiveCapacity = Math.max(0, totalCapacity - currentlyOccupiedSeats);
-
-    logger.debug(`Effective capacity for reservations: ${effectiveCapacity} (${totalCapacity} total - ${currentlyOccupiedSeats} occupied)`);
-
-    // If ALL tables are occupied right now, we have ZERO availability
-    if (effectiveCapacity === 0) {
-      logger.info('All tables currently occupied - no availability');
-      return {
-        success: true,
+    if (slot.status !== 'ok') {
+      const refusal = slotRefusal(slot.status, { timezone, limits: restaurantBookingLimits(restaurant), partySize, time });
+      // Date and limit refusals keep their long-standing shape (success: false)
+      // so the agent restates them; hours and seats are an ordinary "no".
+      const dateOrLimit = ['PAST_DATE', 'TOO_FAR', 'PARTY_TOO_LARGE'].includes(refusal.code);
+      const result = {
+        success: !dateOrLimit,
         available: false,
-        message: `Sorry, we are fully booked right now. All ${totalCapacity} seats are currently occupied. Please try calling us to check for walk-in availability or cancellations.`,
-        details: {
-          total_capacity: totalCapacity,
-          currently_occupied: currentlyOccupiedSeats,
-          available_seats: 0,
-          requested_party_size: partySize
-        },
-        alternative_times: []
+        error: refusal.code,
+        message: refusal.message,
+        details: { requested_time: time, party_size: partySize, seats_available: slot.seats_available ?? null },
+        alternative_times
       };
+      logger.info('check_availability response:', result);
+      return result;
     }
 
-    const availabilityCheck = checkTimeSlotAvailability(
-      time,
-      partySize,
-      existingReservations,
-      effectiveCapacity
-    );
+    // Seats are free for the whole sitting; the tables must also combine for
+    // this party (the booking rule counts seats, not table combinations).
+    const durationMinutes = Math.max(30, Math.min(
+      Number(restaurant.average_dining_duration_minutes || restaurant.avg_dining_duration_minutes) || 90, 360));
+    const accommodationCheck = await canAccommodateParty(restaurantId, partySize, { date, time, durationMinutes });
 
-    // Check if we can accommodate this party size using flexible table combinations
-    // Pass date + time so already-booked tables are excluded from the check
-    const checkDuration = restaurant?.average_dining_duration_minutes || restaurant?.avg_dining_duration_minutes || 90;
-    const accommodationCheck = await canAccommodateParty(restaurantId, partySize, { date, time, durationMinutes: checkDuration });
-
-    if (availabilityCheck.available && accommodationCheck.can_accommodate) {
+    if (accommodationCheck.can_accommodate) {
       const result = {
         success: true,
         available: true,
         message: `Yes, we have space for ${partySize} guests on ${date} at ${time}. Would you like to make a reservation?`,
         details: {
-          estimated_duration: `${availabilityCheck.estimatedDuration} minutes`,
+          estimated_duration: `${durationMinutes} minutes`,
           can_accommodate: true
         }
       };
@@ -296,35 +235,18 @@ async function checkAvailability(restaurantId, restaurant, { date, time, party_s
       return result;
     }
 
-    const suggestions = getSuggestedTimes(
-      time,
-      partySize,
-      existingReservations,
-      effectiveCapacity,
-      openTime,
-      closeTime
-    );
-
-    let message = `Sorry, we're fully booked for ${partySize} guests at ${time}.`;
-    if (!accommodationCheck.can_accommodate) {
-      const maxCap = accommodationCheck.max_capacity;
-      message = maxCap
-        ? `Sorry, the largest party we can seat is ${maxCap} guests. We cannot accommodate a party of ${partySize}.`
-        : `Sorry, we cannot accommodate a party of ${partySize} at the moment.`;
-    }
-
+    const maxCap = accommodationCheck.max_capacity;
     const result = {
       success: true,
       available: false,
-      message,
+      message: maxCap
+        ? `Sorry, the largest party we can seat is ${maxCap} guests. We cannot accommodate a party of ${partySize}.`
+        : `Sorry, we cannot accommodate a party of ${partySize} at the moment.`,
       details: {
         requested_time: time,
         party_size: partySize
       },
-      alternative_times: suggestions.length > 0 ? suggestions.map(s => ({
-        time: s.time,
-        message: `${s.time} is available`
-      })) : []
+      alternative_times
     };
     logger.info('check_availability response:', result);
     return result;

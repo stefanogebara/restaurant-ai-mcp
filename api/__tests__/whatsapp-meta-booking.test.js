@@ -358,9 +358,12 @@ describe('whatsapp-webhook (Meta Cloud API)', () => {
       data: { id: 1, reservation_id: 'RES-TEST-001', customer_name: 'Test User' },
       error: null,
     });
-    mockSupabaseAdmin.rpc.mockResolvedValue({
-      data: { status: 'created', reservation_id: 'RES-TEST-001' }, error: null,
-    });
+    // Availability asks the booking rule (check_guest_slots); the booking itself
+    // answers through book_whatsapp_reservation.
+    mockSupabaseAdmin.rpc.mockImplementation(async (fn, args) => (fn === 'check_guest_slots'
+      ? { data: { status: 'ok', slots: args.p_starts.map(start => ({
+        date: start.slice(0, 10), time: start.slice(11), status: 'ok', seats_available: 10 })) }, error: null }
+      : { data: { status: 'created', reservation_id: 'RES-TEST-001' }, error: null }));
     getOrCreateSession.mockResolvedValue(makeSession());
     getSessionByPhone.mockResolvedValue(makeSession());
     // Default AI: end-turn response (overridden per test)
@@ -424,9 +427,11 @@ describe('whatsapp-webhook (Meta Cloud API)', () => {
     // AI called 3 times (check_availability, create_reservation, end_turn)
     expect(aiCallCount).toBe(3);
 
-    // The create step must reach the transactional RPC, not merely prompt the
-    // model to say the table was booked after a silently failed tool call.
-    expect(mockSupabaseAdmin.from).toHaveBeenCalledWith('reservations');
+    // Availability asked the booking rule, and the create step reached the
+    // transactional RPC, not merely a model reply after a silently failed tool call.
+    expect(mockSupabaseAdmin.rpc).toHaveBeenCalledWith('check_guest_slots', expect.objectContaining({
+      p_party_size: expect.any(Number), p_starts: [expect.stringMatching(/^2026-03-01T\d{2}:\d{2}$/)],
+    }));
     expect(mockSupabaseAdmin.rpc).toHaveBeenCalledWith('book_whatsapp_reservation', expect.objectContaining({
       p_restaurant_id: expect.any(String),
       p_customer_phone: '+15551234567',
