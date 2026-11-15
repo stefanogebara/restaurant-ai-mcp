@@ -162,3 +162,21 @@ describe('buildPersonaPrompt — business hours safety', () => {
     expect(prompt).toMatch(/outside.*hours|alternative times|business hours/i);
   });
 });
+
+describe('availability is never claimed without the tool (live finding, 14/11/2026)', () => {
+  const config = { restaurant_name: 'Trattoria', business_hours: {}, timezone: 'America/Sao_Paulo', agent_language: 'pt' };
+
+  test.each([['voice'], [undefined]])('channel %p: the prompt requires check_availability before any availability answer', channel => {
+    const prompt = buildPersonaPrompt(config, channel ? { channel } : {});
+    expect(prompt).toMatch(/NEVER say a time is available, or that it is full, before check_availability has answered/);
+    expect(prompt).toMatch(/Saying "let me check" is not a check/);
+    expect(prompt).toMatch(/create_reservation has the final word/);
+    expect(prompt).toMatch(/check_availability: .*Call it before you say whether a time is available/);
+  });
+
+  test('the old line that invited an answer without the tool is gone', () => {
+    const prompt = buildPersonaPrompt(config, { channel: 'voice' });
+    expect(prompt).not.toMatch(/simply say "Yes, we can accommodate/);
+    expect(prompt).toMatch(/never instead of it/);
+  });
+});

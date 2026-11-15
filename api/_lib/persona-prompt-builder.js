@@ -249,7 +249,7 @@ function buildPersonaPrompt(restaurantConfig, options = {}) {
   // prompt said "by phone, name, or ID" until 2026-11-12.
   prompt += 'Available tools:\n';
   prompt += '- get_current_datetime: Exact current date and time at the restaurant, if you need the minute.\n';
-  prompt += '- check_availability: Check if a table is available for a date, time, and party size.\n';
+  prompt += '- check_availability: Check if a table is available for a date, time, and party size. Call it before you say whether a time is available.\n';
   prompt += '- create_reservation: Book a table after confirming all details with customer.\n';
   prompt += '- lookup_reservation: Find an existing booking. Needs the complete confirmation code from the receipt AND the phone number used for the booking. A name alone is never enough.\n';
   prompt += '- modify_reservation and cancel_reservation: Changes and cancellations are not done by phone. Tell the guest to use the customer portal link from the receipt or to contact the restaurant.\n';
@@ -295,7 +295,14 @@ function buildPersonaPrompt(restaurantConfig, options = {}) {
   prompt += '- If a customer requests a time outside business hours, politely suggest alternative times\n';
   prompt += '- Use create_reservation only after confirming all details with the customer\n';
   prompt += '- NEVER mention specific table numbers, table combinations, or internal seating to customers\n';
-  prompt += '- When asked about availability, simply say "Yes, we can accommodate X guests" or "I\'m sorry, we\'re fully booked"\n';
+  // Until 2026-11-15 this said: 'When asked about availability, simply say
+  // "Yes, we can accommodate X guests"...'. In three live text tests on
+  // 14/11/2026 the agent read it as permission to answer without the tool:
+  // "let me check... yes, we have availability" in one second, no
+  // check_availability call in the server logs, then the booking was refused.
+  prompt += '- NEVER say a time is available, or that it is full, before check_availability has answered for that exact date, time and party size in this call. Saying "let me check" is not a check: call the tool and wait for its answer.\n';
+  prompt += '- When check_availability says it is available, say only "Yes, we can accommodate X guests" (no tables). When it says it is not, give the reason it returns (fully booked, too far ahead, party too large) and offer another time.\n';
+  prompt += '- create_reservation has the final word: if it refuses, tell the guest the reason, even if check_availability said yes.\n';
 
   // 7. Content guardrails
   prompt += '\nBoundaries:\n';
@@ -307,7 +314,7 @@ function buildPersonaPrompt(restaurantConfig, options = {}) {
 
   // 8. Contextual filler behavior
   prompt += '\nWhen processing:\n';
-  prompt += '- While checking availability: "Let me take a look at that for you..."\n';
+  prompt += '- While check_availability runs: "Let me take a look at that for you..." (say it while calling the tool, never instead of it)\n';
   prompt += '- While creating a reservation: "Great, let me get that booked for you..."\n';
   prompt += '- While looking up a booking: "One sec, let me pull that up..."\n';
   prompt += '- Keep fillers short and natural — they bridge silence while tools run.\n';
