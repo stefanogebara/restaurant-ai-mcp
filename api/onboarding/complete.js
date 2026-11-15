@@ -143,6 +143,11 @@ module.exports = async (req, res) => {
     return res.status(auth.status).json({ error: auth.error });
   }
 
+  // Mesas gravadas por este request e ainda sem restaurant_config. Se algo
+  // lançar antes do config ser salvo, o catch de fora apaga essas mesas
+  // (15/11/2026: antes só a falha do próprio insert do config desfazia).
+  let tablesAwaitingConfig = null;
+
   try {
     // `let` (not `const`) for the 4 string fields below — we reassign them
     // to their trimmed/validated form after the input check so downstream
@@ -405,20 +410,41 @@ module.exports = async (req, res) => {
     const restaurantId = crypto.randomUUID();
     logger.info(` Id do restaurante gerado: ${restaurantId}`);
 
-    // STEP 2: Create Tables
-    logger.info(' Step 2: Creating tables...');
-
-    // First, delete existing tables FOR THIS RESTAURANT ONLY
-    const { error: deleteError } = await supabaseAdmin
-      .from('tables')
-      .delete()
-      .eq('restaurant_id', restaurantId);
-
-    if (deleteError) {
-      logger.warn(' Warning: Could not delete existing tables:', deleteError);
+    // Get user ID from the verified auth token (already available, no lookup needed)
+    const userId = auth.user?.sub || null;
+    if (userId) {
+      logger.info(' User ID from auth token:', userId);
     } else {
-      logger.info(` Cleared existing tables for restaurant ${restaurantId}`);
+      logger.warn(' No user ID in auth token, restaurant_config will not be saved');
     }
+
+    // Guarda de restaurante duplicado (G3.3), ANTES de qualquer gravação.
+    // Um UPDATE completo e silencioso do config existente deixava um cliente
+    // sobrescrever o próprio restaurante vivo com um wizard novo; um cadastro
+    // concluído exige intenção explícita. Até 15/11/2026 esta checagem vinha
+    // depois das mesas, e cada 409 deixava um jogo de mesas órfão.
+    let existingConfig = null;
+    if (userId) {
+      const { data } = await supabaseAdmin
+        .schema('restaurant')
+        .from('restaurant_config')
+        .select('id, user_id, slug, onboarding_completed')
+        .eq('user_id', userId)
+        .single();
+      existingConfig = data || null;
+      if (existingConfig?.onboarding_completed && confirm_overwrite !== true) {
+        logger.warn(` Blocked silent overwrite of completed restaurant ${existingConfig.id}`);
+        return res.status(409).json({
+          error: 'restaurant_already_exists',
+          message: 'Esta conta já tem um restaurante configurado.',
+          restaurant: { restaurant_id: existingConfig.id, slug: existingConfig.slug },
+        });
+      }
+    }
+
+    // STEP 2: Create Tables. O id acabou de ser gerado: não há mesa antiga
+    // deste restaurante para apagar antes.
+    logger.info(' Step 2: Creating tables...');
 
     // Create new tables from areas configuration
     let tableNumber = 1;
@@ -470,18 +496,12 @@ module.exports = async (req, res) => {
       .select();
 
     if (tablesError) throw tablesError;
+    tablesAwaitingConfig = restaurantId;
     logger.info(` Created ${tablesData.length} tables`);
 
     // STEP 3: Create/Update Restaurant Config (for AI Agent)
     logger.info(' Step 3: Creating restaurant_config for AI agent...');
 
-    // Get user ID from the verified auth token (already available, no lookup needed)
-    let userId = auth.user?.sub || null;
-    if (userId) {
-      logger.info(' User ID from auth token:', userId);
-    } else {
-      logger.warn(' No user ID in auth token, restaurant_config will not be saved');
-    }
 
     // Prepare table configuration for restaurant_config
     const tableConfiguration = areas.map(area => ({
@@ -806,30 +826,8 @@ module.exports = async (req, res) => {
 
     let configResult;
     try {
-      // Check if config already exists for this user
+      // existingConfig was read by the duplicate guard, before the tables.
       if (userId) {
-        const { data: existingConfig } = await supabaseAdmin
-          .schema('restaurant')
-          .from('restaurant_config')
-          .select('id, user_id, slug, onboarding_completed')
-          .eq('user_id', userId)
-          .single();
-
-        // Guarda de restaurante duplicado (G3.3). O branch abaixo faz um
-        // UPDATE COMPLETO e silencioso do config existente. Combinado com o
-        // caminho de erro do /welcome — que despejava um dono existente num
-        // segundo onboarding — dava para um cliente sobrescrever o próprio
-        // restaurante vivo com o conteúdo de um wizard novo. Um cadastro já
-        // concluído exige intenção explícita para ser reescrito.
-        if (existingConfig?.onboarding_completed && confirm_overwrite !== true) {
-          logger.warn(` Blocked silent overwrite of completed restaurant ${existingConfig.id}`);
-          return res.status(409).json({
-            error: 'restaurant_already_exists',
-            message: 'Esta conta já tem um restaurante configurado.',
-            restaurant: { restaurant_id: existingConfig.id, slug: existingConfig.slug },
-          });
-        }
-
         if (existingConfig) {
           // Update existing config
           const { data, error } = await supabaseAdmin
@@ -842,6 +840,7 @@ module.exports = async (req, res) => {
 
           if (error) throw error;
           configResult = data;
+          tablesAwaitingConfig = null;
           logger.info(' Restaurant config updated');
         } else {
           // Insert new config
@@ -854,6 +853,7 @@ module.exports = async (req, res) => {
 
           if (error) throw error;
           configResult = data;
+          tablesAwaitingConfig = null;
           logger.info(' Restaurant config created');
         }
       } else {
@@ -924,6 +924,7 @@ module.exports = async (req, res) => {
         // gerado, não emprestado de um registro alheio (era daí que vinha o
         // estrago de 02/08/2026).
         await supabaseAdmin.from('tables').delete().eq('restaurant_id', restaurantId);
+        tablesAwaitingConfig = null;
         logger.info(' Rolled back tables after config failure');
       } catch (rollbackErr) {
         logger.warn(' Rollback failed (leaving orphaned rows):', rollbackErr.message);
@@ -1013,7 +1014,7 @@ module.exports = async (req, res) => {
         // é de lá que o webhook e o phone-integration leem.
         // Save agent_id to restaurant_config for webhook routing
         if (canonicalRestaurantId) {
-          await supabaseAdmin
+          const { error: linkError } = await supabaseAdmin
             .schema('restaurant')
             .from('restaurant_config')
             .update({
@@ -1022,7 +1023,15 @@ module.exports = async (req, res) => {
             })
             .eq('id', canonicalRestaurantId);
 
-          logger.info(' Agent saved to restaurant_config');
+          // Sem o id no restaurante, nenhuma ligação chega a este agente: o
+          // placar não pode dizer "ok" (15/11/2026). O id fica no log para
+          // religar à mão.
+          if (linkError) {
+            setupScorecard.voice_agent = 'failed';
+            logger.error(' Agent created but not linked to restaurant_config:', { agentId, error: linkError.message });
+          } else {
+            logger.info(' Agent saved to restaurant_config');
+          }
         }
 
         logger.info(' ElevenLabs agent created:', agentId);
@@ -1155,6 +1164,14 @@ module.exports = async (req, res) => {
     });
   } catch (error) {
     logger.error(' Error:', error);
+    if (tablesAwaitingConfig) {
+      try {
+        await supabaseAdmin.from('tables').delete().eq('restaurant_id', tablesAwaitingConfig);
+        logger.info(' Rolled back tables after an error before the restaurant was saved');
+      } catch (rollbackErr) {
+        logger.warn(' Rollback failed (leaving orphaned tables):', rollbackErr.message);
+      }
+    }
     return res.status(500).json({
       error: 'Failed to complete onboarding',
       message: error.message,

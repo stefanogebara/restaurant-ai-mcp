@@ -56,7 +56,7 @@ jest.mock('../_lib/supabase', () => {
       then: (resolve, reject) => finalizar(null).then(resolve, reject),
     };
     function finalizar(exigeLinha) {
-      mockDb.ops.push({ schema, tabela, op: ctx.op || 'select', filtros: { ...ctx.filtros } });
+      mockDb.ops.push({ schema, tabela, op: ctx.op || 'select', filtros: { ...ctx.filtros }, payload: ctx.payload });
       let r = { data: null, error: null };
       if (tabela === 'restaurant_info') {
         if (ctx.op === 'update' || ctx.op === 'insert') r = { data: { id: 'info-1' }, error: null };
@@ -136,10 +136,15 @@ describe('não encostar em restaurant_info', () => {
     // O antigo passo 3b existia porque as mesas nasciam com o id do
     // restaurant_info e precisavam ser realinhadas ao do config. Agora nascem
     // certas; este teste é o que garante que o realinhamento não faz falta.
+    // Lido do insert das mesas: o delete prévio (no-op num id recém-gerado)
+    // saiu em 15/11/2026.
     await handler(pedido(), resposta());
-    const idDasMesas = mockDb.ops.find((o) => o.tabela === 'tables' && o.op === 'delete')?.filtros?.restaurant_id;
-    expect(idDasMesas).toBeTruthy();
+    const mesas = mockDb.ops.find((o) => o.tabela === 'tables' && o.op === 'insert')?.payload || [];
+    const idDasMesas = mesas[0]?.restaurant_id;
     expect(idDasMesas).toMatch(/^[0-9a-f-]{36}$/i); // uuid gerado, não emprestado
+    expect(new Set(mesas.map((m) => m.restaurant_id))).toEqual(new Set([idDasMesas]));
+    const config = mockDb.ops.find((o) => o.tabela === 'restaurant_config' && o.op === 'insert')?.payload;
+    expect(config?.id).toBe(idDasMesas);
   });
 });
 
