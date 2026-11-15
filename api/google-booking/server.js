@@ -88,74 +88,107 @@ async function handleHealthCheck(req, res) {
 
 // ─── BatchAvailabilityLookup ─────────────────────────────────────────────────
 
-async function handleBatchAvailabilityLookup(req, res) {
-  const { slot_time_range, merchant_id, party_size } = req.body;
+const LOOKUP_MAX_DAYS = 31;
+const LOOKUP_STEP_MINUTES = 30;
 
-  if (!merchant_id || !party_size) {
-    return res.status(400).json({ error: 'merchant_id and party_size required' });
+function addDays(date, days) {
+  const d = new Date(`${date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function isCalendarDate(value) {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && addDays(value, 0) === value;
+}
+
+/**
+ * Offers only the slots the booking would accept now. Every candidate start
+ * (each 30 minutes of each restaurant-local day in the range) is checked by
+ * public.check_guest_slots, which applies guest_slot_status: the same hours,
+ * notice, day and party limits and seats from every channel (confirmed,
+ * pending and seated) that book_guest_reservation applies. Until 15/11/2026
+ * this endpoint had its own rule: weekday and "today" in UTC, split service
+ * periods ignored, a last seating 60 minutes before close, seated parties not
+ * counted, no day or party limit; the booking refused 246 of 336 offered slots
+ * for one test restaurant (scripts/auditoria-reservas/r8-google-disponibilidade.cjs).
+ */
+async function handleBatchAvailabilityLookup(req, res) {
+  const { slot_time_range, merchant_id, party_size } = req.body || {};
+  const partySize = typeof party_size === 'string' && /^\d{1,3}$/.test(party_size) ? Number(party_size) : party_size;
+
+  if (!merchant_id || !Number.isInteger(partySize) || partySize < 1 || partySize > 100) {
+    return res.status(400).json({ error: 'merchant_id and party_size (1-100) required' });
   }
 
   try {
     // merchant_id maps to restaurant_id in our system
     const restaurantId = merchant_id;
+    const { data: config } = typeof restaurantId === 'string' && UUID.test(restaurantId)
+      ? await supabaseAdmin
+        .schema('restaurant')
+        .from('restaurant_config')
+        .select('id, timezone, average_dining_duration_minutes, reservation_settings')
+        .eq('id', restaurantId)
+        .eq('is_active', true)
+        .maybeSingle()
+      : { data: null };
 
-    // Get restaurant config for business hours
-    const { data: config } = await supabaseAdmin
-      .schema('restaurant')
-      .from('restaurant_config')
-      .select('business_hours, average_dining_duration_minutes')
-      .eq('id', restaurantId)
-      .single();
-
-    if (!config) {
+    if (!config || !config.timezone) {
       return res.status(404).json({ error: 'Merchant not found' });
     }
 
-    // Parse date range
-    const startDate = slot_time_range?.start_date || new Date().toISOString().split('T')[0];
-    const endDate = slot_time_range?.end_date || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    // Dates are the restaurant's local calendar days, from its own "today"
+    // (not the server's UTC date), cut to the restaurant's booking window.
+    const { utcToLocalDate } = require('../_lib/timezone');
+    const { restaurantBookingLimits } = require('../_lib/reservation-validator');
+    const today = utcToLocalDate(new Date(), config.timezone);
+    const limits = restaurantBookingLimits(config);
+    const requestedStart = isCalendarDate(slot_time_range?.start_date) ? slot_time_range.start_date : today;
+    const startDate = requestedStart < today ? today : requestedStart;
+    let endDate = isCalendarDate(slot_time_range?.end_date) ? slot_time_range.end_date : addDays(startDate, 7);
+    if (endDate > addDays(startDate, LOOKUP_MAX_DAYS - 1)) endDate = addDays(startDate, LOOKUP_MAX_DAYS - 1);
+    if (limits.advanceBookingDays !== null && endDate > addDays(today, limits.advanceBookingDays)) {
+      endDate = addDays(today, limits.advanceBookingDays);
+    }
 
-    // Get existing reservations for the date range
-    const { data: existingReservations } = await supabaseAdmin
-      .from('reservations')
-      .select('date, time, party_size')
-      .eq('restaurant_id', restaurantId)
-      .gte('date', startDate)
-      .lte('date', endDate)
-      .in('status', ['confirmed', 'pending']);
+    const starts = [];
+    for (let date = startDate; date <= endDate; date = addDays(date, 1)) {
+      for (let minutes = 0; minutes < 24 * 60; minutes += LOOKUP_STEP_MINUTES) {
+        starts.push(`${date}T${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`);
+      }
+    }
 
-    // Get tables
-    const { data: tables } = await supabaseAdmin
-      .from('tables')
-      .select('id, capacity')
-      .eq('restaurant_id', restaurantId)
-      .eq('is_active', true);
+    const durationMinutes = Math.max(30, Math.min(Number(config.average_dining_duration_minutes) || 90, 360));
+    if (!starts.length) return res.status(200).json({ slots: [] });
 
-    const totalCapacity = (tables || []).reduce((sum, t) => sum + t.capacity, 0);
-    const diningDuration = config.avg_dining_duration_minutes || 90;
-
-    // Generate available time slots
-    const slots = generateAvailableSlots(
-      startDate,
-      endDate,
-      config.business_hours,
-      existingReservations || [],
-      totalCapacity,
-      party_size,
-      diningDuration
-    );
+    const { data, error } = await supabaseAdmin.rpc('check_guest_slots', {
+      p_restaurant_id: restaurantId,
+      p_party_size: partySize,
+      p_starts: starts,
+    });
+    if (error || !data || typeof data.status !== 'string') {
+      logger.error('[GoogleBooking] AvailabilityLookup check failed:', error?.message);
+      return res.status(500).json({ error: 'Internal error' });
+    }
+    if (data.status === 'restaurant_unavailable') {
+      return res.status(404).json({ error: 'Merchant not found' });
+    }
+    if (data.status !== 'ok' || !Array.isArray(data.slots)) {
+      return res.status(500).json({ error: 'Internal error' });
+    }
 
     return res.status(200).json({
-      slots: slots.map(slot => ({
-        merchant_id: restaurantId,
-        service_id: 'dining',
-        start_time: slot.start,
-        duration_seconds: diningDuration * 60,
-        available_spots: slot.spotsAvailable,
-        resources: {
-          party_size: parseInt(party_size),
-        },
-      })),
+      slots: data.slots
+        .filter(slot => slot.status === 'ok')
+        .map(slot => ({
+          merchant_id: restaurantId,
+          service_id: 'dining',
+          // Restaurant wall time without an offset: CreateBooking reads it back as local.
+          start_time: `${slot.date}T${slot.time}:00`,
+          duration_seconds: durationMinutes * 60,
+          available_spots: Math.floor(Number(slot.seats_available) / partySize),
+          resources: { party_size: partySize },
+        })),
     });
 
   } catch (error) {
@@ -405,94 +438,6 @@ function localSlot({ start_sec: startSec, start_time: startTime } = {}, timezone
     hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
   }).formatToParts(instant).map(part => [part.type, part.value]));
   return { date: `${parts.year}-${parts.month}-${parts.day}`, time: `${parts.hour}:${parts.minute}` };
-}
-
-function generateAvailableSlots(startDate, endDate, businessHours, existingReservations, totalCapacity, partySize, diningDuration) {
-  const slots = [];
-  const current = new Date(startDate);
-  const end = new Date(endDate);
-
-  while (current <= end) {
-    const dateStr = current.toISOString().split('T')[0];
-    const dayName = current.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-
-    // Get hours for this day
-    const hours = getHoursForDay(businessHours, dayName);
-    if (hours) {
-      const timeSlots = generateTimeSlotsForDay(hours, 30); // 30-min intervals
-
-      for (const time of timeSlots) {
-        // Count overlapping reservations at this time
-        const overlapping = existingReservations.filter(r => {
-          if (r.date !== dateStr) return false;
-          const existingMinutes = timeToMinutes(r.time);
-          const slotMinutes = timeToMinutes(time);
-          return Math.abs(existingMinutes - slotMinutes) < diningDuration;
-        });
-
-        const occupiedSeats = overlapping.reduce((sum, r) => sum + r.party_size, 0);
-        const availableSeats = totalCapacity - occupiedSeats;
-
-        if (availableSeats >= parseInt(partySize)) {
-          slots.push({
-            start: `${dateStr}T${time}:00`,
-            spotsAvailable: Math.floor(availableSeats / parseInt(partySize)),
-          });
-        }
-      }
-    }
-
-    current.setDate(current.getDate() + 1);
-  }
-
-  return slots;
-}
-
-function getHoursForDay(businessHours, dayName) {
-  if (!businessHours || typeof businessHours !== 'object') return null;
-
-  // Try exact match first, then capitalized
-  const hours = businessHours[dayName]
-    || businessHours[dayName.charAt(0).toUpperCase() + dayName.slice(1)]
-    || businessHours[dayName.substring(0, 3)];
-
-  if (!hours || hours === 'closed' || hours === 'Closed') return null;
-  return hours;
-}
-
-function generateTimeSlotsForDay(hours, intervalMinutes) {
-  const slots = [];
-
-  // Parse hours like "11:00-22:00" or { open: "11:00", close: "22:00" }
-  let openTime, closeTime;
-  if (typeof hours === 'string') {
-    const [open, close] = hours.split('-').map(s => s.trim());
-    openTime = open;
-    closeTime = close;
-  } else if (typeof hours === 'object') {
-    openTime = hours.open || hours.start || '11:00';
-    closeTime = hours.close || hours.end || '22:00';
-  } else {
-    return slots;
-  }
-
-  let currentMinutes = timeToMinutes(openTime);
-  const endMinutes = timeToMinutes(closeTime) - 60; // Stop 1h before close
-
-  while (currentMinutes <= endMinutes) {
-    const h = Math.floor(currentMinutes / 60);
-    const m = currentMinutes % 60;
-    slots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
-    currentMinutes += intervalMinutes;
-  }
-
-  return slots;
-}
-
-function timeToMinutes(timeStr) {
-  if (!timeStr) return 0;
-  const [h, m] = timeStr.split(':').map(Number);
-  return h * 60 + (m || 0);
 }
 
 module.exports.localSlot = localSlot;
