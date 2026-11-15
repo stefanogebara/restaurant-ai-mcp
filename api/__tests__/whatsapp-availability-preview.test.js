@@ -1,25 +1,14 @@
 'use strict';
 
-let mockReservations = [];
-let mockTableResult = { data: [{ capacity: 4 }], error: null };
-let mockQueries = [];
-
+// WhatsApp check_availability asks the booking rule (check_guest_slots: the
+// slot checks of book_guest_reservation) for the requested start and keeps only
+// the physical table check (canAccommodateParty). The rule itself is tested
+// against Postgres in scripts/auditoria-reservas (r7, r9).
+const mockRpc = jest.fn();
+const mockCanAccommodate = jest.fn();
 jest.mock('../_lib/supabase', () => ({
-  supabaseAdmin: {
-    from: table => {
-      const query = {};
-      for (const method of ['select', 'eq', 'in', 'gte', 'lte']) query[method] = jest.fn().mockReturnValue(query);
-      mockQueries.push({ table, query });
-      query.then = (resolve, reject) => Promise.resolve(
-        table === 'tables' ? mockTableResult : { data: mockReservations, error: null },
-      ).then(resolve, reject);
-      return query;
-    },
-  },
-  canAccommodateParty: jest.fn().mockResolvedValue({
-    success: true, can_accommodate: true, method: 'single',
-    total_capacity: 4, table_numbers: [1],
-  }),
+  supabaseAdmin: { rpc: (...args) => mockRpc(...args), from: jest.fn() },
+  canAccommodateParty: (...args) => mockCanAccommodate(...args),
 }));
 jest.mock('../_lib/restaurant-registry', () => ({
   getRestaurantByName: jest.fn(), getAllActiveRestaurants: jest.fn(),
@@ -37,106 +26,90 @@ jest.mock('../_services/whatsapp/waitlist-handler', () => ({
 const { executeTool } = require('../_services/whatsapp/reservation-tools');
 const session = { restaurant: { id: 'restaurant-1', average_dining_duration_minutes: 90 } };
 const request = { date: '2099-01-01', time: '19:00', party_size: 2 };
+const inbound = { timezone: 'UTC', reservationSettings: { advance_booking_days: 30, max_party_size: 6 } };
 
+let mockStatus;
 beforeEach(() => {
-  mockReservations = [];
-  mockTableResult = { data: [{ capacity: 4 }], error: null };
-  mockQueries = [];
+  jest.useFakeTimers({ now: new Date('2026-11-10T12:00:00Z') });
+  mockStatus = () => ({ status: 'ok', seats_available: 6 });
+  mockRpc.mockReset().mockImplementation(async (_, args) => ({
+    data: { status: 'ok', slots: args.p_starts.map(start => ({ date: start.slice(0, 10), time: start.slice(11), ...mockStatus(start) })) },
+    error: null,
+  }));
+  mockCanAccommodate.mockReset().mockResolvedValue({
+    success: true, can_accommodate: true, method: 'single', total_capacity: 4, table_numbers: [1],
+  });
 });
+afterEach(() => { jest.useRealTimers(); });
 
-test('offers a provisional slot when seats are free', async () => {
-  const result = await executeTool('check_availability', request, session);
+test('offers a provisional slot when the rule accepts it and the tables fit', async () => {
+  const result = await executeTool('check_availability', request, session, inbound);
   expect(result).toMatchObject({ success: true, available: true, provisional: true });
+  expect(result.details.remaining_capacity_at_time).toBe(6);
 });
 
-test('an overlapping later reservation consumes capacity', async () => {
-  mockReservations = [{ date: '2099-01-01', time: '19:30', party_size: 4, status: 'confirmed' }];
-  const result = await executeTool('check_availability', request, session);
-  expect(result).toMatchObject({ success: true, available: false });
-});
-
-test('an overlapping previous-day reservation consumes capacity after midnight', async () => {
-  mockReservations = [{ date: '2099-01-01', time: '23:30', party_size: 4, status: 'confirmed' }];
-  const result = await executeTool('check_availability', {
-    date: '2099-01-02', time: '00:15', party_size: 2,
-  }, session);
-  expect(result).toMatchObject({ success: true, available: false });
-  const read = mockQueries.find(({ table }) => table === 'reservations').query;
-  expect(read.gte).toHaveBeenCalledWith('date', '2099-01-01');
-  expect(read.lte).toHaveBeenCalledWith('date', '2099-01-03');
-});
-
-test('non-overlapping bookings do not consume the requested slot', async () => {
-  mockReservations = [{ date: '2099-01-01', time: '21:00', party_size: 4, status: 'confirmed' }];
-  const result = await executeTool('check_availability', request, session);
-  expect(result).toMatchObject({ success: true, available: true });
-});
-
-test('the restaurant dining duration defines the overlap window', async () => {
-  mockReservations = [{ date: '2099-01-01', time: '20:30', party_size: 4, status: 'confirmed' }];
-  const result = await executeTool('check_availability', request, session, {
-    averageDiningDurationMinutes: 120,
+test('asks the rule for exactly the requested start, party and restaurant', async () => {
+  await executeTool('check_availability', request, session, inbound);
+  expect(mockRpc).toHaveBeenCalledWith('check_guest_slots', {
+    p_restaurant_id: 'restaurant-1', p_party_size: 2, p_starts: ['2099-01-01T19:00'],
   });
-  expect(result).toMatchObject({ success: true, available: false });
 });
 
-test('a failed table read cannot invent spare seats', async () => {
-  mockTableResult = { data: null, error: { message: 'tables unavailable' } };
-  const result = await executeTool('check_availability', request, session);
+test('the table check uses the restaurant dining duration', async () => {
+  await executeTool('check_availability', request, session, { ...inbound, averageDiningDurationMinutes: 120 });
+  expect(mockCanAccommodate).toHaveBeenCalledWith('restaurant-1', 2, { date: '2099-01-01', time: '19:00', durationMinutes: 120 });
+});
+
+test.each([
+  ['past_slot', 'PAST_DATE', /in the past\. Today at the restaurant is Tuesday, 2026-11-10/],
+  ['too_far', 'TOO_FAR', /up to 30 days in advance/],
+  ['party_too_large', 'PARTY_TOO_LARGE', /up to 6 guests/],
+  ['outside_hours', 'CLOSED', /closed at that time/],
+  ['too_late', 'TOO_LATE', /after the last seating/],
+  ['unavailable', 'FULLY_BOOKED', /19:00 is fully booked for 2 guests/],
+])('the rule answer %s is a provisional no with reason %s, and no table check', async (status, reason, message) => {
+  mockStatus = () => ({ status, seats_available: status === 'unavailable' ? 1 : undefined });
+  const result = await executeTool('check_availability', request, session, inbound);
+  expect(result).toMatchObject({ success: true, available: false, provisional: true, reason });
+  expect(result.message).toMatch(message);
+  expect(mockCanAccommodate).not.toHaveBeenCalled();
+});
+
+test('the limits for the wording come from the session restaurant when the inbound context has none', async () => {
+  mockStatus = () => ({ status: 'too_far' });
+  const zoned = { restaurant: { ...session.restaurant, timezone: 'UTC', reservation_settings: { advance_booking_days: 14 } } };
+  const result = await executeTool('check_availability', request, zoned, {});
+  expect(result.message).toMatch(/up to 14 days in advance/);
+});
+
+test('tables that cannot combine for the party are a no', async () => {
+  mockCanAccommodate.mockResolvedValue({ success: true, can_accommodate: false, reason: 'No combination seats 2.' });
+  const result = await executeTool('check_availability', request, session, inbound);
+  expect(result).toMatchObject({ success: true, available: false });
+  expect(result.message).toMatch(/cannot accommodate a party of 2 guests\. No combination seats 2\./);
+});
+
+test('a combination names its tables and stays provisional', async () => {
+  mockCanAccommodate.mockResolvedValue({ success: true, can_accommodate: true, method: 'combination', table_numbers: [1, 2] });
+  const result = await executeTool('check_availability', request, session, inbound);
+  expect(result.message).toMatch(/Tables 1 \+ 2\. The slot is confirmed only when the reservation is created\./);
+});
+
+test('a failed table read or a failed rule check cannot invent availability', async () => {
+  mockCanAccommodate.mockResolvedValue({ success: false });
+  expect((await executeTool('check_availability', request, session, inbound)).success).toBe(false);
+  mockRpc.mockResolvedValue({ data: null, error: { message: 'down' } });
+  const failed = await executeTool('check_availability', request, session, inbound);
+  expect(failed.success).toBe(false);
+  expect(failed.available).toBeUndefined();
+});
+
+test.each([
+  ['an impossible calendar date', { date: '2099-02-30' }],
+  ['a bad clock time', { time: '7pm' }],
+  ['fractional guests', { party_size: 2.5 }],
+])('%s fails before asking the rule', async (_, input) => {
+  const result = await executeTool('check_availability', { ...request, ...input }, session, inbound);
   expect(result.success).toBe(false);
-});
-
-test('zero configured seats is not a 30-seat fallback', async () => {
-  mockTableResult = { data: [], error: null };
-  const result = await executeTool('check_availability', request, session);
-  expect(result).toMatchObject({ success: true, available: false });
-});
-
-test('invalid calendar dates fail before any database read', async () => {
-  const result = await executeTool('check_availability', {
-    date: '2099-02-30', time: '19:00', party_size: 2,
-  }, session);
-  expect(result.success).toBe(false);
-  expect(mockQueries).toHaveLength(0);
-});
-
-describe('the past and the restaurant limits, as the booking function checks them (15/11/2026)', () => {
-  // Clock: 2026-11-10T12:00Z, restaurant zone UTC -> the 30-day window ends 2026-12-10.
-  const limited = { timezone: 'UTC', reservationSettings: { advance_booking_days: 30, max_party_size: 6 } };
-  const ask = (input, inbound = limited) => executeTool('check_availability', { date: '2026-11-20', time: '19:00', party_size: 2, ...input }, session, inbound);
-  beforeEach(() => { jest.useFakeTimers({ now: new Date('2026-11-10T12:00:00Z') }); });
-  afterEach(() => { jest.useRealTimers(); });
-
-  test.each([
-    ['a time already passed today', { date: '2026-11-10', time: '11:00' }, 'PAST_DATE', /already passed\. Today at the restaurant is Tuesday, 2026-11-10/],
-    ['the first day past the window', { date: '2026-12-11' }, 'TOO_FAR', /up to 30 days in advance/],
-    ['a party above the restaurant limit', { party_size: 7 }, 'PARTY_TOO_LARGE', /up to 6 guests/],
-  ])('%s is not offered, before any database read', async (_, input, reason, message) => {
-    const result = await ask(input);
-    expect(result).toMatchObject({ success: true, available: false, provisional: true, reason });
-    expect(result.message).toMatch(message);
-    expect(mockQueries).toHaveLength(0);
-  });
-
-  test('the last day of the window and the party limit itself are offered', async () => {
-    expect(await ask({ date: '2026-12-10', party_size: 4 })).toMatchObject({ success: true, available: true });
-  });
-
-  test('the zone comes from the session restaurant when the inbound context has none', async () => {
-    const zoned = { restaurant: { ...session.restaurant, timezone: 'UTC', reservation_settings: { advance_booking_days: 30 } } };
-    const result = await executeTool('check_availability', { date: '2026-12-11', time: '19:00', party_size: 2 }, zoned, {});
-    expect(result).toMatchObject({ available: false, reason: 'TOO_FAR' });
-  });
-
-  test('without stored limits there is no window; an unknown zone leaves the time checks to the booking', async () => {
-    expect(await ask({ date: '2027-06-01' }, { timezone: 'UTC' })).toMatchObject({ available: true });
-    expect(await ask({ date: '2026-11-10', time: '11:00' }, { timezone: 'Mars/Olympus', reservationSettings: limited.reservationSettings }))
-      .toMatchObject({ success: true, available: true });
-  });
-
-  test('every seat-holding status is read, as the booking function counts them', async () => {
-    await ask({});
-    const read = mockQueries.find(({ table }) => table === 'reservations').query;
-    expect(read.in).toHaveBeenCalledWith('status', expect.arrayContaining(['confirmed', 'seated', 'pending', 'Confirmed', 'Seated', 'Pending']));
-  });
+  expect(mockRpc).not.toHaveBeenCalled();
 });

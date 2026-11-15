@@ -10,7 +10,12 @@
 jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: () => ({ info: jest.fn(), debug: jest.fn(), warn: jest.fn(), error: jest.fn() }),
 }));
-jest.mock('../_lib/supabase', () => ({ getReservations: jest.fn(), canAccommodateParty: jest.fn() }));
+// Availability asks the booking rule (check_guest_slots); here it answers past_slot.
+jest.mock('../_lib/supabase', () => ({
+  getReservations: jest.fn(), canAccommodateParty: jest.fn(),
+  supabaseAdmin: { rpc: jest.fn(async (_, args) => ({ data: { status: 'ok', slots: args.p_starts.map(start => ({
+    date: start.slice(0, 10), time: start.slice(11), status: 'past_slot' })) }, error: null })) },
+}));
 jest.mock('../_lib/db/tables', () => ({ getAllTables: jest.fn() }));
 
 const { restaurantTodayHint } = require('../_lib/timezone');

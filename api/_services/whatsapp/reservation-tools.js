@@ -425,126 +425,60 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
         return { success: false, error: 'Invalid date, time, or party size.' };
       }
 
-      // The past and the restaurant's own limits, checked the way the booking
-      // function (book_guest_reservation) checks them: never offer what the
-      // booking then refuses. Until 15/11/2026 this answered "available" for
-      // yesterday, 40 days ahead (limit 30) and 7 guests (limit 6).
-      const refuse = (reason, message) => ({
-        success: true, available: false, provisional: true, reason, message,
-        details: { requested_date: date, requested_time: time, party_size },
-      });
-      const zone = inboundContext.timezone || session.restaurant.timezone;
-      if (zone) {
-        let localNow = null;
-        try {
-          localNow = new Intl.DateTimeFormat('sv-SE', {
-            timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit',
-            hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
-          }).format(new Date()).replace(' ', 'T');
-        } catch { /* invalid zone: the booking function answers timezone_unavailable */ }
-        if (localNow) {
-          const { restaurantTodayHint } = require('../../_lib/timezone');
-          const { restaurantBookingLimits, isBeyondBookingWindow } = require('../../_lib/reservation-validator');
-          const limits = restaurantBookingLimits({
-            reservation_settings: inboundContext.reservationSettings ?? session.restaurant.reservation_settings,
-          });
-          if (`${date}T${time}` < localNow) {
-            return refuse('PAST_DATE', `That time has already passed. ${restaurantTodayHint(zone)}`);
-          }
-          if (isBeyondBookingWindow(date, limits.advanceBookingDays, zone)) {
-            return refuse('TOO_FAR', `Reservations can only be made up to ${limits.advanceBookingDays} days in advance. ${restaurantTodayHint(zone)}`);
-          }
-          if (limits.maxPartySize !== null && party_size > limits.maxPartySize) {
-            return refuse('PARTY_TOO_LARGE', `We can accommodate parties up to ${limits.maxPartySize} guests. For larger groups, please contact the restaurant directly.`);
-          }
-        }
-      }
-
-      // Match the booking RPC's 30–360 minute window. These timestamps are
-      // local wall times represented in UTC only for arithmetic, as in SQL.
-      const configuredDuration = Number(
-        inboundContext.averageDiningDurationMinutes ?? session.restaurant.average_dining_duration_minutes,
-      );
-      const durationMinutes = Number.isFinite(configuredDuration) && configuredDuration > 0
-        ? Math.max(30, Math.min(configuredDuration, 360)) : 90;
-      const durationMs = durationMinutes * 60_000;
-      const adjacentDay = offset => new Date(requestedStart + offset * 86_400_000)
-        .toISOString().slice(0, 10);
-
+      // The answer comes from the booking rule itself (check_guest_slots, the
+      // slot checks of book_guest_reservation): hours per service period, the
+      // past, the restaurant's day and party limits, seats from every channel.
+      // Until 15/11/2026 this had its own seat count and no hours check; in
+      // scripts/auditoria-reservas/r9-disponibilidade-voz-whatsapp.cjs the
+      // booking refused 32 of its 47 "available" answers.
+      const { checkGuestSlots, slotRefusal } = require('../../_lib/guest-slots');
+      const { restaurantBookingLimits } = require('../../_lib/reservation-validator');
+      const details = { requested_date: date, requested_time: time, party_size };
       try {
-        const client = supabaseAdmin;
-
-        // The authoritative RPC counts overlapping reservations, including
-        // service windows crossing midnight. Read the same three-day span.
-        const { data: reservations, error } = await client
-          .from('reservations')
-          .select('date, time, party_size, status')
-          .eq('restaurant_id', session.restaurant.id)
-          .gte('date', adjacentDay(-1))
-          .lte('date', adjacentDay(1))
-          // Every seat-holding status, as the booking function counts them
-          // (lower(status) in confirmed, seated, pending); legacy rows are capitalized.
-          .in('status', ['confirmed', 'seated', 'pending', 'Confirmed', 'Seated', 'Pending']);
-
-        if (error) {
-          logger.error(`[TOOL_FAIL] check_availability reservations query: code=${error.code || 'N/A'} msg=${error.message?.slice(0, 150)}`);
-          return { success: false, error: `Reservations query failed: ${error.message}` };
+        const answer = await checkGuestSlots(session.restaurant.id, party_size, [`${date}T${time}`]);
+        if (!answer.ok) {
+          logger.error(`[TOOL_FAIL] check_availability booking rule: ${answer.status}`);
+          return { success: false, error: 'Could not check availability. Please try again.' };
+        }
+        const [slot] = answer.slots;
+        if (slot.status !== 'ok') {
+          const refusal = slotRefusal(slot.status, {
+            timezone: inboundContext.timezone || session.restaurant.timezone,
+            limits: restaurantBookingLimits({
+              reservation_settings: inboundContext.reservationSettings ?? session.restaurant.reservation_settings,
+            }),
+            partySize: party_size,
+            time,
+          });
+          return {
+            success: true, available: false, provisional: true, reason: refusal.code, message: refusal.message,
+            details: { ...details, remaining_capacity_at_time: slot.seats_available ?? null },
+          };
         }
 
-        // Check if party can be accommodated using date/time-aware table logic
+        // Seats are free for the whole sitting; the tables must also combine
+        // for this party (the booking rule counts seats, not combinations).
+        const configuredDuration = Number(
+          inboundContext.averageDiningDurationMinutes ?? session.restaurant.average_dining_duration_minutes,
+        );
+        const durationMinutes = Number.isFinite(configuredDuration) && configuredDuration > 0
+          ? Math.max(30, Math.min(configuredDuration, 360)) : 90;
         const accommodationResult = await canAccommodateParty(session.restaurant.id, party_size, {
           date, time, durationMinutes,
         });
-
         if (!accommodationResult.success) {
           logger.error(`[TOOL_FAIL] check_availability canAccommodate: ${JSON.stringify(accommodationResult).slice(0, 200)}`);
           return { success: false, error: 'Could not check table availability — getAllTables failed' };
         }
 
-        let bookedSeats = 0;
-        for (const reservation of reservations || []) {
-          const start = Date.parse(`${reservation.date}T${reservation.time}Z`);
-          if (!Number.isFinite(start) || !Number.isFinite(Number(reservation.party_size))) {
-            return { success: false, error: 'Could not verify existing reservations.' };
-          }
-          if (start < requestedStart + durationMs && start + durationMs > requestedStart) {
-            bookedSeats += Number(reservation.party_size);
-          }
-        }
-
-        // Get total capacity to check overall availability (scoped to this restaurant)
-        const { data: allTables, error: tablesError } = await client
-          .from('tables')
-          .select('capacity')
-          .eq('restaurant_id', session.restaurant.id)
-          .eq('is_active', true);
-        if (tablesError || !Array.isArray(allTables)) {
-          logger.error('[TOOL_FAIL] check_availability tables query', tablesError);
-          return { success: false, error: 'Could not verify table capacity.' };
-        }
-        const totalCapacity = allTables.reduce((sum, t) => sum + (Number(t.capacity) || 0), 0);
-        const remainingCapacity = totalCapacity - bookedSeats;
-
-        // Both conditions must be met:
-        // 1. Tables can physically accommodate the party (proper combinations)
-        // 2. There's enough remaining capacity at the requested time
-        const canFit = totalCapacity > 0 && accommodationResult.can_accommodate
-          && remainingCapacity >= party_size;
-
-        // Build response message with table info
+        const canFit = accommodationResult.can_accommodate === true;
         let message;
-        if (canFit) {
-          if (accommodationResult.method === 'combination') {
-            message = `It looks like we can seat ${party_size} guests on ${date} at ${time} at Tables ${(accommodationResult.table_numbers || []).join(' + ')}. The slot is confirmed only when the reservation is created.`;
-          } else {
-            message = `It looks like we can seat ${party_size} guests on ${date} at ${time}. The slot is confirmed only when the reservation is created.`;
-          }
-        } else if (totalCapacity === 0) {
-          message = 'There are no active tables configured for reservations.';
-        } else if (!accommodationResult.can_accommodate) {
-          message = `Sorry, we cannot accommodate a party of ${party_size} guests. ${accommodationResult.reason || 'Our largest available seating option is smaller.'}`;
+        if (canFit && accommodationResult.method === 'combination') {
+          message = `It looks like we can seat ${party_size} guests on ${date} at ${time} at Tables ${(accommodationResult.table_numbers || []).join(' + ')}. The slot is confirmed only when the reservation is created.`;
+        } else if (canFit) {
+          message = `It looks like we can seat ${party_size} guests on ${date} at ${time}. The slot is confirmed only when the reservation is created.`;
         } else {
-          message = `Sorry, ${time} is fully booked for ${party_size} guests. We don't have enough available capacity at that time.`;
+          message = `Sorry, we cannot accommodate a party of ${party_size} guests. ${accommodationResult.reason || 'Our largest available seating option is smaller.'}`;
         }
 
         return {
@@ -553,14 +487,12 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
           provisional: true,
           message,
           details: {
-            requested_date: date,
-            requested_time: time,
-            party_size,
+            ...details,
             can_physically_accommodate: accommodationResult.can_accommodate,
             seating_method: accommodationResult.method,
             assigned_tables: accommodationResult.tables,
             table_capacity: accommodationResult.total_capacity,
-            remaining_capacity_at_time: remainingCapacity
+            remaining_capacity_at_time: slot.seats_available,
           }
         };
       } catch (err) {
