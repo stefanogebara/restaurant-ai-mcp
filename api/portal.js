@@ -11,7 +11,7 @@
  */
 
 const { supabaseAdmin, bookGuestReservation } = require('./_lib/supabase');
-const { checkTimeSlotAvailability, getSuggestedTimes, getDiningDuration } = require('./_lib/availability-calculator');
+const { checkGuestSlots } = require('./_lib/guest-slots');
 const { generateSecureReservationId } = require('./_lib/secure-id');
 const { checkAndApplyRateLimit, peekFailureCount, bumpFailureCount } = require('./_lib/rate-limit');
 const { trackUsage } = require('./_lib/usage-tracking');
@@ -298,6 +298,23 @@ async function handleGetReservation(req, res) {
 // GET ?action=availability&restaurant_id=X&date=Y&party_size=Z
 // Get available time slots for a given date
 // ============================================================
+
+// Statuses of a time inside a service period: offered (ok) or shown taken.
+// Past times, closed hours, after the last seating and dates past the window
+// are left out of the list.
+const SERVICE_STATUSES = new Set(['ok', 'unavailable', 'party_too_large']);
+
+/**
+ * The page's time list, answered by the booking rule: every half hour of the
+ * date goes to public.check_guest_slots (the slot checks of
+ * book_guest_reservation, in the restaurant's zone, with its service periods,
+ * last seating, day and party limits and seats from every channel). A time
+ * shown as available is a time the booking accepts. Until 15/11/2026 this had
+ * its own rule (weekday from the server clock, first open to last close, a
+ * party-size duration, a 60-seat fallback, no day or party limit): in
+ * scripts/auditoria-reservas/r10-pagina-horarios.cjs the booking refused 37 of
+ * the 49 times it showed as available.
+ */
 async function handleGetAvailability(req, res) {
   const { restaurant_id, date, party_size } = req.query;
 
@@ -317,7 +334,7 @@ async function handleGetAvailability(req, res) {
   }
 
   // Validate date format (YYYY-MM-DD)
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+  if (!isValidReservationDate(date)) {
     return res.status(400).json({
       success: false,
       message: 'Invalid date format. Use YYYY-MM-DD.'
@@ -328,7 +345,7 @@ async function handleGetAvailability(req, res) {
   const { data: restaurant, error: restError } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('id, restaurant_name, business_hours, reservation_settings, average_dining_duration_minutes, table_configuration')
+    .select('id, restaurant_name, business_hours, reservation_settings')
     .eq('id', restaurant_id)
     .eq('is_active', true)
     .single();
@@ -340,106 +357,38 @@ async function handleGetAvailability(req, res) {
     });
   }
 
-  // Determine day of week for business hours
-  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-  const dayIndex = new Date(date + 'T12:00:00').getDay();
-  const dayKey = dayNames[dayIndex];
-
-  const businessHours = restaurant.business_hours || {};
-  const dayHours = businessHours[dayKey];
-
-  // Check if restaurant is open that day
-  // Business hours use { is_open, open_time, close_time } format
-  if (!dayHours || dayHours.is_open === false || dayHours.closed) {
-    return res.status(200).json({
-      success: true,
-      available: false,
-      message: 'Restaurant is closed on this day.',
-      slots: []
-    });
+  const starts = [];
+  for (let minutes = 0; minutes < 24 * 60; minutes += 30) {
+    starts.push(`${date}T${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`);
   }
-
-  const openTime = dayHours.open_time || dayHours.open || '12:00';
-  const closeTime = dayHours.close_time || dayHours.close || '22:00';
-
-  // Get existing reservations for this date
-  const { data: reservations, error: resError } = await supabaseAdmin
-    .from('reservations')
-    .select('time, party_size, status')
-    .eq('restaurant_id', restaurant_id)
-    .eq('date', date)
-    .in('status', ['confirmed', 'pending', 'Confirmed', 'Pending', 'Seated']);
-
-  if (resError) {
-    logger.error('[Portal] Error fetching reservations:', resError);
-    return res.status(500).json({
+  const answer = await checkGuestSlots(restaurant_id, partySize, starts);
+  if (!answer.ok) {
+    logger.error('[Portal] Availability rule unavailable:', { status: answer.status });
+    return res.status(answer.status === 'restaurant_unavailable' ? 404 : 500).json({
       success: false,
-      message: 'Could not check availability.'
+      message: answer.status === 'restaurant_unavailable' ? 'Restaurant not found' : 'Could not check availability.'
     });
   }
 
-  // Get restaurant capacity from tables
-  const { data: tables, error: tablesError } = await supabaseAdmin
-    .from('tables')
-    .select('capacity')
-    .eq('restaurant_id', restaurant_id)
-    .eq('is_active', true);
+  const slots = answer.slots
+    .filter(slot => SERVICE_STATUSES.has(slot.status))
+    .map(slot => ({
+      time: slot.time,
+      available: slot.status === 'ok',
+      available_seats: Math.max(0, Number(slot.seats_available) || 0),
+    }));
 
-  let totalCapacity = (tables && tables.length > 0)
-    ? tables.reduce((sum, t) => sum + (t.capacity || 0), 0)
-    : 0;
-
-  // Fallback: derive capacity from table_configuration in restaurant_config
-  if (totalCapacity === 0 && restaurant.table_configuration) {
-    const config = Array.isArray(restaurant.table_configuration)
-      ? restaurant.table_configuration
-      : [];
-    totalCapacity = config.reduce((sum, area) => {
-      const areaTables = Array.isArray(area.tables) ? area.tables : [];
-      return sum + areaTables.reduce((s, t) => s + (t.capacity || 0), 0);
-    }, 0);
-  }
-
-  // Final fallback
-  if (totalCapacity === 0) totalCapacity = 60;
-
-  // Pass reservations directly (availability calculator uses snake_case)
-  const formattedReservations = (reservations || []).map(r => ({
-    time: r.time,
-    party_size: r.party_size,
-    status: r.status
-  }));
-
-  // Generate time slots at 30-minute intervals during operating hours
-  const slots = [];
-  const [openH, openM] = openTime.split(':').map(Number);
-  const [closeH, closeM] = closeTime.split(':').map(Number);
-  const openMinutes = openH * 60 + openM;
-  // Treat 00:00 as 24:00 (next-day midnight) so late-night restaurants generate slots
-  const rawCloseMinutes = closeH * 60 + closeM;
-  const closeMinutes = rawCloseMinutes === 0 ? 1440 : rawCloseMinutes;
-  const diningDuration = getDiningDuration(partySize);
-
-  // Last seating: close time minus dining duration
-  const lastSeatingMinutes = closeMinutes - diningDuration;
-
-  for (let m = openMinutes; m <= lastSeatingMinutes; m += 30) {
-    const hours = String(Math.floor(m / 60)).padStart(2, '0');
-    const mins = String(m % 60).padStart(2, '0');
-    const timeStr = `${hours}:${mins}`;
-
-    const check = checkTimeSlotAvailability(
-      timeStr,
-      partySize,
-      formattedReservations,
-      totalCapacity
-    );
-
-    slots.push({
-      time: timeStr,
-      available: check.available,
-      available_seats: check.availableSeats
-    });
+  if (slots.length === 0) {
+    const statuses = new Set(answer.slots.map(slot => slot.status));
+    if (statuses.size === 1 && statuses.has('invalid_input')) {
+      // A well-formed but impossible date, such as 2027-02-30.
+      return res.status(400).json({ success: false, message: 'Invalid date format. Use YYYY-MM-DD.' });
+    }
+    const days = (restaurant.reservation_settings || {}).advance_booking_days;
+    const message = statuses.has('too_far')
+      ? `Reservations can only be made up to ${days} days in advance.`
+      : statuses.has('past_slot') ? 'No times left on this day.' : 'Restaurant is closed on this day.';
+    return res.status(200).json({ success: true, available: false, message, slots: [] });
   }
 
   return res.status(200).json({
@@ -447,7 +396,8 @@ async function handleGetAvailability(req, res) {
     restaurant_name: restaurant.restaurant_name,
     date,
     party_size: partySize,
-    operating_hours: { open: openTime, close: closeTime },
+    // First and last time shown for this date (the list itself is the rule's).
+    operating_hours: { open: slots[0].time, close: slots[slots.length - 1].time },
     slots
   });
 }
@@ -597,49 +547,10 @@ async function handleCreateReservation(req, res) {
     });
   }
 
-  // Early, friendly refusal with the same rule the availability endpoint shows.
-  // The binding check runs again under the restaurant lock in the booking below.
-  const { data: existingRes } = await supabaseAdmin
-    .from('reservations')
-    .select('time, party_size, status')
-    .eq('restaurant_id', restaurant_id)
-    .eq('date', date)
-    .in('status', ['confirmed', 'pending', 'Confirmed', 'Pending', 'Seated']);
-
-  const { data: tables } = await supabaseAdmin
-    .from('tables')
-    .select('capacity')
-    .eq('restaurant_id', restaurant_id)
-    .eq('is_active', true);
-
-  let totalCapacity = (tables && tables.length > 0)
-    ? tables.reduce((sum, t) => sum + (t.capacity || 0), 0)
-    : 0;
-
-  if (totalCapacity === 0 && restaurant.table_configuration) {
-    const config = Array.isArray(restaurant.table_configuration) ? restaurant.table_configuration : [];
-    totalCapacity = config.reduce((sum, area) => {
-      return sum + (Array.isArray(area.tables) ? area.tables : []).reduce((s, t) => s + (t.capacity || 0), 0);
-    }, 0);
-  }
-
-  if (totalCapacity === 0) totalCapacity = 60;
-
-  const formatted = (existingRes || []).map(r => ({
-    time: r.time,
-    party_size: r.party_size,
-    status: r.status
-  }));
-
-  const availCheck = checkTimeSlotAvailability(time, partySize, formatted, totalCapacity);
-  if (!availCheck.available) {
-    return res.status(409).json({
-      success: false,
-      message: `Sorry, ${time} is no longer available for ${partySize} guests. ${availCheck.reason}`,
-      available_seats: availCheck.availableSeats
-    });
-  }
-
+  // No separate seat pre-check: the time list and the booking below ask the
+  // same rule (book_guest_reservation / check_guest_slots). Until 15/11/2026 a
+  // JavaScript copy here (party-size durations, a 60-seat fallback) could
+  // refuse a time the list had just offered.
   // Create the reservation. book_guest_reservation locks the restaurant and
   // re-checks hours and seats from every channel in the same transaction as
   // the insert: two guests racing for the last seats cannot both get them.

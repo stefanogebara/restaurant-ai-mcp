@@ -17,8 +17,9 @@ const mockSchema = jest.fn();
 const mockChainResolve = jest.fn();
 
 // Availability calculator mocks
-const mockCheckTimeSlotAvailability = jest.fn(() => ({ available: true, availableSeats: 40, reason: '' }));
-const mockGetDiningDuration = jest.fn(() => 90);
+// The booking rule (check_guest_slots): the answer for each start asked.
+const mockRpc = jest.fn();
+let mockStatusAt;
 
 function mockCreateChainableMock() {
   const chain = new Proxy({}, {
@@ -39,6 +40,7 @@ function mockCreateChainableMock() {
 jest.mock('../_lib/supabase', () => ({
   bookGuestReservation: (...args) => mockBookGuestReservation(...args),
   supabaseAdmin: {
+    rpc: (...args) => mockRpc(...args),
     from: (...args) => { mockFrom(...args); return mockCreateChainableMock(); },
     schema: (...args) => {
       mockSchema(...args);
@@ -101,12 +103,6 @@ jest.mock('../_lib/reservation-validator', () => ({
   validateReservation: jest.fn(() => ({ valid: true, message: null })),
 }));
 
-jest.mock('../_lib/availability-calculator', () => ({
-  checkTimeSlotAvailability: (...args) => mockCheckTimeSlotAvailability(...args),
-  getSuggestedTimes: jest.fn(() => []),
-  getDiningDuration: (...args) => mockGetDiningDuration(...args),
-}));
-
 const handler = require('../portal');
 
 // Helper
@@ -130,9 +126,13 @@ function createMockReqRes(overrides = {}) {
 beforeEach(() => {
   jest.clearAllMocks();
   // Default: awaiting a chain resolves with empty data
-  mockChainResolve.mockReturnValue({ data: [], error: null });
-  mockCheckTimeSlotAvailability.mockReturnValue({ available: true, availableSeats: 40, reason: '' });
-  mockGetDiningDuration.mockReturnValue(90);
+  // Drop values queued with mockResolvedValueOnce by an earlier test.
+  mockChainResolve.mockReset().mockReturnValue({ data: [], error: null });
+  mockSingle.mockReset();
+  mockStatusAt = () => ({ status: 'outside_hours' });
+  mockRpc.mockReset().mockImplementation(async (fn, args) => (fn === 'check_guest_slots'
+    ? { data: { status: 'ok', slots: args.p_starts.map(start => ({ date: start.slice(0, 10), time: start.slice(11), ...mockStatusAt(start) })) }, error: null }
+    : { data: null, error: { message: `unexpected rpc ${fn}` } }));
   mockSendReservationConfirmationEmail.mockResolvedValue(undefined);
   mockSendNewBookingAlertEmail.mockResolvedValue(undefined);
   mockSendNewBookingAlertWhatsApp.mockResolvedValue({ success: true });
@@ -452,41 +452,6 @@ describe('Portal: reserve action', () => {
     expect(res.status).toHaveBeenCalledWith(404);
   });
 
-  test('returns 409 when slot is unavailable', async () => {
-    // Restaurant found
-    mockSingle.mockResolvedValueOnce({
-      data: {
-        id: 'r1',
-        restaurant_name: 'Test Restaurant',
-        reservation_settings: { max_party_size: 10 },
-        business_hours: {},
-        average_dining_duration_minutes: 90,
-      },
-      error: null,
-    });
-    // Existing reservations (full)
-    mockChainResolve.mockReturnValueOnce({ data: [{ time: '19:00', party_size: 40, status: 'confirmed' }], error: null });
-    // Tables
-    mockChainResolve.mockReturnValueOnce({ data: [{ capacity: 40 }], error: null });
-    // checkTimeSlotAvailability returns unavailable
-    mockCheckTimeSlotAvailability.mockReturnValueOnce({ available: false, availableSeats: 0, reason: 'Restaurant is fully booked at this time.' });
-
-    const { req, res } = createMockReqRes({
-      method: 'POST',
-      body: {
-        action: 'reserve',
-        restaurant_id: 'r1',
-        customer_name: 'Test User',
-        customer_phone: '+5511999999999',
-        party_size: 4,
-        date: '2027-04-01',
-        time: '19:00',
-      },
-    });
-    await handler(req, res);
-    expect(res.status).toHaveBeenCalledWith(409);
-  });
-
   test('creates reservation and returns 201', async () => {
     // Restaurant found
     mockSingle.mockResolvedValueOnce({
@@ -499,12 +464,6 @@ describe('Portal: reserve action', () => {
       },
       error: null,
     });
-    // Existing reservations (empty)
-    mockChainResolve.mockReturnValueOnce({ data: [], error: null });
-    // Tables
-    mockChainResolve.mockReturnValueOnce({ data: [{ capacity: 40 }], error: null });
-    // Slot available
-    mockCheckTimeSlotAvailability.mockReturnValueOnce({ available: true, availableSeats: 38 });
     // Created reservation
     mockBookGuestReservation.mockResolvedValueOnce({
       success: true,
@@ -547,72 +506,79 @@ describe('Portal: reserve action', () => {
 // ============================================================
 // action=availability (slot generation)
 // ============================================================
-describe('Portal: availability slot generation', () => {
-  // 2027-04-05 is a Monday
-  const MONDAY = '2027-04-05';
-
-  function restaurantConfig(overrides = {}) {
-    return {
-      id: 'r1',
-      restaurant_name: 'Test Restaurant',
-      business_hours: {
-        monday: { is_open: true, open_time: '12:00', close_time: '14:00' },
-      },
-      reservation_settings: { max_party_size: 10 },
-      average_dining_duration_minutes: 90,
-      ...overrides,
-    };
+describe('Portal: availability from the booking rule', () => {
+  // The list is the rule's answer (check_guest_slots) for every half hour of
+  // the date. The rule itself is tested against Postgres in
+  // scripts/auditoria-reservas (r10-pagina-horarios).
+  const DAY = '2027-04-05';
+  const RESTAURANT = { id: 'r1', restaurant_name: 'Test Restaurant', business_hours: {}, reservation_settings: { advance_booking_days: 10 } };
+  async function list(query = {}) {
+    mockSingle.mockResolvedValueOnce({ data: RESTAURANT, error: null });
+    const { req, res } = createMockReqRes({
+      query: { action: 'availability', restaurant_id: 'r1', date: DAY, party_size: '2', ...query },
+    });
+    await handler(req, res);
+    return { status: res.status.mock.calls[0][0], body: res.json.mock.calls[0][0] };
   }
+  const answerAt = byTime => start => byTime[start.slice(11)] || { status: 'outside_hours' };
 
-  test('returns slots for open restaurant', async () => {
-    mockSingle.mockResolvedValueOnce({ data: restaurantConfig(), error: null });
-    mockChainResolve.mockReturnValueOnce({ data: [], error: null });    // reservations
-    mockChainResolve.mockReturnValueOnce({ data: [{ capacity: 40 }], error: null }); // tables
-
-    const { req, res } = createMockReqRes({
-      query: { action: 'availability', restaurant_id: 'r1', date: MONDAY, party_size: '2' },
-    });
-    await handler(req, res);
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-      success: true,
-      slots: expect.any(Array),
-      operating_hours: { open: '12:00', close: '14:00' },
-    }));
+  test('asks the rule for every half hour of the date, with the party as a number', async () => {
+    await list({ party_size: '4' });
+    expect(mockRpc).toHaveBeenCalledTimes(1);
+    const [fn, args] = mockRpc.mock.calls[0];
+    expect(fn).toBe('check_guest_slots');
+    expect(args).toMatchObject({ p_restaurant_id: 'r1', p_party_size: 4 });
+    expect(args.p_starts).toHaveLength(48);
+    expect(args.p_starts[0]).toBe(`${DAY}T00:00`);
+    expect(args.p_starts[39]).toBe(`${DAY}T19:30`);
+    expect(args.p_starts[47]).toBe(`${DAY}T23:30`);
   });
 
-  test('returns empty slots for closed day', async () => {
-    // Monday marked as closed
-    mockSingle.mockResolvedValueOnce({
-      data: restaurantConfig({
-        business_hours: {
-          monday: { is_open: false, open_time: '12:00', close_time: '22:00' },
-        },
-      }),
-      error: null,
+  test('ok is available with its seats, unavailable and party_too_large are shown taken, the rest is left out', async () => {
+    mockStatusAt = answerAt({
+      '12:00': { status: 'past_slot' },
+      '19:00': { status: 'ok', seats_available: 6 },
+      '19:30': { status: 'unavailable', seats_available: 1 },
+      '20:00': { status: 'party_too_large' },
+      '20:30': { status: 'too_late' },
     });
-
-    const { req, res } = createMockReqRes({
-      query: { action: 'availability', restaurant_id: 'r1', date: MONDAY, party_size: '2' },
-    });
-    await handler(req, res);
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-      success: true,
-      available: false,
-      slots: [],
-    }));
+    const { status, body } = await list();
+    expect(status).toBe(200);
+    expect(body).toMatchObject({ success: true, restaurant_name: 'Test Restaurant', date: DAY, party_size: 2 });
+    expect(body.slots).toEqual([
+      { time: '19:00', available: true, available_seats: 6 },
+      { time: '19:30', available: false, available_seats: 1 },
+      { time: '20:00', available: false, available_seats: 0 },
+    ]);
+    expect(body.operating_hours).toEqual({ open: '19:00', close: '20:00' });
   });
 
-  test('returns 500 when reservations fetch fails', async () => {
-    mockSingle.mockResolvedValueOnce({ data: restaurantConfig(), error: null });
-    mockChainResolve.mockReturnValueOnce({ data: null, error: { message: 'DB error' } });
+  test.each([
+    ['a closed day', { '12:00': { status: 'outside_hours' } }, /closed on this day/],
+    ['a day whose times have all passed', { '12:00': { status: 'past_slot' } }, /No times left on this day/],
+    ['a date past the booking window', { '12:00': { status: 'too_far' } }, /up to 10 days in advance/],
+  ])('%s is an empty list with a message', async (_, byTime, message) => {
+    mockStatusAt = answerAt(byTime);
+    const { status, body } = await list();
+    expect(status).toBe(200);
+    expect(body).toMatchObject({ success: true, available: false, slots: [] });
+    expect(body.message).toMatch(message);
+  });
 
-    const { req, res } = createMockReqRes({
-      query: { action: 'availability', restaurant_id: 'r1', date: MONDAY, party_size: '2' },
-    });
-    await handler(req, res);
-    expect(res.status).toHaveBeenCalledWith(500);
+  test('a well-formed but impossible date, refused by the rule as invalid_input, is a 400', async () => {
+    mockStatusAt = () => ({ status: 'invalid_input' });
+    const { status } = await list({ date: '2027-02-30' });
+    expect(status).toBe(400);
+  });
+
+  test('a restaurant the rule does not find is a 404, and a failed rule check is a 500 with no list', async () => {
+    mockRpc.mockResolvedValueOnce({ data: { status: 'restaurant_unavailable' }, error: null });
+    expect((await list()).status).toBe(404);
+
+    mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'down' } });
+    const failed = await list();
+    expect(failed.status).toBe(500);
+    expect(failed.body.slots).toBeUndefined();
   });
 });
 
@@ -690,9 +656,6 @@ describe('Portal: reserve - DB insert error', () => {
       },
       error: null,
     });
-    mockChainResolve.mockReturnValueOnce({ data: [], error: null });
-    mockChainResolve.mockReturnValueOnce({ data: [{ capacity: 40 }], error: null });
-    mockCheckTimeSlotAvailability.mockReturnValueOnce({ available: true, availableSeats: 38 });
     // The booking function returns an error
     mockBookGuestReservation.mockResolvedValueOnce({ success: false, status: 'error', error: { message: 'insert constraint violation' } });
 
@@ -744,9 +707,6 @@ describe('Portal: reserve - locked booking function', () => {
       },
       error: null,
     });
-    mockChainResolve.mockReturnValueOnce({ data: [], error: null });
-    mockChainResolve.mockReturnValueOnce({ data: [{ capacity: 8 }], error: null });
-    mockCheckTimeSlotAvailability.mockReturnValueOnce({ available: true, availableSeats: 8 });
   }
 
   test('books through the function as online_portal, with no retry key and the deposit', async () => {
@@ -834,9 +794,6 @@ describe('Portal: reserve - email confirmation', () => {
       },
       error: null,
     });
-    mockChainResolve.mockReturnValueOnce({ data: [], error: null });
-    mockChainResolve.mockReturnValueOnce({ data: [{ capacity: 40 }], error: null });
-    mockCheckTimeSlotAvailability.mockReturnValueOnce({ available: true, availableSeats: 38 });
     mockBookGuestReservation.mockResolvedValueOnce({
       success: true,
       status: 'created',
@@ -1094,9 +1051,6 @@ describe('Portal: reserve - WhatsApp owner alert', () => {
       },
       error: null,
     });
-    mockChainResolve.mockReturnValueOnce({ data: [], error: null });
-    mockChainResolve.mockReturnValueOnce({ data: [{ capacity: 40 }], error: null });
-    mockCheckTimeSlotAvailability.mockReturnValueOnce({ available: true, availableSeats: 38 });
     mockBookGuestReservation.mockResolvedValueOnce({
       success: true,
       status: 'created',
