@@ -10,6 +10,7 @@ let mockConfig;
 let mockExisting;
 const mockBook = jest.fn();
 const mockFrom = jest.fn();
+const mockRpc = jest.fn();
 
 function mockChain(result) {
   const chain = {
@@ -22,6 +23,7 @@ function mockChain(result) {
 jest.mock('../_lib/supabase', () => ({
   bookGuestReservation: (...args) => mockBook(...args),
   supabaseAdmin: {
+    rpc: (...args) => mockRpc(...args),
     schema: () => ({ from: () => mockChain(() => mockConfig) }),
     from: (table) => { const chain = mockChain(() => mockExisting); mockFrom(table, chain); return chain; },
   },
@@ -197,5 +199,71 @@ describe('UpdateBooking', () => {
     mockMutations.cancelGuestReservation.mockResolvedValue({ success: false, changed: false, reservation: null, error: { code: 'invalid_status' } });
     const res = await call({ action: 'UpdateBooking', body: { booking: { booking_id: ROW, status: 'CANCELED' } } });
     expect(res.body.booking_failure.cause).toBe('CAUSE_UNSPECIFIED');
+  });
+});
+
+describe('BatchAvailabilityLookup asks the booking rule (check_guest_slots)', () => {
+  const lookup = body => call({ action: 'BatchAvailabilityLookup', body: { merchant_id: RESTAURANT, party_size: 2, ...body } });
+  // Clock: 2026-11-15T02:30Z = 23:30 on 2026-11-14 in São Paulo: the restaurant's
+  // "today" is still the 14th, while the server's UTC date is already the 15th.
+  beforeEach(() => {
+    jest.useFakeTimers({ now: new Date('2026-11-15T02:30:00Z') });
+    mockConfig = { id: RESTAURANT, timezone: 'America/Sao_Paulo', average_dining_duration_minutes: 120,
+      reservation_settings: { advance_booking_days: 3 } };
+    mockRpc.mockReset().mockImplementation(async (_, args) => ({
+      data: { status: 'ok', slots: args.p_starts.map(start => ({
+        date: start.slice(0, 10), time: start.slice(11),
+        status: start.endsWith('T19:00') ? 'ok' : 'outside_hours', seats_available: 5,
+      })) }, error: null }));
+  });
+  afterEach(() => { jest.useRealTimers(); });
+
+  test('candidates start on the restaurant-local today and stop at its day limit', async () => {
+    const res = await lookup({});
+    const [fn, args] = mockRpc.mock.calls[0];
+    expect(fn).toBe('check_guest_slots');
+    expect(args).toMatchObject({ p_restaurant_id: RESTAURANT, p_party_size: 2 });
+    expect(args.p_starts[0]).toBe('2026-11-14T00:00');
+    expect(args.p_starts[args.p_starts.length - 1]).toBe('2026-11-17T23:30');
+    expect(args.p_starts).toHaveLength(4 * 48);
+    expect(res.statusCode).toBe(200);
+  });
+
+  test('only slots the rule accepts are offered, with its own seat count and the restaurant duration', async () => {
+    const res = await lookup({ slot_time_range: { start_date: '2026-11-16', end_date: '2026-11-16' } });
+    expect(res.body.slots).toEqual([{
+      merchant_id: RESTAURANT, service_id: 'dining', start_time: '2026-11-16T19:00:00',
+      duration_seconds: 7200, available_spots: 2, resources: { party_size: 2 },
+    }]);
+  });
+
+  test('a range starting in the past starts today instead; a range past the limit is cut', async () => {
+    await lookup({ slot_time_range: { start_date: '2026-11-01', end_date: '2026-12-31' } });
+    const starts = mockRpc.mock.calls[0][1].p_starts;
+    expect(starts[0]).toBe('2026-11-14T00:00');
+    expect(starts[starts.length - 1]).toBe('2026-11-17T23:30');
+  });
+
+  test('a range wholly past the limit asks nothing and offers nothing', async () => {
+    const res = await lookup({ slot_time_range: { start_date: '2026-12-01', end_date: '2026-12-02' } });
+    expect(res.body).toEqual({ slots: [] });
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  test.each([[{ party_size: 0 }], [{ party_size: 2.5 }], [{ party_size: 'two' }], [{ merchant_id: '' }]])(
+    'an invalid request %p is 400 with no check', async body => {
+      const res = await lookup(body);
+      expect(res.statusCode).toBe(400);
+      expect(mockRpc).not.toHaveBeenCalled();
+    });
+
+  test('an unknown merchant is 404, and a failed check is 500 with no slots', async () => {
+    mockConfig = null;
+    expect((await lookup({})).statusCode).toBe(404);
+    mockConfig = { id: RESTAURANT, timezone: 'America/Sao_Paulo' };
+    mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'boom' } });
+    const res = await lookup({});
+    expect(res.statusCode).toBe(500);
+    expect(res.body.slots).toBeUndefined();
   });
 });
