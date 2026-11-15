@@ -59,7 +59,8 @@ module.exports = async (req, res) => {
   // key exists only on the server (sensitive on Vercel), so this is the only
   // way to replay a database language change to the agent (2026-11-12).
   const adminAction = String(req.query?.action || '');
-  if (['admin_language_report', 'admin_language_sync', 'admin_tools_report', 'admin_tools_sync'].includes(adminAction)) {
+  if (['admin_language_report', 'admin_language_sync', 'admin_tools_report', 'admin_tools_sync',
+    'admin_tools_orphans', 'admin_tools_orphans_delete'].includes(adminAction)) {
     return handleAdminLanguage(req, res, adminAction);
   }
 
@@ -237,6 +238,9 @@ async function handleAdminLanguage(req, res, action) {
   const { planLanguageSync, fetchAgent, syncAgentLanguage, CONFIG_COLUMNS } = require('./_lib/elevenlabs-language-sync');
   const configs = () => supabaseAdmin.schema('restaurant').from('restaurant_config').select(CONFIG_COLUMNS);
 
+  if (action === 'admin_tools_orphans' || action === 'admin_tools_orphans_delete') {
+    return handleAdminOrphanTools(req, res, action, { key });
+  }
   if (action === 'admin_tools_report' || action === 'admin_tools_sync') {
     return handleAdminTools(req, res, action, { key, configs, fetchAgent });
   }
@@ -331,6 +335,53 @@ async function handleAdminTools(req, res, action, { key, configs, fetchAgent }) 
     logger.error('[VoiceSettings] admin tools sync failed:', syncError.message);
     return res.status(502).json({ success: false, error: syncError.message });
   }
+}
+
+// Leftover ElevenLabs tools of restaurants that no longer exist (2026-11-15).
+// GET admin_tools_orphans: read-only buckets of the whole tool list (ids and
+// counts only; no URLs or secrets). POST admin_tools_orphans_delete with
+// { bucket, tool_ids } (at most 25): every rule is re-checked on the server
+// for every id before a force delete (api/_lib/elevenlabs-tool-cleanup.js).
+const ORPHAN_BUCKETS = ['missing_restaurant', 'unscoped'];
+const ORPHAN_BATCH = 25;
+
+async function handleAdminOrphanTools(req, res, action, { key }) {
+  const { listAllTools, classifyTools, cleanupTool } = require('./_lib/elevenlabs-tool-cleanup');
+  const { data: rows, error } = await supabaseAdmin.schema('restaurant').from('restaurant_config').select('id');
+  if (error || !Array.isArray(rows)) return res.status(500).json({ success: false, error: 'Database error' });
+  const existingIds = new Set(rows.map(row => row.id));
+
+  if (action === 'admin_tools_orphans') {
+    if (req.method !== 'GET') return res.status(405).json({ success: false, error: 'Use GET' });
+    try {
+      const classified = classifyTools(await listAllTools(key), existingIds);
+      return res.status(200).json({ success: true, ...classified });
+    } catch (listError) {
+      logger.error('[VoiceSettings] admin orphan tools list failed:', listError.message);
+      return res.status(502).json({ success: false, error: listError.message });
+    }
+  }
+
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Use POST' });
+  const bucket = String(req.body?.bucket || '');
+  const ids = Array.isArray(req.body?.tool_ids) ? [...new Set(req.body.tool_ids.map(String))] : [];
+  if (!ORPHAN_BUCKETS.includes(bucket)) return res.status(400).json({ success: false, error: 'bucket must be missing_restaurant or unscoped' });
+  if (!ids.length || ids.length > ORPHAN_BATCH) return res.status(400).json({ success: false, error: `send 1 to ${ORPHAN_BATCH} tool_ids` });
+
+  const ctx = { key, bucket, existingIds, fetchImpl: fetch, agentCache: new Map() };
+  const results = [];
+  for (let i = 0; i < ids.length; i += 4) {
+    results.push(...await Promise.all(ids.slice(i, i + 4).map(id => cleanupTool(id, ctx))));
+  }
+  const summary = { deleted: 0, already_gone: 0, kept_in_use: 0, refused: 0, failed: 0, dependent_agent_statuses: {} };
+  for (const result of results) {
+    summary[result.outcome] += 1;
+    for (const [status, n] of Object.entries(result.agentStatuses || {})) {
+      summary.dependent_agent_statuses[status] = (summary.dependent_agent_statuses[status] || 0) + n;
+    }
+  }
+  logger.info('[VoiceSettings] admin orphan tools delete', { bucket, ...summary });
+  return res.status(200).json({ success: true, summary, results });
 }
 
 /**

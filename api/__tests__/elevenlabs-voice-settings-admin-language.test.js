@@ -85,7 +85,8 @@ afterEach(() => { delete global.fetch; });
 
 test('someone other than the founder is refused before any provider call', async () => {
   mockAuth.mockResolvedValue({ user: { email: 'owner@example.test', restaurant_id: OSTERIA } });
-  for (const [method, action] of [['GET', 'admin_language_report'], ['POST', 'admin_language_sync'], ['GET', 'admin_tools_report'], ['POST', 'admin_tools_sync']]) {
+  for (const [method, action] of [['GET', 'admin_language_report'], ['POST', 'admin_language_sync'], ['GET', 'admin_tools_report'], ['POST', 'admin_tools_sync'],
+    ['GET', 'admin_tools_orphans'], ['POST', 'admin_tools_orphans_delete']]) {
     const res = await call(method, { action, restaurant_id: OSTERIA });
     expect(res.statusCode).toBe(403);
   }
@@ -189,5 +190,63 @@ describe('tools actions', () => {
     const patches = global.fetch.mock.calls.filter(([, init]) => init?.method === 'PATCH');
     expect(patches).toHaveLength(1);
     expect(patches[0][0]).toMatch(/agent_osteria_0001_t\d$/);
+  });
+});
+
+
+describe('leftover tools actions', () => {
+  const GONE = 'bbbbbbbb-2222-4222-8222-222222222222';
+  const tool = (id, rid, host = 'seatable.one') => ({ id, tool_config: { type: 'webhook', name: 'check_availability',
+    api_schema: { url: `https://${host}/api/elevenlabs-webhook?action=x${rid ? `&restaurant_id=${rid}` : ''}`,
+      request_headers: { Authorization: 'Bearer el_whsec_secret' } } } });
+  const callBody = async (method, query, body) => {
+    const res = { statusCode: 200, body: null, status(c) { this.statusCode = c; return this; }, json(b) { this.body = b; return this; }, setHeader() {}, end() { return this; } };
+    await handler({ method, query, headers: {}, body }, res);
+    return res;
+  };
+  let store;
+  beforeEach(() => {
+    store = new Map([
+      ['tool_live', tool('tool_live', OSTERIA)],
+      ['tool_gone', tool('tool_gone', GONE)],
+      ['tool_nobody', tool('tool_nobody', null)],
+      ['tool_foreign', tool('tool_foreign', GONE, 'roca-black.vercel.app')],
+    ]);
+    global.fetch = jest.fn(async (url, init = {}) => {
+      const method = init.method || 'GET';
+      if (url.includes('/convai/tools?')) return { ok: true, status: 200, json: async () => ({ tools: [...store.values()], has_more: false }) };
+      if (url.includes('/dependent-agents')) return { ok: true, status: 200, json: async () => ({ agents: [{ type: 'unknown', id: 'agent_gone' }], branches: [], has_more: false }) };
+      const toolId = (url.split('/convai/tools/')[1] || '').split('?')[0];
+      if (toolId && method === 'GET') return store.has(toolId) ? { ok: true, status: 200, json: async () => store.get(toolId) } : { ok: false, status: 404, json: async () => ({}) };
+      if (toolId && method === 'DELETE') { store.delete(toolId); return { ok: true, status: 200, text: async () => '' }; }
+      return { ok: false, status: 404, json: async () => ({}) }; // agents: all gone
+    });
+  });
+
+  test('the list returns ids and counts only, never URLs or secrets', async () => {
+    const res = await callBody('GET', { action: 'admin_tools_orphans' });
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toMatchObject({ success: true, missing_restaurant: ['tool_gone'], unscoped: ['tool_nobody'],
+      counts: { total: 4, existing_restaurant: 1, missing_restaurant: 1, unscoped: 1, foreign_host: 1 } });
+    expect(JSON.stringify(res.body)).not.toMatch(/el_whsec|https:\/\//);
+    expect(global.fetch.mock.calls.every(([, init]) => !init?.method || init.method === 'GET')).toBe(true);
+  });
+
+  test('delete re-checks each id: only the leftover of a missing restaurant goes', async () => {
+    const res = await callBody('POST', { action: 'admin_tools_orphans_delete' },
+      { bucket: 'missing_restaurant', tool_ids: ['tool_gone', 'tool_live', 'tool_nobody', 'tool_foreign'] });
+    expect(res.statusCode).toBe(200);
+    expect(res.body.summary).toMatchObject({ deleted: 1, refused: 3, dependent_agent_statuses: { 404: 1 } });
+    expect([...store.keys()].sort()).toEqual(['tool_foreign', 'tool_live', 'tool_nobody']);
+  });
+
+  test('bad bucket, empty or oversized batches and wrong methods are refused', async () => {
+    expect((await callBody('POST', { action: 'admin_tools_orphans_delete' }, { bucket: 'everything', tool_ids: ['tool_gone'] })).statusCode).toBe(400);
+    expect((await callBody('POST', { action: 'admin_tools_orphans_delete' }, { bucket: 'unscoped', tool_ids: [] })).statusCode).toBe(400);
+    const many = Array.from({ length: 26 }, (_, i) => `tool_${i}`);
+    expect((await callBody('POST', { action: 'admin_tools_orphans_delete' }, { bucket: 'unscoped', tool_ids: many })).statusCode).toBe(400);
+    expect((await callBody('POST', { action: 'admin_tools_orphans' })).statusCode).toBe(405);
+    expect((await callBody('GET', { action: 'admin_tools_orphans_delete' })).statusCode).toBe(405);
+    expect(store.size).toBe(4);
   });
 });

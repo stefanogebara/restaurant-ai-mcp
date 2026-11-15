@@ -66,7 +66,7 @@ function respondeComAgente(agentPayload, { donoDaFerramenta = () => 'rest-1', st
     const toolId = idDaFerramenta(String(url));
     if (toolId && method === 'GET') {
       const dono = donoDaFerramenta(toolId);
-      return { ok: true, status: 200, json: async () => ({ id: toolId, tool_config: { name: toolId,
+      return { ok: true, status: 200, json: async () => ({ id: toolId, tool_config: { type: 'webhook', name: toolId,
         api_schema: { url: `https://seatable.one/api/elevenlabs-webhook?action=x${dono ? `&restaurant_id=${dono}` : ''}` } } }) };
     }
     if (toolId && method === 'DELETE') {
