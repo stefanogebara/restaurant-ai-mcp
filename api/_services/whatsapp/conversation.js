@@ -466,7 +466,7 @@ async function processWithAI(userMessage, session, conversationHistory = [], inb
       ? supabaseAdmin
           .schema('restaurant')
           .from('restaurant_config')
-          .select('id, restaurant_name, restaurant_type, phone, email, city, country, business_hours, average_dining_duration_minutes, timezone, agent_language, agent_name, agent_greeting, ai_config, ai_strategy_doc, ai_personality, persona_prompt_override')
+          .select('id, restaurant_name, restaurant_type, phone, email, city, country, business_hours, average_dining_duration_minutes, timezone, agent_language, agent_name, agent_greeting, ai_config, ai_strategy_doc, ai_personality, persona_prompt_override, reservation_settings')
           .eq('id', restaurantId)
           .single()
       : Promise.resolve({ data: null }),
@@ -608,6 +608,8 @@ async function processWithAI(userMessage, session, conversationHistory = [], inb
           const toolResult = await executeTool(toolName, toolInput, session, {
             ...inboundContext, timezone, language,
             averageDiningDurationMinutes: restaurantConfig?.average_dining_duration_minutes,
+            // The restaurant's own booking limits, for check_availability.
+            reservationSettings: restaurantConfig?.reservation_settings,
           });
           if (BOOKING_MUTATIONS.has(toolName)) {
             lastMutation.result = toolResult;

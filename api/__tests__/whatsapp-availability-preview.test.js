@@ -99,3 +99,44 @@ test('invalid calendar dates fail before any database read', async () => {
   expect(result.success).toBe(false);
   expect(mockQueries).toHaveLength(0);
 });
+
+describe('the past and the restaurant limits, as the booking function checks them (15/11/2026)', () => {
+  // Clock: 2026-11-10T12:00Z, restaurant zone UTC -> the 30-day window ends 2026-12-10.
+  const limited = { timezone: 'UTC', reservationSettings: { advance_booking_days: 30, max_party_size: 6 } };
+  const ask = (input, inbound = limited) => executeTool('check_availability', { date: '2026-11-20', time: '19:00', party_size: 2, ...input }, session, inbound);
+  beforeEach(() => { jest.useFakeTimers({ now: new Date('2026-11-10T12:00:00Z') }); });
+  afterEach(() => { jest.useRealTimers(); });
+
+  test.each([
+    ['a time already passed today', { date: '2026-11-10', time: '11:00' }, 'PAST_DATE', /already passed\. Today at the restaurant is Tuesday, 2026-11-10/],
+    ['the first day past the window', { date: '2026-12-11' }, 'TOO_FAR', /up to 30 days in advance/],
+    ['a party above the restaurant limit', { party_size: 7 }, 'PARTY_TOO_LARGE', /up to 6 guests/],
+  ])('%s is not offered, before any database read', async (_, input, reason, message) => {
+    const result = await ask(input);
+    expect(result).toMatchObject({ success: true, available: false, provisional: true, reason });
+    expect(result.message).toMatch(message);
+    expect(mockQueries).toHaveLength(0);
+  });
+
+  test('the last day of the window and the party limit itself are offered', async () => {
+    expect(await ask({ date: '2026-12-10', party_size: 4 })).toMatchObject({ success: true, available: true });
+  });
+
+  test('the zone comes from the session restaurant when the inbound context has none', async () => {
+    const zoned = { restaurant: { ...session.restaurant, timezone: 'UTC', reservation_settings: { advance_booking_days: 30 } } };
+    const result = await executeTool('check_availability', { date: '2026-12-11', time: '19:00', party_size: 2 }, zoned, {});
+    expect(result).toMatchObject({ available: false, reason: 'TOO_FAR' });
+  });
+
+  test('without stored limits there is no window; an unknown zone leaves the time checks to the booking', async () => {
+    expect(await ask({ date: '2027-06-01' }, { timezone: 'UTC' })).toMatchObject({ available: true });
+    expect(await ask({ date: '2026-11-10', time: '11:00' }, { timezone: 'Mars/Olympus', reservationSettings: limited.reservationSettings }))
+      .toMatchObject({ success: true, available: true });
+  });
+
+  test('every seat-holding status is read, as the booking function counts them', async () => {
+    await ask({});
+    const read = mockQueries.find(({ table }) => table === 'reservations').query;
+    expect(read.in).toHaveBeenCalledWith('status', expect.arrayContaining(['confirmed', 'seated', 'pending', 'Confirmed', 'Seated', 'Pending']));
+  });
+});

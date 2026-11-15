@@ -386,6 +386,8 @@ describe('whatsapp-webhook (Meta Cloud API)', () => {
 
   // ── 2. Full booking flow — restaurant in session ────────────────────────────
   it('completes full booking: check_availability → create_reservation → end_turn', async () => {
+    // The requested 2026-03-01 must be in the future: availability refuses the past.
+    jest.setSystemTime(new Date('2026-02-28T12:00:00Z'));
     let aiCallCount = 0;
     mockAnthropicCreate.mockImplementation(async () => {
       aiCallCount++;
