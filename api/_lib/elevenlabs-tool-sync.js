@@ -7,7 +7,12 @@
 // agent. Since 2026-11-12 (audit F4) the server refuses guest changes by phone
 // and only looks a booking up with the full code + phone, but agents created
 // earlier still describe lookup as "by phone or name" and have no code field:
-// the agent asks for a code it cannot send. Only the three guest tools change.
+// the agent asks for a code it cannot send.
+//
+// Every tool is compared, not only the three guest tools (2026-11-16): two
+// live restaurants (OGURU Sushi & Bar, Braz Pizzaria) had check_availability,
+// create_reservation and get_wait_time on preview deployments that Vercel had
+// deleted (HTTP 410), and the report still said "in sync".
 //
 // Safety:
 // - the complete tool_config is sent (built exactly as at creation, with the
@@ -16,7 +21,6 @@
 // - every tool is read back and compared before the next one;
 // - nothing about the config (URL, secret) is returned to the caller.
 
-const GUEST_TOOLS = ['lookup_reservation', 'cancel_reservation', 'modify_reservation'];
 const TOOLS_URL = 'https://api.elevenlabs.io/v1/convai/tools';
 const TOOL_ID = /^[A-Za-z0-9_-]{6,80}$/;
 
@@ -61,10 +65,10 @@ function planToolSync(config, tools, buildToolDefinitions, baseUrl = productionB
     return { status: 'invalid', reasons: ['restaurant has no webhook secret'], changes: [] };
   }
   const expected = Object.fromEntries(buildToolDefinitions(baseUrl, config.id, config.elevenlabs_webhook_secret)
-    .filter(tool => GUEST_TOOLS.includes(tool.name)).map(tool => [tool.name, tool]));
+    .map(tool => [tool.name, tool]));
   const reasons = [];
   const changes = [];
-  for (const name of GUEST_TOOLS) {
+  for (const name of Object.keys(expected)) {
     const stored = tools.filter(tool => tool?.tool_config?.name === name);
     if (stored.length !== 1) {
       reasons.push(stored.length ? `${name} appears ${stored.length} times` : `${name} missing`);
@@ -112,4 +116,4 @@ async function syncAgentTools(config, agent, key, { buildToolDefinitions, apply 
   return { changed: true, plan, after };
 }
 
-module.exports = { GUEST_TOOLS, planToolSync, syncAgentTools, toolIdsOf, sameShape, productionBaseUrl };
+module.exports = { planToolSync, syncAgentTools, toolIdsOf, sameShape, productionBaseUrl };

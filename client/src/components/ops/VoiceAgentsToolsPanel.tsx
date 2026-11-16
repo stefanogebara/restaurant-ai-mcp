@@ -11,8 +11,10 @@ import { useToast } from '../../contexts/ToastContext';
  * agente. Desde a auditoria de 11/11 a consulta de reserva pede o código
  * completo + telefone, e mudar/cancelar por telefone é recusado; agentes
  * antigos ainda descrevem a consulta "por telefone ou nome". Este painel
- * compara as três ferramentas de hóspede com a definição atual e atualiza um
- * agente por vez, conferindo cada ferramenta depois.
+ * compara TODAS as ferramentas de cada agente com a definição atual (desde
+ * 16/11: OGURU e Bráz tinham disponibilidade, reserva e espera apontando para
+ * prévias apagadas, e o painel, que só olhava as três de hóspede, dizia
+ * "Em dia") e atualiza um agente por vez, conferindo cada ferramenta depois.
  */
 
 interface ToolsRow {
@@ -66,7 +68,7 @@ export default function VoiceAgentsToolsPanel() {
         <div className="space-y-1">
           <h2 className="font-serif text-2xl text-deep-charcoal">Ferramentas dos agentes</h2>
           <p className="text-sm text-stone-500">
-            Consulta, mudança e cancelamento de reserva de cada agente próprio comparados com a definição atual.
+            Todas as ferramentas de cada agente próprio (disponibilidade, reserva, consulta, mudança, cancelamento, espera, data) comparadas com a definição atual.
             {rows.length > 0 && ` ${rows.length} agentes, ${outdated.length} desatualizados.`}
           </p>
         </div>
