@@ -85,6 +85,8 @@ export function useVoiceAgent({ agentId, useSignedUrl = false, requireConfirmati
         const data = await res.json();
         await conversation.startSession({
           signedUrl: data.signed_url,
+          // A signed URL is a wss:// link: the SDK pairs it with websocket.
+          connectionType: 'websocket',
           ...sessionOpts,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any);
