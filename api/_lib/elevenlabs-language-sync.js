@@ -17,7 +17,7 @@
 // - prompt and first message rebuilt from the config, as
 //   refreshVoiceAgentPrompt does (api/_services/voiceAgentService.js).
 
-const { compatibleTtsModel, summaryLanguageFor } = require('./elevenlabs-voice-config');
+const { agentTtsModel, compatibleTtsModel, summaryLanguageFor } = require('./elevenlabs-voice-config');
 const { callSetupGaps } = require('./elevenlabs-call-setup');
 const { buildFirstMessage } = require('./voice-first-message');
 
@@ -51,8 +51,10 @@ function planLanguageSync(config, agent, deps = {}) {
 
   const reasons = [];
   if (base(current.language) !== base(wanted)) reasons.push(`language ${current.language} != ${wanted}`);
-  const model = compatibleTtsModel(wanted, current.model);
-  if (model !== current.model) reasons.push(`model ${current.model} cannot speak ${wanted}`);
+  const compatible = compatibleTtsModel(wanted, current.model);
+  if (compatible !== current.model) reasons.push(`model ${current.model} cannot speak ${wanted}`);
+  // The voice model (2026-11-16): our old defaults move to eleven_v4_turbo.
+  const model = agentTtsModel(compatible);
   const summary = summaryLanguageFor(wanted, current.summary, config);
   if (base(current.summary) !== base(summary)) reasons.push(`summary ${current.summary} != ${summary}`);
 
@@ -75,9 +77,14 @@ function planLanguageSync(config, agent, deps = {}) {
     if (!sameText(currentPrompt, wantedPrompt)) stale.push('prompt outdated');
     if (zone && current.timezone !== zone) stale.push(`timezone ${current.timezone} != ${zone}`);
     stale.push(...call.reasons);
+    if (model !== current.model) stale.push(`voice model ${current.model} -> ${model}`);
     if (!stale.length) return { status: 'ok', reasons, current, patch: null };
     return { status: 'outdated', reasons: stale, current,
-      patch: { conversation_config: { agent: { prompt: promptPatch }, ...conversationPatch } } };
+      patch: { conversation_config: {
+        agent: { prompt: promptPatch },
+        ...conversationPatch,
+        ...(model !== current.model ? { tts: { model_id: model } } : {}),
+      } } };
   }
 
   const patch = {

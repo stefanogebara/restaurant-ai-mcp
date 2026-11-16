@@ -30,7 +30,7 @@ describe('planLanguageSync', () => {
     expect(plan.patch).toEqual({
       conversation_config: {
         agent: { language: 'pt', first_message: 'Obrigado por ligar para Osteria del Sole. Como posso ajudá-lo hoje?', prompt: { prompt: 'PROMPT(pt)' } },
-        tts: { model_id: 'eleven_flash_v2_5' },
+        tts: { model_id: 'eleven_v4_turbo' },
       },
       platform_settings: { summary_language: 'pt-br' },
     });
@@ -49,17 +49,17 @@ describe('planLanguageSync', () => {
   });
 
   test('an agent already in the language, model, summary and prompt is left alone', () => {
-    expect(planLanguageSync(osteria, agent('pt', 'eleven_flash_v2_5', 'pt-br'), deps)).toMatchObject({ status: 'ok', patch: null });
-    expect(planLanguageSync({ ...osteria, agent_language: 'pt-BR' }, agent('pt-br', 'eleven_flash_v2_5', 'pt-br', 'PROMPT(pt-BR)'), deps).status).toBe('ok');
+    expect(planLanguageSync(osteria, agent('pt', 'eleven_v4_turbo', 'pt-br'), deps)).toMatchObject({ status: 'ok', patch: null });
+    expect(planLanguageSync({ ...osteria, agent_language: 'pt-BR' }, agent('pt-br', 'eleven_v4_turbo', 'pt-br', 'PROMPT(pt-BR)'), deps).status).toBe('ok');
     // ElevenLabs may trim the stored prompt.
-    expect(planLanguageSync(osteria, agent('pt', 'eleven_flash_v2_5', 'pt-br', '  PROMPT(pt)\n'), deps).status).toBe('ok');
+    expect(planLanguageSync(osteria, agent('pt', 'eleven_v4_turbo', 'pt-br', '  PROMPT(pt)\n'), deps).status).toBe('ok');
   });
 
   // 2026-11-12: the agents guessed the year (sent 2023-11-14). The fix lives in
   // the prompt and in the agent's time zone, which only this sync delivers.
   test('right language with an old prompt is outdated: the patch changes only prompt and zone', () => {
     const plan = planLanguageSync({ ...osteria, timezone: 'America/Sao_Paulo' },
-      agent('pt', 'eleven_flash_v2_5', 'pt-br', 'old prompt'), deps);
+      agent('pt', 'eleven_v4_turbo', 'pt-br', 'old prompt'), deps);
     expect(plan.status).toBe('outdated');
     expect(plan.reasons).toEqual(['prompt outdated', 'timezone null != America/Sao_Paulo']);
     expect(plan.patch).toEqual({ conversation_config: { agent: { prompt: { prompt: 'PROMPT(pt)', timezone: 'America/Sao_Paulo' } } } });
@@ -67,8 +67,8 @@ describe('planLanguageSync', () => {
 
   test('a missing time zone alone is outdated; a matching one is in sync', () => {
     const config = { ...osteria, timezone: 'America/Sao_Paulo' };
-    expect(planLanguageSync(config, agent('pt', 'eleven_flash_v2_5', 'pt-br'), deps).reasons).toEqual(['timezone null != America/Sao_Paulo']);
-    expect(planLanguageSync(config, agent('pt', 'eleven_flash_v2_5', 'pt-br', 'PROMPT(pt)', 'America/Sao_Paulo'), deps).status).toBe('ok');
+    expect(planLanguageSync(config, agent('pt', 'eleven_v4_turbo', 'pt-br'), deps).reasons).toEqual(['timezone null != America/Sao_Paulo']);
+    expect(planLanguageSync(config, agent('pt', 'eleven_v4_turbo', 'pt-br', 'PROMPT(pt)', 'America/Sao_Paulo'), deps).status).toBe('ok');
   });
 
   test('a language mismatch carries the zone in its full patch', () => {
@@ -78,7 +78,7 @@ describe('planLanguageSync', () => {
   });
 
   test('an English restaurant on the English-only model is in sync', () => {
-    expect(planLanguageSync({ ...osteria, country: 'US', agent_language: 'en' }, agent('en', 'eleven_flash_v2', 'en'), deps).status).toBe('ok');
+    expect(planLanguageSync({ ...osteria, country: 'US', agent_language: 'en' }, agent('en', 'eleven_v4_turbo', 'en'), deps).status).toBe('ok');
   });
 
   test('missing data is reported, never patched', () => {
@@ -89,9 +89,37 @@ describe('planLanguageSync', () => {
 
 // 2026-11-16, first browser test call of the new onboarding: the owner heard
 // nothing (no 'audio' event) and the agent never hung up (no end_call tool).
+// 2026-11-16 (Stefano: "I need a real voice, use v4 turbo"): our old default
+// models move to eleven_v4_turbo; a model set on purpose stays.
+describe('voice model', () => {
+  test('an agent on an old default model is outdated, and the patch changes only the model besides prompt', () => {
+    for (const old of ['eleven_flash_v2_5', 'eleven_turbo_v2_5']) {
+      const plan = planLanguageSync(osteria, agent('pt', old, 'pt-br'), deps);
+      expect(plan.status).toBe('outdated');
+      expect(plan.reasons).toEqual([`voice model ${old} -> eleven_v4_turbo`]);
+      expect(plan.patch.conversation_config.tts).toEqual({ model_id: 'eleven_v4_turbo' });
+      expect(plan.patch.conversation_config.agent.language).toBeUndefined();
+    }
+  });
+
+  test('an English agent on the English-only Flash v2 moves to v4 Turbo too', () => {
+    const plan = planLanguageSync({ ...osteria, country: 'US', agent_language: 'en' }, agent('en', 'eleven_flash_v2', 'en'), deps);
+    expect(plan).toMatchObject({ status: 'outdated', patch: { conversation_config: { tts: { model_id: 'eleven_v4_turbo' } } } });
+  });
+
+  test('a model set on purpose is kept', () => {
+    expect(planLanguageSync(osteria, agent('pt', 'eleven_multilingual_v2', 'pt-br'), deps).status).toBe('ok');
+    expect(planLanguageSync(osteria, agent('pt', 'eleven_v4', 'pt-br'), deps).status).toBe('ok');
+  });
+
+  test('a language mismatch lands on v4 Turbo in the same patch', () => {
+    expect(planLanguageSync(osteria, agent('en'), deps).patch.conversation_config.tts).toEqual({ model_id: 'eleven_v4_turbo' });
+  });
+});
+
 describe('call setup', () => {
   const ready = { ...osteria, timezone: 'America/Sao_Paulo' };
-  const upToDate = () => agent('pt', 'eleven_flash_v2_5', 'pt-br', 'PROMPT(pt)', 'America/Sao_Paulo');
+  const upToDate = () => agent('pt', 'eleven_v4_turbo', 'pt-br', 'PROMPT(pt)', 'America/Sao_Paulo');
   const created = () => {
     const a = upToDate();
     a.conversation_config.conversation.client_events = ['agent_response', 'agent_response_correction', 'user_transcript', 'internal_tentative_agent_response'];
@@ -171,19 +199,19 @@ describe('sync script', () => {
       return ok(url.endsWith('agent_osteria_0001') ? osteriaAgent : agent('en'));
     });
     const { applied } = await run({ configs: [osteria, other], apply: osteria.id, key: 'k', fetchImpl, log: () => {} });
-    expect(applied).toMatchObject({ status: 'ok', changed: true, after: { language: 'pt', model: 'eleven_flash_v2_5', summary: 'pt-br' } });
+    expect(applied).toMatchObject({ status: 'ok', changed: true, after: { language: 'pt', model: 'eleven_v4_turbo', summary: 'pt-br' } });
     expect(fetchImpl.mock.calls.filter(([, init]) => init?.method === 'PATCH')).toHaveLength(1);
   });
 
   test('an outdated agent is patched with prompt and zone only, then read back', async () => {
     const { syncAgentLanguage } = require('../_lib/elevenlabs-language-sync');
     const config = { ...osteria, timezone: 'America/Sao_Paulo' };
-    let stored = agent('pt', 'eleven_flash_v2_5', 'pt-br', 'old prompt');
+    let stored = agent('pt', 'eleven_v4_turbo', 'pt-br', 'old prompt');
     const fetchImpl = jest.fn(async (url, init = {}) => {
       if (init.method === 'PATCH') {
         const { prompt } = JSON.parse(init.body).conversation_config.agent;
         expect(Object.keys(JSON.parse(init.body).conversation_config.agent)).toEqual(['prompt']);
-        stored = agent('pt', 'eleven_flash_v2_5', 'pt-br', prompt.prompt, prompt.timezone);
+        stored = agent('pt', 'eleven_v4_turbo', 'pt-br', prompt.prompt, prompt.timezone);
         return ok({});
       }
       return ok(stored);

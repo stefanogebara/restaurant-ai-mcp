@@ -201,8 +201,8 @@ describe('payload de criação do agente ElevenLabs', () => {
     expect(body.conversation_config.agent.prompt.llm).toBe('gpt-4o-mini');
     expect(Array.isArray(body.conversation_config.agent.prompt.tool_ids)).toBe(true);
     expect(body.conversation_config.agent.language).toBe('pt');
-    // pt usa o modelo multilíngue; só 'en' usa o flash v2 puro.
-    expect(body.conversation_config.tts.model_id).toBe('eleven_flash_v2_5');
+    // Voz v4 Turbo em todo idioma (16/11/2026).
+    expect(body.conversation_config.tts.model_id).toBe('eleven_v4_turbo');
     expect(body.conversation_config.tts.voice_id).toBe(ARGS.voice_id);
     expect(body.conversation_config.conversation.turn_timeout).toBe(8);
     // 'audio' + 'interruption': without them a browser call is silent (2026-11-16).
@@ -221,9 +221,9 @@ describe('payload de criação do agente ElevenLabs', () => {
     expect(body.conversation_config.asr).toEqual({ quality: 'high', provider: 'elevenlabs' });
   });
 
-  it('usa eleven_flash_v2 quando o idioma é en', async () => {
+  it('usa eleven_v4_turbo também quando o idioma é en', async () => {
     await createAgent({ ...ARGS, language: 'en' });
-    expect(corpoDoCreate().conversation_config.tts.model_id).toBe('eleven_flash_v2');
+    expect(corpoDoCreate().conversation_config.tts.model_id).toBe('eleven_v4_turbo');
   });
 
   /**
