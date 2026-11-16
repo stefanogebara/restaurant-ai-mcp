@@ -74,7 +74,13 @@ export function useVoiceAgent({ agentId, useSignedUrl = false, requireConfirmati
       };
 
       if (useSignedUrl) {
-        const res = await fetch('/api/elevenlabs-signed-url');
+        // Signed in (the endpoint answers 401 without the token) and naming the
+        // agent: the endpoint then refuses with 403 instead of quietly falling
+        // back to the public demo agent when it cannot match the owner.
+        // Loaded here so the landing page, which uses this hook without a
+        // signed URL, does not bundle the sign-in client.
+        const { authFetch } = await import('../../services/api');
+        const res = await authFetch(`/api/elevenlabs-signed-url?agent_id=${encodeURIComponent(agentId)}`);
         if (!res.ok) throw new Error('Failed to get signed URL');
         const data = await res.json();
         await conversation.startSession({

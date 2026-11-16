@@ -24,6 +24,8 @@ const ROOT = resolve(__dirname, '../../..');
 const SURFACE = [
   ...globSync('components/booking/*.tsx', { cwd: ROOT }),
   ...globSync('components/onboarding/*.tsx', { cwd: ROOT }),
+  // The onboarding sheet and its launch screens (2026-11-16): the default path.
+  ...globSync('components/onboarding/folha/*.tsx', { cwd: ROOT }),
   'pages/BookingPage.tsx',
   'pages/BookingConfirmation.tsx',
   'pages/Onboarding.tsx',

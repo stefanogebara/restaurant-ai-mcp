@@ -65,7 +65,11 @@ describe('single-sheet launch submission', () => {
     expect(submitted.business_hours.find(day => day.day === 'Monday')?.close_time).toBe('20:30');
     expect(submitted.business_hours.find(day => day.day === 'Friday')?.is_open).toBe(false);
     expect(screen.getByRole('link', { name: 'Go to Dashboard' })).toHaveAttribute('href', '/host-dashboard/simple?launch=1');
-    expect(screen.getByRole('link', { name: 'Your booking link' })).toHaveAttribute('href', 'https://seatable.one/book/sheet-bistro');
+    expect(screen.getByText('Your booking link')).toBeVisible();
+    expect(screen.getByRole('link', { name: 'seatable.one/book/sheet-bistro' })).toHaveAttribute('href', 'https://seatable.one/book/sheet-bistro');
+    expect(screen.getByRole('img', { name: 'QR code for your booking link' })).toHaveAttribute('src', '/api/booking-qr?slug=sheet-bistro');
+    // No agent id came back, so no test call is offered.
+    expect(screen.queryByTestId('talk-to-receptionist')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Colocar no ar' })).not.toBeInTheDocument();
     expect(screen.getByText('Setup saved. Phone and WhatsApp connections still need verification.')).toBeVisible();
     expect(api.mock.calls.filter(([url]) => url === '/api/onboarding/complete')).toHaveLength(1);
