@@ -840,7 +840,7 @@ async function createAgent({
       const { data: config, error: configError } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
-        .select('id, restaurant_name, phone, email, website, city, country, business_hours, timezone, agent_language, ai_config, agent_name, agent_greeting, voice_id, voice_engine, persona_prompt_override, restaurant_profile, scraped_data, ai_strategy_doc, deposit_config, reservation_settings')
+        .select('id, restaurant_name, phone, email, website, city, country, business_hours, timezone, agent_language, ai_config, agent_name, agent_greeting, voice_id, voice_engine, persona_prompt_override, restaurant_profile, scraped_data, ai_strategy_doc, deposit_config, reservation_settings, ai_personality')
         .eq('id', restaurantId)
         .maybeSingle();
       if (configError) {

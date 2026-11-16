@@ -99,3 +99,31 @@ describe('the ElevenLabs prompt states the date', () => {
     expect(buildPersonaPrompt({ ...trattoria, persona_prompt_override: 'Custom persona.' })).toBe('Custom persona.');
   });
 });
+
+// 2026-11-16 (Stefano's decision): the speaking style the owner picks in
+// onboarding ("Do bairro", "Direta", "Animada", "Sobria") reached the WhatsApp
+// assistant but not the phone agent's instructions.
+describe('the owner-chosen speaking style reaches the phone agent', () => {
+  const neighborhood = { humor_type: 'warm', communication_style: 'casual', language_tone: 'warm', personality_traits: ['friendly', 'welcoming'] };
+
+  test('a voice prompt carries the chosen style, phrased for a phone call', () => {
+    const prompt = buildPersonaPrompt({ ...trattoria, ai_personality: neighborhood }, { channel: 'voice' });
+    expect(prompt).toContain("Owner's chosen speaking style");
+    expect(prompt).toContain('Be casual and relaxed, like talking with a friend');
+    expect(prompt).toContain('Personality traits: friendly, welcoming');
+    expect(prompt).not.toContain('texting');
+  });
+
+  test('no saved style, no style section', () => {
+    expect(buildPersonaPrompt(trattoria, { channel: 'voice' })).not.toContain("Owner's chosen speaking style");
+  });
+
+  test('every path that rebuilds the voice prompt reads ai_personality', () => {
+    const { CONFIG_COLUMNS } = require('../_lib/elevenlabs-language-sync');
+    expect(CONFIG_COLUMNS.split(',').map(c => c.trim())).toContain('ai_personality');
+    const fs = require('fs');
+    const read = f => fs.readFileSync(require.resolve(f), 'utf8');
+    expect(read('../_services/voiceAgentService')).toMatch(/select\('[^']*ai_personality/);
+    expect(read('../_services/elevenlabsAgentService')).toMatch(/\.select\('id, restaurant_name[^']*ai_personality/);
+  });
+});

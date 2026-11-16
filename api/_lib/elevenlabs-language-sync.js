@@ -122,6 +122,6 @@ async function syncAgentLanguage(config, key, { fetchImpl = fetch, deps = {}, on
 }
 
 // Columns buildPersonaPrompt reads (same list as refreshVoiceAgentPrompt).
-const CONFIG_COLUMNS = 'id, restaurant_name, restaurant_type, phone, email, website, city, country, business_hours, average_dining_duration_minutes, timezone, agent_language, reservation_settings, deposit_config, elevenlabs_agent_id, agent_name, agent_greeting, ai_config, metric_profile, restaurant_profile, scraped_data, ai_strategy_doc, persona_prompt_override';
+const CONFIG_COLUMNS = 'id, restaurant_name, restaurant_type, phone, email, website, city, country, business_hours, average_dining_duration_minutes, timezone, agent_language, reservation_settings, deposit_config, elevenlabs_agent_id, agent_name, agent_greeting, ai_config, metric_profile, restaurant_profile, scraped_data, ai_strategy_doc, persona_prompt_override, ai_personality';
 
 module.exports = { planLanguageSync, fetchAgent, patchAgent, syncAgentLanguage, CONFIG_COLUMNS };
