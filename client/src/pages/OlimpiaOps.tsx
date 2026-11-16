@@ -19,6 +19,7 @@ import { fmtTime, httpStatus } from '../components/prospecting/types';
 import VoiceAgentsLanguagePanel from '../components/ops/VoiceAgentsLanguagePanel';
 import VoiceAgentsToolsPanel from '../components/ops/VoiceAgentsToolsPanel';
 import VoiceAgentsOrphanToolsPanel from '../components/ops/VoiceAgentsOrphanToolsPanel';
+import VoiceAgentsOrphanAgentsPanel from '../components/ops/VoiceAgentsOrphanAgentsPanel';
 
 /**
  * Olímpia Ops — the STANDALONE prospecting console (Phase 7 + 8), deliberately
@@ -322,7 +323,7 @@ export default function OlimpiaOps() {
         {section === 'abordagens' && <VariantsPanel />}
         {section === 'insights' && <InsightsPanel />}
         {section === 'academia' && <GymPanel />}
-        {section === 'voz' && (<div className="space-y-4"><VoiceAgentsLanguagePanel /><VoiceAgentsToolsPanel /><VoiceAgentsOrphanToolsPanel /></div>)}
+        {section === 'voz' && (<div className="space-y-4"><VoiceAgentsLanguagePanel /><VoiceAgentsToolsPanel /><VoiceAgentsOrphanAgentsPanel /><VoiceAgentsOrphanToolsPanel /></div>)}
 
         {section === 'conversas' && (
           <>
