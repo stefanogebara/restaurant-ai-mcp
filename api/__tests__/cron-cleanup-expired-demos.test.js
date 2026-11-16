@@ -20,6 +20,9 @@ jest.mock('../_lib/cron-tracker', () => ({
   logCronRun: jest.fn().mockResolvedValue(undefined),
 }));
 
+var mockDeleteAgent = jest.fn();
+jest.mock('../_services/elevenlabsAgentService', () => ({ deleteAgent: (...a) => mockDeleteAgent(...a) }));
+
 const handler = require('../_crons/cleanup-expired-demos');
 
 function mockRes() {
@@ -31,7 +34,7 @@ function mockRes() {
 
 beforeAll(() => { process.env.CRON_SECRET = 'test-cron-secret'; });
 afterAll(() => { delete process.env.CRON_SECRET; });
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => { jest.clearAllMocks(); mockDeleteAgent.mockResolvedValue({ success: true }); });
 
 describe('cron/cleanup-expired-demos', () => {
   test('returns 401 for wrong CRON_SECRET', async () => {
@@ -256,4 +259,67 @@ describe('cron/cleanup-expired-demos', () => {
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false }));
   });
+
+  // 2026-11-16: a failed table or agent delete only logged a warning and the
+  // demo row was deleted anyway. The row is the only link to its tables and
+  // to its ElevenLabs agent, so both were stranded for good (72 orphan tables
+  // and dozens of orphan agents found on 2026-11-15). Now the row stays and
+  // the next run retries.
+  describe('a failed delete keeps the demo row for the next run', () => {
+    function monta({ tablesError = null }) {
+      const configDeletes = [];
+      let schemaCallCount = 0;
+      mockSupabaseAdmin.schema.mockImplementation(() => ({
+        from: jest.fn().mockImplementation(() => {
+          schemaCallCount++;
+          if (schemaCallCount === 1) {
+            return { select: jest.fn().mockReturnValue({ eq: jest.fn().mockReturnValue({
+              lt: jest.fn().mockResolvedValue({ data: [{ ...CANDIDATO, user_id: null }], error: null }) }) }) };
+          }
+          return { delete: jest.fn().mockReturnValue({ eq: jest.fn().mockImplementation(async (_c, id) => { configDeletes.push(id); return { error: null }; }) }) };
+        }),
+      }));
+      mockFrom.mockImplementation((table) => {
+        if (table === 'cron_config') {
+          return { select: jest.fn().mockReturnValue({ eq: jest.fn().mockReturnValue({ maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }) }) }) };
+        }
+        if (table === 'reservations') {
+          return { select: jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ data: [], error: null }) }),
+            delete: jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null, count: 0 }) }) };
+        }
+        if (table === 'tables') {
+          return { delete: jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: tablesError }) }) };
+        }
+        return { delete: jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null, count: 0 }) }) };
+      });
+      return configDeletes;
+    }
+
+    test('tables that fail to delete keep the demo row (and its agent)', async () => {
+      const configDeletes = monta({ tablesError: { message: 'timeout' } });
+      const res = mockRes();
+      await handler({ headers: { authorization: 'Bearer test-cron-secret' } }, res);
+      expect(configDeletes).toEqual([]);
+      expect(mockDeleteAgent).not.toHaveBeenCalled();
+      expect(res.json.mock.calls[0][0]).toMatchObject({ deleted_demos: 0 });
+    });
+
+    test('an agent that fails to delete keeps the demo row, which holds its id', async () => {
+      const configDeletes = monta({});
+      mockDeleteAgent.mockResolvedValue({ success: false, error: 'Failed to delete agent from ElevenLabs' });
+      const res = mockRes();
+      await handler({ headers: { authorization: 'Bearer test-cron-secret' } }, res);
+      expect(configDeletes).toEqual([]);
+      expect(res.json.mock.calls[0][0]).toMatchObject({ deleted_demos: 0 });
+    });
+
+    test('when everything succeeds, the demo row goes', async () => {
+      const configDeletes = monta({});
+      const res = mockRes();
+      await handler({ headers: { authorization: 'Bearer test-cron-secret' } }, res);
+      expect(configDeletes).toEqual(['demo-1']);
+      expect(res.json.mock.calls[0][0]).toMatchObject({ deleted_demos: 1 });
+    });
+  });
 });
+
