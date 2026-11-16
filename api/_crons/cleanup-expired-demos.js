@@ -244,8 +244,14 @@ module.exports = async (req, res) => {
         .delete()
         .eq('restaurant_id', demo.id);
 
+      // A failed delete keeps the demo row (2026-11-16): the row is the only
+      // link to its tables and to its ElevenLabs agent. Deleting it anyway
+      // stranded them for good (72 orphan tables, dozens of orphan agents
+      // found on 2026-11-15). The next run retries.
       if (tablesError) {
-        logger.warn(`Failed to delete tables for demo ${demo.id} (non-fatal):`, tablesError.message);
+        logger.error(`Failed to delete tables for demo ${demo.id}; keeping the demo row to retry:`, tablesError.message);
+        failedDemos++;
+        continue;
       }
 
       // Step 2: Delete ElevenLabs agent (before DB row — prevents orphaned paid agents)
@@ -253,12 +259,15 @@ module.exports = async (req, res) => {
         const { deleteAgent } = require('../_services/elevenlabsAgentService');
         const agentResult = await deleteAgent(demo.id);
         if (!agentResult.success) {
-          logger.warn(`Failed to delete ElevenLabs agent for demo ${demo.id} (non-fatal): ${agentResult.error}`);
-        } else {
-          logger.info(`Deleted ElevenLabs agent for demo ${demo.id}`);
+          logger.error(`Failed to delete ElevenLabs agent for demo ${demo.id}; keeping the demo row to retry: ${agentResult.error}`);
+          failedDemos++;
+          continue;
         }
+        logger.info(`Deleted ElevenLabs agent for demo ${demo.id}`);
       } catch (agentErr) {
-        logger.warn(`ElevenLabs agent deletion threw for demo ${demo.id} (non-fatal): ${agentErr.message}`);
+        logger.error(`ElevenLabs agent deletion threw for demo ${demo.id}; keeping the demo row to retry: ${agentErr.message}`);
+        failedDemos++;
+        continue;
       }
 
       // Step 3: Delete the restaurant_config row
