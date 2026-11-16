@@ -267,6 +267,15 @@ function buildPersonaPrompt(restaurantConfig, options = {}) {
   prompt += '- If you need to look something up, say so: "One moment while I check that for you..."\n';
   prompt += '- End with a clear next step or question, never leave the caller hanging.\n\n';
 
+  // The owner's chosen speaking style (onboarding "A voz dela" or the
+  // personality panel). Until 2026-11-16 only WhatsApp followed it.
+  if (options.channel === 'voice') {
+    const style = require('./persona-style').personalityLines(restaurantConfig.ai_personality, { channel: 'voice' });
+    if (style.length) {
+      prompt += "Owner's chosen speaking style (follow it over the general style above):\n" + style.join('\n') + '\n\n';
+    }
+  }
+
   // 6. Operational Guidelines
   prompt += 'Important guidelines:\n';
   prompt += '- Confirm all details before creating a reservation\n';

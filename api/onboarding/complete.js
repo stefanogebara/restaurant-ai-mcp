@@ -121,6 +121,9 @@ async function generateUniqueSlug(name, supabaseClient) {
   return `${baseSlug.slice(0, 40)}-${Date.now().toString(36).slice(-6)}`;
 }
 
+// The 14-day trial outside Brazil is on Growth (Profissional), as documented.
+const TRIAL_PLAN = 'Growth';
+
 module.exports = async (req, res) => {
   // Set CORS headers
   setInternalCors(req, res);
@@ -889,8 +892,10 @@ module.exports = async (req, res) => {
             customer_email: email || customer_email,
             language: finalVoiceLanguage,
             timezone: resolvedTimezone,
-            plan_name: (plan || 'starter').toLowerCase(),
-            subscription_status: plan ? 'active' : 'trialing',
+            // Same plan and status as the subscription row below (2026-11-16):
+            // Brazil starts on the free plan, everyone else on a Growth trial.
+            plan_name: resolvedCountryIso === 'BR' ? 'free' : TRIAL_PLAN.toLowerCase(),
+            subscription_status: resolvedCountryIso === 'BR' ? 'active' : 'trialing',
             is_active: true,
           }, { onConflict: 'id' });
 
@@ -1112,7 +1117,9 @@ module.exports = async (req, res) => {
           subscription_id: `trial_${canonicalRestaurantId}`,
           customer_id: userId || `user_${Date.now()}`,
           customer_email: customer_email,
-          plan_name: plan || 'Growth',
+          // Growth (Profissional) whatever the client sends: the onboarding
+          // sheet always sent plan 'Starter' (Stefano's decision, 2026-11-16).
+          plan_name: TRIAL_PLAN,
           price_id: 'trial',
           status: 'trialing',
           current_period_start: now.toISOString(),

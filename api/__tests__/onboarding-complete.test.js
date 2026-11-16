@@ -1255,3 +1255,52 @@ describe('onboarding não deixa nada pela metade', () => {
     expect(res.json.mock.calls[0][0].setup.voice_agent).toBe('ok');
   });
 });
+
+// 2026-11-16 (Stefano's decision): outside Brazil the 14-day trial starts on
+// Growth (Profissional), whatever the client sends — the sheet always sent
+// plan 'Starter'. The WhatsApp registry records the same plan and status.
+describe('trial plan and registry status', () => {
+  const { supabaseAdmin } = require('../_lib/supabase');
+  const originalFrom = supabaseAdmin.from.getMockImplementation();
+  let registryWrite;
+
+  beforeEach(() => {
+    registryWrite = null;
+    require('../_lib/auth').verifyAuth.mockResolvedValueOnce({ user: { sub: 'user-1', id: 'user-1' } });
+    supabaseAdmin.schema.mockImplementation(() => ({
+      from: () => {
+        let wrote = null;
+        const chain = {};
+        chain.select = () => chain; chain.eq = () => chain;
+        chain.limit = () => Promise.resolve({ data: [], error: null });
+        chain.maybeSingle = () => Promise.resolve({ data: null, error: null });
+        chain.insert = () => { wrote = 'insert'; return chain; };
+        chain.update = (p) => ('elevenlabs_agent_id' in p ? { eq: () => Promise.resolve({ error: null }) } : chain);
+        chain.single = () => Promise.resolve(wrote === 'insert'
+          ? { data: { id: 'rest-novo', slug: 'test-restaurant', restaurant_name: 'Test Restaurant' }, error: null }
+          : { data: null, error: null });
+        return chain;
+      },
+    }));
+    supabaseAdmin.from.mockImplementation((table) => {
+      if (table === 'restaurant_registry') return { upsert: (p) => { registryWrite = p; return Promise.resolve({ error: null }); } };
+      return originalFrom(table);
+    });
+  });
+  afterAll(() => { supabaseAdmin.from.mockImplementation(originalFrom); });
+
+  test('outside Brazil: Growth trial even when the client sends Starter, registry growth/trialing', async () => {
+    const { req, res } = mockReqRes({ ...BASE_BODY, country: 'Spain', city: 'Madrid', phone_number: '+34612345678', plan: 'Starter' });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(capturedSubscriptionInsert).toMatchObject({ plan_name: 'Growth', status: 'trialing', price_id: 'trial' });
+    expect(registryWrite).toMatchObject({ plan_name: 'growth', subscription_status: 'trialing' });
+  });
+
+  test('Brazil: free plan, registry free/active', async () => {
+    const { req, res } = mockReqRes({ ...BASE_BODY, plan: 'Starter' });
+    await handler(req, res);
+    expect(capturedSubscriptionInsert).toMatchObject({ plan_name: 'Free', status: 'active' });
+    expect(registryWrite).toMatchObject({ plan_name: 'free', subscription_status: 'active' });
+  });
+});
