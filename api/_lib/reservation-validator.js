@@ -90,7 +90,9 @@ function validateReservation(params, restaurant) {
     // max_party_size is only enforced when explicitly set by the restaurant.
     // Physical capacity limits are enforced by canAccommodateParty() using real table data.
     max_party_size: restaurant.max_party_size || limits.maxPartySize || null,
-    min_advance_hours: restaurant.min_advance_hours || 1,
+    // Guest channels pass 0: their notice is the booking rule's (too_soon in
+    // guest_slot_status). The host's reservations API keeps this one hour.
+    min_advance_hours: restaurant.min_advance_hours ?? 1,
     max_advance_days: restaurant.max_advance_days || (limits.advanceBookingDays ?? 90)
   };
 

@@ -101,6 +101,7 @@ test.each([
   ['party_too_large', 'PARTY_TOO_LARGE', false, /up to 6 guests/],
   ['outside_hours', 'CLOSED', true, /closed at that time/],
   ['too_late', 'TOO_LATE', true, /after the last seating/],
+  ['too_soon', 'TOO_SOON', true, /at least 1 hour in advance/],
   ['unavailable', 'FULLY_BOOKED', true, /20:00 is fully booked for 3 guests/],
 ])('the rule answer %s is spoken as %s, with no table check', async (status, code, success, message) => {
   mockStatus = start => (start.endsWith('T20:00') ? status : 'ok');

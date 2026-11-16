@@ -36,6 +36,11 @@ describe.each(['UTC', 'Asia/Tokyo', 'America/Sao_Paulo'])('server zone %s, clock
     expect(codes(validateReservation({ date: '2026-11-24', time: '17:30', party_size: 2 }, saoPaulo))).toContain('TOO_SOON');
   });
 
+  test('min_advance_hours 0 leaves the notice out (guest channels: the booking rule owns it)', () => {
+    expect(codes(validateReservation({ date: '2026-11-24', time: '17:30', party_size: 2 }, { ...saoPaulo, min_advance_hours: 0 })))
+      .not.toContain('TOO_SOON');
+  });
+
   test('refuses 16:00 tonight as past', () => {
     expect(codes(validateReservation({ date: '2026-11-24', time: '16:00', party_size: 2 }, saoPaulo))).toContain('PAST_DATE');
   });

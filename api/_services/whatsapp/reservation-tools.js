@@ -586,6 +586,7 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
             outside_hours: 'The restaurant is closed at that time. Please offer another time.',
             too_late: 'That time is after the last seating. Please offer an earlier time.',
             past_slot: 'That time has passed. Please offer a future time.',
+            too_soon: 'That time is less than one hour away. Please offer a time at least one hour from now.',
             too_far: 'The requested date is beyond the advance-booking window.',
             party_too_large: 'The party exceeds the restaurant booking limit.',
             cancelled_intent: 'That booking request was cancelled. Ask the guest to send a new request.',

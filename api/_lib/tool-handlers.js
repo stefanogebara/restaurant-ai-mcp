@@ -268,6 +268,7 @@ async function checkAvailability(restaurantId, restaurant, { date, time, party_s
 // not already catch (the SQL rule is the final one, checked under the lock).
 const BOOKING_REFUSALS = {
   past_slot: ['PAST_DATE', 'The requested date and time is in the past. Please choose a future date.'],
+  too_soon: ['TOO_SOON', 'Reservations must be made at least 1 hour in advance. Please choose a later time.'],
   too_far: ['TOO_FAR', 'That date is further ahead than the restaurant takes bookings. Please choose an earlier date.'],
   outside_hours: ['CLOSED', 'The restaurant is closed at that time. Please choose another time.'],
   too_late: ['TOO_LATE', 'That time is after the last seating. Please choose an earlier time.'],
@@ -317,8 +318,9 @@ async function createReservation(restaurantId, restaurant, params, trustedContex
     };
     const replay = await replayCommittedBooking();
     if (replay) return replay;
-    // Validate reservation against restaurant configuration
-    const validation = validateReservation({ date, time, party_size }, restaurant);
+    // Validate reservation against restaurant configuration. The hour of
+    // notice belongs to the booking rule (too_soon), not to this copy.
+    const validation = validateReservation({ date, time, party_size }, { ...restaurant, min_advance_hours: 0 });
 
     if (!validation.valid) {
       const committed = await replayCommittedBooking();

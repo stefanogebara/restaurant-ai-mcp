@@ -300,8 +300,8 @@ async function handleGetReservation(req, res) {
 // ============================================================
 
 // Statuses of a time inside a service period: offered (ok) or shown taken.
-// Past times, closed hours, after the last seating and dates past the window
-// are left out of the list.
+// Past times, times less than an hour away, closed hours, after the last
+// seating and dates past the window are left out of the list.
 const SERVICE_STATUSES = new Set(['ok', 'unavailable', 'party_too_large']);
 
 /**
@@ -387,7 +387,7 @@ async function handleGetAvailability(req, res) {
     const days = (restaurant.reservation_settings || {}).advance_booking_days;
     const message = statuses.has('too_far')
       ? `Reservations can only be made up to ${days} days in advance.`
-      : statuses.has('past_slot') ? 'No times left on this day.' : 'Restaurant is closed on this day.';
+      : statuses.has('past_slot') || statuses.has('too_soon') ? 'No times left on this day.' : 'Restaurant is closed on this day.';
     return res.status(200).json({ success: true, available: false, message, slots: [] });
   }
 
@@ -537,6 +537,8 @@ async function handleCreateReservation(req, res) {
       timezone: restaurant.timezone,
       max_party_size: settings.max_party_size,
       max_advance_days: settings.advance_booking_days,
+      // The hour of notice belongs to the booking rule (too_soon).
+      min_advance_hours: 0,
     }
   );
 
@@ -581,6 +583,7 @@ async function handleCreateReservation(req, res) {
     }
     const refusal = {
       past_slot: 'That time has already passed. Please choose a later time.',
+      too_soon: 'Reservations must be made at least 1 hour in advance. Please choose a later time.',
       too_far: `Reservations can only be made up to ${settings.advance_booking_days} days in advance.`,
       outside_hours: 'The restaurant does not take bookings at that time. Please choose another time.',
       too_late: 'That time is after the last seating. Please choose an earlier time.',

@@ -211,7 +211,7 @@ test('model failure after a committed booking never restarts a mutation', async 
   expect(JSON.parse(retryResult.content[0].content).reservation.time).toBe('19:00');
 }, 10000);
 
-test.each(['unavailable', 'outside_hours', 'too_late', 'past_slot', 'too_far', 'cancelled_intent', 'invalid_input'])(
+test.each(['unavailable', 'outside_hours', 'too_late', 'past_slot', 'too_soon', 'too_far', 'cancelled_intent', 'invalid_input'])(
   'does not claim a booking or notify the customer when RPC returns %s', async status => {
     mockRpc.mockResolvedValue({ data: { status }, error: null });
     const result = await executeTool('create_reservation', input, session, context);

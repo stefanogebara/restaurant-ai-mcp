@@ -537,6 +537,7 @@ describe('Portal: availability from the booking rule', () => {
   test('ok is available with its seats, unavailable and party_too_large are shown taken, the rest is left out', async () => {
     mockStatusAt = answerAt({
       '12:00': { status: 'past_slot' },
+      '18:30': { status: 'too_soon' },
       '19:00': { status: 'ok', seats_available: 6 },
       '19:30': { status: 'unavailable', seats_available: 1 },
       '20:00': { status: 'party_too_large' },
@@ -556,6 +557,7 @@ describe('Portal: availability from the booking rule', () => {
   test.each([
     ['a closed day', { '12:00': { status: 'outside_hours' } }, /closed on this day/],
     ['a day whose times have all passed', { '12:00': { status: 'past_slot' } }, /No times left on this day/],
+    ['a day whose last times are less than an hour away', { '12:00': { status: 'too_soon' } }, /No times left on this day/],
     ['a date past the booking window', { '12:00': { status: 'too_far' } }, /up to 10 days in advance/],
   ])('%s is an empty list with a message', async (_, byTime, message) => {
     mockStatusAt = answerAt(byTime);
@@ -746,6 +748,7 @@ describe('Portal: reserve - locked booking function', () => {
 
   test.each([
     ['too_late', /after the last seating/],
+    ['too_soon', /at least 1 hour in advance/],
     ['outside_hours', /does not take bookings at that time/],
     ['past_slot', /already passed/],
     ['too_far', /up to 60 days/],
@@ -759,6 +762,16 @@ describe('Portal: reserve - locked booking function', () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false, message: expect.stringMatching(message) }));
+  });
+
+  test('the hour of notice is left to the booking rule, not the JavaScript validator', async () => {
+    setupPreChecksPass();
+    mockBookGuestReservation.mockResolvedValueOnce({ success: false, status: 'too_soon', data: { status: 'too_soon' } });
+    const { req, res } = createMockReqRes({ method: 'POST', body: BODY });
+    await handler(req, res);
+    const { validateReservation } = require('../_lib/reservation-validator');
+    expect(validateReservation).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ min_advance_hours: 0 }));
+    expect(res.status).toHaveBeenCalledWith(400);
   });
 
   test('a restaurant that went inactive meanwhile is a 404', async () => {

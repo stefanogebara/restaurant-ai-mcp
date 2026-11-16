@@ -292,7 +292,7 @@ describe('the locked booking function decides the last seats and tables', () => 
 
   test.each([
     ['too_far', 'TOO_FAR'], ['outside_hours', 'CLOSED'], ['too_late', 'TOO_LATE'],
-    ['past_slot', 'PAST_DATE'], ['party_too_large', 'PARTY_TOO_LARGE'],
+    ['past_slot', 'PAST_DATE'], ['party_too_large', 'PARTY_TOO_LARGE'], ['too_soon', 'TOO_SOON'],
   ])('a %s refusal from the function is spoken as %s', async (status, code) => {
     mockBookGuestReservation.mockResolvedValueOnce({ success: false, status, data: { status } });
     const result = await createReservation('sandbox-restaurant', restaurant, details);
@@ -300,6 +300,14 @@ describe('the locked booking function decides the last seats and tables', () => 
     // A date refusal names today, so an agent that guessed the year can fix it.
     if (code === 'PAST_DATE' || code === 'TOO_FAR') expect(result.message).toMatch(/Today at the restaurant is \w+day, \d{4}-\d{2}-\d{2}/);
     else expect(result.message).not.toMatch(/Today at the restaurant/);
+  });
+
+  test('the hour of notice is left to the booking rule, not the JavaScript validator', async () => {
+    mockBookGuestReservation.mockResolvedValueOnce({ success: false, status: 'too_soon', data: { status: 'too_soon' } });
+    const { validateReservation } = require('../_lib/reservation-validator');
+    const result = await createReservation('sandbox-restaurant', restaurant, details);
+    expect(validateReservation).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ min_advance_hours: 0 }));
+    expect(result.message).toMatch(/at least 1 hour in advance/);
   });
 
   test('a database error is a generic failure, never a confirmation', async () => {
