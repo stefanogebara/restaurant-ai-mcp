@@ -320,6 +320,24 @@ continua `DISCUTIR`.
 
 ---
 
+**Absorvido em 2026-11-16 — a doc-mãe da Meta mudou de tempo verbal, mas ainda sem número em
+BRL.** Reabri `developers.facebook.com/documentation/business-messaging/whatsapp/pricing` hoje.
+Pela primeira vez desde que este item existe, a página **não repete** "Meta will announce...
+by September 1, 2026" — essa frase desapareceu. No lugar, o texto agora afirma a vigência como
+fato consumado: *"This only applies to service messages, as of 12am by Messaging account
+timezone on October 1, 2026"*, e a cobrança de service message é descrita como "Fixed, per
+published rates", com link para rate card em CSV/PDF por mercado. **O que isso prova:** a Meta
+cumpriu o prazo de vigência (01/10 passou e a cobrança está ativa, confirmado pelo texto no
+tempo presente, não mais promessa). **O que isso NÃO prova:** o valor exato para o Brasil —
+os arquivos de rate card não são renderizados como HTML na página e não foram abertos nesta
+passada (não achei a URL direta do CSV; tentativa de adivinhar a URL deu 404). Continua valendo
+a mesma ação pendente das rodadas anteriores: abrir o CSV/PDF de rate card linkado na própria
+doc da Meta (não adivinhar a URL — navegar a partir da página) para extrair o valor BRL exato.
+Score mantido em 10 — a pergunta de negócio (quanto custa, e o roteamento por `whatsapp_provider`
+antes de decidir o canal) continua sem resposta numérica, só menos incerta sobre o "quando".
+
+---
+
 ## Fila de trabalho
 
 Promovido em 2026-10-12:
@@ -382,6 +400,36 @@ Promovidos em 2026-08-24, os quatro com âncora verificada:
 
 ## Radar
 
+- `2026-11-16` **Terceiro agregador brasileiro lança copiloto de gestão grátis via WhatsApp: a 99
+  lança o Zesto** (SaaS de gestão/CRM/marketing com assistente de IA que monta pedido e cardápio
+  no WhatsApp, 90 funcionalidades, já integrado aos ecossistemas 99/iFood, 1.000+ restaurantes
+  ativos) — sem reserva de mesa, sem voz, números de cliente autodeclarados. Mesmo padrão do
+  Toqan (iFood) já registrado: agregador grande oferecendo de graça o que o Seatable cobra, mas
+  no segmento de pedido/cardápio, não reserva+voz+CRM de hóspede. [Mobile Time](https://www.mobiletime.com.br/noticias/14/10/2026/99-lanca-zesto-gestao/) · 5/15
+- `2026-11-16` **SevenRooms anuncia Voice AI nativo (sem citar fornecedor — confirmado que NÃO é
+  ElevenLabs, ao contrário do que a cobertura secundária sugeria)** — os números reais na própria
+  página são de um único cliente (Casper Hospitality, 4 unidades nos EUA): 3.800 chamadas, 850
+  couverts, US$28k de GMV — bem mais modestos que a cifra de "400 mil ligações/600+ restaurantes"
+  que circulou em cobertura terceira e que não se confirma na fonte primária. [SevenRooms](https://sevenrooms.com/platform/VoiceAI/) · 5/15
+- `2026-11-16` **Sharpi (Brasil) capta US$4M seed (NXTP/ONEVC, anjos Stone/iFood) para transformar
+  conversa de WhatsApp de vendedor B2B em pedido de ERP (SAP/Totvs/Sankhya)** — não é restaurante
+  nem CRM de hóspede, é automação de pedido B2B genérica; vale como mais um data point de capital
+  brasileiro apostando em "WhatsApp + IA estrutura dado" como padrão de mercado, reforço indireto
+  da `bets[0]`. [Dealroom](https://dealroom.co/news/147631-sharpi-raises-4m-seed-to-turn-whatsapp-chats-into-erp-orders/) · 5/15
+- `2026-11-16` **PAR Technology (Punchh) lança Guest360, CDP que promete unificar dado de cliente
+  entre drive-thru/kiosk/app** — não consegui abrir a fonte primária (403 em duas tentativas,
+  QSR Magazine e Business Wire); G1 fraco, score travado em REGISTRAR independente do conteúdo.
+  Já havia um PAR Technology DESCARTAR anterior (conference call, score 3) — este é lançamento de
+  produto nomeado, vale reabrir se a fonte ficar acessível numa próxima passada. · 5/15, travado
+- `2026-11-16` **Vercel marca Cron Jobs como "legacy feature" nos docs** (limite sobe de 40 para
+  100 crons/projeto no Pro, mesmo billing de invocations, migração futura não especificada) —
+  toca direto a regra crítica do `CLAUDE.md` sobre crons/invocations serem o que custa; vale
+  revisitar quando a Vercel anunciar o que vem depois de "legacy". [Vercel docs](https://vercel.com/docs/cron-jobs/usage-and-pricing) · 6/15
+- `2026-11-16` **Square Managerbot e Thanx RecoveryAI** — dois concorrentes adjacentes (PDV e
+  CRM/loyalty) lançando agente proativo de operação; não consegui abrir nenhuma das duas fontes
+  primárias (429 e 402 respectivamente) — G1 fraco, score travado em REGISTRAR. Ambos ecoam o
+  padrão já registrado no item "agregador virou copiloto" (Delivery Hero, `DISCUTIR`) — candidatos
+  a fundir com aquele item numa próxima passada, se a fonte abrir. · 5/15, travado
 - `2026-11-09` **Fly.io sobe RAM de Machines de ~US$5 para US$6/GB-mês em 1º/out/2026** (CPU,
   volumes e egress sem mudança; confirmado em docs.fly.io/about/pricing e fly.io/pricing.md) —
   impacto real no `seatable-voice` (1 Machine always-on, 512MB, `fly.toml`) é de centavos/mês,
