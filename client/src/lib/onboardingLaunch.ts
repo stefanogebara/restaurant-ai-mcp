@@ -95,3 +95,16 @@ export async function readLaunchResponse(
     },
   };
 }
+
+/**
+ * The last booking code the receptionist said in the test call, e.g.
+ * "RES-20261116-H-zB-VQKj-FS", so the final screen can name it.
+ */
+export function bookingCodeFrom(transcript: Array<{ role: 'user' | 'agent'; text: string }>): string | null {
+  for (let i = transcript.length - 1; i >= 0; i -= 1) {
+    if (transcript[i].role !== 'agent') continue;
+    const match = /\bRES-\d{8}-[A-Za-z0-9_-]{4,}/.exec(transcript[i].text);
+    if (match) return match[0].replace(/-+$/, '');
+  }
+  return null;
+}

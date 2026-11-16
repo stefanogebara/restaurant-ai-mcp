@@ -205,12 +205,19 @@ describe('payload de criação do agente ElevenLabs', () => {
     expect(body.conversation_config.tts.model_id).toBe('eleven_flash_v2_5');
     expect(body.conversation_config.tts.voice_id).toBe(ARGS.voice_id);
     expect(body.conversation_config.conversation.turn_timeout).toBe(8);
+    // 'audio' + 'interruption': without them a browser call is silent (2026-11-16).
     expect(body.conversation_config.conversation.client_events).toEqual([
+      'audio',
+      'interruption',
       'agent_response',
       'agent_response_correction',
       'user_transcript',
       'internal_tentative_agent_response',
     ]);
+    // The prompt tells her to use end_call; the tool has to exist.
+    expect(body.conversation_config.agent.prompt.built_in_tools).toEqual({
+      end_call: { type: 'system', name: 'end_call', description: '', params: { system_tool_type: 'end_call' } },
+    });
     expect(body.conversation_config.asr).toEqual({ quality: 'high', provider: 'elevenlabs' });
   });
 

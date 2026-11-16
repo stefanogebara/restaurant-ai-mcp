@@ -31,6 +31,9 @@ const en = {
   callError: 'The call did not connect. Check the microphone permission and try again.',
   bookingLink: 'Your booking link', copyLink: 'Copy', copied: 'Copied',
   qrAlt: 'QR code for your booking link', qrHint: 'Print it for the tables or the window.', downloadQr: 'Download QR',
+  callEnded: 'Call ended.', afterCallBooked: 'Booking {{code}} is already on your dashboard.',
+  afterCallNext: 'Next: your dashboard, with your bookings and tables.',
+  continueIn: 'Opening your dashboard in {{n}} s.', stayHere: 'Stay here',
 };
 type Copy = Record<keyof typeof en, string>;
 const pt: Copy = {
@@ -66,6 +69,9 @@ const pt: Copy = {
   callError: 'A ligação não conectou. Confira a permissão do microfone e tente de novo.',
   bookingLink: 'Seu link de reservas', copyLink: 'Copiar', copied: 'Copiado',
   qrAlt: 'QR code do seu link de reservas', qrHint: 'Imprima para as mesas ou para a vitrine.', downloadQr: 'Baixar QR',
+  callEnded: 'Ligação encerrada.', afterCallBooked: 'A reserva {{code}} já está no seu painel.',
+  afterCallNext: 'Próximo passo: o seu painel, com as reservas e as mesas.',
+  continueIn: 'Abrindo o painel em {{n}} s.', stayHere: 'Ficar aqui',
 };
 const es: Copy = {
   optional: 'opcional', essentialDetails: 'Introduce los datos esenciales del restaurante para continuar.',
@@ -100,6 +106,9 @@ const es: Copy = {
   callError: 'La llamada no se conectó. Revisa el permiso del micrófono e inténtalo de nuevo.',
   bookingLink: 'Tu enlace de reservas', copyLink: 'Copiar', copied: 'Copiado',
   qrAlt: 'Código QR de tu enlace de reservas', qrHint: 'Imprímelo para las mesas o el escaparate.', downloadQr: 'Descargar QR',
+  callEnded: 'Llamada terminada.', afterCallBooked: 'La reserva {{code}} ya está en tu panel.',
+  afterCallNext: 'Siguiente paso: tu panel, con las reservas y las mesas.',
+  continueIn: 'Abriendo el panel en {{n}} s.', stayHere: 'Quedarme aquí',
 };
 export function getSheetCopy(language = 'en'): Copy {
   return language.startsWith('pt') ? pt : language.startsWith('es') ? es : en;

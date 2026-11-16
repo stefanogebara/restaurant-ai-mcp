@@ -1,9 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getSheetCopy } from './sheetCopy';
 import LaunchStepList from './LaunchSteps';
 import TalkToReceptionist from './TalkToReceptionist';
 import BookingLinkCard from './BookingLinkCard';
+import ThiingsIcon from '../../common/ThiingsIcon';
 import { LAUNCH_STEPS, type LaunchSteps } from '../../../lib/onboardingLaunch';
 
 export interface SheetCompletionProps {
@@ -14,7 +15,12 @@ export interface SheetCompletionProps {
   /** The new voice agent, only when the server said it is ok. */
   agentId?: string | null;
   restaurantName?: string | null;
+  /** Leaves the onboarding; injectable for tests. */
+  goTo?: (url: string) => void;
 }
+
+const DASHBOARD = '/host-dashboard/simple?launch=1';
+const CONTINUE_AFTER_CALL_SECONDS = 8;
 
 /**
  * The end of the onboarding sheet. Three things, in the order an owner wants
@@ -24,7 +30,10 @@ export interface SheetCompletionProps {
  * The results list is the SAME list the progress screen showed, so the rows
  * stay where they were while the heading changes from "Setting up" to "live".
  */
-export default function SheetCompletion({ setup, bookingUrl, steps = {}, agentId = null, restaurantName = null }: SheetCompletionProps) {
+export default function SheetCompletion({
+  setup, bookingUrl, steps = {}, agentId = null, restaurantName = null,
+  goTo = (url) => window.location.assign(url),
+}: SheetCompletionProps) {
   const { t, i18n } = useTranslation();
   const copy = getSheetCopy(i18n.language);
   const heading = useRef<HTMLHeadingElement>(null);
@@ -34,6 +43,23 @@ export default function SheetCompletion({ setup, bookingUrl, steps = {}, agentId
   const name = restaurantName?.trim();
   const anyOpen = LAUNCH_STEPS.some((key) => setup?.[key] !== 'ok');
   const enter = 'motion-safe:animate-fade-in-up';
+
+  // After the test call the onboarding moves on: a short summary, then the
+  // dashboard (where her booking already is) unless the owner stays.
+  const [afterCall, setAfterCall] = useState<{ bookingCode: string | null } | null>(null);
+  const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
+  const goToRef = useRef(goTo);
+  goToRef.current = goTo;
+  useEffect(() => {
+    if (secondsLeft === null) return;
+    if (secondsLeft <= 0) { goToRef.current(DASHBOARD); return; }
+    const timer = window.setTimeout(() => setSecondsLeft(secondsLeft - 1), 1000);
+    return () => window.clearTimeout(timer);
+  }, [secondsLeft]);
+  function callEnded(result: { bookingCode: string | null }) {
+    setAfterCall(result);
+    setSecondsLeft(CONTINUE_AFTER_CALL_SECONDS);
+  }
 
   return (
     <main className="mx-auto w-full max-w-[620px] px-6 pt-16 pb-24 text-deep-charcoal">
@@ -51,8 +77,33 @@ export default function SheetCompletion({ setup, bookingUrl, steps = {}, agentId
 
       {live && agentId && (
         <div className={enter} style={{ animationFillMode: 'both' }}>
-          <TalkToReceptionist agentId={agentId} copy={copy} />
+          <TalkToReceptionist agentId={agentId} copy={copy} onEnded={callEnded} />
         </div>
+      )}
+
+      {afterCall && (
+        <section role="status" data-testid="after-call" className={`mt-6 ${enter}`}>
+          <p className="flex items-center gap-2 text-[17px] text-deep-charcoal">
+            <ThiingsIcon name="check-circle" pxSize={20} className="text-emerald-600" />
+            {afterCall.bookingCode ? copy.afterCallBooked.replace('{{code}}', afterCall.bookingCode) : copy.callEnded}
+          </p>
+          <p className="mt-1 text-[15px] text-muted-stone">{copy.afterCallNext}</p>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <button type="button" onClick={() => goTo(DASHBOARD)}
+              className="inline-flex min-h-11 items-center justify-center rounded-full bg-burgundy px-6 py-3 text-[15px] font-medium text-white hover:bg-burgundy-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-burgundy/60 focus-visible:ring-offset-2">
+              {t('onboarding.goToDashboard', 'Go to Dashboard')}
+            </button>
+            {secondsLeft !== null && (
+              <>
+                <span className="text-[14px] text-muted-stone">{copy.continueIn.replace('{{n}}', String(secondsLeft))}</span>
+                <button type="button" onClick={() => setSecondsLeft(null)}
+                  className="text-[14px] text-muted-stone underline underline-offset-2 hover:text-deep-charcoal">
+                  {copy.stayHere}
+                </button>
+              </>
+            )}
+          </div>
+        </section>
       )}
 
       {bookingUrl && (
