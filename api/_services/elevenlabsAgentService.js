@@ -12,6 +12,7 @@
 const crypto = require('node:crypto');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { CLIENT_EVENTS, END_CALL_TOOL } = require('../_lib/elevenlabs-call-setup');
+const { AGENT_TTS_MODEL } = require('../_lib/elevenlabs-voice-config');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { postCallWebhookOverrides } = require('../_lib/elevenlabs-post-call-config');
 const { buildPersonaPrompt } = require('../_lib/persona-prompt-builder');
@@ -907,7 +908,8 @@ async function createAgent({
             first_message: firstMessage,
             language,
           },
-          tts: { voice_id, model_id: language === 'en' ? 'eleven_flash_v2' : 'eleven_flash_v2_5' },
+          // One model for every language (see AGENT_TTS_MODEL in elevenlabs-voice-config).
+          tts: { voice_id, model_id: AGENT_TTS_MODEL },
           conversation: {
             turn_timeout: 8,
             // 'audio' is what a browser call plays; without it the owner's test call was silent.
