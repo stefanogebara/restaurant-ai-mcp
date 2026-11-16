@@ -11,7 +11,7 @@ jest.mock('../_lib/supabase', () => ({ supabaseAdmin: {} }));
 jest.mock('../_lib/secure-logger', () => ({ createSecureLogger: () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn() }) }));
 
 const { buildToolDefinitions } = require('../_services/elevenlabsAgentService');
-const { planToolSync, syncAgentTools, GUEST_TOOLS } = require('../_lib/elevenlabs-tool-sync');
+const { planToolSync, syncAgentTools } = require('../_lib/elevenlabs-tool-sync');
 
 const BASE = 'https://seatable.one';
 const config = { id: '152dc287-46e6-4139-b8eb-12d1877b121f', restaurant_name: 'Osteria del Sole', elevenlabs_webhook_secret: 'el_whsec_test_secret' };
@@ -64,8 +64,27 @@ describe('planToolSync', () => {
     expect(planToolSync({ ...config, elevenlabs_webhook_secret: null }, [], buildToolDefinitions, BASE).status).toBe('invalid');
   });
 
-  test('only the three guest tools are considered', () => {
-    expect(GUEST_TOOLS).toEqual(['lookup_reservation', 'cancel_reservation', 'modify_reservation']);
+  // 2026-11-16: OGURU Sushi & Bar and Braz Pizzaria (live restaurants) had
+  // check_availability, create_reservation and get_wait_time pointing at
+  // preview deployments that Vercel had deleted (HTTP 410). The sync compared
+  // only the three guest tools, so the report said "Em dia".
+  test('every tool is compared: a booking tool on a deleted preview is outdated and fixed to seatable.one', () => {
+    const dead = 'https://restaurant-ai-lyo3jhqqd-stefanogebaras-projects.vercel.app';
+    const onPreview = current.map(t => (['check_availability', 'create_reservation', 'get_wait_time'].includes(t.name)
+      ? { ...t, api_schema: { ...t.api_schema, url: t.api_schema.url.replace(BASE, dead) } } : t));
+    const plan = planToolSync(config, onPreview.map((t, i) => ({ id: `t${i}`, tool_config: t })), buildToolDefinitions, BASE);
+    expect(plan.status).toBe('outdated');
+    expect(plan.reasons.sort()).toEqual(['check_availability outdated', 'create_reservation outdated', 'get_wait_time outdated']);
+    for (const change of plan.changes) {
+      expect(change.config.api_schema.url.startsWith(`${BASE}/api/`)).toBe(true);
+      expect(change.config.api_schema.url).toContain(`restaurant_id=${config.id}`);
+      expect(change.config.api_schema.request_headers).toEqual({ Authorization: 'Bearer el_whsec_test_secret' });
+    }
+  });
+
+  test('all seven current tools are part of the comparison', () => {
+    const missingDatetime = current.filter(t => t.name !== 'get_current_datetime').map((t, i) => ({ id: `t${i}`, tool_config: t }));
+    expect(planToolSync(config, missingDatetime, buildToolDefinitions, BASE)).toMatchObject({ status: 'invalid', reasons: ['get_current_datetime missing'] });
   });
 });
 
