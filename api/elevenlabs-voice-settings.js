@@ -60,7 +60,8 @@ module.exports = async (req, res) => {
   // way to replay a database language change to the agent (2026-11-12).
   const adminAction = String(req.query?.action || '');
   if (['admin_language_report', 'admin_language_sync', 'admin_tools_report', 'admin_tools_sync',
-    'admin_tools_orphans', 'admin_tools_orphans_delete'].includes(adminAction)) {
+    'admin_tools_orphans', 'admin_tools_orphans_delete',
+    'admin_agents_orphans', 'admin_agents_orphans_delete'].includes(adminAction)) {
     return handleAdminLanguage(req, res, adminAction);
   }
 
@@ -241,6 +242,9 @@ async function handleAdminLanguage(req, res, action) {
   if (action === 'admin_tools_orphans' || action === 'admin_tools_orphans_delete') {
     return handleAdminOrphanTools(req, res, action, { key });
   }
+  if (action === 'admin_agents_orphans' || action === 'admin_agents_orphans_delete') {
+    return handleAdminOrphanAgents(req, res, action, { key });
+  }
   if (action === 'admin_tools_report' || action === 'admin_tools_sync') {
     return handleAdminTools(req, res, action, { key, configs, fetchAgent });
   }
@@ -382,6 +386,60 @@ async function handleAdminOrphanTools(req, res, action, { key }) {
   }
   logger.info('[VoiceSettings] admin orphan tools delete', { bucket, ...summary });
   return res.status(200).json({ success: true, summary, results });
+}
+
+// Old agents of restaurants that no longer exist (2026-11-16). GET
+// admin_agents_orphans?cursor=: read-only classification of one page of
+// agents (20). POST admin_agents_orphans_delete { agent_ids } (at most 5):
+// each agent is re-checked on the server and deleted without force
+// (api/_lib/elevenlabs-agent-cleanup.js). Only agent names and buckets are
+// returned.
+const ORPHAN_AGENT_BATCH = 5;
+
+async function handleAdminOrphanAgents(req, res, action, { key }) {
+  const cleanup = require('./_lib/elevenlabs-agent-cleanup');
+  const { data: rows, error } = await supabaseAdmin.schema('restaurant').from('restaurant_config').select('id, elevenlabs_agent_id');
+  if (error || !Array.isArray(rows)) return res.status(500).json({ success: false, error: 'Database error' });
+  const base = {
+    key,
+    fetchImpl: fetch,
+    now: Date.now(),
+    existingIds: new Set(rows.map(row => row.id)),
+    linkedIds: new Set(rows.map(row => row.elevenlabs_agent_id).filter(Boolean)),
+    envIds: cleanup.appSettingAgentIds(),
+  };
+
+  try {
+    base.phoneIds = await cleanup.phoneAgentIds(key);
+    if (action === 'admin_agents_orphans') {
+      if (req.method !== 'GET') return res.status(405).json({ success: false, error: 'Use GET' });
+      const cursor = typeof req.query?.cursor === 'string' ? req.query.cursor.slice(0, 500) : '';
+      const page = await cleanup.listAgentsPage(key, cursor);
+      const out = [];
+      for (let i = 0; i < page.agents.length; i += 2) {
+        out.push(...await Promise.all(page.agents.slice(i, i + 2).map(async agent => {
+          const verdict = cleanup.classifyAgent(agent, await cleanup.toolsUsedBy(agent.agent_id, key), base);
+          return { agent_id: agent.agent_id, name: agent.name, bucket: verdict.bucket, reason: verdict.reason || null,
+            missing_restaurants: verdict.restaurantIds ? verdict.restaurantIds.length : 0 };
+        })));
+      }
+      return res.status(200).json({ success: true, rows: out, next_cursor: page.next_cursor });
+    }
+
+    if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Use POST' });
+    const ids = Array.isArray(req.body?.agent_ids) ? [...new Set(req.body.agent_ids.map(String))] : [];
+    if (!ids.length || ids.length > ORPHAN_AGENT_BATCH) {
+      return res.status(400).json({ success: false, error: `send 1 to ${ORPHAN_AGENT_BATCH} agent_ids` });
+    }
+    const results = [];
+    for (const id of ids) results.push(await cleanup.cleanupAgent(id, base));
+    const summary = results.reduce((acc, r) => { acc[r.outcome] = (acc[r.outcome] || 0) + 1; return acc; }, {});
+    logger.info('[VoiceSettings] admin orphan agents delete', summary);
+    return res.status(200).json({ success: true, summary, results });
+  } catch (cleanupError) {
+    logger.error('[VoiceSettings] admin orphan agents failed:', cleanupError.message);
+    return res.status(502).json({ success: false, error: cleanupError.message });
+  }
 }
 
 /**

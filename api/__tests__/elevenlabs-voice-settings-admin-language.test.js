@@ -86,7 +86,8 @@ afterEach(() => { delete global.fetch; });
 test('someone other than the founder is refused before any provider call', async () => {
   mockAuth.mockResolvedValue({ user: { email: 'owner@example.test', restaurant_id: OSTERIA } });
   for (const [method, action] of [['GET', 'admin_language_report'], ['POST', 'admin_language_sync'], ['GET', 'admin_tools_report'], ['POST', 'admin_tools_sync'],
-    ['GET', 'admin_tools_orphans'], ['POST', 'admin_tools_orphans_delete']]) {
+    ['GET', 'admin_tools_orphans'], ['POST', 'admin_tools_orphans_delete'],
+    ['GET', 'admin_agents_orphans'], ['POST', 'admin_agents_orphans_delete']]) {
     const res = await call(method, { action, restaurant_id: OSTERIA });
     expect(res.statusCode).toBe(403);
   }
@@ -248,5 +249,58 @@ describe('leftover tools actions', () => {
     expect((await callBody('POST', { action: 'admin_tools_orphans' })).statusCode).toBe(405);
     expect((await callBody('GET', { action: 'admin_tools_orphans_delete' })).statusCode).toBe(405);
     expect(store.size).toBe(4);
+  });
+});
+
+
+describe('old agents actions', () => {
+  const GONE = 'bbbbbbbb-2222-4222-8222-222222222222';
+  const tool = rid => ({ id: `t_${rid}`, tool_config: { type: 'webhook', name: 'x', api_schema: { url: `https://seatable.one/api/elevenlabs-webhook?action=x&restaurant_id=${rid}` } } });
+  const callBody = async (method, query, body) => {
+    const res = { statusCode: 200, body: null, status(c) { this.statusCode = c; return this; }, json(b) { this.body = b; return this; }, setHeader() {}, end() { return this; } };
+    await handler({ method, query, headers: {}, body }, res);
+    return res;
+  };
+  let agentsStore;
+  beforeEach(() => {
+    agentsStore = new Map([
+      ['agent_orphan1', { agent_id: 'agent_orphan1', name: 'Link Test AI Host', tools: [tool(GONE)] }],
+      ['agent_osteria_0001', { agent_id: 'agent_osteria_0001', name: 'Osteria del Sole AI Host', tools: [tool(OSTERIA)] }],
+      ['agent_orch', { agent_id: 'agent_orch', name: 'Seatable Orchestrator v2', tools: [tool(GONE)] }],
+    ]);
+    global.fetch = jest.fn(async (url, init = {}) => {
+      const method = init.method || 'GET';
+      const path = url.replace('https://api.elevenlabs.io/v1/convai', '');
+      if (path.startsWith('/phone-numbers')) return { ok: true, status: 200, json: async () => [] };
+      if (path.startsWith('/agents?')) return { ok: true, status: 200, json: async () => ({ agents: [...agentsStore.values()].map(({ tools, ...a }) => a), has_more: false }) };
+      if (path.startsWith('/tools?')) { const id = new URL(url).searchParams.get('used_by_agent_id'); return { ok: true, status: 200, json: async () => ({ tools: agentsStore.get(id)?.tools || [], has_more: false }) }; }
+      if (path.startsWith('/conversations?')) return { ok: true, status: 200, json: async () => ({ conversations: [], has_more: false }) };
+      const id = path.split('/agents/')[1];
+      if (id && method === 'GET') return agentsStore.has(id) ? { ok: true, status: 200, json: async () => agentsStore.get(id) } : { ok: false, status: 404, json: async () => ({}) };
+      if (id && method === 'DELETE') { agentsStore.delete(id); return { ok: true, status: 200, text: async () => '' }; }
+      return { ok: false, status: 500, json: async () => ({}) };
+    });
+  });
+
+  test('classification is read-only and keeps the linked and the named agents', async () => {
+    const res = await callBody('GET', { action: 'admin_agents_orphans' });
+    expect(res.statusCode).toBe(200);
+    expect(Object.fromEntries(res.body.rows.map(r => [r.name, r.bucket]))).toEqual({
+      'Link Test AI Host': 'orphan', 'Osteria del Sole AI Host': 'kept_linked', 'Seatable Orchestrator v2': 'kept_named' });
+    expect(global.fetch.mock.calls.every(([, init]) => !init?.method || init.method === 'GET')).toBe(true);
+  });
+
+  test('delete re-checks: only the orphan goes, the others are kept', async () => {
+    const res = await callBody('POST', { action: 'admin_agents_orphans_delete' }, { agent_ids: ['agent_orphan1', 'agent_osteria_0001', 'agent_orch'] });
+    expect(res.body.summary).toEqual({ deleted: 1, kept: 2 });
+    expect([...agentsStore.keys()].sort()).toEqual(['agent_orch', 'agent_osteria_0001']);
+    expect(global.fetch.mock.calls.some(([url]) => url.includes('force'))).toBe(false);
+  });
+
+  test('batches above 5 and wrong methods are refused', async () => {
+    const many = Array.from({ length: 6 }, (_, i) => `agent_${i}`);
+    expect((await callBody('POST', { action: 'admin_agents_orphans_delete' }, { agent_ids: many })).statusCode).toBe(400);
+    expect((await callBody('POST', { action: 'admin_agents_orphans' })).statusCode).toBe(405);
+    expect(agentsStore.size).toBe(3);
   });
 });
