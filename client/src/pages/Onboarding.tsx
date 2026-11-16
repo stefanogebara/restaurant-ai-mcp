@@ -25,6 +25,9 @@ import Step3TablesAndSettings from '../components/onboarding/Step3TablesAndSetti
 import Step4Review from '../components/onboarding/Step4Review';
 import Step5ImportHistory from '../components/onboarding/Step5ImportHistory';
 import SheetCompletion from '../components/onboarding/folha/SheetCompletion';
+import LaunchProgress from '../components/onboarding/folha/LaunchProgress';
+import FindOnGoogle from '../components/onboarding/folha/FindOnGoogle';
+import { readLaunchResponse, type LaunchSteps } from '../lib/onboardingLaunch';
 import { FolhaDeConfirmacao } from '../components/onboarding/folha/FolhaDeConfirmacao';
 import { ORDEM_PADRAO } from '../lib/personaProposta';
 import OnboardingSuccessModal from '../components/onboarding/OnboardingSuccessModal';
@@ -44,6 +47,9 @@ interface SheetReceipt {
   restaurantId: string;
   bookingUrl: string | null;
   setup: Record<string, string> | null;
+  /** The new voice agent, so a reload still offers the test call. */
+  agentId?: string | null;
+  name?: string | null;
 }
 
 function readSheetReceipt(key: string): SheetReceipt | null {
@@ -54,6 +60,8 @@ function readSheetReceipt(key: string): SheetReceipt | null {
       restaurantId: receipt.restaurantId,
       bookingUrl: typeof receipt.bookingUrl === 'string' && receipt.bookingUrl.startsWith('https://seatable.one/book/') ? receipt.bookingUrl : null,
       setup: receipt.setup && typeof receipt.setup === 'object' && !Array.isArray(receipt.setup) ? receipt.setup : null,
+      agentId: typeof receipt.agentId === 'string' && /^agent_[A-Za-z0-9]{1,80}$/.test(receipt.agentId) ? receipt.agentId : null,
+      name: typeof receipt.name === 'string' ? receipt.name.slice(0, 200) : null,
     };
   } catch { return null; }
 }
@@ -82,6 +90,11 @@ export default function Onboarding() {
   const [countdown, setCountdown] = useState(5);
   const [ownReferral, setOwnReferral] = useState<{ code: string; url: string } | null>(null);
   const [bookingUrl, setBookingUrl] = useState<string | null>(savedReceipt?.bookingUrl ?? null);
+  // Folha: o progresso real da criação (um evento por etapa) e o que a tela
+  // final precisa para a ligação de teste.
+  const [launchSteps, setLaunchSteps] = useState<LaunchSteps>({});
+  const [voiceAgentId, setVoiceAgentId] = useState<string | null>(savedReceipt?.agentId ?? null);
+  const [completedName, setCompletedName] = useState<string | null>(savedReceipt?.name ?? null);
   // If the server tells us *which* field is bad we can offer a one-click jump
   // back to the step that owns it instead of making the owner hunt for it.
   const [submitErrorJumpStep, setSubmitErrorJumpStep] = useState<number | null>(null);
@@ -215,8 +228,14 @@ export default function Onboarding() {
   // no Google presence can proceed.
   const [step0Done, setStep0Done] = useState(restored.step > 1);
   const [hasPrefillFromScrape, setHasPrefillFromScrape] = useState(false);
+  // Na folha, a busca no Google vem primeiro — exceto para quem veio do demo
+  // (o token decide já no primeiro render, sem piscar a busca antes do prefill).
+  const [pendingDemoAtMount] = useState(() => Boolean(localStorage.getItem(LS_PENDING_DEMO_TOKEN)));
+  // Foto e nota do Google para o topo da folha. Só exibição: não vai ao rascunho nem ao servidor.
+  const [googleCard, setGoogleCard] = useState<{ photoRef?: string | null; rating?: number | null; reviews?: number | null } | null>(null);
 
   function applyAndAdvancePastStep0(scraped: ScrapedRestaurant) {
+    setGoogleCard({ photoRef: scraped.photo_ref ?? null, rating: scraped.rating ?? null, reviews: scraped.review_count ?? null });
     setOnboardingData((prev) => ({
       ...prev,
       ...applyScrapedData(scraped),
@@ -354,6 +373,7 @@ export default function Onboarding() {
   const completeOnboarding = async () => {
     if (isSubmitting || completedRef.current) return;
     setSubmitError(null);
+    setLaunchSteps({});
     setIsSubmitting(true);
     // Estágios otimistas cronometrados pelos tempos reais do backend (mesas
     // e config são rápidos; a recepcionista é uma chamada externa com teto de
@@ -369,7 +389,11 @@ export default function Onboarding() {
     try {
       const response = await authFetch('/api/onboarding/complete', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        // A folha pede o progresso ao vivo (um evento por etapa, ver
+        // lib/onboardingLaunch.ts); o formulário segue no JSON de sempre.
+        headers: modo === 'folha'
+          ? { 'Content-Type': 'application/json', Accept: 'text/event-stream' }
+          : { 'Content-Type': 'application/json' },
         // demo_token junto: o backend lê o conhecimento do demo (persona,
         // cardápio, insights, reviews, idioma) direto do banco e grava no
         // config novo. Só o TOKEN viaja pelo cliente — o payload em si é lido
@@ -384,9 +408,11 @@ export default function Onboarding() {
         }),
       });
 
-      const data = await response.json();
+      const { ok, data } = await readLaunchResponse(response, (key, step) => {
+        setLaunchSteps((prev) => ({ ...prev, [key]: step }));
+      });
 
-      if (!response.ok || data?.success !== true || !data.restaurant?.restaurant_id) {
+      if (!ok || data?.success !== true || !data.restaurant?.restaurant_id) {
         // Hand the structured response to parseOnboardingError so the user
         // gets a clean "Your phone number is required" instead of a
         // serialized "[object Object],[object Object]" or a raw Postgres
@@ -436,10 +462,15 @@ export default function Onboarding() {
         setBookingUrl(`https://seatable.one${data.restaurant.booking_url}`);
       }
       if (modo === 'folha') {
+        const agentId = typeof data.restaurant.voice_agent_id === 'string' ? data.restaurant.voice_agent_id : null;
+        setVoiceAgentId(agentId);
+        setCompletedName(onboardingData.restaurant_name || null);
         const receipt: SheetReceipt = {
           restaurantId: data.restaurant.restaurant_id,
           bookingUrl: data.restaurant.booking_url ? `https://seatable.one${data.restaurant.booking_url}` : null,
           setup: data.setup && typeof data.setup === 'object' ? data.setup : null,
+          agentId,
+          name: onboardingData.restaurant_name || null,
         };
         // A reload after a confirmed creation must show its receipt, never a second launch form.
         try { localStorage.setItem(receiptKey, JSON.stringify(receipt)); } catch { /* completion still works when storage is unavailable */ }
@@ -520,7 +551,27 @@ export default function Onboarding() {
   const progressPercent = (currentStep / TOTAL_STEPS) * 100;
 
   if (sheetCompleted) {
-    return <SheetCompletion setup={setupScorecard} bookingUrl={bookingUrl} />;
+    return (
+      <SheetCompletion setup={setupScorecard} bookingUrl={bookingUrl} steps={launchSteps}
+        agentId={voiceAgentId} restaurantName={completedName ?? onboardingData.restaurant_name} />
+    );
+  }
+
+  if (modo === 'folha' && isSubmitting) {
+    return <LaunchProgress name={onboardingData.restaurant_name} steps={launchSteps} />;
+  }
+
+  if (modo === 'folha' && !step0Done && !pendingDemoAtMount && !onboardingData.restaurant_name?.trim()) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        {showSubscribeBanner && (
+          <div className="bg-burgundy text-white text-[13px] text-center py-2.5 px-4">
+            {t('onboarding.subscribeBanner')}
+          </div>
+        )}
+        <FindOnGoogle onFound={applyAndAdvancePastStep0} onSkip={() => setStep0Done(true)} />
+      </div>
+    );
   }
 
   if (modo === 'folha') {
@@ -532,6 +583,7 @@ export default function Onboarding() {
           </div>
         )}
         <FolhaDeConfirmacao
+          google={googleCard}
           data={onboardingData}
           updateData={updateData}
           vibeTags={onboardingData.vibe_tags}

@@ -147,6 +147,35 @@ describe('Step0Search', () => {
     expect(screen.getByRole('button', { name: /Read website/i })).toBeInTheDocument();
   });
 
+  // The real endpoint answers "nothing found" as 404 + { results: [] }. Before
+  // 2026-11-16 that showed "No restaurants found" as an error and hid the
+  // website fallback, because the test above only covered a 200.
+  it('treats the endpoint\'s 404 "nothing found" as no match, with the website fallback', async () => {
+    fetchMock.mockResolvedValueOnce(notOk(404, { error: 'No restaurants found', results: [] }));
+    const user = userEvent.setup();
+    render(<Step0Search onPrefill={vi.fn()} onSkip={vi.fn()} />);
+    await user.type(screen.getByLabelText(/Restaurant name/i), 'Nonexistent Bistro');
+    await user.type(screen.getByLabelText(/City/i), 'São Paulo');
+    await user.click(screen.getByRole('button', { name: /Search Google Maps/i }));
+
+    expect(await screen.findByTestId('step0-no-match')).toBeInTheDocument();
+    expect(screen.queryByTestId('step0-search-error')).toBeNull();
+  });
+
+  it('shows the Google photo on a result card and can hide its own heading', async () => {
+    fetchMock.mockResolvedValueOnce(ok({ results: [{ name: 'Casa Azul', address: 'Rua A, 1', photo_ref: 'places/abc/photos/xyz' }] }));
+    const user = userEvent.setup();
+    const { container } = render(<Step0Search onPrefill={vi.fn()} onSkip={vi.fn()} showHeader={false} />);
+    expect(screen.queryByRole('heading')).toBeNull();
+    await user.type(screen.getByLabelText(/Restaurant name/i), 'Casa Azul');
+    await user.type(screen.getByLabelText(/City/i), 'Lisboa');
+    await user.click(screen.getByRole('button', { name: /Search Google Maps/i }));
+
+    await screen.findByTestId('step0-candidate-0');
+    expect(container.querySelector('img')?.getAttribute('src'))
+      .toBe('/api/places-photo?ref=places%2Fabc%2Fphotos%2Fxyz&maxWidth=240');
+  });
+
   it('website fallback hits /api/enrich-restaurant and prefills with name + website', async () => {
     fetchMock
       .mockResolvedValueOnce(ok({ results: [] }))           // first scrape: no hits

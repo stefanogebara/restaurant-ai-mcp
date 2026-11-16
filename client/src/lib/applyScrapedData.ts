@@ -41,6 +41,9 @@ export interface ScrapedRestaurant {
   website?: string | null;
   address?: string | null;
   review_count?: number | null;
+  /** Google rating and photo: shown on the sheet header, never saved. */
+  rating?: number | null;
+  photo_ref?: string | null;
   price_level?: string | number | null;
   business_hours?: Record<string, { open_time: string | null; close_time: string | null; is_open: boolean }> | null;
 }

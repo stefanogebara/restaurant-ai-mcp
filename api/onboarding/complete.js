@@ -124,6 +124,45 @@ async function generateUniqueSlug(name, supabaseClient) {
 // The 14-day trial outside Brazil is on Growth (Profissional), as documented.
 const TRIAL_PLAN = 'Growth';
 
+// Live setup progress (2026-11-16). A client that sends
+// `Accept: text/event-stream` gets one event per setup result as soon as that
+// result is known, so the onboarding screen shows what really happened instead
+// of timed guesses. The stream opens only AFTER the restaurant is saved: every
+// earlier refusal (bad input, 409, save failure) stays a JSON response with its
+// status code, exactly as without the header. Without the header nothing changes.
+function setupProgress(req, res) {
+  const wanted = String(req.headers?.accept || '').includes('text/event-stream');
+  const sent = new Set();
+  let open = false;
+  const write = (frame) => res.write(`data: ${JSON.stringify(frame)}\n\n`);
+  return {
+    get open() { return open; },
+    /** One event per key; a second call for the same key is ignored. */
+    step(key, status, detail = {}) {
+      if (!wanted || sent.has(key)) return;
+      if (!open) {
+        res.writeHead(200, {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache, no-transform',
+          Connection: 'keep-alive',
+        });
+        open = true;
+      }
+      sent.add(key);
+      write({ type: 'step', key, status, ...detail });
+    },
+    finish(body) {
+      if (!open) return res.status(200).json(body);
+      write({ type: 'done', ...body });
+      return res.end();
+    },
+    fail(message) {
+      write({ type: 'error', error: message });
+      return res.end();
+    },
+  };
+}
+
 module.exports = async (req, res) => {
   // Set CORS headers
   setInternalCors(req, res);
@@ -150,6 +189,7 @@ module.exports = async (req, res) => {
   // lançar antes do config ser salvo, o catch de fora apaga essas mesas
   // (15/11/2026: antes só a falha do próprio insert do config desfazia).
   let tablesAwaitingConfig = null;
+  const progress = setupProgress(req, res);
 
   try {
     // `let` (not `const`) for the 4 string fields below — we reassign them
@@ -941,6 +981,17 @@ module.exports = async (req, res) => {
       });
     }
 
+    // The restaurant exists from here on: the live progress stream may open.
+    // Its id and link travel in this first event, so a connection that drops
+    // later still lets the client show the finished restaurant, not a retry
+    // that would only hit the 409 above.
+    progress.step('restaurant', setupScorecard.restaurant, {
+      restaurant_id: configResult?.id || restaurantId,
+      booking_url: `/book/${restaurantSlug}`,
+      tables: tablesToInsert.length,
+      seats: tablesToInsert.reduce((sum, table) => sum + (Number(table.capacity) || 0), 0),
+    });
+    progress.step('whatsapp_registry', setupScorecard.whatsapp_registry);
 
     // Invalidate SEO city+cuisine cache so the page rebuilds with this restaurant included
     try {
@@ -1041,6 +1092,11 @@ module.exports = async (req, res) => {
 
         logger.info(' ElevenLabs agent created:', agentId);
         logger.info(' Agent URL: https://elevenlabs.io/app/conversational-ai/' + agentId);
+        // Reported before the knowledge sync, which can take up to 8 more seconds.
+        progress.step('voice_agent', setupScorecard.voice_agent, {
+          language: finalVoiceLanguage,
+          agent_id: setupScorecard.voice_agent === 'ok' ? agentId : null,
+        });
 
         // Step 4b: sync da base de conhecimento — AGUARDADO com teto de 8s.
         //
@@ -1082,6 +1138,9 @@ module.exports = async (req, res) => {
       setupScorecard.voice_agent = 'failed';
       logger.warn(' Continuing without agent creation');
     }
+    // Already sent on the success path (ignored then); this covers the failures.
+    progress.step('voice_agent', setupScorecard.voice_agent, { language: finalVoiceLanguage, agent_id: null });
+    progress.step('knowledge_base', setupScorecard.knowledge_base);
 
     // STEP 5: Create subscription (Brazil gets free plan; all others get 14-day Growth trial)
     logger.info(' Step 5: Creating subscription...');
@@ -1146,10 +1205,14 @@ module.exports = async (req, res) => {
       setupScorecard.subscription = 'failed';
       logger.warn(' Subscription creation error (non-fatal):', trialError.message);
     }
+    progress.step('subscription', setupScorecard.subscription, {
+      plan: isBrazil ? 'free' : 'trial',
+      trial_end: trialSubscription?.trial_end || null,
+    });
 
     logger.info(' Onboarding complete!');
 
-    return res.status(200).json({
+    return progress.finish({
       success: true,
       message: 'Onboarding completed successfully',
       restaurant: {
@@ -1161,7 +1224,10 @@ module.exports = async (req, res) => {
         tables_created: tablesToInsert.length,
         ai_config_saved: !!userId,
         trial_active: !!trialSubscription,
-        trial_end: trialSubscription?.trial_end || null
+        trial_end: trialSubscription?.trial_end || null,
+        // Lets the final screen open a browser call with THIS agent; the
+        // signed-URL endpoint answers 403 rather than another agent.
+        voice_agent_id: setupScorecard.voice_agent === 'ok' ? agentId : null,
       },
       // Placar honesto: o cliente decide o que dizer ao dono. "Bem-vindo a
       // bordo!" sobre um agente de voz que não existe é a pior forma de
@@ -1179,6 +1245,7 @@ module.exports = async (req, res) => {
         logger.warn(' Rollback failed (leaving orphaned tables):', rollbackErr.message);
       }
     }
+    if (progress.open) return progress.fail(error.message || 'Failed to complete onboarding');
     return res.status(500).json({
       error: 'Failed to complete onboarding',
       message: error.message,

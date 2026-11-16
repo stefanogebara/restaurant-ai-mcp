@@ -6,13 +6,11 @@ import type { ScrapedRestaurant } from '../../lib/applyScrapedData';
 interface Step0SearchProps {
   onPrefill: (scraped: ScrapedRestaurant) => void;
   onSkip: () => void;
+  /** The onboarding sheet shows its own serif heading above this step. */
+  showHeader?: boolean;
 }
 
 interface ScrapeResult extends ScrapedRestaurant {
-  address?: string | null;
-  rating?: number | null;
-  review_count?: number;
-  photo_ref?: string | null;
   google_maps_url?: string | null;
 }
 
@@ -31,7 +29,7 @@ interface ScrapeResult extends ScrapedRestaurant {
  * On any prefill the parent gets a Partial<ScrapedRestaurant> via onPrefill,
  * which it converts to OnboardingData via lib/applyScrapedData.ts.
  */
-export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
+export default function Step0Search({ onPrefill, onSkip, showHeader = true }: Step0SearchProps) {
   const { t } = useTranslation();
 
   const [name, setName] = useState('');
@@ -63,6 +61,12 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
         body: JSON.stringify({ query: name.trim(), city: city.trim() }),
       });
       const body = await res.json().catch(() => ({}));
+      // The endpoint answers "nothing found" as 404 with an empty list. That is
+      // the no-match case (website fallback), not a failed search.
+      if (res.status === 404 && Array.isArray(body.results)) {
+        setHits([]);
+        return;
+      }
       if (!res.ok) {
         setSearchError(body.error || t('onboarding.step0.searchFailed', 'Search failed. Try again or skip below.'));
         return;
@@ -124,7 +128,7 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
 
   return (
     <div className="space-y-6" data-testid="step0-search">
-      <div>
+      {showHeader && <div>
         <h2 className="text-2xl sm:text-3xl font-semibold text-deep-charcoal mb-2">
           {t('onboarding.step0.title', 'Find your restaurant')}
         </h2>
@@ -134,9 +138,10 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
             "Type your restaurant name + city — we'll pull the basics from Google Maps so you don't have to retype them.",
           )}
         </p>
-      </div>
+      </div>}
 
       <form onSubmit={runGoogleSearch} className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-[1.4fr_1fr]">
         <div>
           <label htmlFor="step0-name" className="block text-sm font-medium text-deep-charcoal mb-1">
             {t('onboarding.step0.nameLabel', 'Restaurant name')}
@@ -147,7 +152,7 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t('onboarding.step0.namePlaceholder', 'e.g. Cantina Bella')}
-            className="w-full px-4 py-2.5 border border-glass-border-input rounded-lg text-sm focus:outline-none focus:border-burgundy"
+            className="w-full px-4 py-3 border border-glass-border-input rounded-lg text-[15px] bg-white placeholder-muted-stone focus:outline-none focus:ring-[3px] focus:ring-burgundy/20 focus:border-burgundy transition-all"
           />
         </div>
         <div>
@@ -160,14 +165,16 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
             value={city}
             onChange={(e) => setCity(e.target.value)}
             placeholder={t('onboarding.step0.cityPlaceholder', 'e.g. São Paulo')}
-            className="w-full px-4 py-2.5 border border-glass-border-input rounded-lg text-sm focus:outline-none focus:border-burgundy"
+            className="w-full px-4 py-3 border border-glass-border-input rounded-lg text-[15px] bg-white placeholder-muted-stone focus:outline-none focus:ring-[3px] focus:ring-burgundy/20 focus:border-burgundy transition-all"
           />
+        </div>
         </div>
         <button
           type="submit"
           disabled={!canSearch}
-          className="px-4 py-2 bg-burgundy text-white rounded-[100px] text-sm font-semibold hover:bg-burgundy-dark transition-colors disabled:opacity-50"
+          className="inline-flex min-h-11 items-center gap-2 px-6 py-3 bg-burgundy text-white rounded-[100px] text-[15px] font-semibold hover:bg-burgundy-dark transition-colors disabled:opacity-50"
         >
+          <ThiingsIcon name="search" pxSize={16} />
           {searching
             ? t('onboarding.step0.searching', 'Searching…')
             : t('onboarding.step0.searchCta', 'Search Google Maps')}
@@ -192,7 +199,16 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
               className="border border-glass-border-dark rounded-xl p-4 space-y-3"
               data-testid={`step0-candidate-${i}`}
             >
-              <div>
+              <div className="flex items-start gap-4">
+                {hit.photo_ref && (
+                  <img
+                    src={`/api/places-photo?ref=${encodeURIComponent(hit.photo_ref)}&maxWidth=240`}
+                    alt=""
+                    loading="lazy"
+                    className="h-16 w-16 shrink-0 rounded-xl object-cover bg-soft-gray"
+                  />
+                )}
+                <div className="min-w-0">
                 <p className="text-sm font-semibold text-deep-charcoal">{hit.name || name}</p>
                 {hit.address && <p className="text-xs text-muted-stone mt-0.5">{hit.address}</p>}
                 <div className="flex items-center gap-3 mt-2 text-xs text-muted-stone">
@@ -204,6 +220,7 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
                   </span>
                 )}
                   {hit.phone && <span>{hit.phone}</span>}
+                </div>
                 </div>
               </div>
               <button
@@ -264,7 +281,7 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
               value={website}
               onChange={(e) => setWebsite(e.target.value)}
               placeholder="https://your-restaurant.com"
-              className="w-full px-4 py-2.5 border border-glass-border-input rounded-lg text-sm focus:outline-none focus:border-burgundy"
+              className="w-full px-4 py-3 border border-glass-border-input rounded-lg text-[15px] bg-white placeholder-muted-stone focus:outline-none focus:ring-[3px] focus:ring-burgundy/20 focus:border-burgundy transition-all"
             />
             <button
               type="submit"

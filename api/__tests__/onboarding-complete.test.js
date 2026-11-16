@@ -1304,3 +1304,79 @@ describe('trial plan and registry status', () => {
     expect(registryWrite).toMatchObject({ plan_name: 'free', subscription_status: 'active' });
   });
 });
+
+// 2026-11-16: the onboarding sheet shows each setup result as it happens.
+describe('live setup progress (Accept: text/event-stream)', () => {
+  function streamReqRes(body) {
+    const { req, res } = mockReqRes(body);
+    req.headers.accept = 'text/event-stream';
+    const frames = [];
+    res.writeHead = jest.fn();
+    res.write = jest.fn((chunk) => {
+      frames.push(JSON.parse(String(chunk).replace(/^data: /, '').trim()));
+      return true;
+    });
+    return { req, res, frames };
+  }
+
+  test('one event per result, in setup order, then the same body as the JSON path', async () => {
+    const { createAgent, syncKnowledgeBase } = require('../_services/elevenlabsAgentService');
+    createAgent.mockResolvedValueOnce({ success: true, agent_id: 'agent-live-1' });
+    syncKnowledgeBase.mockResolvedValueOnce({ success: true, documentId: 'doc-1' });
+    // An owner id makes the handler save the config, which the agent link and knowledge sync need.
+    require('../_lib/auth').verifyAuth.mockResolvedValueOnce({ user: { sub: 'owner-uuid' } });
+
+    const { req, res, frames } = streamReqRes({ ...BASE_BODY, country: 'Spain' });
+    await handler(req, res);
+
+    expect(res.writeHead).toHaveBeenCalledWith(200, expect.objectContaining({ 'Content-Type': 'text/event-stream' }));
+    expect(frames.map(f => f.key || f.type)).toEqual(
+      ['restaurant', 'whatsapp_registry', 'voice_agent', 'knowledge_base', 'subscription', 'done']);
+    expect(frames[0]).toMatchObject({
+      type: 'step', status: 'ok', tables: 3, seats: 12,
+      restaurant_id: expect.any(String), booking_url: expect.stringMatching(/^\/book\//),
+    });
+    expect(frames[2]).toMatchObject({ status: 'ok', language: expect.any(String), agent_id: 'agent-live-1' });
+    expect(frames[3]).toMatchObject({ status: 'ok' });
+    expect(frames[4]).toMatchObject({ status: 'ok', plan: 'trial', trial_end: expect.any(String) });
+    const done = frames[5];
+    expect(done).toMatchObject({ success: true, restaurant: { voice_agent_id: 'agent-live-1' } });
+    expect(done.setup).toMatchObject({ restaurant: 'ok', voice_agent: 'ok', knowledge_base: 'ok', subscription: 'ok' });
+    expect(res.end).toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+  });
+
+  test('a failed agent still reports every step, and no agent id is handed out', async () => {
+    const { createAgent } = require('../_services/elevenlabsAgentService');
+    createAgent.mockResolvedValueOnce({ success: false, error: 'boom' });
+
+    const { req, res, frames } = streamReqRes(BASE_BODY);
+    await handler(req, res);
+
+    const byKey = Object.fromEntries(frames.filter(f => f.type === 'step').map(f => [f.key, f.status]));
+    expect(byKey).toEqual({
+      restaurant: 'ok', whatsapp_registry: expect.any(String), voice_agent: 'failed',
+      knowledge_base: 'pending', subscription: 'ok',
+    });
+    expect(frames.at(-1)).toMatchObject({ type: 'done', restaurant: { voice_agent_id: null } });
+  });
+
+  test('a refusal before the restaurant exists stays a JSON response with its status', async () => {
+    const { req, res, frames } = streamReqRes({ ...BASE_BODY, restaurant_name: '   ' });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.writeHead).not.toHaveBeenCalled();
+    expect(frames).toEqual([]);
+  });
+
+  test('without the header the response is the plain JSON it always was', async () => {
+    const { req, res } = mockReqRes(BASE_BODY);
+    res.write = jest.fn();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true, setup: expect.any(Object) }));
+    expect(res.write).not.toHaveBeenCalled();
+  });
+});

@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import ThiingsIcon from '../../common/ThiingsIcon';
 import { BlocoConfirmavel } from './BlocoConfirmavel';
 import { VozDaCasa } from './VozDaCasa';
 import HoursEditor, { invalidHours } from './HoursEditor';
@@ -39,6 +40,8 @@ export interface FolhaDeConfirmacaoProps {
   /** De onde vieram os dados: muda a frase da fonte, não o layout. */
   veioDoDemo?: boolean;
   origem?: 'manual' | 'demo' | 'google';
+  /** What Google showed when the owner picked the restaurant (never saved). */
+  google?: { photoRef?: string | null; rating?: number | null; reviews?: number | null } | null;
 }
 
 const RESTAURANT_TYPES = ['fine-dining', 'casual-dining', 'fast-casual', 'cafe', 'bar', 'bistro', 'pizzeria', 'steakhouse', 'seafood', 'other'];
@@ -56,6 +59,7 @@ export function FolhaDeConfirmacao({
   enviando = false,
   veioDoDemo = false,
   origem,
+  google = null,
 }: FolhaDeConfirmacaoProps) {
   const { t, i18n } = useTranslation();
   const copy = getSheetCopy(i18n.language);
@@ -115,6 +119,13 @@ export function FolhaDeConfirmacao({
   return (
     <div className="max-w-[620px] mx-auto px-6 pb-40">
       <header className="pt-12 pb-2">
+        {source === 'google' && google?.photoRef && (
+          <img
+            src={`/api/places-photo?ref=${encodeURIComponent(google.photoRef)}&maxWidth=1200`}
+            alt=""
+            className="mb-8 h-44 sm:h-56 w-full rounded-[20px] object-cover bg-soft-gray motion-safe:animate-fade-in-up"
+          />
+        )}
         <h1 className="font-serif text-[38px] sm:text-[46px] leading-[1.08] tracking-tight text-deep-charcoal text-balance">
           {source === 'google'
             ? t('onboarding.folha.titulo', 'Achamos isto sobre o {{nome}}.', { nome: data.restaurant_name })
@@ -122,6 +133,14 @@ export function FolhaDeConfirmacao({
               ? (source === 'demo' ? copy.demoTitle : copy.manualTitle).replace('{{name}}', data.restaurant_name)
               : copy.manualEmptyTitle}
         </h1>
+        {source === 'google' && typeof google?.rating === 'number' && (
+          <p className="mt-3 flex items-center gap-1.5 text-[14px] text-muted-stone">
+            <ThiingsIcon name="star" pxSize={14} className="text-warm-stone" />
+            {copy.googleRating
+              .replace('{{rating}}', google.rating.toLocaleString(i18n.language || 'en', { maximumFractionDigits: 1 }))
+              .replace('{{count}}', (google.reviews ?? 0).toLocaleString(i18n.language || 'en'))}
+          </p>
+        )}
         <p className="mt-4 text-[17px] leading-[1.6] text-warm-stone">
           {source === 'manual' ? copy.manualIntro : t(
             'onboarding.folha.subtitulo',
@@ -130,7 +149,8 @@ export function FolhaDeConfirmacao({
         </p>
       </header>
 
-      <fieldset disabled={enviando} className="min-w-0 divide-y divide-glass-border-dark">
+      <fieldset disabled={enviando} className="min-w-0 divide-y divide-glass-border-dark motion-safe:animate-fade-in-up"
+        style={{ animationDelay: '120ms', animationFillMode: 'both' }}>
         <BlocoConfirmavel
           titulo={t('onboarding.folha.aCasa', 'A casa')}
           fonte={fonte}
