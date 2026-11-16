@@ -102,7 +102,7 @@ describe('CreateBooking', () => {
     expect(res.body.booking).toEqual(expect.objectContaining({ booking_id: ROW, status: 'CANCELED' }));
   });
 
-  test.each(['unavailable', 'outside_hours', 'too_late', 'past_slot', 'too_far', 'party_too_large'])(
+  test.each(['unavailable', 'outside_hours', 'too_late', 'past_slot', 'too_soon', 'too_far', 'party_too_large'])(
     'a %s refusal is a SLOT_UNAVAILABLE booking failure', async status => {
       mockBook.mockResolvedValue({ success: false, status, data: { status } });
       const res = await call({ action: 'CreateBooking', body: { slot: slot(), user_information: guest } });

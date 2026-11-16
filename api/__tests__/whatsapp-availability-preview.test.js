@@ -66,6 +66,7 @@ test.each([
   ['party_too_large', 'PARTY_TOO_LARGE', /up to 6 guests/],
   ['outside_hours', 'CLOSED', /closed at that time/],
   ['too_late', 'TOO_LATE', /after the last seating/],
+  ['too_soon', 'TOO_SOON', /at least 1 hour in advance/],
   ['unavailable', 'FULLY_BOOKED', /19:00 is fully booked for 2 guests/],
 ])('the rule answer %s is a provisional no with reason %s, and no table check', async (status, reason, message) => {
   mockStatus = () => ({ status, seats_available: status === 'unavailable' ? 1 : undefined });

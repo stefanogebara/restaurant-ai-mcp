@@ -202,7 +202,7 @@ async function handleBatchAvailabilityLookup(req, res) {
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // Refusals that mean "this slot cannot be booked" (book_guest_reservation and
 // mutate_guest_reservation use the same codes).
-const SLOT_REFUSALS = new Set(['unavailable', 'table_taken', 'outside_hours', 'too_late', 'past_slot', 'too_far', 'party_too_large']);
+const SLOT_REFUSALS = new Set(['unavailable', 'table_taken', 'outside_hours', 'too_late', 'past_slot', 'too_soon', 'too_far', 'party_too_large']);
 
 // The retry key Google gives us, hashed: its charset and length never matter,
 // and book_guest_reservation checks the 'google:v1:<sha256>' shape.

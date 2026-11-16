@@ -147,7 +147,7 @@ const createReservation = async (restaurantId, fields, options = {}) => {
  * @param {{ externalId?: string }} [options] - the channel's retry key
  * @returns {Promise<{ success: boolean, status: string, data?: object, error?: object }>}
  *   status: created | existing | cancelled_intent | unavailable | table_taken |
- *   past_slot | too_far | outside_hours | too_late | party_too_large |
+ *   past_slot | too_soon | too_far | outside_hours | too_late | party_too_large |
  *   timezone_unavailable | restaurant_unavailable | invalid_input | error
  */
 const bookGuestReservation = async (restaurantId, fields, options = {}) => {

@@ -2,7 +2,7 @@
 
 // The booking rule, asked without booking. public.check_guest_slots runs the
 // same slot checks as book_guest_reservation (guest_slot_status: hours per
-// service period, notice, the restaurant's day and party limits, seats from
+// service period, one hour of notice, the restaurant's day and party limits, seats from
 // every channel) for a list of restaurant-local starts, read only. Voice,
 // WhatsApp and Google availability ask it, so they cannot offer a time the
 // booking then refuses. Physical table combinations are not part of the rule:
@@ -46,6 +46,8 @@ function slotRefusal(status, { timezone, limits = {}, partySize, time } = {}) {
   switch (status) {
     case 'past_slot':
       return { code: 'PAST_DATE', message: `The requested date and time is in the past. ${today()}` };
+    case 'too_soon':
+      return { code: 'TOO_SOON', message: 'Reservations must be made at least 1 hour in advance. Please choose a later time.' };
     case 'too_far':
       return {
         code: 'TOO_FAR',
