@@ -141,6 +141,7 @@ export default function Step0Search({ onPrefill, onSkip, showHeader = true }: St
       </div>}
 
       <form onSubmit={runGoogleSearch} className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-[1.4fr_1fr]">
         <div>
           <label htmlFor="step0-name" className="block text-sm font-medium text-deep-charcoal mb-1">
             {t('onboarding.step0.nameLabel', 'Restaurant name')}
@@ -151,7 +152,7 @@ export default function Step0Search({ onPrefill, onSkip, showHeader = true }: St
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t('onboarding.step0.namePlaceholder', 'e.g. Cantina Bella')}
-            className="w-full px-4 py-2.5 border border-glass-border-input rounded-lg text-sm focus:outline-none focus:border-burgundy"
+            className="w-full px-4 py-3 border border-glass-border-input rounded-lg text-[15px] bg-white placeholder-muted-stone focus:outline-none focus:ring-[3px] focus:ring-burgundy/20 focus:border-burgundy transition-all"
           />
         </div>
         <div>
@@ -164,14 +165,16 @@ export default function Step0Search({ onPrefill, onSkip, showHeader = true }: St
             value={city}
             onChange={(e) => setCity(e.target.value)}
             placeholder={t('onboarding.step0.cityPlaceholder', 'e.g. São Paulo')}
-            className="w-full px-4 py-2.5 border border-glass-border-input rounded-lg text-sm focus:outline-none focus:border-burgundy"
+            className="w-full px-4 py-3 border border-glass-border-input rounded-lg text-[15px] bg-white placeholder-muted-stone focus:outline-none focus:ring-[3px] focus:ring-burgundy/20 focus:border-burgundy transition-all"
           />
+        </div>
         </div>
         <button
           type="submit"
           disabled={!canSearch}
-          className="px-4 py-2 bg-burgundy text-white rounded-[100px] text-sm font-semibold hover:bg-burgundy-dark transition-colors disabled:opacity-50"
+          className="inline-flex min-h-11 items-center gap-2 px-6 py-3 bg-burgundy text-white rounded-[100px] text-[15px] font-semibold hover:bg-burgundy-dark transition-colors disabled:opacity-50"
         >
+          <ThiingsIcon name="search" pxSize={16} />
           {searching
             ? t('onboarding.step0.searching', 'Searching…')
             : t('onboarding.step0.searchCta', 'Search Google Maps')}
@@ -278,7 +281,7 @@ export default function Step0Search({ onPrefill, onSkip, showHeader = true }: St
               value={website}
               onChange={(e) => setWebsite(e.target.value)}
               placeholder="https://your-restaurant.com"
-              className="w-full px-4 py-2.5 border border-glass-border-input rounded-lg text-sm focus:outline-none focus:border-burgundy"
+              className="w-full px-4 py-3 border border-glass-border-input rounded-lg text-[15px] bg-white placeholder-muted-stone focus:outline-none focus:ring-[3px] focus:ring-burgundy/20 focus:border-burgundy transition-all"
             />
             <button
               type="submit"

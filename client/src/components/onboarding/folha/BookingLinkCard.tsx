@@ -39,7 +39,7 @@ export default function BookingLinkCard({ url, copy }: { url: string; copy: Copy
           className="h-28 w-28 shrink-0 rounded-2xl border border-glass-border-dark bg-white p-2" />
       )}
       <div className="min-w-0">
-        <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{copy.bookingLink}</h2>
+        <h2 className="font-sans text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{copy.bookingLink}</h2>
         <a href={url} target="_blank" rel="noreferrer"
           className="mt-1 block break-all text-[17px] text-deep-charcoal underline decoration-glass-border-input underline-offset-4 hover:decoration-deep-charcoal">
           {url.replace(/^https:\/\//, '')}
