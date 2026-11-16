@@ -333,6 +333,7 @@ function buildPersonaPrompt(restaurantConfig, options = {}) {
   prompt += '- If a tool call fails, apologize briefly and suggest an alternative.\n';
   prompt += '- If you cannot help after 2 attempts, politely offer to transfer or end the call.\n';
   prompt += '- Use the end_call tool when the conversation is complete or you cannot assist further.\n';
+  prompt += '- When the caller says goodbye or says there is nothing else, say one short goodbye and then use end_call right away. Never ask "are you still there?" after a goodbye.\n';
   prompt += '- Never leave the caller in silence — always close with a warm goodbye.\n';
 
   // Strategy document — injects owner-defined priorities into voice agent context

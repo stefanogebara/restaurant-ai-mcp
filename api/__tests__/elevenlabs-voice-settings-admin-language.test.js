@@ -44,8 +44,14 @@ const handler = require('../elevenlabs-voice-settings');
 const OSTERIA = '152dc287-46e6-4139-b8eb-12d1877b121f';
 const CASA = '27b0272b-fd5f-41e2-81c0-e27faca99ac6';
 const agents = {};
+// Agents here already have browser audio and the end_call tool (see
+// elevenlabs-call-setup); elevenlabs-language-sync.test.js covers agents without.
+const { CLIENT_EVENTS, END_CALL_TOOL } = require('../_lib/elevenlabs-call-setup');
 const agentBody = (language, model, summary, prompt = 'secret prompt') => ({
-  conversation_config: { agent: { language, first_message: 'Thank you for calling.', prompt: { prompt } }, tts: { model_id: model } },
+  conversation_config: {
+    agent: { language, first_message: 'Thank you for calling.', prompt: { prompt, built_in_tools: { end_call: { ...END_CALL_TOOL } } } },
+    tts: { model_id: model }, conversation: { client_events: [...CLIENT_EVENTS] },
+  },
   platform_settings: { summary_language: summary },
 });
 const call = async (method, query) => {

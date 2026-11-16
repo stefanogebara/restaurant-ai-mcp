@@ -1,5 +1,5 @@
 import { describe, test, expect, vi } from 'vitest';
-import { readLaunchResponse, type LaunchStepKey } from '../onboardingLaunch';
+import { bookingCodeFrom, readLaunchResponse, type LaunchStepKey } from '../onboardingLaunch';
 
 const frame = (o: unknown) => `data: ${JSON.stringify(o)}\n\n`;
 
@@ -88,5 +88,16 @@ describe('readLaunchResponse', () => {
   test('a stream that breaks before the restaurant exists is an error', async () => {
     await expect(readLaunchResponse(sse([], true), vi.fn())).rejects.toThrow();
     await expect(readLaunchResponse(sse([]), vi.fn())).rejects.toThrow(/before the restaurant was saved/);
+  });
+});
+
+describe('bookingCodeFrom', () => {
+  test('takes the last code the receptionist said, not the guest', () => {
+    expect(bookingCodeFrom([
+      { role: 'user', text: 'meu código é RES-20250101-XXXX' },
+      { role: 'agent', text: 'O código da reserva é RES-20261116-H-zB-VQKj-FS. Se precisar, é só avisar!' },
+      { role: 'agent', text: 'Ainda está aí?' },
+    ])).toBe('RES-20261116-H-zB-VQKj-FS');
+    expect(bookingCodeFrom([{ role: 'agent', text: 'Tchau!' }])).toBeNull();
   });
 });

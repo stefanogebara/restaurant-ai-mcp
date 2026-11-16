@@ -18,6 +18,7 @@
 //   refreshVoiceAgentPrompt does (api/_services/voiceAgentService.js).
 
 const { compatibleTtsModel, summaryLanguageFor } = require('./elevenlabs-voice-config');
+const { callSetupGaps } = require('./elevenlabs-call-setup');
 const { buildFirstMessage } = require('./voice-first-message');
 
 const base = value => String(value || '').trim().toLowerCase().replace(/_/g, '-').split('-')[0];
@@ -59,14 +60,24 @@ function planLanguageSync(config, agent, deps = {}) {
   const wantedPrompt = buildPersonaPrompt(config, { channel: 'voice' });
   // The zone ElevenLabs uses for {{system__time_date}} (unset = UTC).
   const zone = typeof config.timezone === 'string' && config.timezone.trim() ? config.timezone.trim() : null;
-  const promptPatch = { prompt: wantedPrompt, ...(zone ? { timezone: zone } : {}) };
+  // Browser audio and the end_call tool (2026-11-16, see elevenlabs-call-setup):
+  // added to the same PATCH, keeping whatever events and tools the agent has.
+  const call = callSetupGaps(agentConfig);
+  const promptPatch = {
+    prompt: wantedPrompt,
+    ...(zone ? { timezone: zone } : {}),
+    ...(call.builtInTools ? { built_in_tools: call.builtInTools } : {}),
+  };
+  const conversationPatch = call.clientEvents ? { conversation: { client_events: call.clientEvents } } : {};
 
   if (!reasons.length) {
     const stale = [];
     if (!sameText(currentPrompt, wantedPrompt)) stale.push('prompt outdated');
     if (zone && current.timezone !== zone) stale.push(`timezone ${current.timezone} != ${zone}`);
+    stale.push(...call.reasons);
     if (!stale.length) return { status: 'ok', reasons, current, patch: null };
-    return { status: 'outdated', reasons: stale, current, patch: { conversation_config: { agent: { prompt: promptPatch } } } };
+    return { status: 'outdated', reasons: stale, current,
+      patch: { conversation_config: { agent: { prompt: promptPatch }, ...conversationPatch } } };
   }
 
   const patch = {
@@ -81,6 +92,7 @@ function planLanguageSync(config, agent, deps = {}) {
         prompt: promptPatch,
       },
       tts: { model_id: model },
+      ...conversationPatch,
     },
     platform_settings: { summary_language: summary },
   };

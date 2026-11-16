@@ -10,8 +10,15 @@ const { run, parseArgs } = require('../../scripts/elevenlabs-agent-language-sync
 
 const osteria = { id: '152dc287-46e6-4139-b8eb-12d1877b121f', restaurant_name: 'Osteria del Sole', country: 'Brazil',
   agent_language: 'pt', agent_greeting: null, elevenlabs_agent_id: 'agent_osteria_0001', ai_config: { language: 'pt-BR' } };
+const { CLIENT_EVENTS, END_CALL_TOOL } = require('../_lib/elevenlabs-call-setup');
+// Agents in these fixtures already have browser audio and the end_call tool;
+// the 'call setup' tests below remove them on purpose.
 const agent = (language, model = 'eleven_flash_v2', summary = 'en', prompt = `PROMPT(${language})`, timezone) => ({
-  conversation_config: { agent: { language, first_message: 'Thank you for calling.', prompt: { prompt, ...(timezone ? { timezone } : {}) } }, tts: { model_id: model } },
+  conversation_config: {
+    agent: { language, first_message: 'Thank you for calling.',
+      prompt: { prompt, built_in_tools: { end_call: { ...END_CALL_TOOL } }, ...(timezone ? { timezone } : {}) } },
+    tts: { model_id: model }, conversation: { client_events: [...CLIENT_EVENTS] },
+  },
   platform_settings: { summary_language: summary },
 });
 const deps = { buildPersonaPrompt: config => `PROMPT(${config.agent_language})` };
@@ -77,6 +84,64 @@ describe('planLanguageSync', () => {
   test('missing data is reported, never patched', () => {
     expect(planLanguageSync({ ...osteria, agent_language: '' }, agent('en'), deps).status).toBe('invalid');
     expect(planLanguageSync(osteria, { conversation_config: { agent: { language: 'en' } } }, deps).status).toBe('invalid');
+  });
+});
+
+// 2026-11-16, first browser test call of the new onboarding: the owner heard
+// nothing (no 'audio' event) and the agent never hung up (no end_call tool).
+describe('call setup', () => {
+  const ready = { ...osteria, timezone: 'America/Sao_Paulo' };
+  const upToDate = () => agent('pt', 'eleven_flash_v2_5', 'pt-br', 'PROMPT(pt)', 'America/Sao_Paulo');
+  const created = () => {
+    const a = upToDate();
+    a.conversation_config.conversation.client_events = ['agent_response', 'agent_response_correction', 'user_transcript', 'internal_tentative_agent_response'];
+    a.conversation_config.agent.prompt.built_in_tools = { language_detection: null, end_call: null };
+    return a;
+  };
+
+  test('an agent made before the fix is outdated, and the patch adds audio and end_call', () => {
+    const plan = planLanguageSync(ready, created(), deps);
+    expect(plan.status).toBe('outdated');
+    expect(plan.reasons).toEqual(['call events missing: audio, interruption', 'end_call tool missing']);
+    expect(plan.patch.conversation_config.conversation.client_events).toEqual([
+      'agent_response', 'agent_response_correction', 'user_transcript', 'internal_tentative_agent_response', 'audio', 'interruption']);
+    expect(plan.patch.conversation_config.agent.prompt.built_in_tools).toEqual({
+      language_detection: null,
+      end_call: { type: 'system', name: 'end_call', description: '', params: { system_tool_type: 'end_call' } },
+    });
+    // Same prompt and zone as before: the patch only adds.
+    expect(plan.patch.conversation_config.agent.prompt).toMatchObject({ prompt: 'PROMPT(pt)', timezone: 'America/Sao_Paulo' });
+  });
+
+  test('an agent with both is in sync, whatever other events it has', () => {
+    const a = upToDate();
+    a.conversation_config.conversation.client_events.push('ping');
+    expect(planLanguageSync(ready, a, deps)).toMatchObject({ status: 'ok', patch: null });
+  });
+
+  test('a language mismatch also carries the call setup', () => {
+    const a = created();
+    a.conversation_config.agent.language = 'en';
+    const plan = planLanguageSync(ready, a, deps);
+    expect(plan.status).toBe('mismatch');
+    expect(plan.patch.conversation_config.conversation.client_events).toContain('audio');
+    expect(plan.patch.conversation_config.agent.prompt.built_in_tools.end_call).toBeTruthy();
+  });
+
+  test('the sync patches an old agent and reads it back as in sync', async () => {
+    const { syncAgentLanguage } = require('../_lib/elevenlabs-language-sync');
+    let stored = created();
+    const fetchImpl = jest.fn(async (url, init = {}) => {
+      if (init.method === 'PATCH') {
+        const body = JSON.parse(init.body).conversation_config;
+        stored.conversation_config.conversation.client_events = body.conversation.client_events;
+        stored.conversation_config.agent.prompt.built_in_tools = body.agent.prompt.built_in_tools;
+        return { ok: true, status: 200, json: async () => ({}) };
+      }
+      return { ok: true, status: 200, json: async () => stored };
+    });
+    const result = await syncAgentLanguage(ready, 'k', { fetchImpl, deps, onlyOutdated: true });
+    expect(result).toMatchObject({ changed: true, before: { status: 'outdated' }, after: { status: 'ok' } });
   });
 });
 

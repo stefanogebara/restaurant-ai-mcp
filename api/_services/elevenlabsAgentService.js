@@ -11,6 +11,7 @@
 
 const crypto = require('node:crypto');
 const { supabaseAdmin } = require('../_lib/supabase');
+const { CLIENT_EVENTS, END_CALL_TOOL } = require('../_lib/elevenlabs-call-setup');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { postCallWebhookOverrides } = require('../_lib/elevenlabs-post-call-config');
 const { buildPersonaPrompt } = require('../_lib/persona-prompt-builder');
@@ -899,7 +900,9 @@ async function createAgent({
           agent: {
             // The zone ElevenLabs uses for {{system__time_date}} in the prompt
             // (unset = UTC). See voiceDateSection in persona-prompt-builder.
+            // end_call: she hangs up after the goodbye (see elevenlabs-call-setup).
             prompt: { prompt: systemPrompt, llm: 'gpt-4o-mini', tool_ids: toolIds,
+              built_in_tools: { end_call: { ...END_CALL_TOOL, params: { ...END_CALL_TOOL.params } } },
               ...(restaurantConfig?.timezone ? { timezone: restaurantConfig.timezone } : {}) },
             first_message: firstMessage,
             language,
@@ -907,7 +910,8 @@ async function createAgent({
           tts: { voice_id, model_id: language === 'en' ? 'eleven_flash_v2' : 'eleven_flash_v2_5' },
           conversation: {
             turn_timeout: 8,
-            client_events: ['agent_response', 'agent_response_correction', 'user_transcript', 'internal_tentative_agent_response'],
+            // 'audio' is what a browser call plays; without it the owner's test call was silent.
+            client_events: [...CLIENT_EVENTS],
           },
           asr: { quality: 'high', provider: 'elevenlabs' },
         },
