@@ -6,13 +6,11 @@ import type { ScrapedRestaurant } from '../../lib/applyScrapedData';
 interface Step0SearchProps {
   onPrefill: (scraped: ScrapedRestaurant) => void;
   onSkip: () => void;
+  /** The onboarding sheet shows its own serif heading above this step. */
+  showHeader?: boolean;
 }
 
 interface ScrapeResult extends ScrapedRestaurant {
-  address?: string | null;
-  rating?: number | null;
-  review_count?: number;
-  photo_ref?: string | null;
   google_maps_url?: string | null;
 }
 
@@ -31,7 +29,7 @@ interface ScrapeResult extends ScrapedRestaurant {
  * On any prefill the parent gets a Partial<ScrapedRestaurant> via onPrefill,
  * which it converts to OnboardingData via lib/applyScrapedData.ts.
  */
-export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
+export default function Step0Search({ onPrefill, onSkip, showHeader = true }: Step0SearchProps) {
   const { t } = useTranslation();
 
   const [name, setName] = useState('');
@@ -63,6 +61,12 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
         body: JSON.stringify({ query: name.trim(), city: city.trim() }),
       });
       const body = await res.json().catch(() => ({}));
+      // The endpoint answers "nothing found" as 404 with an empty list. That is
+      // the no-match case (website fallback), not a failed search.
+      if (res.status === 404 && Array.isArray(body.results)) {
+        setHits([]);
+        return;
+      }
       if (!res.ok) {
         setSearchError(body.error || t('onboarding.step0.searchFailed', 'Search failed. Try again or skip below.'));
         return;
@@ -124,7 +128,7 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
 
   return (
     <div className="space-y-6" data-testid="step0-search">
-      <div>
+      {showHeader && <div>
         <h2 className="text-2xl sm:text-3xl font-semibold text-deep-charcoal mb-2">
           {t('onboarding.step0.title', 'Find your restaurant')}
         </h2>
@@ -134,7 +138,7 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
             "Type your restaurant name + city — we'll pull the basics from Google Maps so you don't have to retype them.",
           )}
         </p>
-      </div>
+      </div>}
 
       <form onSubmit={runGoogleSearch} className="space-y-4">
         <div>
@@ -192,7 +196,16 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
               className="border border-glass-border-dark rounded-xl p-4 space-y-3"
               data-testid={`step0-candidate-${i}`}
             >
-              <div>
+              <div className="flex items-start gap-4">
+                {hit.photo_ref && (
+                  <img
+                    src={`/api/places-photo?ref=${encodeURIComponent(hit.photo_ref)}&maxWidth=240`}
+                    alt=""
+                    loading="lazy"
+                    className="h-16 w-16 shrink-0 rounded-xl object-cover bg-soft-gray"
+                  />
+                )}
+                <div className="min-w-0">
                 <p className="text-sm font-semibold text-deep-charcoal">{hit.name || name}</p>
                 {hit.address && <p className="text-xs text-muted-stone mt-0.5">{hit.address}</p>}
                 <div className="flex items-center gap-3 mt-2 text-xs text-muted-stone">
@@ -204,6 +217,7 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
                   </span>
                 )}
                   {hit.phone && <span>{hit.phone}</span>}
+                </div>
                 </div>
               </div>
               <button
