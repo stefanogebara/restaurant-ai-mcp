@@ -86,19 +86,22 @@ export function useTimeSlots(restaurantId: string, date: string, partySize: numb
 
 // ─── Create reservation ───────────────────────────────────────────────────────
 
-type ReservationInput = ReservationCreateInput;
+export type PortalReservationInput = ReservationCreateInput & { deposit_quote_id?: string };
+type BookingError = Error & { code?: string };
 
 export function useCreateReservation() {
-  return useMutation<{ reservation: ReservationData }, Error, ReservationInput>({
+  return useMutation<{ reservation: ReservationData }, BookingError, PortalReservationInput>({
     mutationFn: async (input) => {
       const payload = normalizeReservationCreateInput(input, { requireRestaurantId: true });
       const res = await fetch(`${PORTAL_API}?action=reserve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ...payload, deposit_quote_id: input.deposit_quote_id }),
       });
       const data = await res.json();
-      if (!data.success) throw new Error(data.error || data.message || 'Could not complete reservation');
+      if (!data.success) {
+        throw Object.assign(new Error(data.error || data.message || 'Could not complete reservation'), { code: data.code });
+      }
       return data;
     },
   });

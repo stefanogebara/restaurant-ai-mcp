@@ -34,7 +34,11 @@ test('maps every field to the function arguments, with nulls for what a channel 
 test('a refusal is not a success but keeps its status and data', async () => {
   mockRpc.mockResolvedValue({ data: { status: 'unavailable', seats_available: 2 }, error: null });
   const result = await bookGuestReservation('rest-1', { source: 'online_portal' });
-  expect(mockRpc.mock.calls[0][1].p_external_id).toBeNull();
+  const [rpc, args] = mockRpc.mock.calls[0];
+  expect(rpc).toBe('book_portal_reservation');
+  expect(args.p_quote_id).toBeNull();
+  expect(args).not.toHaveProperty('p_external_id');
+  expect(args).not.toHaveProperty('p_deposit_payment_intent_id');
   expect(result).toEqual({ success: false, status: 'unavailable', data: { status: 'unavailable', seats_available: 2 } });
 });
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useTimeSlots, useCreateReservation } from '../../hooks/useBooking';
+import { useTimeSlots, useCreateReservation, type PortalReservationInput } from '../../hooks/useBooking';
 import { formatLocalDate } from '../../utils/timeFormatting';
 import { localizeCancellationPolicy } from '../../utils/cancellationPolicy';
 import DepositPaymentStep from './DepositPaymentStep';
@@ -42,6 +42,15 @@ export interface TimeSlot {
   available_seats: number;
 }
 
+interface DepositQuote {
+  id: string;
+  clientSecret: string;
+  amount: number;
+  currency: string;
+  booking: PortalReservationInput;
+  authorized: boolean;
+}
+
 interface BookingFormProps {
   restaurant: RestaurantInfo;
 }
@@ -75,10 +84,9 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
-  const [depositStep, setDepositStep] = useState(false);
-  const [clientSecret, setClientSecret] = useState('');
-  const [depositAmount, setDepositAmount] = useState(0);
-  const [paymentIntentId, setPaymentIntentId] = useState('');
+  const [depositQuote, setDepositQuote] = useState<DepositQuote | null>(null);
+  const [preparingDeposit, setPreparingDeposit] = useState(false);
+  const [serverRequiresDeposit, setServerRequiresDeposit] = useState<boolean | null>(null);
   const [depositError, setDepositError] = useState<string | null>(null);
   const [showPartySizeInput, setShowPartySizeInput] = useState(false);
   const [customPartySizeValue, setCustomPartySizeValue] = useState('8');
@@ -243,92 +251,106 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
     return `${hour}:${String(m).padStart(2, '0')} ${period}`;
   };
 
+  const depositRequired = serverRequiresDeposit ?? (restaurant.deposit_config?.enabled === true);
+  const depositStep = depositQuote && !depositQuote.authorized;
+
+  const submitBooking = (booking: PortalReservationInput) => {
+    reserve.mutate(booking, {
+      onSuccess: ({ reservation }) => {
+        navigate(`/book/${slug}/confirmed?id=${encodeURIComponent(reservation.id)}&rid=${encodeURIComponent(restaurant.id)}`, {
+          state: { reservation, receiptId: reservation.id, customerPhone: booking.customer_phone, restaurant_name: restaurant.name, restaurant_id: restaurant.id },
+        });
+      },
+      onError: ({ code }) => {
+        if (code === 'deposit_required') setServerRequiresDeposit(true);
+        if (code && ['deposit_invalid', 'deposit_quote_changed', 'deposit_closed', 'deposit_consumed'].includes(code)) {
+          setDepositQuote(null);
+        }
+      },
+    });
+  };
+
   const handleSubmit = async () => {
-    // If deposit required and not yet paid, create intent first
-    if (depositRequired && !paymentIntentId) {
-      setDepositError(null);
-      try {
-        // Fetch a short-lived booking token before creating the PaymentIntent
-        const tokenRes = await fetch('/api/booking-token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ restaurant_id: restaurant.id }),
-        });
-        const tokenData = await tokenRes.json();
-        if (!tokenRes.ok || !tokenData.token) throw new Error('Failed to authorise payment setup');
-
-        const res = await fetch('/api/create-deposit-intent', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            restaurant_id: restaurant.id,
-            party_size: partySize,
-            customer_email: customerEmail.trim() || undefined,
-            booking_token: tokenData.token,
-          }),
-        });
-        const data = await res.json();
-        if (!data.success) throw new Error(data.error || 'Failed to create deposit');
-
-        setClientSecret(data.client_secret);
-        setDepositAmount(data.deposit_amount);
-        setDepositStep(true);
-        return; // Show payment step
-      } catch (err) {
-        console.error('Deposit intent error:', err);
-        setDepositError(t('booking.depositError', 'Payment setup failed. Please try again.'));
-        return;
-      }
+    if (depositQuote?.authorized) {
+      submitBooking({ ...depositQuote.booking, deposit_quote_id: depositQuote.id });
+      return;
+    }
+    const booking = {
+      restaurant_id: restaurant.id,
+      customer_name: customerName.trim(),
+      customer_phone: customerPhone.trim(),
+      customer_email: customerEmail.trim() || undefined,
+      party_size: partySize,
+      date: selectedDate,
+      time: selectedTime,
+      special_requests: specialRequests.trim() || undefined,
+    };
+    if (!depositRequired) {
+      submitBooking(booking);
+      return;
     }
 
-    // Create the reservation (with or without deposit)
-    reserve.mutate({
-      restaurant_id: restaurant.id,
-      customer_name: customerName.trim(),
-      customer_phone: customerPhone.trim(),
-      customer_email: customerEmail.trim() || undefined,
-      party_size: partySize,
-      date: selectedDate,
-      time: selectedTime,
-      special_requests: specialRequests.trim() || undefined,
-      ...(paymentIntentId ? {
-        deposit_payment_intent_id: paymentIntentId,
-        deposit_amount: depositAmount,
-      } : {}),
-    }, {
-      onSuccess: ({ reservation }) => {
-        navigate(`/book/${slug}/confirmed?id=${encodeURIComponent(reservation.id)}&rid=${encodeURIComponent(restaurant.id)}`, {
-          state: { reservation, receiptId: reservation.id, customerPhone, restaurant_name: restaurant.name, restaurant_id: restaurant.id },
-        });
-      },
-    });
+    reserve.reset();
+    setDepositError(null);
+    setPreparingDeposit(true);
+    try {
+      const tokenRes = await fetch('/api/booking-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurant_id: restaurant.id }),
+      });
+      const tokenData = await tokenRes.json();
+      if (tokenData.code === 'deposit_not_required') {
+        setServerRequiresDeposit(false);
+        return;
+      }
+      if (!tokenRes.ok || !tokenData.token) throw new Error('Failed to authorize payment setup');
+
+      const quoteRes = await fetch('/api/create-deposit-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...booking, booking_token: tokenData.token }),
+      });
+      const data = await quoteRes.json();
+      if (!quoteRes.ok || !data.quote_id) {
+        if (data.code === 'deposit_not_required') setServerRequiresDeposit(false);
+        setDepositError(data.error || t('booking.depositError', 'Payment setup failed. Please try again.'));
+        return;
+      }
+      setDepositQuote({
+        id: data.quote_id,
+        clientSecret: data.client_secret,
+        amount: data.deposit_amount,
+        currency: data.currency,
+        booking,
+        authorized: false,
+      });
+    } catch {
+      setDepositError(t('booking.depositError', 'Payment setup failed. Please try again.'));
+    } finally {
+      setPreparingDeposit(false);
+    }
   };
 
-  const handleDepositSuccess = (piId: string) => {
-    setPaymentIntentId(piId);
-    setDepositStep(false);
-    // Auto-submit the reservation now that deposit is confirmed
-    reserve.mutate({
-      restaurant_id: restaurant.id,
-      customer_name: customerName.trim(),
-      customer_phone: customerPhone.trim(),
-      customer_email: customerEmail.trim() || undefined,
-      party_size: partySize,
-      date: selectedDate,
-      time: selectedTime,
-      special_requests: specialRequests.trim() || undefined,
-      deposit_payment_intent_id: piId,
-      deposit_amount: depositAmount,
-    }, {
-      onSuccess: ({ reservation }) => {
-        navigate(`/book/${slug}/confirmed?id=${encodeURIComponent(reservation.id)}&rid=${encodeURIComponent(restaurant.id)}`, {
-          state: { reservation, receiptId: reservation.id, customerPhone, restaurant_name: restaurant.name, restaurant_id: restaurant.id },
-        });
-      },
-    });
+  const handleDepositSuccess = () => {
+    if (!depositQuote) return;
+    setDepositQuote({ ...depositQuote, authorized: true });
+    submitBooking({ ...depositQuote.booking, deposit_quote_id: depositQuote.id });
   };
 
-  const depositRequired = restaurant.deposit_config?.enabled === true;
+  const leaveDeposit = () => {
+    if (!depositQuote) return;
+    const { booking, id } = depositQuote;
+    setDepositQuote(null);
+    void fetch('/api/create-deposit-intent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...booking, action: 'abandon', deposit_quote_id: id }),
+      keepalive: true,
+    }).catch(() => {
+      // The expiry job retries cleanup if the request did not reach the server.
+    });
+  };
 
   /** Phone is valid if it contains at least 10 digits (ignoring formatting chars). */
   const isPhoneValid = (phone: string) => phone.replace(/\D/g, '').length >= 10;
@@ -356,6 +378,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
         </p>
       </div>
 
+      <fieldset disabled={preparingDeposit || reserve.isPending || Boolean(depositQuote)} className="min-w-0">
       {/* Date Selection — paginated with month nav (M1) */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-3">
@@ -591,6 +614,8 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
         onSpecialRequestsChange={setSpecialRequests}
       />
 
+      </fieldset>
+
       {/* Summary Card */}
       {selectedDate && selectedTime && (
         <div className="glass-card p-6 mb-6">
@@ -617,13 +642,14 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
       )}
 
       {/* Deposit Payment Step */}
-      {depositStep && clientSecret && (
+      {depositStep && (
         <div className="mb-6">
           <DepositPaymentStep
-            clientSecret={clientSecret}
-            depositAmount={depositAmount}
+            clientSecret={depositQuote.clientSecret}
+            depositAmount={depositQuote.amount}
+            currency={depositQuote.currency}
             onSuccess={handleDepositSuccess}
-            onCancel={() => setDepositStep(false)}
+            onCancel={leaveDeposit}
           />
         </div>
       )}
@@ -656,15 +682,15 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={!canSubmit || reserve.isPending}
+          disabled={(!canSubmit && !depositQuote?.authorized) || reserve.isPending || preparingDeposit}
           className="w-full py-4 rounded-[100px] text-[15px] font-semibold bg-burgundy hover:bg-burgundy-dark disabled:bg-border-gray disabled:text-muted-stone text-white transition-colors flex items-center justify-center gap-2"
         >
-          {reserve.isPending ? (
+          {reserve.isPending || preparingDeposit ? (
             <>
               <div aria-hidden="true" className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />
               {t('booking.confirming')}
             </>
-          ) : depositRequired && !paymentIntentId ? (
+          ) : depositRequired && !depositQuote?.authorized ? (
             t('booking.continueToPayment')
           ) : (
             t('booking.confirmReservation')

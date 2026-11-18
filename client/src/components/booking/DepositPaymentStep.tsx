@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { loadStripe } from '@stripe/stripe-js';
 import type { StripeElementLocale } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { formatCurrency } from '../../utils/currency';
 import ThiingsIcon from '../common/ThiingsIcon';
 
 const STRIPE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
@@ -14,12 +13,13 @@ const stripePromise = STRIPE_KEY ? loadStripe(STRIPE_KEY) : null;
 interface DepositPaymentStepProps {
   clientSecret: string;
   depositAmount: number;
-  onSuccess: (paymentIntentId: string) => void;
+  currency: string;
+  onSuccess: () => void;
   onCancel: () => void;
 }
 
-function DepositForm({ depositAmount, onSuccess, onCancel }: Omit<DepositPaymentStepProps, 'clientSecret'>) {
-  const { t } = useTranslation();
+function DepositForm({ depositAmount, currency, onSuccess, onCancel }: Omit<DepositPaymentStepProps, 'clientSecret'>) {
+  const { t, i18n } = useTranslation();
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -43,14 +43,14 @@ function DepositForm({ depositAmount, onSuccess, onCancel }: Omit<DepositPayment
     }
 
     if (paymentIntent && paymentIntent.status === 'requires_capture') {
-      onSuccess(paymentIntent.id);
+      onSuccess();
     } else {
       setError(t('booking.deposit.unexpectedStatus'));
       setIsProcessing(false);
     }
   };
 
-  const formatted = formatCurrency(depositAmount);
+  const formatted = new Intl.NumberFormat(i18n.language, { style: 'currency', currency }).format(depositAmount);
 
   return (
     <div className="space-y-5">
@@ -113,7 +113,7 @@ function DepositForm({ depositAmount, onSuccess, onCancel }: Omit<DepositPayment
   );
 }
 
-export default function DepositPaymentStep({ clientSecret, depositAmount, onSuccess, onCancel }: DepositPaymentStepProps) {
+export default function DepositPaymentStep({ clientSecret, depositAmount, currency, onSuccess, onCancel }: DepositPaymentStepProps) {
   const { t, i18n } = useTranslation();
 
   if (!clientSecret) return null;
@@ -125,6 +125,9 @@ export default function DepositPaymentStep({ clientSecret, depositAmount, onSucc
     return (
       <div className="bg-red-600/10 border border-red-600/20 rounded-xl p-3">
         <p className="text-sm text-red-600">{t('booking.deposit.unavailable')}</p>
+        <button type="button" className="mt-2 text-sm font-medium text-deep-charcoal" onClick={onCancel}>
+          {t('booking.deposit.back')}
+        </button>
       </div>
     );
   }
@@ -145,7 +148,7 @@ export default function DepositPaymentStep({ clientSecret, depositAmount, onSucc
         },
       }}
     >
-      <DepositForm depositAmount={depositAmount} onSuccess={onSuccess} onCancel={onCancel} />
+      <DepositForm depositAmount={depositAmount} currency={currency} onSuccess={onSuccess} onCancel={onCancel} />
     </Elements>
   );
 }

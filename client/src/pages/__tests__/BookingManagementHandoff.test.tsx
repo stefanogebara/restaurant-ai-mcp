@@ -10,7 +10,7 @@ import CustomerPortal from '../CustomerPortal';
 // Simulate the payment processor callback, while exercising both real form
 // success handlers and the real reservation mutation with mocked HTTP only.
 vi.mock('../../components/booking/DepositPaymentStep', () => ({
-  default: ({ onSuccess }: { onSuccess: (id: string) => void }) => <button onClick={() => onSuccess('pi_test')}>Complete test deposit</button>,
+  default: ({ onSuccess }: { onSuccess: () => void }) => <button onClick={() => onSuccess()}>Complete test deposit</button>,
 }));
 
 const CODE = 'RES-20261110-aB_cD-eF12_X';
@@ -35,7 +35,7 @@ beforeEach(() => {
   request.mockReset().mockImplementation(async input => {
     const url = new URL(String(input), 'https://seatable.one');
     if (url.pathname === '/api/booking-token') return Response.json({ token: 'test-token' });
-    if (url.pathname === '/api/create-deposit-intent') return Response.json({ success: true, client_secret: 'test-secret', deposit_amount: 10 });
+    if (url.pathname === '/api/create-deposit-intent') return Response.json({ success: true, quote_id: 'test-quote', client_secret: 'test-secret', deposit_amount: 10, currency: 'brl' });
     const action = url.searchParams.get('action');
     if (action === 'restaurant') return Response.json({ success: true, data: restaurant });
     if (action === 'availability') return Response.json({ success: true, slots: [{ time: '23:59', available: true, available_seats: 8 }] });

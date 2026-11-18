@@ -134,7 +134,8 @@ const createReservation = async (restaurantId, fields, options = {}) => {
 
 /**
  * Create a guest booking (voice, booking page) through
- * public.book_guest_reservation. The function locks the restaurant row, checks
+ * public.book_guest_reservation. The portal wrapper checks deposit policy and
+ * claims an authorization in the same transaction. The shared rule locks the restaurant row, checks
  * hours, notice, party size, seats from every channel and the chosen tables,
  * and inserts in the same transaction, so two bookings racing for the last
  * seats cannot both commit. WhatsApp uses the same rule via
@@ -144,17 +145,16 @@ const createReservation = async (restaurantId, fields, options = {}) => {
  * @param {object} fields - reservation_id, source, date, time, party_size,
  *   customer_name, customer_phone, customer_email?, special_requests?,
  *   table_ids?, notes?, deposit_payment_intent_id?, deposit_amount?
- * @param {{ externalId?: string }} [options] - the channel's retry key
+ * @param {{ externalId?: string, deposit?: object }} [options] - channel retry key or verified portal quote
  * @returns {Promise<{ success: boolean, status: string, data?: object, error?: object }>}
  *   status: created | existing | cancelled_intent | unavailable | table_taken |
  *   past_slot | too_soon | too_far | outside_hours | too_late | party_too_large |
- *   timezone_unavailable | restaurant_unavailable | invalid_input | error
+ *   timezone_unavailable | restaurant_unavailable | invalid_input | error,
+ *   or a deposit refusal from the portal wrapper
  */
 const bookGuestReservation = async (restaurantId, fields, options = {}) => {
-  const { data, error } = await supabase.rpc('book_guest_reservation', {
+  const params = {
     p_restaurant_id: restaurantId,
-    p_source: fields.source,
-    p_external_id: options.externalId || null,
     p_reservation_id: fields.reservation_id,
     p_date: fields.date,
     p_time: fields.time,
@@ -163,11 +163,23 @@ const bookGuestReservation = async (restaurantId, fields, options = {}) => {
     p_customer_phone: fields.customer_phone,
     p_customer_email: fields.customer_email || null,
     p_special_requests: fields.special_requests ?? null,
-    p_table_ids: fields.table_ids ?? null,
-    p_notes: fields.notes ?? null,
-    p_deposit_payment_intent_id: fields.deposit_payment_intent_id ?? null,
-    p_deposit_amount: fields.deposit_amount ?? null,
-  });
+  };
+  const { data, error } = fields.source === 'online_portal'
+    ? await supabase.rpc('book_portal_reservation', {
+      ...params,
+      p_quote_id: options.deposit?.id ?? null,
+      p_guest_fingerprint: options.deposit?.guest ?? null,
+      p_authorized_intent: options.deposit?.authorizedIntent ?? null,
+    })
+    : await supabase.rpc('book_guest_reservation', {
+      ...params,
+      p_source: fields.source,
+      p_external_id: options.externalId || null,
+      p_table_ids: fields.table_ids ?? null,
+      p_notes: fields.notes ?? null,
+      p_deposit_payment_intent_id: fields.deposit_payment_intent_id ?? null,
+      p_deposit_amount: fields.deposit_amount ?? null,
+    });
   if (error || !data || typeof data.status !== 'string') {
     return { success: false, status: 'error', error: error || { message: 'Empty booking result' } };
   }
@@ -334,7 +346,7 @@ const getUpcomingReservations = async (restaurantId, timezone) => {
 
   const { data, error } = await supabase
     .from('reservations')
-    .select('id, reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, special_requests, status, checked_in_at, ml_risk_score, ml_risk_level, ml_confidence, ml_model_version, deposit_amount, deposit_payment_intent_id')
+    .select('id, reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, special_requests, status, checked_in_at, ml_risk_score, ml_risk_level, ml_confidence, ml_model_version, deposit_amount, deposit_payment_intent_id, deposit_currency')
     .eq('restaurant_id', restaurantId)
     // SAFE: today and currentTime are server-generated date strings from getLocalDate/getLocalTime,
     // not user input. No injection risk via .or() interpolation.
@@ -370,6 +382,7 @@ const getUpcomingReservations = async (restaurantId, timezone) => {
     prediction_confidence: r.ml_confidence,
     // Deposit fields
     deposit_amount: r.deposit_amount || null,
+    deposit_currency: r.deposit_currency || null,
     deposit_payment_intent_id: r.deposit_payment_intent_id || null,
   }));
 

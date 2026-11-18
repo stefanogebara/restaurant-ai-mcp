@@ -1,16 +1,11 @@
-const Stripe = require('stripe');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { verifyAuth } = require('./_lib/auth');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
+const { getStripe, isCapturable, readReservationDeposit } = require('./_lib/reservation-deposits');
 
 const logger = createSecureLogger('CaptureDeposit');
-let stripe;
-function getStripe() {
-  if (!stripe) stripe = Stripe(process.env.STRIPE_SECRET_KEY);
-  return stripe;
-}
 
 module.exports = async (req, res) => {
   setInternalCors(req, res);
@@ -38,7 +33,7 @@ module.exports = async (req, res) => {
     // Fetch reservation to get payment_intent_id
     const { data: reservation, error: fetchError } = await supabaseAdmin
       .from('reservations')
-      .select('id, deposit_payment_intent_id, deposit_amount, restaurant_id')
+      .select('id, reservation_id, deposit_payment_intent_id, deposit_amount, restaurant_id')
       .eq('reservation_id', reservation_id)
       .eq('restaurant_id', req.user.restaurant_id)
       .single();
@@ -51,18 +46,29 @@ module.exports = async (req, res) => {
       return res.status(400).json({ success: false, error: 'No deposit held for this reservation' });
     }
 
-    // Capture the payment
-    const paymentIntent = await getStripe().paymentIntents.capture(
-      reservation.deposit_payment_intent_id
+    const payment = await readReservationDeposit(reservation);
+    if (!payment || (payment.status !== 'succeeded' && !isCapturable(payment, payment.amount))) {
+      return res.status(409).json({ success: false, error: 'No matching deposit authorization can be captured' });
+    }
+    const paymentIntent = payment.status === 'succeeded' ? payment : await getStripe().paymentIntents.capture(
+      payment.id, {}, { idempotencyKey: `reservation-deposit-capture-${payment.id}` }
     );
+    if (paymentIntent.status !== 'succeeded' || paymentIntent.amount_received !== payment.amount) {
+      return res.status(409).json({ success: false, error: 'Stripe did not confirm capture of the full deposit' });
+    }
 
     // Null out the payment intent ID so DepositActions stops showing buttons.
     // Keep deposit_amount for reporting purposes.
-    await supabaseAdmin
+    const { error: clearError } = await supabaseAdmin
       .from('reservations')
-      .update({ deposit_payment_intent_id: null })
+      .update({ deposit_payment_intent_id: null, deposit_currency: paymentIntent.currency })
       .eq('id', reservation.id)
-      .eq('restaurant_id', req.user.restaurant_id);
+      .eq('restaurant_id', req.user.restaurant_id)
+      .eq('deposit_payment_intent_id', payment.id);
+    if (clearError) {
+      logger.error('Stripe captured deposit but local update failed', { payment_intent_id: payment.id, code: clearError.code });
+      return res.status(503).json({ success: false, error: 'The deposit was captured. Retry to update the reservation.' });
+    }
 
     logger.info('Deposit captured', {
       reservation_id,

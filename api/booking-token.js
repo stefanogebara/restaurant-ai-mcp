@@ -9,30 +9,13 @@
  * edge cases where the page loaded just before a boundary flip).
  */
 
-const crypto = require('crypto');
+const { issueBookingToken, WINDOW_SECONDS } = require('./_lib/booking-token');
 const { supabaseAdmin } = require('./_lib/supabase');
-const { setInternalCors, handlePreflight } = require('./_lib/cors');
+const { setInternalCors } = require('./_lib/cors');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
 
 const logger = createSecureLogger('BookingToken');
-
-function getSecret() {
-  const secret = process.env.BOOKING_HMAC_SECRET;
-  if (!secret) throw new Error('BOOKING_HMAC_SECRET is not configured');
-  return secret;
-}
-
-function timeBucket() {
-  return Math.floor(Date.now() / 600000); // 10-minute window
-}
-
-function sign(restaurantId, bucket) {
-  return crypto
-    .createHmac('sha256', getSecret())
-    .update(`${restaurantId}:${bucket}`)
-    .digest('hex');
-}
 
 module.exports = async (req, res) => {
   setInternalCors(req, res);
@@ -63,52 +46,24 @@ module.exports = async (req, res) => {
       .from('restaurant_config')
       .select('deposit_config')
       .eq('id', restaurant_id)
+      .eq('is_active', true)
+      .eq('onboarding_completed', true)
       .maybeSingle();
 
     if (error || !config) {
       return res.status(404).json({ error: 'Restaurant not found' });
     }
 
-    if (!config.deposit_config?.enabled) {
-      return res.status(400).json({ error: 'Deposits not enabled for this restaurant' });
+    if (config.deposit_config?.enabled !== true) {
+      return res.status(400).json({ code: 'deposit_not_required', error: 'Deposits not enabled for this restaurant' });
     }
 
-    const bucket = timeBucket();
-    const token = sign(restaurant_id, bucket);
+    const token = issueBookingToken(restaurant_id);
 
     logger.info('Booking token issued', { restaurant_id });
-    return res.status(200).json({ token, expires_in: 600 });
+    return res.status(200).json({ token, expires_in: WINDOW_SECONDS });
   } catch (err) {
     logger.error('booking-token error', { error: err.message });
     return res.status(500).json({ error: 'Internal server error' });
   }
 };
-
-/**
- * Verify a booking token. Called by create-deposit-intent.
- * Returns true if the token is valid for the given restaurant_id.
- */
-function verifyBookingToken(restaurantId, token) {
-  if (!token || !restaurantId) return false;
-  const secret = process.env.BOOKING_HMAC_SECRET;
-  if (!secret) return false; // if secret not configured, fail open during rollout
-
-  const bucket = timeBucket();
-  // Accept current bucket and the previous one
-  for (const b of [bucket, bucket - 1]) {
-    const expected = crypto
-      .createHmac('sha256', secret)
-      .update(`${restaurantId}:${b}`)
-      .digest('hex');
-    try {
-      if (crypto.timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(token, 'hex'))) {
-        return true;
-      }
-    } catch {
-      // mismatched lengths = invalid token
-    }
-  }
-  return false;
-}
-
-module.exports.verifyBookingToken = verifyBookingToken;

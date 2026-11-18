@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -h 127.0.0.1 -U postgres"]
+      interval: 1s
+      timeout: 2s
+      retries: 30
+  rest:
+    image: postgrest/postgrest:v14.5
+    environment:
+      PGRST_DB_URI: postgres://authenticator@db:5432/postgres
+      PGRST_DB_SCHEMAS: public,restaurant
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${HOSTED_DEPOSIT_JWT_SECRET:?local secret required}
+    ports:
+      - "127.0.0.1:0:3000"
