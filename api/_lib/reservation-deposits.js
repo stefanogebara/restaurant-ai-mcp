@@ -1,7 +1,7 @@
 const { createHmac, randomUUID } = require('node:crypto');
 const Stripe = require('stripe');
 const { supabaseAdmin } = require('./supabase');
-const { minChargeAmount, resolveDepositCurrency } = require('./currency');
+const { minChargeAmount, MIN_CHARGE_AMOUNT, resolveDepositCurrency } = require('./currency');
 const { createSecureLogger } = require('./secure-logger');
 
 const logger = createSecureLogger('ReservationDeposits');
@@ -24,6 +24,7 @@ function stripeLiveMode() {
 function quoteDeposit(policy, country, partySize) {
   if (policy?.enabled !== true) return null;
   const currency = resolveDepositCurrency(country, policy.currency);
+  if (!Object.hasOwn(MIN_CHARGE_AMOUNT, currency)) return null;
   const amount = Number(policy.amount) * (policy.type === 'per_person' ? partySize : 1);
   const minor = Math.round(amount * 100);
   if (!['flat', 'per_person'].includes(policy.type) || !Number.isSafeInteger(minor) ||

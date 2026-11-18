@@ -116,6 +116,7 @@ function quoteDeposit(config, partySize) {
   if (deposit?.enabled !== true) {
     return { error: 'Deposits are not enabled for this restaurant. Enable them in Settings first.' };
   }
+  if (!['flat', 'per_person'].includes(deposit.type)) return { error: 'Invalid deposit type in config' };
   const currency = resolveDepositCurrency(config.country, deposit.currency);
   const amount = Number(deposit.amount) * (deposit.type === 'per_person' ? partySize : 1);
   const amountMinor = Math.round(amount * 100);

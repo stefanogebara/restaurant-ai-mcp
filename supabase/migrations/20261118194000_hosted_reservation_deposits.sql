@@ -163,7 +163,8 @@ BEGIN
      AND p_authorized_at <= attempt.expires_at
      AND p_capture_before > extract(epoch FROM clock_timestamp()) THEN
     UPDATE public.reservations
-       SET deposit_payment_intent_id = p_intent_id, deposit_amount = attempt.amount_minor::numeric / 100
+       SET deposit_payment_intent_id = p_intent_id, deposit_amount = attempt.amount_minor::numeric / 100,
+           deposit_currency = attempt.currency
      WHERE id = booking.id AND restaurant_id = attempt.restaurant_id;
     UPDATE public.hosted_reservation_deposits
        SET state = 'attached', checkout_session_id = p_session_id, payment_intent_id = p_intent_id, checkout_params = NULL

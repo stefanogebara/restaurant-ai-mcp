@@ -12,6 +12,7 @@ const { chromium, expect } = require('@playwright/test');
 
 const root = path.resolve(__dirname, '..');
 const migration = 'supabase/migrations/20261118194000_hosted_reservation_deposits.sql';
+const publicDepositMigration = 'supabase/migrations/20261118192636_public_booking_deposits.sql';
 const guardPath = path.resolve(root, '../seatable-billing-activation/.billing-e2e/catalog.cjs');
 const expectedAccount = 'acct_1UdAs4AjGeKZnIF4';
 const sqlLiteral = value => "'" + String(value).replaceAll("'", "''") + "'";
@@ -112,7 +113,7 @@ async function main() {
   let cleanupFailure;
   try {
     compose(['up', '-d', '--wait', 'db']);
-    for (const file of ['scripts/auditoria-reservas/fixture-schema.sql', '.hosted-deposit-e2e/fixture.sql', migration]) {
+    for (const file of ['scripts/auditoria-reservas/fixture-schema.sql', '.hosted-deposit-e2e/fixture.sql', publicDepositMigration, migration]) {
       sql(fs.readFileSync(path.join(root, file), 'utf8'));
     }
     assert.equal(sql(`
@@ -190,6 +191,7 @@ async function main() {
 
     const webhook = require('../api/stripe-webhook');
     const requestLink = require('../api/request-deposit-link');
+    const releaseDeposit = require('../api/release-deposit');
     const deliveries = [];
     let dropMissedCase = false;
     app.post(webhookPath, express.raw({ type: 'application/json' }), async (req, res) => {
@@ -212,6 +214,7 @@ async function main() {
       return webhook(req, res);
     });
     app.post('/api/request-deposit-link', express.json(), requestLink);
+    app.post('/api/release-deposit', express.json(), releaseDeposit);
     app.get('/book/:slug/confirmed', (_req, res) => res.send('Local return destination'));
     const request = (item, owner = fixtures.owner) => fetch(origin + '/api/request-deposit-link', {
       method: 'POST',
@@ -223,7 +226,7 @@ async function main() {
     });
     const state = item => JSON.parse(sql(`SELECT to_jsonb(a) - 'checkout_params' FROM public.hosted_reservation_deposits a
       WHERE booking_id=${sqlLiteral(item.id)} ORDER BY expires_at DESC LIMIT 1;`) || 'null');
-    const booking = item => JSON.parse(sql(`SELECT json_build_object('intent',deposit_payment_intent_id,'amount',deposit_amount,
+    const booking = item => JSON.parse(sql(`SELECT json_build_object('intent',deposit_payment_intent_id,'amount',deposit_amount,'currency',deposit_currency,
       'time',time,'party',party_size,'status',status) FROM public.reservations WHERE id=${sqlLiteral(item.id)};`));
 
     assert.equal((await request(cases.attach, null)).status, 401);
@@ -340,6 +343,7 @@ async function main() {
       assert.equal(booking(item).intent, expected === 'attached' ? intent.id : null);
       assert.equal(booking(item).amount,
         item === cases.capturedBeforeWebhook ? 20 : expected === 'attached' ? 25 : null);
+      assert.equal(booking(item).currency, expected === 'attached' ? 'brl' : null);
       if (item === cases.changed) assert.deepEqual([booking(item).time, booking(item).party], ['20:00:00', 4]);
       if (item === cases.cancelled) assert.equal(booking(item).status, 'cancelled');
       evidence.results[item.label] = {
@@ -349,6 +353,17 @@ async function main() {
         amountMinor: intent.amount, currency: intent.currency, checkoutPaymentStatus: session.payment_status,
       };
     }
+    const held = booking(cases.attach);
+    const release = await fetch(origin + '/api/release-deposit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + fixtures.owner.token },
+      body: JSON.stringify({ reservation_id: cases.attach.code }),
+    });
+    assert.equal(release.status, 200);
+    assert.equal((await sandbox.stripe.paymentIntents.retrieve(held.intent)).status, 'canceled');
+    const released = booking(cases.attach);
+    assert.deepEqual([released.intent, released.amount, released.currency], [null, null, null]);
+    evidence.results.dashboardRelease = { http: release.status, attachedCurrency: held.currency, clearedCurrency: released.currency };
     assert.equal(sql('SELECT count(*) FROM public.stripe_webhook_events_processed;'), '0');
     evidence.results.subscriptionIsolation = 'Hosted events bypassed the generic webhook ledger';
     evidence.passed = true;
