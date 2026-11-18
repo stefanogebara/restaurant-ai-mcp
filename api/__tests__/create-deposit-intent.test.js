@@ -77,6 +77,7 @@ jest.mock('../_lib/booking-token', () => ({
 }));
 
 jest.mock('../_lib/currency', () => ({
+  ...jest.requireActual('../_lib/currency'),
   resolveDepositCurrency: jest.fn((_country, override) => override || 'brl'),
   minChargeAmount: jest.fn(() => 1),
 }));
