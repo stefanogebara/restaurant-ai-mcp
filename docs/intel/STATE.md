@@ -1,183 +1,238 @@
 # Estado do repositório — Seatable
 
-> Reescrito pelo `/intel` de 2026-09-07. Janela: desde o último commit de intel
-> (`0914f9e`/`e12595c`, PR #108, 2026-09-01) até `edda6b0` (2026-09-04), 29
-> commits não-merge em `main`. Fora de `main`: dois PRs abertos (`#140` draft,
-> `#90` parado há 12 dias) e quatro PRs de dependabot abertos hoje de manhã.
-> Reescrito a cada `/intel`. Fonte: o git e o GitHub, não o config.
+> Reescrito pelo `/intel` de 2026-11-16. **Achado que precede o git desta
+> janela, e que muda como ler todo o resto deste arquivo:** o clone desta
+> sessão veio **raso** (`git rev-parse --is-shallow-repository` = `true`);
+> antes de `git fetch --unshallow` a janela "desde 2026-09-07" aparentava
+> **zero commits entre 07/09 e 09/11** — um congelamento de dois meses que
+> não existe. Depois do unshallow, `main` tem 2954 commits, e há 140
+> commits não-merge entre 07/09 e 09/11. Isso importa porque **essa janela
+> já foi lida, a fundo, por seis rodadas de `/intel` que ninguém mesclou**:
+> `intel/2026-09-14` → `2026-09-21` → `2026-09-28` → `2026-10-26` (PR #214)
+> → `2026-11-02` (PR #218) → `2026-11-09` (PR #286), cada uma herdando a
+> anterior, exatamente como a própria #218 recomendou fazer e a própria
+> #286 repetiu. `docs/intel/` em `main`, porém, continua congelado no
+> snapshot de 2026-09-07 — nenhuma das seis rodadas chegou a ser revisada
+> ou mesclada. Esta rodada faz a mesma coisa que as seis anteriores: parte
+> da mais recente (`intel/2026-11-09`, PR #286) em vez de redigitar dois
+> meses de arqueologia, e cobre só a janela genuinamente inédita: de
+> `63585fc` (PR #284, 09/11 — onde a #286 parou) até `e0299bf` (PR #349,
+> 16/11, `HEAD` de `main`). São 166 commits (112 não-merge, 54 merges),
+> **inteiros dentro de uma única semana** (09–16/11, com 2026-11-14 como
+> único dia parado) — não dois meses de trabalho, uma semana intensa depois
+> de uma retomada. Fora de `main`: a cadeia de intel represada ganhou um
+> **quarto elo em potencial** se esta rodada também não for mesclada — ver
+> "O que está em voo". Reescrito a cada `/intel`. Fonte: o git e o GitHub,
+> não o config.
 
 ## O parágrafo
 
-A semana não teve feature nova — teve uma auditoria que virou caçada, e a
-caçada achou uma falha de segurança de verdade. O gatilho foi mecânico: o
-PR #111 (31/08) construiu um verificador que compara todo `.select()`/`.from()`
-do repo contra o `information_schema` real do Supabase, em vez de uma lista
-escrita à mão de "problemas já conhecidos". Rodado, ele achou **72 referências
-a colunas fantasma em 22 arquivos** — nomes de coluna que o código lê e que
-não existem na tabela. Quatro rodadas de correção (PRs #114, #129, #131, #132)
-fecharam a lista até zero, e no meio da terceira apareceu o achado sério:
-`verify-session.js` pedia `customer_email` de uma coluna que não existe em
-`restaurant_config` (a real é `email`); o `SELECT` falhava inteiro, o bloco de
-posse era pulado e **qualquer usuário autenticado lia a sessão de checkout do
-Stripe de qualquer outro dono** — e-mail, valor, plano — só por ter o
-`session_id`. Corrigido e testado (7 testes, 3 provados vermelhos contra a
-versão antiga). No mesmo lote: o agente de voz nunca lia a config do
-restaurante (7 colunas erradas, `configForPrompt` sempre caía no fallback
-genérico), as campanhas pós-visita nunca enviaram nada desde sempre
-(`service_records` não tem `customer_email` nem `completed_at`), `whatsapp-
-settings.js` sempre mostrava zero de uso, e `customer_history` — já registrada
-como morta no `CLAUDE.md` — teve o mapeamento confirmado contra produção e o
-erro parou de ser engolido em silêncio (o modelo de no-show continua tratando
-todo cliente como novo; repontar para `customer_ltv` foi deixado como decisão
-de produto, não bug). Em paralelo, a Olímpia teve sua própria rodada de
-correção de mira: a regex de celular inventava número a partir de classe CSS
-e float de JSON (10 de 19 sites testados davam falso positivo), a caça ficava
-travada sem `SCRAPINGDOG_API_KEY` mesmo tendo um leitor grátis, e uma casa de
-culto (2926 avaliações) quase recebeu intro comercial por entrar no ICP pelo
-início do nome. Por baixo disso, duas frentes de custo do `CLAUDE.md` foram
-atacadas de vez: 36 funções de cron viraram 3 despachantes (191→159 funções,
-15min→11min de build) e o build passa a pular quando o commit não toca nada
-servido (medido: 80,8% do CPU do ciclo). E a segurança de dependência foi
-zerada — 50 vulnerabilidades (`npm audit fix`, sem `--force` exceto `sharp`) —
-com scan automático configurado pela primeira vez.
+A semana (10–16/11) tem um gatilho claro: em 11/11, uma auditoria
+("auditoria-nov11-entrega", PR #328, co-autoria Claude Opus 5.5) reproduziu
+contra um Postgres descartável — com as mesmas funções SQL da produção —
+as jornadas "hóspede muda ou cancela" e "IA cria reserva", e achou **quatro
+caminhos que pulam a regra central de reserva**: o portal do cliente mudava
+e cancelava sem checar horário, capacidade, mesa ou estado; a voz ignorava
+mesa cheia (reproduzido: 12 pessoas em 8 lugares, depois de passar pelo
+WhatsApp); o validador lia horário em UTC e recusava a própria noite por
+fuso errado; e **Google/parceiros nunca funcionaram, nunca** — o
+`CreateBooking` do Google inseria sem `reservation_id` (coluna `NOT NULL`,
+toda reserva falhava) e o webhook de parceiro procurava a chave numa
+`public.api_keys` que não existe (403 sempre). Medido em 12/11: **zero
+reservas** desses dois canais já existiram em produção. O resto da semana
+(11–15/11, PRs #329–#344) é a correção sistemática de cada caminho: voz,
+WhatsApp, portal, Google e parceiros passam a reservar e mudar por duas
+funções SQL únicas (`book_guest_reservation`/`mutate_guest_reservation`),
+com trava `FOR UPDATE` no restaurante contra reserva concorrente
+(reproduzido e corrigido em #333: duas vozes simultâneas furando a
+capacidade), checando fuso, antecedência mínima (#337, unificada em 1h por
+PR #349 no fim da semana) e limite de grupo pela mesma regra em todos os
+canais. Em paralelo, e antes disso, 10–11/11 foi uma segunda frente, de
+outro agente (branches `codex/*`, sem co-autoria Claude): uma leva de ~25
+PRs pequenos endurecendo o fluxo de recibo de voz (ortografia ditada,
+confirmação por teclado, onboarding em folha única) — território adjacente,
+não o mesmo bug. E, fechando a semana (14–16/11), duas frentes de
+ferramenta: `audit:phantom-columns` ganhou um segundo tipo de checagem —
+comparar o **corpo das funções SQL** com a produção, não só a existência de
+tabela (achou 3 das 23 funções com diffs de espaço/comentário, e uma
+função mergeada em 11/11 que nunca tinha sido aplicada — só o smoke test
+pegou) — e a ElevenLabs ganhou limpeza de órfãos: agentes de restaurantes
+que não existem mais, e ferramentas que nenhum agente vivo referencia,
+ambos só com prova, nunca por força bruta. No meio disso, um vazamento de
+custo: o `ignoreCommand` da Vercel não via a regra "só produção constrói"
+(decidida em 23/09), e ramos de agente geraram ~12 builds pagos de
+pré-visualização em 10–11/11 antes da correção (#320).
 
 ## O que shipou
 
-- **A auditoria de colunas fantasma, do gatilho ao zero** (#111→#114→#129→
-  #131→#132): `schema-snapshot.json` (colunas reais de 17 tabelas, tiradas do
-  `information_schema` de produção) substitui o allowlist manual de
-  `audit:phantom-columns`. 72 referências corrigidas em 22 arquivos. A mais
-  séria: `verify-session.js` deixava qualquer usuário logado ler a sessão de
-  checkout do Stripe de outro dono (e-mail, valor, plano) — o `error` do
-  Supabase nunca era lido, o `SELECT` falhava calado, o gate de posse nunca
-  rodava. Também corrigido: o agente de voz nunca lia a config real do
-  restaurante (7 colunas erradas em `elevenlabs-agent-create.js`); campanhas
-  pós-visita e pedido de review no Google nunca saíram (`service_records` sem
-  `customer_email`/`completed_at` — `completed_at` na verdade é
-  `actual_departure`); contador de uso do WhatsApp sempre zero; `handoff_to_
-  human` (do #109) respondia em inglês para cliente brasileiro porque o
-  fallback de restaurante também lia coluna errada (`language`/`restaurant_
-  slug` em vez de `agent_language`/`slug`). `customer_history` confirmada
-  morta (schema `restaurant`, zero linhas, `restaurant_id` não existe) — LGPD
-  deletion corrigido, erro passa a subir em vez de virar "cliente novo" em
-  silêncio; repontar o no-show model para `customer_ltv` fica em aberto, por
-  decisão.
-- **Cron: 36 funções → 3 despachantes** (#135) — `api/_crons/` (não vira
-  função própria) + `run.js`(60s)/`run-2min.js`/`run-5min.js`, agrupados por
-  teto de `maxDuration`. 191→159 funções, build 15min→11min. `health.js`
-  ficou standalone de propósito (não tem cron, mover quebraria `GET /api/
-  cron/health`). **`vercel.json` mudou de rota **e** de cadência** — o
-  `CLAUDE.md` ainda documenta caminhos diretos (`/api/cron/check-late-
-  reservations` etc.) e frequências antigas; hoje `sync-conversation-data` e
-  `validate-conversations` rodam de hora em hora (eram `*/15`), `send-
-  feedback` também (era 30 min), e a tabela do `CLAUDE.md` nem lista boa parte
-  dos 39 crons reais (a maioria da Olímpia). Não é `intel.config.json`, é
-  `CLAUDE.md` — fica registrado aqui, não é deste pipeline corrigir.
-- **Build pulado quando nada servido muda** (#128) — Ignored Build Step mede
-  `vite build` (38s) contra o empacotamento de função (~13min de 191 funções);
-  9 dos últimos 38 commits antes desta mudança eram só doc/lição/intel.
-  Falha para o lado de construir (git raso, sem base, qualquer erro → builda).
-- **Segurança de dependência zerada** (#117, #124, #133, #136 em sequência) —
-  50 vulnerabilidades (20 raiz, 30 client) a zero via `npm audit fix` sem
-  `--force` (exceto `sharp`, dev-only, bump maior testado à mão). Duas
-  dependências fantasma achadas no caminho: `node-fetch` (só transitiva do
-  SDK Anthropic, virou `fetch` nativo — o bump do SDK para 0.122 já tinha
-  quebrado 4 rotas do ElevenLabs por isso) e `jsonwebtoken` (só transitiva do
-  Twilio, autentica todo JWT do repo — um bump de SMS derrubaria login). Scan
-  de dependência (`dependabot.yml`, agrupado por ecossistema) configurado pela
-  primeira vez — o repo tinha três lockfiles e zero scan.
-- **CodeRabbit revisando de verdade** (#116) — `auto_review.drafts` estava
-  `false`; como todo PR desta esteira nasce draft, nada era revisado, sete PRs
-  seguidos saíram verdes por "review skipped" — inclusive PRs mexendo em RLS
-  e WhatsApp. Corrigido. Registrado no cabeçalho: o repo também está abaixo do
-  corte de 10 estrelas que libera revisão automática por padrão do plano —
-  isso não tem correção por YAML.
-- **9 tabelas expostas via RLS fechadas** (#112) — 4 de fato tinham grant para
-  `anon`/`authenticated` (das 9 que o advisor apontou). A mais séria:
-  `restaurant.stripe_connect_accounts` era `SELECT` para qualquer usuário
-  **logado**, vazando `stripe_account_id`/`payouts_enabled` dos 65
-  restaurantes entre inquilinos.
-- **CI: live-smoke falha rápido e sem vazar credencial** (#137) — estava
-  vermelho em 100% das runs desde 02/09 por dois secrets faltando
-  (`SANDBOX_EMAIL`/`SANDBOX_PASSWORD`), e a revisão pegou que a correção
-  original vazava a senha para todo passo do job (`npm ci` incluído). Trocado
-  por flag de presença; valor só chega aos passos de login.
-- **e2e: 536 testes e 0 rodavam** (#90, ainda aberto — ver "em voo") — um spec
-  do Racha lia um `.env` do Windows local no carregamento do módulo; `ENOENT`
-  derrubava a coleta do Playwright inteira antes de qualquer teste existir.
-- **Prospecção — três acertos de mira**: regex de celular parava de inventar
-  número a partir de CSS/JSON (#113, 0%→100% de precisão em 19 sites reais);
-  caça ao celular deixou de depender de `SCRAPINGDOG_API_KEY` como trava dura
-  — leitor grátis primeiro, pago só quando o grátis não achou (#138, 82% dos
-  sites abrem com o grátis); link de WhatsApp do Elementor reconhecido, dedup
-  de intro cruza o lote inteiro (não só dentro da rodada — `+5511946310342`
-  tinha recebido 7 intros em um mês), e ICP para de aceitar casa de culto pelo
-  início do nome (#139).
+- **A auditoria que achou os quatro caminhos, e por que GOOGLE/PARCEIROS
+  nunca existiram de verdade** (PR #328, 11/11): reproduzido em Postgres
+  descartável com as funções de produção (`scripts/auditoria-reservas/
+  run.sh`). Portal muda/cancela sem regra; voz ignora mesa cheia; validador
+  lê horário em UTC (19h em São Paulo virava 22h, recusando a própria
+  noite); Google `CreateBooking` inseria sem `reservation_id` (sempre
+  falhava) e sem olhar horário/capacidade; webhook de parceiro batia numa
+  tabela (`public.api_keys`) que não existe (sempre 403). **Zero reservas
+  do Google ou de parceiro já existiram em produção** — não é regressão, é
+  "nunca funcionou".
+- **Regra única de reserva, por canal, PR por PR** (#333 `reserva-atomica`,
+  #335 `reserva-parceiros`, #337 `voz-limite-antecedencia`, #338
+  `voz-checar-disponibilidade`, #340 `whatsapp-limites`, #341
+  `google-disponibilidade`, #343 `disponibilidade-regra-unica`, #345
+  `pagina-horarios`, integrações `portal-regra-central`/`validador-fuso-
+  restaurante`/`voz-propria-prova`/`voz-email-espera`/`voz-capacidade-
+  canais`/`whatsapp-codigo-completo` em 11/11): `book_guest_reservation`
+  trava o restaurante (`FOR UPDATE`) e confere horário, fuso, antecedência,
+  limite de grupo e lugares de **todos os canais** (incluindo `pending`)
+  antes de inserir; `mutate_guest_reservation` faz o mesmo para mudança e
+  cancelamento. Reproduzido com script de barreiras
+  (`c4-criacao-concorrente.cjs`): duas vozes na mesma mesa, 12 lugares num
+  salão de 8 — corrigido. Google agora reserva por essa função com origem
+  `google`, chave de idempotência `google:v1:<sha256>`, hora local do
+  restaurante; parceiro agora autentica por `verifyApiKey` (hash em
+  `restaurant.api_keys`, não a tabela inexistente) com permissão
+  `reservations:import`. Antecedência mínima de 1h unificada por canal no
+  fim da semana (#349 `aviso-minimo`).
+- **Checagem de migração passa a comparar função SQL, não só tabela** (#336
+  `auditoria-funcoes`, 14/11): `scripts/lib/migration-functions.js` extrai a
+  última definição de cada função em `supabase/migrations` e compara com
+  `pg_proc.prosrc` via `public.audit_function_sources(text[])` (só
+  `service_role`, API REST — CI não tem acesso a `pg_catalog` direto).
+  Gatilho real: em 11/11 uma função de confirmação por teclado foi
+  mergeada e nunca aplicada em produção — só o smoke test pegou; as
+  funções de reserva dos PRs #333/#335 tinham sido conferidas só à mão, por
+  md5. Medido em 14/11: 19/23 funções idênticas, 3 só com diff de
+  comentário/EOL, e `restaurant.confirm_event_booking` com duas variáveis
+  não usadas removidas.
+- **ElevenLabs: limpeza de órfãos, só com prova** (#342
+  `apagar-agente-com-ferramentas`, #344 `limpar-ferramentas-orfas`, #346
+  `sincronizar-todas-ferramentas`, #347 `apagar-agentes-orfaos`): apagar
+  agente carrega consigo suas ferramentas (ordem agente-primeiro,
+  ferramentas com `force`, resposta conferida); a sincronização de
+  ferramentas agora compara as 7 reais (não só as 3 de hóspede); a limpeza
+  de ferramentas órfãs lista por grupo e apaga só o que nenhum agente vivo
+  referencia; agentes de restaurantes que não existem mais são apagados —
+  só com prova, nunca por força.
+- **Idioma e fuso passam a nascer corretos** (#329 `fuso-onboarding`, #330
+  `idioma-agente`, #331 `sync-idioma-elevenlabs`, #332
+  `voz-idioma-ferramentas`, 12/11): todo restaurante novo nasce no fuso da
+  cidade (a coluna tinha default `UTC`) e no idioma do país, por um mapa
+  só; o agente de voz passa a acompanhar essa configuração, e ferramentas
+  de data antigas presas a hosts fixos podem ser atualizadas.
+- **Vercel: pré-visualização nunca constrói, de verdade** (#320
+  `vercel-sem-preview`, 11/11): a regra de time desde 23/09/2026 ("só
+  produção constrói") estava configurada no projeto, mas o `ignoreCommand`
+  de `vercel.json` passava por cima dela e `vercel-ignore-build.sh` só
+  olhava caminhos alterados — ramos de agente tocando `api/`/`client/src/`
+  geraram **~12 builds pagos de pré-visualização em 10–11/11**. O script
+  agora pula quando `VERCEL_ENV` existe e não é `production`; sem a
+  variável (fora da Vercel), vale a regra por caminho de antes. Testado
+  contra um repositório git temporário de verdade, não mock.
+- **Segunda frente, agente diferente, mesmo território adjacente — fluxo de
+  recibo de voz** (~25 PRs `codex/*` sem numeração sequencial de commit,
+  #289–#320, 10–11/11, sem co-autoria Claude — outro agente/sessão): voz só
+  muda/cancela com confirmação por teclado explícita do titular
+  (`native-guest-mutations-fail-closed`, #316 — recusa mutação por telefone
+  sem prova, só permite consulta); ortografia ditada de código de reserva em
+  PT/ES; onboarding em folha única; detalhes de chamada e navegação mobile
+  dos Calls corrigidos; duração média de chamada só sobre amostra
+  encerrada. Território vizinho ao da auditoria de reservas, não o mesmo
+  bug — vale ler como simultâneo, não como parte do mesmo esforço.
 
 ## O que está em voo
 
-- **PR #140** (draft, aberto 06/09, mergeable): landing fotográfica em três
-  tempos (`PhotographicHero`/`LiveServiceCanvas`/`CinematicServiceStory`),
-  teste de envio de WhatsApp que não vira pesquisa, e uma lição registrada —
-  oito rodadas de crítica sem a nota mexer até resolver o laço estrutural
-  (artefato repetido, CTA preso num mock) em vez da lista item a item. Achado
-  lateral que vale registrar: o mock anterior repintava reservas planejadas
-  como se fossem o estado real da noite — sem nenhum no-show numa página que
-  vende exatamente a detecção disso.
-- **PR #90** (aberto desde 26/08, 12 dias, não-draft, `mergeable_state:
-  unknown` — base desatualizada, roda sobre `b33944b`, bem antes desta
-  janela): remove dois specs do Racha que faziam a suíte e2e inteira falhar
-  coleta (0 testes coletados) e que, sem configuração, disparavam contra o
-  ambiente de produção de **outro produto**. Correção pequena (42+/8-, 4
-  arquivos) e isolada; parece só esperando merge.
-- **4 PRs de dependabot** abertos nesta manhã (09-07): #141–#144, bumps de
-  rotina em `producao`/`desenvolvimento`, raiz e client.
-- **Eval do Manager AI** (20 casos, PR #99 de duas semanas atrás) — arnês
-  pronto, ainda não rodado; segue faltando `OPENROUTER_API_KEY` e login neste
-  ambiente.
-- **G5 — onboarding em conversa** segue como estava no `STATE.md` anterior:
-  fundação escrita, endpoint que liga (`api/onboarding/agent.js`) e promoção
-  atômica do demo ainda não existem. Nenhum commit desta janela tocou
-  `onboarding-agent.js`/`onboarding-draft.js`/`agent-loop.js`.
+- **A cadeia de intel represada ganhou um elo — e esta rodada seria o
+  quarto se também não for mesclada.** `intel/2026-10-26` (PR #214, draft,
+  aberta há três semanas), `intel/2026-11-02` (PR #218, draft, aberta há
+  duas) e `intel/2026-11-09` (PR #286, draft, aberta há uma) continuam
+  abertas, sem review, cada uma superada pela seguinte. **Recomendação
+  explícita, repetida da rodada anterior e agora mais urgente — são três
+  elos represados, não dois:** fechar #214, #218 e #286 sem merge quando a
+  PR desta rodada for revisada; ela herda e supera as três. O mecanismo "a
+  próxima rodada herda a anterior" só funciona enquanto alguém eventualmente
+  revisa e mescla uma — não revisar nenhuma deixa este backlog crescer para
+  sempre em paralelo a `main`.
+- **PR #169** (`codex/phone-tenant-safety`, draft, autodeclarada "não
+  mesclar" até confirmação manual de qual restaurante é dono legítimo de
+  número duplicado) — território que pode já estar coberto: esta mesma
+  janela tem um commit direto em `main`, não ligado a PR aberta,
+  `dbf11e9` "route inbound calls only to unique phone owner" (07/11), que
+  parece atacar exatamente esse problema. Vale conferir se #169 já está
+  resolvida antes de continuar represando.
+- **PR #165** (`codex/platform-insights-redesign`, draft, `dirty`) — sem
+  mudança nos bloqueios já registrados (nota visual, OAuth de Preview,
+  merge de CRM inseguro).
+- **PR #140** (draft) — sem mudança; coexiste com versão já publicada por
+  artefato estático. Fechar é chamada do Stefano.
+- **PR #90** (`claude/e2e-racha-quebra-listagem`, não-draft, aberta há
+  meses) — segue aberta e sem bloqueio declarado; candidato a merge rápido,
+  como nas duas rodadas anteriores.
+- **5 PRs de dependabot abertos** (`#198`, `#206`, `#215`, `#216`, `#348`)
+  — nenhum mesclado; todos antecedem a semana de 166 commits e precisam de
+  rebase.
+- **Eval do Manager AI e G5 (onboarding em conversa)** seguem intocados:
+  nenhum commit desta janela toca `onboarding-agent.js`/`agent-loop.js`; o
+  arnês de 20 casos do Manager AI não rodou.
 
 ## O que morreu
 
-- Nada foi removido de propósito nesta janela — foi tudo correção de dado
-  errado, não descarte de feature. A exceção é a lista de conhecidos-ruins do
-  `audit:phantom-columns` (3 tabelas escritas à mão), substituída pelo
-  `schema-snapshot.json` gerado do banco real.
+- **O `known_gap` do `fly.toml` apontando para caminho de build inexistente
+  — RESOLVIDO, mecânico.** `fly.toml` na raiz agora aponta para
+  `api/_voice-server/Dockerfile` (confirmado lendo o arquivo agora: existe
+  e bate com o diretório real). O commit é `efb1da1f` ("restore Fly image
+  build after server move", 08/11) — fora desta janela de 166 commits, mas
+  dentro do hiato que o clone raso tinha escondido, e que a rodada de
+  `intel/2026-11-09` ainda registrava como aberto (não tinha alcançado
+  esse commit). Fica para a seção de divergências: é fato verificável no
+  código, candidato a sair de `known_gaps`.
+- Fora isso, nada removido de propósito: a semana inteira foi correção de
+  regra (reserva) e de ferramenta (auditoria, limpeza de ElevenLabs), não
+  descarte de feature.
 
 ## Áreas quentes
 
-`api/_lib/audit/phantom-columns` (e o `schema-snapshot.json` que o alimenta),
-`api/_lib/prospecting/*` (regex de celular, caça ao JSON, dedup entre
-rodadas), `api/_crons/*` + `api/cron/run*.js` (a nova forma de todo cron), `.
-github/workflows/live-smoke.yml`, `.github/dependabot.yml`, `api/verify-
-session.js` (segurança — vale revisão extra no próximo toque).
+`api/_lib/pos/service-completion-core.js` + as duas funções SQL novas de
+reserva (`book_guest_reservation`/`mutate_guest_reservation` — acabaram de
+absorver cinco canais numa semana), `api/google-booking/server.js` +
+`api/external-booking-webhook.js` (nunca funcionaram até esta semana — sem
+tráfego histórico para comparar, qualquer regressão é silenciosa),
+`scripts/lib/migration-functions.js` + `public.audit_function_sources`
+(novo, vale rodar a cada PR que toque função SQL), `api/_services/
+elevenlabsAgentService.js` (limpeza de órfãos, território onde apagar
+errado é destrutivo), `vercel-ignore-build.sh` (acabou de custar ~12 builds
+pagos), e a própria fila de PRs represados (`#214`/`#218`/`#286` de intel,
+mais `#169`/`#165`/`#140`/`#90` + 5 de dependabot) — crescendo há quatro
+rodadas seguidas.
 
 ## Divergências com o config
 
-Nenhuma linha de `bets`, `known_gaps` ou `settled` foi tocada nesta janela por
-decisão de julgamento — o que segue é o que dá para aplicar sozinho, por ser
-o que o próprio texto do `known_gaps[6]` (customer_history) já previa:
-
-1. **`customer_history` — buraco documentado só em `CLAUDE.md`, faltava em
-   `known_gaps`; acrescentado agora, mecânico.** O `CLAUDE.md` já registrava
-   a tabela como morta ("erra 42P01 em silêncio"), mas o `intel.config.json`
-   não tinha essa entrada. PR #115 (2026-09-02) corrigiu metade do problema:
-   o erro agora sobe para quem chama, em vez de virar `null`/"cliente novo"
-   sem rastro, e a exclusão LGPD (`data-deletion.js`) passou a usar
-   `.schema('restaurant')` e parar de filtrar por uma coluna (`restaurant_id`)
-   que a tabela não tem. O que **não** mudou: o modelo de no-show ainda trata
-   todo cliente como novo — o mapeamento para `customer_ltv` está pronto
-   (`total_visits`, `last_visit_date`, `avg_party_size` existem lá) mas não
-   foi aplicado, por ser decisão de produto e não bug. Acrescentado ao
-   `known_gaps` do `intel.config.json` nesta passada — é adição de fato
-   verificável no git, não remoção nem alteração de entrada existente.
-2. **`CLAUDE.md` (fora do `intel.config.json`, registrado aqui por não ter
-   outro lugar):** a tabela de cron jobs ficou desatualizada pelo próprio
-   #135 desta janela — rotas mudaram de endpoint direto para `/api/cron/
-   run?job=`, e pelo menos três cadências mudaram (`sync-conversation-data`,
-   `validate-conversations`: `*/15`→hora em hora; `send-feedback`: 30min→hora
-   em hora) sem que a doc acompanhasse. Fora do escopo deste pipeline
-   (`docs/intel/` + `intel.config.json`) corrigir — só registrar que existe.
+1. **`known_gap` do `fly.toml` — checar para remoção.** Como registrado em
+   "O que morreu": o caminho de build quebrado (`api/voice-server/
+   Dockerfile`, sem *underscore*) que o `intel.config.json` registra desde
+   agosto **não existe mais** no `fly.toml` atual — está correto
+   (`api/_voice-server/Dockerfile`), desde o commit `efb1da1f` de 08/11.
+   Fato verificável no git e no arquivo, sem ambiguidade. Não editado aqui
+   (fora do escopo deste arquivo); fica registrado para quem tratar
+   `intel.config.json` decidir a remoção da entrada.
+2. **`CLAUDE.md` (fora do `intel.config.json`, registrado por não ter outro
+   lugar) — a tabela de cron jobs continua desatualizada**, e agora por um
+   motivo adicional: `api/cron/send-reminders.js` e os demais crons citados
+   na tabela do `CLAUDE.md` não existem mais nesse caminho — foram
+   consolidados em `api/_crons/*.js` desde a reforma de 36→3 despachantes
+   (registrada na rodada de 2026-09-07). Confirmado agora que
+   `api/_crons/send-reminders.js` ainda **não lê `whatsapp_provider`** antes
+   de escolher o canal — o `known_gap` do roteamento hardcoded de WhatsApp
+   (reminders sempre Twilio, campanhas sempre Meta) **permanece aberto**,
+   sem mudança nesta janela. Fora do escopo deste pipeline corrigir a
+   tabela do `CLAUDE.md` — só registrar que a divergência persiste e
+   ganhou mais uma camada (caminho de arquivo, não só rota/cadência).
+3. **Achado novo, candidato a entrar em `known_gaps` — decisão de quem
+   tratar o config, não mecânica:** a auditoria de 11/11 (PR #328) provou
+   que os canais Google e parceiro de reserva **nunca funcionaram em
+   produção** (zero reservas, bugs desde a criação) — isso é mais forte do
+   que o `known_gap` atual sobre "reserva externa pode chegar sem
+   telefone", que supõe que a reserva ao menos se cria. Ambos os caminhos
+   foram corrigidos nesta semana (ver "O que shipou"), então o gap em si
+   pode já estar resolvido — mas vale conferir em produção com tráfego
+   real antes de fechar, já que nunca houve volume histórico para
+   comparar.
