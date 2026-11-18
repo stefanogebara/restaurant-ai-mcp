@@ -19,11 +19,12 @@ export type LaunchStepKey = typeof LAUNCH_STEPS[number];
 
 export interface LaunchStep {
   status: string;
+  retry?: boolean;
   tables?: number;
   seats?: number;
   language?: string;
   agent_id?: string | null;
-  plan?: 'free' | 'trial';
+  plan?: 'free' | 'trial' | 'trial_ended';
   trial_end?: string | null;
   restaurant_id?: string;
   booking_url?: string;

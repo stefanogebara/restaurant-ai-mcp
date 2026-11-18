@@ -37,6 +37,7 @@ app.use((req, res, next) => {
 
 // Load and mount API endpoints
 const onboardingComplete = require('./api/onboarding/complete.js');
+const onboardingStatus = require('./api/onboarding/status.js');
 const hostDashboard = require('./api/host-dashboard.js');
 const analytics = require('./api/analytics.js');
 const waitlist = require('./api/waitlist.js');
@@ -68,6 +69,7 @@ const createHandler = (handler) => {
 // Mount routes
 app.post('/api/onboarding/complete', createHandler(onboardingComplete));
 app.options('/api/onboarding/complete', (req, res) => res.status(200).end());
+app.all('/api/onboarding/status', createHandler(onboardingStatus));
 
 // Host Dashboard endpoints
 app.get('/api/host-dashboard', createHandler(hostDashboard));

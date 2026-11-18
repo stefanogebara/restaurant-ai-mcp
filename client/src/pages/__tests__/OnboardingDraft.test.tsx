@@ -8,7 +8,7 @@
  *   migrated into the signed-in user's bucket, then removed
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Onboarding from '../Onboarding';
 
@@ -33,7 +33,7 @@ vi.mock('../../contexts/ToastContext', () => ({
 }));
 
 vi.mock('../../services/api', () => ({
-  authFetch: vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) }),
+  authFetch: vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({ restaurant: null, steps: {}, needs_recovery: false }) }),
 }));
 
 vi.mock('../../lib/analytics', () => ({
@@ -88,16 +88,16 @@ describe('Onboarding draft persistence (user-scoped keys)', () => {
     mockUserId = 'user-a';
   });
 
-  it('persists the draft under a per-user key', () => {
+  it('persists the draft under a per-user key', async () => {
     renderOnboarding();
-    expect(localStorage.getItem('onboarding_data:user-a')).toBeTruthy();
+    await waitFor(() => expect(localStorage.getItem('onboarding_data:user-a')).toBeTruthy());
     expect(localStorage.getItem('onboarding_step:user-a')).toBe('1');
     // No unscoped writes
     expect(localStorage.getItem('onboarding_data')).toBeNull();
     expect(localStorage.getItem('onboarding_step')).toBeNull();
   });
 
-  it('migrates a legacy unscoped draft into the signed-in user bucket', () => {
+  it('migrates a legacy unscoped draft into the signed-in user bucket', async () => {
     localStorage.setItem('onboarding_step', '2');
     localStorage.setItem(
       'onboarding_data',
@@ -107,7 +107,7 @@ describe('Onboarding draft persistence (user-scoped keys)', () => {
     renderOnboarding();
 
     // Restored to step 2 (Step 0 search is bypassed on resume)
-    expect(screen.getByTestId('step-2')).toBeInTheDocument();
+    expect(await screen.findByTestId('step-2')).toBeInTheDocument();
     // Draft now lives under the scoped key…
     expect(localStorage.getItem('onboarding_data:user-a')).toContain('Legacy Bistro');
     // …and the legacy keys are gone
@@ -115,7 +115,7 @@ describe('Onboarding draft persistence (user-scoped keys)', () => {
     expect(localStorage.getItem('onboarding_step')).toBeNull();
   });
 
-  it("does not let another user inherit someone else's draft", () => {
+  it("does not let another user inherit someone else's draft", async () => {
     // Este teste exercita o WIZARD: o rascunho é (corretamente) recusado,
     // o passo volta a 1, e sem esta linha a folha renderizaria no lugar.
     localStorage.setItem('onboarding_modo', 'formulario');
@@ -129,7 +129,7 @@ describe('Onboarding draft persistence (user-scoped keys)', () => {
     renderOnboarding();
 
     // Fresh start for user B: Step 0 search, not user A's step 3
-    expect(screen.getByTestId('step-0')).toBeInTheDocument();
+    expect(await screen.findByTestId('step-0')).toBeInTheDocument();
     expect(screen.queryByTestId('step-3')).not.toBeInTheDocument();
     // User B's draft contains no trace of user A's data
     expect(localStorage.getItem('onboarding_data:user-b') || '').not.toContain('Secret');
@@ -137,7 +137,7 @@ describe('Onboarding draft persistence (user-scoped keys)', () => {
     expect(localStorage.getItem('onboarding_data:user-a')).toContain('User A Secret Bistro');
   });
 
-  it('restores the right step for the returning user', () => {
+  it('restores the right step for the returning user', async () => {
     localStorage.setItem('onboarding_step:user-a', '3');
     localStorage.setItem(
       'onboarding_data:user-a',
@@ -146,10 +146,10 @@ describe('Onboarding draft persistence (user-scoped keys)', () => {
 
     renderOnboarding();
 
-    expect(screen.getByTestId('step-3')).toBeInTheDocument();
+    expect(await screen.findByTestId('step-3')).toBeInTheDocument();
   });
 
-  it('never rehydrates a draft that already has a restaurant_id (duplicate-launch guard)', () => {
+  it('never rehydrates a draft that already has a restaurant_id (duplicate-launch guard)', async () => {
     // Este teste exercita o WIZARD: o rascunho é (corretamente) recusado,
     // o passo volta a 1, e sem esta linha a folha renderizaria no lugar.
     localStorage.setItem('onboarding_modo', 'formulario');
@@ -162,6 +162,6 @@ describe('Onboarding draft persistence (user-scoped keys)', () => {
     renderOnboarding();
 
     // Fresh start — Step 0, not Step 4
-    expect(screen.getByTestId('step-0')).toBeInTheDocument();
+    expect(await screen.findByTestId('step-0')).toBeInTheDocument();
   });
 });

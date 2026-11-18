@@ -26,6 +26,13 @@ jest.mock('../_services/elevenlabsAgentService', () => ({
 jest.mock('../_services/voiceAgentService', () => ({ refreshVoiceAgentPrompt: jest.fn() }));
 jest.mock('../_lib/supabase', () => ({
   supabaseAdmin: {
+    from: jest.fn(() => {
+      const query = {
+        select: () => query, eq: () => query,
+        maybeSingle: async () => ({ data: null, error: null }),
+      };
+      return query;
+    }),
     schema: jest.fn(() => ({
       from: jest.fn(() => ({
         select: jest.fn(() => {

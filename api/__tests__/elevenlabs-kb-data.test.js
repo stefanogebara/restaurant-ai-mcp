@@ -11,6 +11,7 @@ function mockQuery(table) {
   };
   async function result() {
     mockReads.push({ table, filters });
+    if (table === 'onboarding_setup_steps') return { data: null, error: null };
     if (table === 'restaurant_config') return { data: mockConfig, error: null };
     if (table === 'manager_memory') return { data: [{ content: 'Outdoor tables available' }], error: mockFactsError };
     if (table === 'pos_menu_items') return { data: [{ name: 'Moqueca da casa', category: 'Main', price_cents: 4200 }], error: mockMenuError };

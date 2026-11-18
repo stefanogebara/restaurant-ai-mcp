@@ -12,6 +12,7 @@
  */
 
 const { supabaseAdmin } = require('./_lib/supabase');
+const { runPendingProviderStep } = require('./_services/onboardingRecovery');
 const { buildKnowledgeDoc, loadKnowledgeBaseData } = require('./_lib/elevenlabs-knowledge-base');
 const { verifyJWT, getRestaurantIdForUser } = require('./_lib/auth');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
@@ -50,6 +51,14 @@ const handler = async (req, res) => {
   // agentId resolved from DB after config fetch (per-restaurant)
 
   try {
+    const tracked = await runPendingProviderStep(restaurantId, 'knowledge_base');
+    if (tracked) {
+      if (tracked.status === 'ok') {
+        return res.status(200).json({ success: true, document_id: tracked.document_id });
+      }
+      const status = ['working', 'reconcile'].includes(tracked.status) ? 409 : 502;
+      return res.status(status).json({ success: false, error: 'Knowledge setup is incomplete. Check onboarding setup.' });
+    }
     const { config, managerFacts, menuItems } = await loadKnowledgeBaseData(restaurantId);
     const agentId = config.elevenlabs_agent_id;
     if (!agentId) {

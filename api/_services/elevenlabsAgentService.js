@@ -157,6 +157,12 @@ async function getAgentIdForRestaurant(restaurantId) {
  */
 async function syncKnowledgeBase(restaurantId) {
   try {
+    const { runPendingProviderStep } = require('./onboardingRecovery');
+    const tracked = await runPendingProviderStep(restaurantId, 'knowledge_base');
+    if (tracked) return tracked.status === 'ok'
+      ? { success: true, documentId: tracked.document_id }
+      : { success: false, error: 'Onboarding knowledge setup is incomplete' };
+
     const apiKey = getApiKey();
     if (!apiKey) {
       return { success: false, error: 'ElevenLabs API key not configured' };
@@ -740,16 +746,18 @@ function buildToolDefinitions(baseUrl, restaurantId, webhookSecret) {
  * @param {string} apiKey
  * @returns {Promise<{toolIds: string[], errors: Array}>}
  */
-async function createToolsViaAPI(toolDefinitions, apiKey) {
+async function createToolsViaAPI(toolDefinitions, apiKey, signal) {
   const toolIds = [];
   const errors = [];
 
   for (const toolDef of toolDefinitions) {
+    if (signal?.aborted) break;
     try {
       const res = await fetch(`${ELEVENLABS_BASE}/tools`, {
         method: 'POST',
         headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json' },
         body: JSON.stringify({ tool_config: toolDef }),
+        ...(signal ? { signal } : {}),
       });
 
       if (!res.ok) {
@@ -774,6 +782,20 @@ async function createToolsViaAPI(toolDefinitions, apiKey) {
   }
 
   return { toolIds, errors };
+}
+
+async function removeUnattachedTools(toolIds, apiKey) {
+  const signal = AbortSignal.timeout(2500);
+  await Promise.allSettled(toolIds.map(async (id) => {
+    try {
+      const response = await fetch(`${ELEVENLABS_BASE}/tools/${encodeURIComponent(id)}`, {
+        method: 'DELETE', headers: elevenLabsHeaders(apiKey), signal,
+      });
+      if (!response.ok && response.status !== 404) throw new Error('Provider rejected tool cleanup');
+    } catch (error) {
+      logger.warn('Could not remove unattached onboarding tool', { toolId: id, error: error.message });
+    }
+  }));
 }
 
 /**
@@ -802,9 +824,14 @@ async function createAgent({
   phone,
   address,
   custom_greeting,
+  tags,
+  signal,
+  beforeCreate,
 }) {
+  let createSent = false;
+  let createdTools = [];
+  const apiKey = getApiKey();
   try {
-    const apiKey = getApiKey();
     if (!apiKey) {
       return { success: false, error: 'ElevenLabs API key not configured' };
     }
@@ -884,19 +911,27 @@ async function createAgent({
       return { success: false, error: 'Could not secure voice tools for this restaurant' };
     }
     const toolDefs = buildToolDefinitions(baseUrl, restaurantId, webhookSecret);
-    const { toolIds, errors: toolErrors } = await createToolsViaAPI(toolDefs, apiKey);
+    const { toolIds, errors: toolErrors } = await createToolsViaAPI(toolDefs, apiKey, signal);
+    createdTools = toolIds;
 
     if (toolIds.length !== toolDefs.length) {
+      if (beforeCreate) await removeUnattachedTools(toolIds, apiKey);
       logger.error('Failed to create complete tool set', { toolErrors });
       return { success: false, error: 'Failed to create complete agent tools', details: toolErrors };
     }
 
-    // Create agent
+    // Record the uncertain boundary before calling a provider create API.
+    signal?.throwIfAborted();
+    await beforeCreate?.();
+    signal?.throwIfAborted();
+    createSent = true;
     const agentRes = await fetch(`${ELEVENLABS_BASE}/agents/create`, {
       method: 'POST',
       headers: elevenLabsHeaders(apiKey),
+      ...(signal ? { signal } : {}),
       body: JSON.stringify({
         name: `${restaurant_name} AI Host`,
+        ...(tags ? { tags } : {}),
         conversation_config: {
           agent: {
             // The zone ElevenLabs uses for {{system__time_date}} in the prompt
@@ -942,7 +977,11 @@ async function createAgent({
     if (!agentRes.ok) {
       const errorText = await agentRes.text();
       logger.error('ElevenLabs agent creation failed', { status: agentRes.status, error: errorText });
-      return { success: false, error: 'Failed to create agent at ElevenLabs' };
+      const rejected = [400, 401, 403, 404, 422, 429].includes(agentRes.status);
+      if (beforeCreate && rejected) await removeUnattachedTools(createdTools, apiKey);
+      return { success: false, error: 'Failed to create agent at ElevenLabs',
+        ...(beforeCreate && !rejected ? { uncertain: true } : {}),
+      };
     }
 
     const agentData = await agentRes.json();
@@ -952,8 +991,9 @@ async function createAgent({
 
     return { success: true, agent_id: agentId, tools_created: toolIds.length };
   } catch (err) {
+    if (beforeCreate && !createSent) await removeUnattachedTools(createdTools, apiKey);
     logger.error('createAgent error', { error: err.message, stack: err.stack });
-    return { success: false, error: err.message };
+    return { success: false, error: err.message, ...(beforeCreate && createSent ? { uncertain: true } : {}) };
   }
 }
 

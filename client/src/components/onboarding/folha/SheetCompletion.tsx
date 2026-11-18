@@ -7,6 +7,7 @@ import BookingLinkCard from './BookingLinkCard';
 import ThiingsIcon from '../../common/ThiingsIcon';
 import ResumeCheckout from '../ResumeCheckout';
 import type { BillingPlan } from '../../../lib/billingHandoff';
+import type { RetryStep } from '../../../lib/onboardingStatus';
 import { LAUNCH_STEPS, type LaunchSteps } from '../../../lib/onboardingLaunch';
 
 export interface SheetCompletionProps {
@@ -18,6 +19,10 @@ export interface SheetCompletionProps {
   agentId?: string | null;
   restaurantName?: string | null;
   selectedPlan?: BillingPlan | null;
+  retrying?: RetryStep | null;
+  onRetry?: (step: RetryStep) => void;
+  statusUnavailable?: boolean;
+  onRefresh?: () => void;
   /** Leaves the onboarding; injectable for tests. */
   goTo?: (url: string) => void;
 }
@@ -26,15 +31,12 @@ const DASHBOARD = '/host-dashboard/simple?launch=1';
 const CONTINUE_AFTER_CALL_SECONDS = 8;
 
 /**
- * The end of the onboarding sheet. Three things, in the order an owner wants
- * them: hear the receptionist (a real call with the agent just created), take
- * the booking link, and see honestly what was set up and what was not.
- *
- * The results list is the SAME list the progress screen showed, so the rows
- * stay where they were while the heading changes from "Setting up" to "live".
+ * Show recovery actions first when setup needs attention. The finished
+ * flow leads with the receptionist and booking link.
  */
 export default function SheetCompletion({
   setup, bookingUrl, steps = {}, agentId = null, restaurantName = null, selectedPlan = null,
+  retrying, onRetry, statusUnavailable, onRefresh,
   goTo = (url) => window.location.assign(url),
 }: SheetCompletionProps) {
   const { t, i18n } = useTranslation();
@@ -42,9 +44,10 @@ export default function SheetCompletion({
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => { heading.current?.focus(); }, []);
 
-  const live = setup?.voice_agent === 'ok' && Boolean(agentId);
+  const live = (steps.voice_agent?.status ?? setup?.voice_agent) === 'ok' && Boolean(agentId);
   const name = restaurantName?.trim();
-  const anyOpen = LAUNCH_STEPS.some((key) => setup?.[key] !== 'ok');
+  const anyOpen = LAUNCH_STEPS.some((key) => !['ok', 'skipped'].includes(steps[key]?.status ?? setup?.[key] ?? ''));
+  const recoveryFirst = Boolean(onRetry && (anyOpen || statusUnavailable));
   const enter = 'motion-safe:animate-fade-in-up';
 
   // After the test call the onboarding moves on: a short summary, then the
@@ -61,12 +64,28 @@ export default function SheetCompletion({
   }, [secondsLeft]);
   function callEnded(result: { bookingCode: string | null }) {
     setAfterCall(result);
-    if (!selectedPlan) setSecondsLeft(CONTINUE_AFTER_CALL_SECONDS);
+    if (!selectedPlan && !(onRetry && anyOpen)) setSecondsLeft(CONTINUE_AFTER_CALL_SECONDS);
   }
+
+  const results = (
+    <section aria-labelledby="setup-results" className={recoveryFirst ? 'mt-7' : 'mt-12'}>
+      <h2 id="setup-results" className="mb-1 font-sans text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{copy.results}</h2>
+      <LaunchStepList steps={steps} setup={setup} phase="done" onRetry={onRetry} retrying={retrying} />
+      {statusUnavailable && <p role="alert" className="mt-4 text-sm text-amber-800">{copy.statusUnavailable}</p>}
+      {onRefresh && (statusUnavailable || LAUNCH_STEPS.some(key => steps[key]?.status === 'working')) && (
+        <button type="button" onClick={onRefresh}
+          className="min-h-11 text-sm font-medium text-burgundy underline underline-offset-4">
+          {copy.refreshSetup}
+        </button>
+      )}
+      <p className="mt-5 text-[15px] leading-relaxed text-muted-stone">{copy.verification}</p>
+      {anyOpen && <p className="mt-3 text-sm text-muted-stone">{copy.support}</p>}
+    </section>
+  );
 
   return (
     <main className="mx-auto w-full max-w-[620px] px-6 pt-16 pb-24 text-deep-charcoal">
-      {live && (
+      {live && !recoveryFirst && (
         <p className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">
           <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
           {copy.liveLabel}
@@ -74,8 +93,9 @@ export default function SheetCompletion({
       )}
       <h1 ref={heading} tabIndex={-1}
         className="mt-3 font-serif text-[38px] sm:text-[46px] leading-[1.08] tracking-tight text-balance focus:outline-none">
-        {live && name ? copy.liveTitle.replace('{{name}}', name) : copy.savedTitle}
+        {live && name && !recoveryFirst ? copy.liveTitle.replace('{{name}}', name) : copy.savedTitle}
       </h1>
+      {recoveryFirst && results}
       {live && <p className="mt-4 text-[17px] leading-[1.6] text-warm-stone">{copy.liveIntro}</p>}
 
       {live && agentId && (
@@ -115,10 +135,7 @@ export default function SheetCompletion({
         </div>
       )}
 
-      <h2 className="mt-12 mb-1 font-sans text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{copy.results}</h2>
-      <LaunchStepList steps={steps} setup={setup} phase="done" />
-      <p className="mt-5 text-[15px] leading-relaxed text-muted-stone">{copy.verification}</p>
-      {anyOpen && <p className="mt-3 text-sm text-muted-stone">{copy.support}</p>}
+      {!recoveryFirst && results}
 
       <div className="mt-10">
         {selectedPlan && <ResumeCheckout plan={selectedPlan} />}
