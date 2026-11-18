@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useDepositConfig, useUpdateDepositConfig } from '../../hooks/useDepositConfig';
 import { getCurrencySymbol } from '../../utils/currency';
@@ -42,6 +43,10 @@ export default function DepositSettingsPanel() {
       <p className="text-xs text-warm-stone mb-5">
         {t('settings.depositDesc')}
       </p>
+
+      <Link to="/host-dashboard/integrations#integrations:payments" className="mb-5 inline-flex min-h-11 items-center text-sm font-medium text-burgundy underline underline-offset-4">
+        {t('stripeConnect.managePayments')}
+      </Link>
 
       {/* Enable toggle */}
       <label className="flex items-center gap-3 mb-5 cursor-pointer">

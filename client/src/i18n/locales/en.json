@@ -3868,9 +3868,10 @@
     "pageTitle": "Channels & integrations",
     "pageIntro": "Share your booking link and connect the services that help your restaurant reach and serve guests.",
     "tab": {
+      "payments": "Payments",
       "booking": "Share bookings",
       "instagram": "Instagram",
-      "pos": "POS & payments",
+      "pos": "Point of sale",
       "developers": "For developers"
     },
     "loadingBookingLink": "Loading your booking link...",
@@ -3949,7 +3950,7 @@
   },
   "stripeConnect": {
     "title": "Stripe for booking deposits",
-    "subtitle": "Connect your Stripe account so booking deposits reach your bank directly.",
+    "subtitle": "Connect Stripe to receive reservation deposits in your Stripe account. Your Seatable subscription is billed separately.",
     "startCta": "Connect Stripe",
     "resumeCta": "Edit Stripe details",
     "continueCta": "Continue onboarding",
@@ -3971,6 +3972,23 @@
       "restricted": "Action needed",
       "disabled": "Disabled",
       "revoked": "Revoked"
+    },
+    "reconnectCta": "Connect again",
+    "checking": "Checking Stripe status…",
+    "verifyFailed": "We couldn't confirm your account's status with Stripe. Try again.",
+    "readFailed": "We couldn't load the Stripe connection. Try again.",
+    "checkAgain": "Check status",
+    "ownerRequired": "Only the restaurant owner can connect Stripe.",
+    "countryRequired": "Set a supported country in your restaurant settings before connecting Stripe.",
+    "configureDeposits": "Set up deposits",
+    "managePayments": "Manage Stripe connection",
+    "payoutsPending": "Stripe has not enabled payouts to your bank yet.",
+    "help": {
+      "active": "Card payments are available for reservation deposits.",
+      "pending": "Finish setting up your account on Stripe to receive deposits.",
+      "restricted": "Stripe still needs information before you can receive deposits. Open Stripe to see what is missing.",
+      "disabled": "Stripe has disabled this connection. Open Stripe for more information.",
+      "revoked": "This account was disconnected. Connect again to receive new deposits."
     }
   },
   "instagramPanel": {

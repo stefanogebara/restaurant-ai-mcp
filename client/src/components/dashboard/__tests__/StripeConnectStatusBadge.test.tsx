@@ -6,6 +6,8 @@ import StripeConnectStatusBadge from '../StripeConnectStatusBadge';
 // Mock authFetch — the badge's only side effect is the GET on
 // /api/stripe-connect-status. We return canned responses per test.
 const mockAuthFetch = vi.fn();
+vi.mock('../../../contexts/AuthContext', () => ({ useAuth: () => ({ user: { id: 'owner-qa' } }) }));
+
 vi.mock('../../../services/api', () => ({
   authFetch: (...args: unknown[]) => mockAuthFetch(...args),
 }));
@@ -84,7 +86,7 @@ describe('StripeConnectStatusBadge', () => {
     expect(badge.textContent).toMatch(/Stripe disabled/i);
   });
 
-  it('renders red pill for revoked + links to Voice Settings POS tab', async () => {
+  it('renders red pill for revoked + links to Payments tab', async () => {
     mockAuthFetch.mockReturnValue(ok({
       success: true,
       connected: true,
@@ -95,7 +97,7 @@ describe('StripeConnectStatusBadge', () => {
     const badge = await screen.findByTestId('stripe-connect-status-badge');
     expect(badge.className).toContain('bg-red-50');
     expect(badge.textContent).toMatch(/Stripe disconnected/i);
-    expect(badge.getAttribute('href')).toBe('/host-dashboard/integrations#integrations:pos');
+    expect(badge.getAttribute('href')).toBe('/host-dashboard/integrations#integrations:payments');
   });
 
   it('renders nothing if API call fails (graceful degradation)', async () => {

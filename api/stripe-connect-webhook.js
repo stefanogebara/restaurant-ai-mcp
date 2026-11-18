@@ -14,8 +14,7 @@
  *   capability.updated               — log only (informational)
  *
  * Idempotency: reuses public.stripe_webhook_events_processed
- * (event_id PK). Stripe retries every webhook on 5xx for ~3 days, so
- * a unique-violation on insert means we've already processed it.
+ * (event_id PK). Receipts are recorded after successful processing.
  */
 
 const Stripe = require('stripe');
@@ -23,23 +22,10 @@ const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { setWebhookCors } = require('./_lib/cors');
+const { connectAccountState } = require('./_lib/stripe-connect-account');
 
 const logger = createSecureLogger('StripeConnectWebhook');
 const endpointSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET;
-
-/**
- * Map Stripe Account flags to our row's status.
- *   active     — restaurant has finished onboarding AND can charge
- *   restricted — onboarding done but charges blocked (capability/KYC issue)
- *   pending    — restaurant hasn't finished the hosted onboarding yet
- *
- * `revoked` is set elsewhere (deauthorize handler), not from these flags.
- */
-function computeStatus(acct) {
-  if (acct.charges_enabled && acct.details_submitted) return 'active';
-  if (acct.details_submitted) return 'restricted';
-  return 'pending';
-}
 
 module.exports = async (req, res) => {
   setWebhookCors(req, res);
@@ -95,50 +81,34 @@ module.exports = async (req, res) => {
     });
   }
 
-  // 2. Idempotency guard. Atomic insert into stripe_webhook_events_processed;
-  // 23505 unique-violation means we already processed this event.id.
+  // Mirror updates are idempotent. Record the receipt only after they succeed,
+  // so a retry after a database failure still reaches the update.
   try {
-    const { error: idempErr } = await supabaseAdmin
-      .from('stripe_webhook_events_processed')
-      .insert({ event_id: event.id, event_type: event.type });
-    if (idempErr) {
-      if (idempErr.code === '23505') {
-        logger.info('Connect webhook event already processed, skipping', { event_id: event.id, type: event.type });
-        return res.status(200).json({ received: true, deduplicated: true });
-      }
-      // Non-fatal — better to process once than lose the event entirely.
-      logger.error('Idempotency insert failed (continuing)', { event_id: event.id, error: idempErr.message });
-    }
-  } catch (e) {
-    logger.error('Idempotency insert threw (continuing)', { event_id: event.id, error: e?.message });
-  }
+    const receipts = supabaseAdmin.from('stripe_webhook_events_processed');
+    const { data: receipt, error: readError } = await receipts.select('event_id')
+      .eq('event_id', event.id).maybeSingle();
+    if (readError) throw readError;
+    if (receipt) return res.status(200).json({ received: true, deduplicated: true });
 
-  // 3. Dispatch
-  try {
     switch (event.type) {
       case 'account.updated': {
         const acct = event.data.object; // Stripe Account
         const stripeAccountId = acct.id;
-        const status = computeStatus(acct);
+        const state = connectAccountState(acct);
         logger.info('Connect account updated', {
           stripe_account_id: stripeAccountId,
           charges_enabled: acct.charges_enabled,
           payouts_enabled: acct.payouts_enabled,
           details_submitted: acct.details_submitted,
-          new_status: status,
+          new_status: state.status,
         });
 
         const { data: updated, error: updErr } = await supabaseAdmin
           .schema('restaurant')
           .from('stripe_connect_accounts')
-          .update({
-            charges_enabled: !!acct.charges_enabled,
-            payouts_enabled: !!acct.payouts_enabled,
-            details_submitted: !!acct.details_submitted,
-            status,
-            default_currency: acct.default_currency || null,
-          })
+          .update(state)
           .eq('stripe_account_id', stripeAccountId)
+          .neq('status', 'revoked')
           .select('id');
 
         if (updErr) {
@@ -191,6 +161,8 @@ module.exports = async (req, res) => {
         logger.info('Unhandled Connect event type', { type: event.type });
     }
 
+    const { error: insertError } = await receipts.insert({ event_id: event.id, event_type: event.type });
+    if (insertError && insertError.code !== '23505') throw insertError;
     return res.status(200).json({ received: true });
   } catch (err) {
     logger.error('Connect webhook processing failed', { event_id: event.id, type: event.type, error: err.message });

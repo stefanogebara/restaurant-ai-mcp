@@ -24,6 +24,7 @@ const { supabaseAdmin } = require('../_lib/supabase');
 const { logCronRun } = require('../_lib/cron-tracker');
 const { isCronEnabled } = require('../_lib/cron-config');
 const { createSecureLogger } = require('../_lib/secure-logger');
+const { connectAccountState } = require('../_lib/stripe-connect-account');
 
 const logger = createSecureLogger('CronSyncStripeConnect');
 
@@ -31,16 +32,6 @@ let stripe;
 function getStripe() {
   if (!stripe) stripe = Stripe(process.env.STRIPE_SECRET_KEY);
   return stripe;
-}
-
-/**
- * Mirror api/stripe-connect-webhook.js computeStatus() so any drift uses
- * the same status mapping the webhook would have produced.
- */
-function computeStatus(acct) {
-  if (acct.charges_enabled && acct.details_submitted) return 'active';
-  if (acct.details_submitted) return 'restricted';
-  return 'pending';
 }
 
 module.exports = async (req, res) => {
@@ -98,7 +89,8 @@ module.exports = async (req, res) => {
         continue;
       }
 
-      const remoteStatus = computeStatus(acct);
+      const remoteState = connectAccountState(acct);
+      const remoteStatus = remoteState.status;
       const remoteCurrency = acct.default_currency || null;
       const drift = {};
       if (!!acct.charges_enabled !== !!row.charges_enabled) {
@@ -135,14 +127,10 @@ module.exports = async (req, res) => {
       const { error: updErr } = await supabaseAdmin
         .schema('restaurant')
         .from('stripe_connect_accounts')
-        .update({
-          charges_enabled: !!acct.charges_enabled,
-          payouts_enabled: !!acct.payouts_enabled,
-          details_submitted: !!acct.details_submitted,
-          status: remoteStatus,
-          default_currency: remoteCurrency,
-        })
-        .eq('id', row.id);
+        .update(remoteState)
+        .eq('id', row.id)
+        .eq('stripe_account_id', row.stripe_account_id)
+        .neq('status', 'revoked');
 
       if (updErr) {
         errors++;

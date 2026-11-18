@@ -6,6 +6,8 @@ import StripeConnectNudgeBanner from '../StripeConnectNudgeBanner';
 
 // authFetch backs useStripeConnectStatus
 const mockAuthFetch = vi.fn();
+vi.mock('../../../contexts/AuthContext', () => ({ useAuth: () => ({ user: { id: 'owner-qa' } }) }));
+
 vi.mock('../../../services/api', async () => {
   // useDepositConfig uses api.get/api.patch (an axios-style client).
   return {
@@ -86,7 +88,7 @@ describe('StripeConnectNudgeBanner', () => {
     expect(banner.textContent).toMatch(/Connect your Stripe account/i);
     expect(banner.textContent).toMatch(/routed through Seatable/i);
     const cta = screen.getByRole('link', { name: /Connect Stripe/i });
-    expect(cta.getAttribute('href')).toBe('/host-dashboard/integrations#integrations:pos');
+    expect(cta.getAttribute('href')).toBe('/host-dashboard/integrations#integrations:payments');
   });
 
   it('explains the deposit status in Portuguese without an English fallback', async () => {
@@ -97,7 +99,7 @@ describe('StripeConnectNudgeBanner', () => {
 
     const banner = await screen.findByTestId('stripe-connect-nudge-banner');
     expect(banner).toHaveTextContent('Os depósitos de reservas passam pela Seatable');
-    expect(screen.getByRole('link', { name: 'Conectar Stripe' })).toHaveAttribute('href', '/host-dashboard/integrations#integrations:pos');
+    expect(screen.getByRole('link', { name: 'Conectar Stripe' })).toHaveAttribute('href', '/host-dashboard/integrations#integrations:payments');
   });
 
   it('renders the banner for per-person deposit config too', async () => {

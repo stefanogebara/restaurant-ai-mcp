@@ -1,161 +1,135 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { authFetch } from '../../services/api';
-import { useToast } from '../../contexts/ToastContext';
-import { useStripeConnectStatus, type StripeConnectStatusValue } from '../../hooks/useStripeConnectStatus';
+import {
+  useStripeConnectStatusKey, useStripeConnectStatus, type StripeConnectStatus,
+} from '../../hooks/useStripeConnectStatus';
 
-interface OnboardingResponse {
-  success: boolean;
-  url?: string;
-  account_id?: string;
-  status?: string;
-  error?: string;
-}
-
-const STATUS_TONE: Record<StripeConnectStatusValue, { dot: string; bg: string; text: string }> = {
-  active:     { dot: 'bg-emerald-500', bg: 'bg-emerald-100', text: 'text-emerald-800' },
-  pending:    { dot: 'bg-amber-500',   bg: 'bg-amber-100',   text: 'text-amber-800'   },
-  restricted: { dot: 'bg-amber-500',   bg: 'bg-amber-100',   text: 'text-amber-800'   },
-  disabled:   { dot: 'bg-red-500',     bg: 'bg-red-100',     text: 'text-red-800'     },
-  revoked:    { dot: 'bg-red-500',     bg: 'bg-red-100',     text: 'text-red-800'     },
+const STATUS_TONE = {
+  active: 'bg-emerald-100 text-emerald-800',
+  pending: 'bg-amber-100 text-amber-800',
+  restricted: 'bg-amber-100 text-amber-800',
+  disabled: 'bg-red-100 text-red-800',
+  revoked: 'bg-red-100 text-red-800',
 };
+
+const BUTTON = 'inline-flex min-h-11 items-center justify-center rounded-full bg-burgundy px-5 py-2 text-sm font-semibold text-white hover:bg-burgundy-dark disabled:opacity-50';
+const SECONDARY = 'inline-flex min-h-11 items-center text-sm font-medium text-burgundy underline underline-offset-4 disabled:opacity-50';
 
 export default function StripeConnectPanel() {
   const { t } = useTranslation();
-  const toast = useToast();
   const queryClient = useQueryClient();
-
-  // Handle Stripe Connect return-URL params. Mirrors POSIntegrationPanel.
+  const [returnKind] = useState(() => new URLSearchParams(window.location.search).get('stripe_connect'));
+  const handledReturn = useRef(false);
+  const queryKey = useStripeConnectStatusKey();
+  const statusQuery = useStripeConnectStatus();
+  const refresh = useMutation({
+    mutationFn: async (): Promise<StripeConnectStatus> => {
+      await queryClient.cancelQueries({ queryKey });
+      const res = await authFetch('/api/stripe-connect-status', { method: 'POST' });
+      if (!res.ok) throw new Error('Could not verify Stripe status');
+      return res.json();
+    },
+    onSuccess: (status) => queryClient.setQueryData(queryKey, status),
+  });
+  const refreshStatus = refresh.mutate;
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const result = params.get('stripe_connect');
-    if (!result) return;
-
-    if (result === 'ok') {
-      toast.success(t('stripeConnect.returnSuccess', 'Stripe account updated. Status refreshing…'));
-      queryClient.invalidateQueries({ queryKey: ['stripe-connect-status'] });
-    } else if (result === 'refresh') {
-      toast.info(t('stripeConnect.returnRefresh', 'Onboarding link expired. Tap "Continue" to resume.'));
-    }
+    if (!returnKind || handledReturn.current) return;
+    handledReturn.current = true;
+    if (returnKind === 'ok') refreshStatus();
     const url = new URL(window.location.href);
     url.searchParams.delete('stripe_connect');
-    window.history.replaceState({}, '', url.toString());
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    window.history.replaceState(window.history.state, '', url);
+  }, [returnKind, refreshStatus]);
 
-  const { data, isLoading } = useStripeConnectStatus();
-
-  const onboardingMutation = useMutation<string, Error>({
+  const onboarding = useMutation({
     mutationFn: async () => {
-      const res = await authFetch('/api/stripe-connect-onboarding', {
-        method: 'POST',
-        body: JSON.stringify({}),
-        headers: { 'Content-Type': 'application/json' },
-      });
-      const body: OnboardingResponse = await res.json().catch(() => ({ success: false }));
-      if (!res.ok || !body.success || !body.url) {
-        throw new Error(body.error || 'Failed to start Stripe onboarding');
-      }
-      return body.url;
-    },
-    onSuccess: (url) => {
-      window.location.href = url;
-    },
-    onError: (err) => {
-      toast.error(err.message || t('stripeConnect.startFailed', 'Could not start Stripe onboarding'));
+      const res = await authFetch('/api/stripe-connect-onboarding', { method: 'POST' });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || !body.success || typeof body.url !== 'string') throw new Error(body.error || 'start_failed');
+      const url = new URL(body.url);
+      if (url.origin !== 'https://connect.stripe.com') throw new Error('start_failed');
+      window.location.assign(url.href);
     },
   });
 
+  const data = statusQuery.data;
   const status = data?.status;
-  const isActive = status === 'active';
-  const isBlocked = status === 'restricted' || status === 'disabled' || status === 'revoked';
-  const isPending = status === 'pending';
-  const tone = status ? STATUS_TONE[status] : null;
-
-  const ctaLabel = (() => {
-    if (!data?.connected) return t('stripeConnect.startCta', 'Connect Stripe');
-    if (isActive)         return t('stripeConnect.resumeCta', 'Edit Stripe details');
-    if (isPending)        return t('stripeConnect.continueCta', 'Continue onboarding');
-    if (isBlocked)        return t('stripeConnect.fixCta', 'Fix Stripe issues');
-    return t('stripeConnect.openCta', 'Open Stripe');
-  })();
+  const verifyingReturn = returnKind === 'ok' && refresh.isIdle;
+  const pending = statusQuery.isLoading || refresh.isPending || verifyingReturn;
+  const canShowStatus = !pending && !refresh.isError && !statusQuery.isError;
+  const cta = status === 'revoked' ? 'reconnectCta'
+    : status === 'pending' ? 'continueCta' : status ? 'fixCta' : 'startCta';
+  const dashboardUrl = data?.account_id && /^acct_[A-Za-z0-9]+$/.test(data.account_id)
+    ? `https://dashboard.stripe.com/${data.account_id}/dashboard` : 'https://dashboard.stripe.com/';
+  const actionError = onboarding.error?.message;
+  const actionMessage = actionError === 'owner_required' ? 'ownerRequired'
+    : actionError === 'country_required' ? 'countryRequired' : 'startFailed';
 
   return (
-    <section className="py-5">
-      <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-3">
-        {t('stripeConnect.title', 'Stripe for booking deposits')}
-      </h2>
-      <p className="text-sm text-muted-stone mb-4">
-        {t(
-          'stripeConnect.subtitle',
-          'Connect your own Stripe account so booking deposits land directly in your bank.',
-        )}
-      </p>
+    <section aria-labelledby="stripe-connect-heading" className="max-w-2xl space-y-5">
+      <div>
+        <h2 id="stripe-connect-heading" className="font-serif text-3xl text-deep-charcoal">{t('stripeConnect.title')}</h2>
+        <p className="mt-2 text-[15px] text-stone-gray">{t('stripeConnect.subtitle')}</p>
+      </div>
 
-      {isLoading ? (
-        <div className="text-sm text-muted-stone">{t('common.loading', 'Loading...')}</div>
-      ) : (
-        <div className="space-y-4">
-          {data?.connected && tone && status && (
-            <div className="flex items-center gap-2">
-              <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${tone.bg} ${tone.text}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${tone.dot}`} />
-                {t(`stripeConnect.status.${status}`, status)}
-              </span>
-              {data.account_id && (
-                <span className="text-xs font-mono text-muted-stone truncate max-w-[200px]" title={data.account_id}>
-                  {data.account_id}
-                </span>
-              )}
-            </div>
-          )}
-
-          {data?.connected && (
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <span className="text-muted-stone text-xs">{t('stripeConnect.charges', 'Charges')}</span>
-                <p className="text-deep-charcoal text-xs">
-                  {data.charges_enabled
-                    ? t('stripeConnect.flagEnabled', 'Enabled')
-                    : t('stripeConnect.flagDisabled', 'Disabled')}
-                </p>
-              </div>
-              <div>
-                <span className="text-muted-stone text-xs">{t('stripeConnect.payouts', 'Payouts')}</span>
-                <p className="text-deep-charcoal text-xs">
-                  {data.payouts_enabled
-                    ? t('stripeConnect.flagEnabled', 'Enabled')
-                    : t('stripeConnect.flagDisabled', 'Disabled')}
-                </p>
-              </div>
-              <div>
-                <span className="text-muted-stone text-xs">{t('stripeConnect.detailsSubmitted', 'Details submitted')}</span>
-                <p className="text-deep-charcoal text-xs">
-                  {data.details_submitted
-                    ? t('common.yes', 'Yes')
-                    : t('common.no', 'No')}
-                </p>
-              </div>
-              {data.default_currency && (
-                <div>
-                  <span className="text-muted-stone text-xs">{t('stripeConnect.currency', 'Currency')}</span>
-                  <p className="text-deep-charcoal text-xs uppercase">{data.default_currency}</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={() => onboardingMutation.mutate()}
-            disabled={onboardingMutation.isPending}
-            className="px-4 py-2 bg-burgundy text-white rounded-full text-xs font-medium hover:bg-burgundy-dark transition-colors disabled:opacity-50"
-          >
-            {onboardingMutation.isPending
-              ? t('stripeConnect.starting', 'Opening Stripe…')
-              : ctaLabel}
-          </button>
+      {pending && <p role="status" className="text-sm text-stone-gray">{t('stripeConnect.checking')}</p>}
+      {refresh.isError && (
+        <div>
+          <p role="alert" className="text-sm text-amber-800">{t('stripeConnect.verifyFailed')}</p>
+          <button type="button" className={SECONDARY} onClick={() => refreshStatus()}>{t('stripeConnect.checkAgain')}</button>
         </div>
+      )}
+      {statusQuery.isError && !refresh.isError && !pending && (
+        <div>
+          <p role="alert" className="text-sm text-amber-800">{t('stripeConnect.readFailed')}</p>
+          <button type="button" className={SECONDARY} onClick={() => { void statusQuery.refetch(); }}>{t('stripeConnect.checkAgain')}</button>
+        </div>
+      )}
+
+      {canShowStatus && (
+        <>
+          {returnKind === 'refresh' && status !== 'active' && (
+            <p role="status" className="text-sm text-amber-800">{t('stripeConnect.returnRefresh')}</p>
+          )}
+          {status && (
+            <div className="hairline space-y-3 pt-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_TONE[status]}`}>
+                  {t(`stripeConnect.status.${status}`)}
+                </span>
+                {data?.default_currency && (
+                  <span className="text-xs uppercase text-stone-gray">{data.default_currency}</span>
+                )}
+              </div>
+              <p role="status" className="text-[15px] text-stone-gray">{t(`stripeConnect.help.${status}`)}</p>
+              {status === 'active' && !data?.payouts_enabled && (
+                <p className="text-sm text-amber-800">{t('stripeConnect.payoutsPending')}</p>
+              )}
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            {status === 'active' ? (
+              <>
+                <Link to="/host-dashboard/settings#reservation-deposits" className={BUTTON}>
+                  {t('stripeConnect.configureDeposits')}
+                </Link>
+                <a href={dashboardUrl} target="_blank" rel="noreferrer" className={SECONDARY}>{t('stripeConnect.openCta')}</a>
+              </>
+            ) : (
+              <button type="button" className={BUTTON} disabled={onboarding.isPending} onClick={() => onboarding.mutate()}>
+                {t(onboarding.isPending ? 'stripeConnect.starting' : `stripeConnect.${cta}`)}
+              </button>
+            )}
+            {status && status !== 'revoked' && (
+              <button type="button" className={SECONDARY} onClick={() => refreshStatus()}>{t('stripeConnect.checkAgain')}</button>
+            )}
+          </div>
+          {onboarding.isError && <p role="alert" className="text-sm text-red-800">{t(`stripeConnect.${actionMessage}`)}</p>}
+        </>
       )}
     </section>
   );

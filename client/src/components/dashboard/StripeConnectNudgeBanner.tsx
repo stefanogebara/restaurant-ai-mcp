@@ -50,7 +50,7 @@ export default function StripeConnectNudgeBanner() {
         {t('stripeConnectNudge.subtitle')}
       </p>
       <a
-        href="/host-dashboard/integrations#integrations:pos"
+        href="/host-dashboard/integrations#integrations:payments"
         className="text-sm font-semibold text-amber-700 hover:text-amber-900 bg-amber-100 hover:bg-amber-200 px-4 py-1.5 rounded-xl whitespace-nowrap transition-colors"
       >
         {t('stripeConnectNudge.cta')}

@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { hostAPI } from '../services/api';
 import DashboardLayout from '../components/layout/DashboardLayout';
@@ -34,6 +34,7 @@ function BookingChannelsTab() {
 export default function IntegrationsPage() {
   const { t } = useTranslation();
   useDocumentTitle(t('pageTitles.integrations', 'Integrations | seatable'));
+  const location = useLocation();
   const [showEndpoints, setShowEndpoints] = useState(false);
   const developerTab = (
     <div className="space-y-10">
@@ -93,13 +94,18 @@ export default function IntegrationsPage() {
       content: <BookingChannelsTab />,
     },
     { id: 'instagram', label: t('integrations.tab.instagram'), content: <InstagramPanel /> },
+    { id: 'payments', label: t('integrations.tab.payments'), content: <StripeConnectPanel /> },
     {
       id: 'pos',
       label: t('integrations.tab.pos'),
-      content: <div className="space-y-10"><POSIntegrationPanel /><div className="hairline" /><StripeConnectPanel /></div>,
+      content: <POSIntegrationPanel />,
     },
     { id: 'developers', label: t('integrations.tab.developers'), content: developerTab },
   ];
+
+  if (new URLSearchParams(location.search).has('stripe_connect') && location.hash !== '#integrations:payments') {
+    return <Navigate to={`${location.pathname}${location.search}#integrations:payments`} replace />;
+  }
 
   return (
     <DashboardLayout>
