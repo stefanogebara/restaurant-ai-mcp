@@ -43,20 +43,6 @@ function planNameToTierKey(raw: string): string {
   return mapping[raw.toLowerCase()] ?? raw.toLowerCase();
 }
 
-/** Map legacy/orphaned plan names to current localized display names (Portuguese) */
-function normalizePlanName(raw: string): string {
-  const mapping: Record<string, string> = {
-    starter: 'Inicial',
-    professional: 'Crescimento',
-    growth: 'Crescimento',
-    pro: 'Escala',
-    basic: 'Inicial',
-    enterprise: 'Escala',
-    scale: 'Escala',
-  };
-  return mapping[raw.toLowerCase()] ?? raw;
-}
-
 export default function SubscriptionManage() {
   const { t, i18n } = useTranslation();
   const { can } = usePermission();
@@ -153,8 +139,8 @@ export default function SubscriptionManage() {
     return <NoPlanPricing selectedPlan={selectedPlan} loadingPlan={loadingCheckoutPlan} onCheckout={handleCheckout} />;
   }
 
-  const displayPlanName = normalizePlanName(subscription.planName);
   const currentTierKey = planNameToTierKey(subscription.planName);
+  const displayPlanName = plans.find(plan => plan.key === currentTierKey)?.name ?? subscription.planName;
   const currentTierIndex = planTiers.indexOf(currentTierKey);
   // Use locale-aware price from plan cards instead of raw Stripe price
   const currentPlanPrice = plans.find(p => p.key === (planTiers[currentTierIndex] ?? ''))?.price;

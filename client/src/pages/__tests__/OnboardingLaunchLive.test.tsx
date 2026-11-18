@@ -1,5 +1,5 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Onboarding from '../Onboarding';
 import { authFetch } from '../../services/api';
@@ -121,6 +121,21 @@ describe('the onboarding sheet goes live in front of the owner', () => {
     expect(await screen.findByText('4.6 on Google · 812 reviews')).toBeVisible();
     expect(document.querySelector('img[src*="maxWidth=1200"]')).not.toBeNull();
     expect(screen.queryByRole('heading', { name: 'Which restaurant is yours?' })).not.toBeInTheDocument();
+    const hours = screen.getByRole('region', { name: /horários|hours/i });
+    expect(within(hours).getByText('Initial hours — please confirm')).toBeVisible();
+    expect(within(hours).queryByText(/do seu google|from your google/i)).not.toBeInTheDocument();
+  });
+
+  it('returns to the blank confirmation sheet after a new restaurant skips search and reloads', () => {
+    const tree = <MemoryRouter><Onboarding /></MemoryRouter>;
+    const first = render(tree);
+    fireEvent.click(screen.getByRole('button', { name: /skip.*fill/i }));
+    expect(screen.queryByRole('heading', { name: 'Which restaurant is yours?' })).not.toBeInTheDocument();
+
+    first.unmount();
+    render(tree);
+    expect(screen.queryByRole('heading', { name: 'Which restaurant is yours?' })).not.toBeInTheDocument();
+    expect(screen.getByText('Initial hours — please confirm')).toBeVisible();
   });
 
   it('a demo convert never sees the Google search', () => {

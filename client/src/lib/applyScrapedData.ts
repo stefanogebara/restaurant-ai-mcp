@@ -31,6 +31,7 @@ import type { RestaurantSize } from '../types/profile.types';
 
 /** Subset of /api/scrape-restaurant result we actually consume. */
 export interface ScrapedRestaurant {
+  source?: 'website';
   name?: string | null;
   /** Cidade que o dono DIGITOU na busca do Passo 0. O scraper recebia a
    *  cidade e a jogava fora — o Passo 1 perguntava de novo (auditoria
