@@ -36,6 +36,7 @@ const CRON_JOBS = [
   { name: 'pre-reservation-upsell', intervalMinutes: 1440 },    // daily
   { name: 'analytics-briefing', intervalMinutes: 1440 },        // daily
   { name: 'cleanup-waitlist', intervalMinutes: 1440 },           // daily
+  { name: 'cleanup-booking-deposits', intervalMinutes: 60 },
   { name: 'automated-campaigns', intervalMinutes: 1440 },       // daily
   { name: 'health-alert', intervalMinutes: 1440 },              // daily
 

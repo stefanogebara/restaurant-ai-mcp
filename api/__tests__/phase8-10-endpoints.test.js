@@ -381,6 +381,8 @@ describe('create-deposit-intent', () => {
 
   beforeEach(() => {
     jest.resetModules();
+    process.env.STRIPE_SECRET_KEY = 'sk_test_dummy';
+    process.env.BOOKING_HMAC_SECRET = 'test-booking-secret';
 
     mockStripePaymentIntentsCreate = jest.fn().mockResolvedValue({
       id: 'pi_test123',
@@ -415,23 +417,28 @@ describe('create-deposit-intent', () => {
     // Without a real token the handler 403s. Mock it to always pass — tests
     // here exercise the deposit math + Stripe call, not the token guard
     // (which has its own coverage elsewhere).
-    jest.mock('../booking-token', () => ({
+    jest.mock('../_lib/booking-token', () => ({
       verifyBookingToken: jest.fn().mockReturnValue(true),
     }));
 
+    jest.mock('../_lib/guest-slots', () => ({
+      checkGuestSlots: jest.fn().mockResolvedValue({ ok: true, slots: [{ status: 'ok' }] }),
+    }));
     handler = require('../create-deposit-intent');
   });
 
   function makeConfigChain(depositConfig, restaurantName = 'Test Restaurant') {
-    const chain = { select: jest.fn(), eq: jest.fn(), single: jest.fn() };
+    const chain = { select: jest.fn(), eq: jest.fn(), maybeSingle: jest.fn() };
     chain.select.mockReturnValue(chain);
     chain.eq.mockReturnValue(chain);
-    chain.single.mockResolvedValue({
+    chain.maybeSingle.mockResolvedValue({
       data: { deposit_config: depositConfig, restaurant_name: restaurantName },
       error: null,
     });
     return chain;
   }
+
+  const details = { customer_name: 'Test Guest', customer_phone: '+15550101100', date: '2027-01-10', time: '19:00' };
 
   it('creates payment intent and returns client_secret', async () => {
     const depositConfig = { enabled: true, type: 'flat', amount: 30 };
@@ -439,7 +446,7 @@ describe('create-deposit-intent', () => {
 
     const req = {
       method: 'POST',
-      body: { restaurant_id: 'rest-1', party_size: 2, customer_email: 'test@test.com' },
+      body: { ...details, restaurant_id: 'rest-1', party_size: 2, customer_email: 'test@test.com' },
     };
     const res = mockRes();
     await handler(req, res);
@@ -457,7 +464,7 @@ describe('create-deposit-intent', () => {
 
     const req = {
       method: 'POST',
-      body: { restaurant_id: 'rest-1', party_size: 4 },
+      body: { ...details, restaurant_id: 'rest-1', party_size: 4 },
     };
     const res = mockRes();
     await handler(req, res);
@@ -474,20 +481,20 @@ describe('create-deposit-intent', () => {
   });
 
   it('returns 400 when party_size is invalid', async () => {
-    const req = { method: 'POST', body: { restaurant_id: 'rest-1', party_size: 0 } };
+    const req = { method: 'POST', body: { ...details, restaurant_id: 'rest-1', party_size: 0 } };
     const res = mockRes();
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  it('returns 400 when deposits are not enabled', async () => {
+  it('reports the policy change when deposits are not enabled', async () => {
     const depositConfig = { enabled: false };
     mockSupabaseAdmin._schemaChain.from.mockReturnValue(makeConfigChain(depositConfig));
 
-    const req = { method: 'POST', body: { restaurant_id: 'rest-1', party_size: 2 } };
+    const req = { method: 'POST', body: { ...details, restaurant_id: 'rest-1', party_size: 2 } };
     const res = mockRes();
     await handler(req, res);
-    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.status).toHaveBeenCalledWith(409);
   });
 
   it('returns 405 for GET', async () => {
@@ -510,6 +517,7 @@ describe('capture-deposit', () => {
 
   beforeEach(() => {
     jest.resetModules();
+    process.env.STRIPE_SECRET_KEY = 'sk_test_dummy';
 
     mockVerifyAuth = jest.fn().mockResolvedValue({
       user: { restaurant_id: 'rest-1' },
@@ -517,6 +525,7 @@ describe('capture-deposit', () => {
     mockStripePaymentIntentsCapture = jest.fn().mockResolvedValue({
       id: 'pi_test123',
       amount_received: 3000,
+      status: 'succeeded',
     });
 
     const fromChain = { select: jest.fn(), eq: jest.fn(), single: jest.fn(), update: jest.fn() };
@@ -526,6 +535,7 @@ describe('capture-deposit', () => {
     fromChain.single.mockResolvedValue({
       data: {
         id: 'internal-id-1',
+        reservation_id: 'res-1',
         deposit_payment_intent_id: 'pi_test123',
         deposit_amount: 30,
         restaurant_id: 'rest-1',
@@ -537,7 +547,12 @@ describe('capture-deposit', () => {
 
     jest.mock('stripe', () => {
       return jest.fn().mockReturnValue({
-        paymentIntents: { capture: (...a) => mockStripePaymentIntentsCapture(...a) },
+        paymentIntents: {
+          retrieve: async () => ({
+            id: 'pi_test123', amount: 3000, amount_capturable: 3000,
+            capture_method: 'manual', status: 'requires_capture', livemode: false,
+            metadata: { restaurant_id: 'rest-1', type: 'reservation_deposit_post_booking', reservation_id: 'res-1' },
+          }), capture: (...a) => mockStripePaymentIntentsCapture(...a) },
       });
     });
     jest.mock('../_lib/auth', () => ({ verifyAuth: (...a) => mockVerifyAuth(...a) }));
@@ -632,6 +647,7 @@ describe('release-deposit', () => {
 
   beforeEach(() => {
     jest.resetModules();
+    process.env.STRIPE_SECRET_KEY = 'sk_test_dummy';
 
     mockVerifyAuth = jest.fn().mockResolvedValue({
       user: { restaurant_id: 'rest-1' },
@@ -648,6 +664,7 @@ describe('release-deposit', () => {
     fromChain.single.mockResolvedValue({
       data: {
         id: 'internal-id-1',
+        reservation_id: 'res-1',
         deposit_payment_intent_id: 'pi_test123',
         deposit_amount: 30,
         restaurant_id: 'rest-1',
@@ -659,7 +676,12 @@ describe('release-deposit', () => {
 
     jest.mock('stripe', () => {
       return jest.fn().mockReturnValue({
-        paymentIntents: { cancel: (...a) => mockStripePaymentIntentsCancel(...a) },
+        paymentIntents: {
+          retrieve: async () => ({
+            id: 'pi_test123', amount: 3000, amount_capturable: 3000,
+            capture_method: 'manual', status: 'requires_capture', livemode: false,
+            metadata: { restaurant_id: 'rest-1', type: 'reservation_deposit_post_booking', reservation_id: 'res-1' },
+          }), cancel: (...a) => mockStripePaymentIntentsCancel(...a) },
       });
     });
     jest.mock('../_lib/auth', () => ({ verifyAuth: (...a) => mockVerifyAuth(...a) }));

@@ -1,16 +1,11 @@
-const Stripe = require('stripe');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { verifyAuth } = require('./_lib/auth');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
+const { getStripe, readReservationDeposit } = require('./_lib/reservation-deposits');
 
 const logger = createSecureLogger('ReleaseDeposit');
-let stripe;
-function getStripe() {
-  if (!stripe) stripe = Stripe(process.env.STRIPE_SECRET_KEY);
-  return stripe;
-}
 
 module.exports = async (req, res) => {
   setInternalCors(req, res);
@@ -38,7 +33,7 @@ module.exports = async (req, res) => {
   try {
     const { data: reservation, error: fetchError } = await supabaseAdmin
       .from('reservations')
-      .select('id, deposit_payment_intent_id, deposit_amount, restaurant_id')
+      .select('id, reservation_id, deposit_payment_intent_id, deposit_amount, restaurant_id')
       .eq('reservation_id', reservation_id)
       .eq('restaurant_id', req.user.restaurant_id)
       .single();
@@ -51,10 +46,16 @@ module.exports = async (req, res) => {
       return res.status(400).json({ success: false, error: 'No deposit held for this reservation' });
     }
 
-    // Cancel the payment intent to release the hold
-    const paymentIntent = await getStripe().paymentIntents.cancel(
-      reservation.deposit_payment_intent_id
+    const payment = await readReservationDeposit(reservation);
+    if (!payment || !['requires_capture', 'canceled'].includes(payment.status)) {
+      return res.status(409).json({ success: false, error: 'No matching deposit authorization can be released' });
+    }
+    const paymentIntent = payment.status === 'canceled' ? payment : await getStripe().paymentIntents.cancel(
+      payment.id, {}, { idempotencyKey: `reservation-deposit-release-${payment.id}` }
     );
+    if (paymentIntent.status !== 'canceled') {
+      return res.status(409).json({ success: false, error: 'Stripe did not confirm release of the deposit' });
+    }
 
     // DD.1 — chain .select('id'). Without this, a race where the row is
     // deleted between fetch and update leaves Stripe's hold released but
@@ -68,6 +69,7 @@ module.exports = async (req, res) => {
       })
       .eq('id', reservation.id)
       .eq('restaurant_id', reservation.restaurant_id)
+      .eq('deposit_payment_intent_id', payment.id)
       .select('id');
 
     if (clearErr) {
@@ -76,11 +78,9 @@ module.exports = async (req, res) => {
         payment_intent_id: paymentIntent.id,
         error: clearErr.message,
       });
-      // Stripe-side hold is already cancelled; surface the inconsistency
-      // so the operator can reconcile, but DON'T retry-storm them.
-      return res.status(500).json({
+      return res.status(503).json({
         success: false,
-        error: 'Hold released on Stripe but local row update failed — see logs',
+        error: 'The hold was released. Retry to update the reservation.',
       });
     }
     if (!cleared || cleared.length === 0) {
@@ -106,7 +106,7 @@ module.exports = async (req, res) => {
     if (error.type === 'StripeInvalidRequestError') {
       return res.status(400).json({
         success: false,
-        error: `Stripe error: ${error.message}`,
+        error: 'Stripe could not release the deposit.',
       });
     }
 

@@ -711,7 +711,7 @@ describe('Portal: reserve - locked booking function', () => {
     });
   }
 
-  test('books through the function as online_portal, with no retry key and the deposit', async () => {
+  test('books through the portal function without forwarding browser-supplied payment data', async () => {
     setupPreChecksPass();
     mockBookGuestReservation.mockResolvedValueOnce({
       success: true, status: 'created',
@@ -725,13 +725,14 @@ describe('Portal: reserve - locked booking function', () => {
     expect(mockBookGuestReservation).toHaveBeenCalledTimes(1);
     const [restaurantId, fields, options] = mockBookGuestReservation.mock.calls[0];
     expect(restaurantId).toBe('r1');
-    expect(options).toBeUndefined();
+    expect(options.deposit).toBeUndefined();
     expect(fields).toEqual(expect.objectContaining({
       source: 'online_portal', customer_name: 'Lock User', customer_phone: '+5511977777777',
       customer_email: 'lock@example.com', party_size: 4, date: '2027-04-01', time: '19:00',
-      deposit_payment_intent_id: 'pi_123', deposit_amount: 80,
     }));
     expect(fields.reservation_id).toEqual(expect.any(String));
+    expect(fields).not.toHaveProperty('deposit_payment_intent_id');
+    expect(fields).not.toHaveProperty('deposit_amount');
     expect(mockInsert).not.toHaveBeenCalled();
   });
 

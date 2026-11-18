@@ -21,6 +21,7 @@ const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { sanitizeStringXSS } = require('./_lib/validation');
 const { validateReservation: validateReservationRules } = require('./_lib/reservation-validator');
+const { releaseRejectedDeposit, verifyPublicDeposit } = require('./_lib/reservation-deposits');
 const {
   getMissingReservationCreateFields,
   isValidReservationDate,
@@ -425,9 +426,8 @@ async function handleCreateReservation(req, res) {
     date,
     time,
     special_requests,
-    deposit_payment_intent_id,
-    deposit_amount
   } = input;
+  const quoteId = req.body?.deposit_quote_id;
 
   // Validate required fields
   if (missingFields.length > 0) {
@@ -483,7 +483,7 @@ async function handleCreateReservation(req, res) {
   // Cheap early refusal: before yesterday in UTC is the past in every zone.
   // The exact check uses the restaurant's local date once it is loaded.
   const utcYesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-  if (date < utcYesterday) {
+  if (!quoteId && date < utcYesterday) {
     return res.status(400).json({
       success: false,
       message: 'Cannot book for a past date.'
@@ -512,7 +512,7 @@ async function handleCreateReservation(req, res) {
   const { getLocalDate } = require('./_lib/timezone');
   let today;
   try { today = getLocalDate(restaurant.timezone || 'UTC'); } catch { today = getLocalDate('UTC'); }
-  if (date < today) {
+  if (!quoteId && date < today) {
     return res.status(400).json({
       success: false,
       message: 'Cannot book for a past date.'
@@ -522,7 +522,7 @@ async function handleCreateReservation(req, res) {
   // Check party size limits
   const settings = restaurant.reservation_settings || {};
   const maxParty = settings.max_party_size || 12;
-  if (partySize > maxParty) {
+  if (!quoteId && partySize > maxParty) {
     return res.status(400).json({
       success: false,
       message: `Maximum party size is ${maxParty}. Please call us for larger groups.`
@@ -542,20 +542,29 @@ async function handleCreateReservation(req, res) {
     }
   );
 
-  if (!validation.valid) {
+  if (!quoteId && !validation.valid) {
     return res.status(400).json({
       success: false,
       message: validation.message
     });
   }
 
-  // No separate seat pre-check: the time list and the booking below ask the
-  // same rule (book_guest_reservation / check_guest_slots). Until 15/11/2026 a
-  // JavaScript copy here (party-size durations, a 60-seat fallback) could
-  // refuse a time the list had just offered.
-  // Create the reservation. book_guest_reservation locks the restaurant and
-  // re-checks hours and seats from every channel in the same transaction as
-  // the insert: two guests racing for the last seats cannot both get them.
+  let deposit;
+  if (quoteId !== undefined && quoteId !== null) {
+    try {
+      if (typeof quoteId === 'string') {
+        deposit = await verifyPublicDeposit(quoteId, { ...input, customer_name: sanitizedName });
+      }
+    } catch (error) {
+      logger.error('[Portal] Deposit verification unavailable', { code: error.code });
+      return res.status(503).json({ success: false, code: 'deposit_retry', message: 'Could not verify the deposit. Please try again.' });
+    }
+    if (!deposit) {
+      return res.status(409).json({ success: false, code: 'deposit_invalid', message: 'No usable deposit authorization was found for this booking.' });
+    }
+  }
+
+  // The portal RPC locks the policy and quote around the shared seat rule and insert.
   const reservationId = generateSecureReservationId();
 
   const booked = await bookGuestReservation(restaurant_id, {
@@ -568,17 +577,44 @@ async function handleCreateReservation(req, res) {
     date,
     time,
     special_requests: special_requests || null,
-    deposit_payment_intent_id: deposit_payment_intent_id || null,
-    deposit_amount: deposit_amount !== undefined ? deposit_amount : null
-  });
+  }, { deposit });
+
+  if (booked.status === 'existing') {
+    return res.status(200).json({
+      success: true,
+      reservation: mapReservationSummary({ ...booked.data, status: booked.data.reservation_status }, {
+        restaurant_name: restaurant.restaurant_name,
+      }),
+    });
+  }
 
   if (booked.status !== 'created') {
+    if (deposit && booked.data?.release_intent &&
+        !await releaseRejectedDeposit(deposit.id, restaurant_id, booked.data.release_intent)) {
+      return res.status(503).json({
+        success: false,
+        code: 'deposit_retry',
+        message: 'The booking could not be made. Please retry so we can finish releasing the hold.',
+      });
+    }
+    const depositRefusal = {
+      deposit_required: 'A deposit authorization is required to book at this restaurant.',
+      deposit_invalid: 'No usable deposit authorization was found for this booking.',
+      deposit_quote_changed: 'The deposit quote has expired or changed. Please request a new quote.',
+      deposit_closed: 'This deposit quote is closed. Please request a new quote.',
+      deposit_consumed: 'This deposit was already used for a reservation.',
+    }[booked.status];
+    if (depositRefusal) {
+      return res.status(409).json({ success: false, code: booked.status, message: depositRefusal });
+    }
     if (booked.status === 'unavailable') {
-      const seatsLeft = booked.data?.seats_available ?? 0;
+      const seatsLeft = booked.data?.seats_available;
       return res.status(409).json({
         success: false,
-        message: `Sorry, ${time} is no longer available for ${partySize} guests. Only ${seatsLeft} seats remain at that time.`,
-        available_seats: seatsLeft
+        ...(booked.data?.release_intent ? { code: 'deposit_closed' } : {}),
+        message: `Sorry, ${time} is no longer available for ${partySize} guests.` +
+          (seatsLeft === undefined ? '' : ` Only ${seatsLeft} seats remain at that time.`),
+        ...(seatsLeft === undefined ? {} : { available_seats: seatsLeft }),
       });
     }
     const refusal = {
@@ -589,9 +625,14 @@ async function handleCreateReservation(req, res) {
       too_late: 'That time is after the last seating. Please choose an earlier time.',
       party_too_large: `Maximum party size is ${maxParty}. Please call us for larger groups.`,
       invalid_input: 'Invalid reservation details. Please check the form and try again.',
+      timezone_unavailable: 'Could not verify the restaurant time zone. Please call the restaurant directly.',
     }[booked.status];
     if (refusal) {
-      return res.status(400).json({ success: false, message: refusal });
+      return res.status(400).json({
+        success: false,
+        ...(booked.data?.release_intent ? { code: 'deposit_closed' } : {}),
+        message: refusal,
+      });
     }
     if (booked.status === 'restaurant_unavailable') {
       return res.status(404).json({ success: false, message: 'Restaurant not found' });

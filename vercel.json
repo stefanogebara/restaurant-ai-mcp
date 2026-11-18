@@ -431,6 +431,10 @@
       "schedule": "0 3 * * *"
     },
     {
+      "path": "/api/cron/run?job=cleanup-booking-deposits",
+      "schedule": "17 * * * *"
+    },
+    {
       "path": "/api/cron/run?job=warm-seo-cache",
       "schedule": "0 2 * * *"
     },

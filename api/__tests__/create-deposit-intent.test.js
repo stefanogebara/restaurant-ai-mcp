@@ -25,9 +25,11 @@ jest.mock('stripe', () => jest.fn().mockImplementation(() => ({
 const mockConfigSingle = jest.fn();
 const mockConnectMaybeSingle = jest.fn();
 const mockAnalyticsInsert = jest.fn();
+const mockQuoteInsert = jest.fn();
 
-const mockConfigEq = jest.fn(() => ({ single: mockConfigSingle }));
-const mockConfigSelect = jest.fn(() => ({ eq: mockConfigEq }));
+const mockConfigChain = { eq: jest.fn(), maybeSingle: mockConfigSingle };
+mockConfigChain.eq.mockReturnValue(mockConfigChain);
+const mockConfigSelect = jest.fn(() => mockConfigChain);
 const mockConnectEq = jest.fn(() => ({ maybeSingle: mockConnectMaybeSingle }));
 const mockConnectSelect = jest.fn(() => ({ eq: mockConnectEq }));
 
@@ -42,6 +44,7 @@ const mockRestaurantSchemaFrom = jest.fn((tableName) => {
 });
 
 const mockPublicFrom = jest.fn((tableName) => {
+  if (tableName === 'public_booking_deposits') return { insert: mockQuoteInsert };
   if (tableName === 'stripe_deposit_routing_events') {
     return { insert: mockAnalyticsInsert };
   }
@@ -69,7 +72,7 @@ jest.mock('../_lib/cors', () => ({
 }));
 
 const mockVerifyBookingToken = jest.fn();
-jest.mock('../booking-token', () => ({
+jest.mock('../_lib/booking-token', () => ({
   verifyBookingToken: (...args) => mockVerifyBookingToken(...args),
 }));
 
@@ -78,7 +81,11 @@ jest.mock('../_lib/currency', () => ({
   minChargeAmount: jest.fn(() => 1),
 }));
 
+jest.mock('../_lib/guest-slots', () => ({
+  checkGuestSlots: jest.fn().mockResolvedValue({ ok: true, slots: [{ status: 'ok' }] }),
+}));
 process.env.STRIPE_SECRET_KEY = 'sk_test_dummy';
+process.env.BOOKING_HMAC_SECRET = 'test-booking-secret';
 const handler = require('../create-deposit-intent');
 
 // --- Helpers ---
@@ -102,6 +109,8 @@ function makeReq(body) {
       restaurant_id: 'rest-1',
       party_size: 2,
       booking_token: 'tok',
+      date: '2027-01-10', time: '19:00',
+      customer_name: 'Test Guest', customer_phone: '+15550101100', customer_email: 'guest@example.test',
       ...body,
     },
   };
@@ -125,6 +134,7 @@ beforeEach(() => {
   });
   // Analytics insert is fire-and-forget; default to success so the
   // .then() callback is a noop.
+  mockQuoteInsert.mockResolvedValue({ error: null });
   mockAnalyticsInsert.mockResolvedValue({ error: null });
 });
 
@@ -318,4 +328,17 @@ describe('routing analytics — append-only adoption log', () => {
     expect(res.body.success).toBe(true);
     expect(res.body.payment_intent_id).toBe('pi_test_123');
   });
+});
+
+test('persists the exact quote before responding and keeps receipt email', async () => {
+  const res = makeRes();
+  await handler(makeReq(), res);
+  expect(res.statusCode).toBe(200);
+  const payment = mockPaymentIntentCreate.mock.calls[0][0];
+  expect(payment.receipt_email).toBe('guest@example.test');
+  expect(payment.metadata.quote_id).toBe(res.body.quote_id);
+  expect(mockQuoteInsert).toHaveBeenCalledWith(expect.objectContaining({
+    id: res.body.quote_id, booking_date: '2027-01-10', booking_time: '19:00',
+    restaurant_id: 'rest-1', amount_minor: 5000, intent_id: 'pi_test_123',
+  }));
 });

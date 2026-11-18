@@ -16,7 +16,8 @@ for m in 20261016184431_whatsapp_booking_integrity 20261109002803_reservation_wh
          20261109231933_voice_booking_external_key_guard 20261110174209_guest_reservation_mutations \
          20261110180955_retain_guest_reservation_table_assignment 20261111004327_sandbox_keypad_reservation_actions \
          20261112150000_book_guest_reservation 20261112190000_book_guest_reservation_google \
-         20261115220000_regra_unica_de_horario 20261116120000_aviso_minimo_de_uma_hora; do
+         20261115220000_regra_unica_de_horario 20261116120000_aviso_minimo_de_uma_hora \
+         20261118192636_public_booking_deposits; do
   psql -h "$SOCK" -p 55441 -U postgres -d audit -v ON_ERROR_STOP=1 -q -f "$REPO/supabase/migrations/$m.sql" >/dev/null 2>&1
 done
 export AUDIT_SOCK="$SOCK" AUDIT_REPO="$REPO" NODE_PATH="$REPO/node_modules"

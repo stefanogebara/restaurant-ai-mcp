@@ -31,6 +31,7 @@ const JOBS = {
   'analytics-briefing': (req, res) => require('../_crons/analytics-briefing')(req, res),
   'automated-campaigns': (req, res) => require('../_crons/automated-campaigns')(req, res),
   'check-late-reservations': (req, res) => require('../_crons/check-late-reservations')(req, res),
+  'cleanup-booking-deposits': (req, res) => require('../_crons/cleanup-booking-deposits')(req, res),
   'cleanup-expired-demos': (req, res) => require('../_crons/cleanup-expired-demos')(req, res),
   'cleanup-waitlist': (req, res) => require('../_crons/cleanup-waitlist')(req, res),
   'cleanup-whatsapp-dedup': (req, res) => require('../_crons/cleanup-whatsapp-dedup')(req, res),
