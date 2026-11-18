@@ -18,6 +18,7 @@ import {
   LS_FIRST_RESERVATION_TRACKED,
 } from '../config/localStorageKeys';
 import { identifyUser } from '../lib/analytics';
+import { type BillingPlan, withBillingPlan } from '../lib/billingHandoff';
 
 type RestaurantRole = 'owner' | 'manager' | 'host' | 'staff';
 
@@ -29,7 +30,7 @@ interface AuthContextType {
   signInWithGoogle: (extraRedirectParams?: Record<string, string>) => Promise<void>;
   signInWithApple: (extraRedirectParams?: Record<string, string>) => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
-  signUpWithEmail: (email: string, password: string) => Promise<{ needsConfirmation: boolean }>;
+  signUpWithEmail: (email: string, password: string, plan?: BillingPlan) => Promise<{ needsConfirmation: boolean }>;
   signOut: () => Promise<void>;
 }
 
@@ -143,12 +144,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
   };
 
-  const signUpWithEmail = async (email: string, password: string) => {
+  const signUpWithEmail = async (email: string, password: string, plan?: BillingPlan) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/welcome`,
+        emailRedirectTo: `${window.location.origin}${withBillingPlan('/welcome', plan ?? null)}`,
       },
     });
     if (error) throw error;

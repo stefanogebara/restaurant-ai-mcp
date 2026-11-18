@@ -5,6 +5,8 @@ import LaunchStepList from './LaunchSteps';
 import TalkToReceptionist from './TalkToReceptionist';
 import BookingLinkCard from './BookingLinkCard';
 import ThiingsIcon from '../../common/ThiingsIcon';
+import ResumeCheckout from '../ResumeCheckout';
+import type { BillingPlan } from '../../../lib/billingHandoff';
 import { LAUNCH_STEPS, type LaunchSteps } from '../../../lib/onboardingLaunch';
 
 export interface SheetCompletionProps {
@@ -15,6 +17,7 @@ export interface SheetCompletionProps {
   /** The new voice agent, only when the server said it is ok. */
   agentId?: string | null;
   restaurantName?: string | null;
+  selectedPlan?: BillingPlan | null;
   /** Leaves the onboarding; injectable for tests. */
   goTo?: (url: string) => void;
 }
@@ -31,7 +34,7 @@ const CONTINUE_AFTER_CALL_SECONDS = 8;
  * stay where they were while the heading changes from "Setting up" to "live".
  */
 export default function SheetCompletion({
-  setup, bookingUrl, steps = {}, agentId = null, restaurantName = null,
+  setup, bookingUrl, steps = {}, agentId = null, restaurantName = null, selectedPlan = null,
   goTo = (url) => window.location.assign(url),
 }: SheetCompletionProps) {
   const { t, i18n } = useTranslation();
@@ -58,7 +61,7 @@ export default function SheetCompletion({
   }, [secondsLeft]);
   function callEnded(result: { bookingCode: string | null }) {
     setAfterCall(result);
-    setSecondsLeft(CONTINUE_AFTER_CALL_SECONDS);
+    if (!selectedPlan) setSecondsLeft(CONTINUE_AFTER_CALL_SECONDS);
   }
 
   return (
@@ -118,6 +121,7 @@ export default function SheetCompletion({
       {anyOpen && <p className="mt-3 text-sm text-muted-stone">{copy.support}</p>}
 
       <div className="mt-10">
+        {selectedPlan && <ResumeCheckout plan={selectedPlan} />}
         <a href="/host-dashboard/simple?launch=1"
           className="inline-flex min-h-11 items-center justify-center rounded-full bg-burgundy px-6 py-3 text-[15px] font-medium text-white hover:bg-burgundy-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-burgundy/60 focus-visible:ring-offset-2">
           {t('onboarding.goToDashboard', 'Go to Dashboard')}

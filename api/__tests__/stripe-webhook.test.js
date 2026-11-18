@@ -15,12 +15,16 @@ process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test';
 const mockCustomersRetrieve = jest.fn();
 const mockCustomersUpdate = jest.fn();
 const mockConstructEvent = jest.fn();
+const mockRetrieveSubscription = jest.fn();
+const mockProject = jest.fn();
+const mockLedgerInsert = jest.fn();
 
 jest.mock('stripe', () => {
   return jest.fn().mockImplementation(() => ({
     webhooks: {
       constructEvent: mockConstructEvent,
     },
+    subscriptions: { retrieve: mockRetrieveSubscription },
     customers: {
       retrieve: mockCustomersRetrieve,
       update: mockCustomersUpdate,
@@ -46,10 +50,12 @@ const mockSubscriptionsSelect = jest.fn().mockReturnValue({
 });
 
 jest.mock('../_lib/supabase', () => ({
-  createSubscription: jest.fn().mockResolvedValue({ success: true }),
-  updateSubscription: jest.fn().mockResolvedValue({ success: true }),
-  getSubscriptionByCustomerId: jest.fn().mockResolvedValue(null),
-  updateRestaurantPlan: jest.fn().mockResolvedValue({ success: true }),
+  supabaseAdmin: {
+    rpc: mockProject,
+    from: jest.fn(table => table === 'stripe_webhook_events_processed'
+      ? { insert: mockLedgerInsert }
+      : { select: () => ({ eq: () => ({ maybeSingle: mockMaybeSingle }) }) }),
+  },
   query: {
     schema: jest.fn().mockReturnValue({
       from: jest.fn().mockReturnValue({
@@ -82,7 +88,7 @@ jest.mock('../_lib/supabase', () => ({
 }));
 
 jest.mock('../_services/subscription-limits', () => ({
-  getPlanFromPriceId: jest.fn().mockReturnValue('growth'),
+  getPlanFromPriceId: jest.fn(price => price === 'price_growth' ? 'growth' : null),
 }));
 
 jest.mock('../_lib/email', () => ({
@@ -100,7 +106,6 @@ jest.mock('../_lib/secure-logger', () => ({
 }));
 
 const handler = require('../stripe-webhook');
-const { createSubscription, updateSubscription, updateRestaurantPlan } = require('../_lib/supabase');
 const { sendPaymentReceiptEmail, sendPaymentFailedEmail, sendTrialEndingEmail } = require('../_lib/email');
 
 function createMockReqRes(overrides = {}) {
@@ -146,6 +151,22 @@ describe('StripeWebhook: Method checks', () => {
 // Signature verification
 // ============================================================
 describe('StripeWebhook: Signature verification', () => {
+  test('passes the unmodified Vercel request stream to Stripe signature verification', async () => {
+    const { Readable } = require('node:stream');
+    const { res } = createMockReqRes();
+    const text = '{ "type":  "unhandled.fixture" }';
+    const req = Readable.from([Buffer.from(text.slice(0, 5)), Buffer.from(text.slice(5))]);
+    req.method = 'POST';
+    req.headers = { 'stripe-signature': 'sig_test' };
+    mockConstructEvent.mockReturnValue({ id: 'evt_raw', type: 'unhandled.fixture', data: { object: {} } });
+
+    await handler(req, res);
+
+    expect(handler.config.api.bodyParser).toBe(false);
+    expect(mockConstructEvent).toHaveBeenCalledWith(Buffer.from(text), 'sig_test', 'whsec_test');
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
   test('returns 400 for invalid signature', async () => {
     mockConstructEvent.mockImplementationOnce(() => {
       throw new Error('Invalid signature');
@@ -233,174 +254,89 @@ describe('StripeWebhook: checkout.session.completed', () => {
 // ============================================================
 // customer.subscription.created
 // ============================================================
-describe('StripeWebhook: customer.subscription.created', () => {
-  test('creates subscription in database', async () => {
-    mockConstructEvent.mockReturnValueOnce({
-      id: 'evt_sub_create_001',
-      type: 'customer.subscription.created',
-      data: {
-        object: {
-          id: 'sub_test_123',
-          customer: 'cus_test',
-          status: 'active',
-          current_period_start: Math.floor(Date.now() / 1000),
-          current_period_end: Math.floor(Date.now() / 1000) + 30 * 86400,
-          trial_end: null,
-          metadata: { restaurant_id: 'rest-1' },
-          items: {
-            data: [{ price: { id: 'price_growth' } }],
-          },
-        },
-      },
-    });
-
-    // Handler calls customers.retrieve for the customer email
-    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'test@restaurant.com' });
-    // Idempotency guard: no existing subscription
-    mockMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
-
+describe('StripeWebhook: subscription projection', () => {
+  const subscription = {
+    id: 'sub_audit', customer: { id: 'cus_audit', email: 'billing@example.test' },
+    status: 'trialing', metadata: { restaurant_id: 'rest-1' }, trial_end: 1795600000,
+    items: { data: [
+      { price: { id: 'price_metered' } },
+      { price: { id: 'price_growth' }, current_period_start: 1794300000, current_period_end: 1795600000 },
+    ] },
+  };
+  const event = (type = 'customer.subscription.created', object = { id: subscription.id, status: 'incomplete' }) => ({
+    id: 'evt_audit', type, data: { object },
+  });
+  async function deliver(notification) {
+    mockConstructEvent.mockReturnValue(notification);
     const { req, res } = createMockReqRes();
     await handler(req, res);
-
-    expect(createSubscription).toHaveBeenCalledWith('rest-1', expect.objectContaining({
-      'Subscription ID': 'sub_test_123',
-      'Plan Name': 'growth',
-      'Status': 'active',
-    }), expect.objectContaining({ idempotency_key: 'stripe-event-evt_sub_create_001' }));
-    expect(updateRestaurantPlan).toHaveBeenCalledWith('rest-1', 'growth', 'test@restaurant.com');
-    expect(res.status).toHaveBeenCalledWith(200);
+    return res;
+  }
+  beforeEach(() => {
+    mockRetrieveSubscription.mockResolvedValue(subscription);
+    mockMaybeSingle.mockResolvedValue({ data: null, error: null });
+    mockProject.mockResolvedValue({ data: 'applied', error: null });
   });
 
-  test('returns 500 when restaurant_id cannot be resolved (forces Stripe retry)', async () => {
-    mockConstructEvent.mockReturnValueOnce({
-      type: 'customer.subscription.created',
-      data: {
-        object: {
-          id: 'sub_test_456',
-          customer: 'cus_test',
-          status: 'active',
-          current_period_start: Math.floor(Date.now() / 1000),
-          current_period_end: Math.floor(Date.now() / 1000) + 30 * 86400,
-          trial_end: null,
-          metadata: {},
-          items: { data: [{ price: { id: 'price_growth' } }] },
-        },
-      },
-    });
+  test.each(['customer.subscription.created', 'customer.subscription.updated', 'customer.subscription.resumed'])(
+    'projects current Stripe state and item periods atomically for %s', async type => {
+      const res = await deliver(event(type));
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(mockRetrieveSubscription).toHaveBeenCalledWith(subscription.id, { expand: ['customer'] });
+      expect(mockProject).toHaveBeenCalledWith('project_stripe_subscription', expect.objectContaining({
+        p_event_id: 'evt_audit', p_event_type: type, p_restaurant_id: 'rest-1', p_price_id: 'price_growth',
+        p_plan: 'Growth', p_status: 'trialing', p_customer_id: 'cus_audit', p_customer_email: 'billing@example.test',
+        p_period_end: new Date(1795600000 * 1000).toISOString(),
+      }));
+      expect(mockLedgerInsert).not.toHaveBeenCalled();
+    },
+  );
 
-    // Handler: customers.retrieve for customer email
-    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'unknown@test.com' });
-    // resolveRestaurantId Method 2: customers.retrieve for Stripe customer metadata — no restaurant_id
-    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'unknown@test.com', metadata: {} });
-    // Method 3 subscriptions lookup — no match
-    mockSubscriptionsSingle.mockResolvedValueOnce({ data: null, error: { message: 'not found' } });
-    // For creation events, email lookup (Method 4) is skipped entirely → returns null → throws
-
-    const { req, res } = createMockReqRes();
-    await handler(req, res);
-
-    expect(createSubscription).not.toHaveBeenCalled();
-    // Returns 500 so Stripe retries the event instead of silently dropping the subscription
-    expect(res.status).toHaveBeenCalledWith(500);
-  });
-
-  test('skips creation when subscription already exists (idempotency guard)', async () => {
-    mockConstructEvent.mockReturnValueOnce({
-      id: 'evt_sub_create_idem',
-      type: 'customer.subscription.created',
-      data: {
-        object: {
-          id: 'sub_already_exists',
-          customer: 'cus_test',
-          status: 'active',
-          current_period_start: Math.floor(Date.now() / 1000),
-          current_period_end: Math.floor(Date.now() / 1000) + 30 * 86400,
-          trial_end: null,
-          metadata: { restaurant_id: 'rest-1' },
-          items: { data: [{ price: { id: 'price_growth' } }] },
-        },
-      },
-    });
-
-    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'test@restaurant.com' });
-    // Idempotency guard: subscription already exists
-    mockMaybeSingle.mockResolvedValueOnce({ data: { id: 'existing-uuid' }, error: null });
-
-    const { req, res } = createMockReqRes();
-    await handler(req, res);
-
-    expect(createSubscription).not.toHaveBeenCalled();
-    expect(updateRestaurantPlan).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(200);
-  });
-});
-
-// ============================================================
-// customer.subscription.updated
-// ============================================================
-describe('StripeWebhook: customer.subscription.updated', () => {
-  test('updates subscription in database', async () => {
-    mockConstructEvent.mockReturnValueOnce({
-      type: 'customer.subscription.updated',
-      data: {
-        object: {
-          id: 'sub_test_789',
-          customer: 'cus_test',
-          status: 'active',
-          current_period_start: Math.floor(Date.now() / 1000),
-          current_period_end: Math.floor(Date.now() / 1000) + 30 * 86400,
-          trial_end: null,
-          metadata: { restaurant_id: 'rest-1' },
-          items: { data: [{ price: { id: 'price_scale' } }] },
-        },
-      },
-    });
-
-    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'test@restaurant.com' });
-
-    const { req, res } = createMockReqRes();
-    await handler(req, res);
-
-    expect(updateSubscription).toHaveBeenCalledWith('rest-1', 'sub_test_789', expect.objectContaining({
-      'Status': 'active',
+  test('can activate from Checkout before subscription.created, with a current Stripe lookup', async () => {
+    const res = await deliver(event('checkout.session.completed', {
+      mode: 'subscription', customer: 'cus_audit', subscription: 'sub_audit', metadata: { restaurant_id: 'rest-1' },
     }));
     expect(res.status).toHaveBeenCalledWith(200);
-  });
-});
-
-// ============================================================
-// customer.subscription.deleted
-// ============================================================
-describe('StripeWebhook: customer.subscription.deleted', () => {
-  test('cancels subscription and downgrades plan', async () => {
-    mockConstructEvent.mockReturnValueOnce({
-      type: 'customer.subscription.deleted',
-      data: {
-        object: {
-          id: 'sub_del_123',
-          customer: 'cus_test',
-          metadata: { restaurant_id: 'rest-1' },
-          items: { data: [{ price: { id: 'price_growth' } }] },
-        },
-      },
-    });
-
-    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'test@restaurant.com' });
-
-    const { req, res } = createMockReqRes();
-    await handler(req, res);
-
-    expect(updateSubscription).toHaveBeenCalledWith('rest-1', 'sub_del_123', expect.objectContaining({
-      'Status': 'canceled',
+    expect(mockProject).toHaveBeenCalledWith('project_stripe_subscription', expect.objectContaining({
+      p_subscription_id: 'sub_audit',
     }));
-    expect(updateRestaurantPlan).toHaveBeenCalledWith('rest-1', 'Starter');
+  });
+
+  test('returns 500 on database failure and a later delivery can apply the same event', async () => {
+    mockProject.mockResolvedValueOnce({ error: { code: '23505' } });
+    expect((await deliver(event())).status).toHaveBeenCalledWith(500);
+    expect((await deliver(event())).status).toHaveBeenCalledWith(200);
+    expect(mockProject).toHaveBeenCalledTimes(2);
+    expect(mockLedgerInsert).not.toHaveBeenCalled();
+  });
+
+  test('only the transaction decides whether an event is already applied', async () => {
+    mockProject.mockResolvedValue({ data: 'duplicate' });
+    expect((await deliver(event())).json).toHaveBeenCalledWith({ received: true, deduplicated: true });
+  });
+
+  test('resolves a legacy subscription from its exact DB ID, and never guesses by email', async () => {
+    mockRetrieveSubscription.mockResolvedValue({ ...subscription, metadata: {} });
+    expect((await deliver(event())).status).toHaveBeenCalledWith(500);
+    expect(mockProject).not.toHaveBeenCalled();
+    mockMaybeSingle.mockResolvedValue({ data: { restaurant_id: 'rest-1' } });
+    expect((await deliver(event())).status).toHaveBeenCalledWith(200);
+  });
+
+  test('rejects conflicting restaurant bindings', async () => {
+    mockMaybeSingle.mockResolvedValue({ data: { restaurant_id: 'different' } });
+    expect((await deliver(event())).status).toHaveBeenCalledWith(500);
+    expect(mockProject).not.toHaveBeenCalled();
+  });
+
+  test('a delayed update carries the current canceled status into the transaction', async () => {
+    mockRetrieveSubscription.mockResolvedValue({ ...subscription, status: 'canceled', canceled_at: 1794500000 });
+    const res = await deliver(event('customer.subscription.updated', { id: subscription.id, status: 'active' }));
     expect(res.status).toHaveBeenCalledWith(200);
+    expect(mockProject.mock.calls[0][1]).toMatchObject({ p_status: 'canceled' });
   });
 });
 
-// ============================================================
-// invoice.payment_succeeded
-// ============================================================
 describe('StripeWebhook: invoice.payment_succeeded', () => {
   test('sends receipt email on payment success', async () => {
     mockConstructEvent.mockReturnValueOnce({
@@ -509,265 +445,6 @@ describe('StripeWebhook: Unhandled events', () => {
 // ============================================================
 // resolveRestaurantId - fallback chain
 // ============================================================
-describe('StripeWebhook: resolveRestaurantId fallback chain', () => {
-  test('resolves restaurant_id from Stripe customer metadata (Method 2)', async () => {
-    // Subscription.updated (not creation) without object metadata → tries customer metadata
-    mockConstructEvent.mockReturnValueOnce({
-      type: 'customer.subscription.updated',
-      data: {
-        object: {
-          id: 'sub_cust_meta_test',
-          customer: 'cus_meta',
-          items: { data: [{ price: { id: 'price_test_123' } }] },
-          metadata: {}, // No object metadata
-          status: 'active',
-          current_period_start: 1700000000,
-          current_period_end: 1702688400,
-          trial_end: null,
-        },
-      },
-    });
-    // Handler calls customers.retrieve for the update customer email
-    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'restaurant@example.com' });
-    // resolveRestaurantId Method 2: customers.retrieve returns customer with restaurant_id in metadata
-    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'restaurant@example.com', metadata: { restaurant_id: 'rest-from-cust-meta' } });
-
-    const { req, res } = createMockReqRes();
-    await handler(req, res);
-    expect(res.status).toHaveBeenCalledWith(200);
-  });
-
-  test('creation events skip email fallback and return 500 when metadata missing', async () => {
-    // Subscription.created with no metadata → email lookup is SKIPPED → returns null → 500
-    mockConstructEvent.mockReturnValueOnce({
-      type: 'customer.subscription.created',
-      data: {
-        object: {
-          id: 'sub_no_meta_create',
-          customer: 'cus_no_meta',
-          items: { data: [{ price: { id: 'price_test_123' } }] },
-          metadata: {},
-          status: 'active',
-          current_period_start: 1700000000,
-          current_period_end: 1702688400,
-          trial_end: null,
-        },
-      },
-    });
-    // Handler: customers.retrieve for email
-    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'restaurant@example.com' });
-    // resolveRestaurantId Method 2: no restaurant_id in customer metadata
-    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'restaurant@example.com', metadata: {} });
-    // Method 3: subscriptions table — no match
-    mockSubscriptionsSingle.mockResolvedValueOnce({ data: null, error: { message: 'not found' } });
-
-    const { req, res } = createMockReqRes();
-    await handler(req, res);
-    // Email lookup is NOT attempted for creation events → returns null → throws → 500
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(createSubscription).not.toHaveBeenCalled();
-  });
-
-  test('non-creation events fall back to email lookup as last resort', async () => {
-    // Subscription.updated with no metadata anywhere → falls through to email lookup
-    mockConstructEvent.mockReturnValueOnce({
-      type: 'customer.subscription.updated',
-      data: {
-        object: {
-          id: 'sub_email_fallback',
-          customer: 'cus_email_fallback',
-          items: { data: [{ price: { id: 'price_test_123' } }] },
-          metadata: {},
-          status: 'active',
-          current_period_start: 1700000000,
-          current_period_end: 1702688400,
-          trial_end: null,
-        },
-      },
-    });
-    // Handler: customers.retrieve for email
-    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'restaurant@example.com' });
-    // resolveRestaurantId Method 2: customer metadata — no restaurant_id
-    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'restaurant@example.com', metadata: {} });
-    // Method 3: subscriptions table — no match
-    mockSubscriptionsSingle.mockResolvedValueOnce({ data: null, error: { message: 'not found' } });
-    // Method 4: email lookup returns a match (default mock returns { data: { id: 'rest-1' } })
-
-    const { req, res } = createMockReqRes();
-    await handler(req, res);
-    expect(res.status).toHaveBeenCalledWith(200);
-  });
-});
-
-// ============================================================
-// subscription.created - DB failure paths (lines 132, 140)
-// ============================================================
-describe('StripeWebhook: subscription.created DB failure paths', () => {
-  function makeCreatedEvent() {
-    return {
-      type: 'customer.subscription.created',
-      data: {
-        object: {
-          id: 'sub_fail_test',
-          customer: 'cus_test',
-          items: { data: [{ price: { id: 'price_test_123' } }] },
-          metadata: { restaurant_id: 'rest-1' },
-          status: 'active',
-          current_period_start: 1700000000,
-          current_period_end: 1702688400,
-          trial_end: null,
-        },
-      },
-    };
-  }
-
-  test('logs error when createSubscription fails (line 132)', async () => {
-    mockConstructEvent.mockReturnValueOnce(makeCreatedEvent());
-    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'test@restaurant.com' });
-    mockMaybeSingle.mockResolvedValueOnce({ data: null, error: null }); // idempotency guard: no existing sub
-    createSubscription.mockResolvedValueOnce({ success: false, message: 'DB write failed' });
-
-    const { req, res } = createMockReqRes();
-    await handler(req, res);
-    expect(res.status).toHaveBeenCalledWith(200);
-  });
-
-  test('logs error when updateRestaurantPlan fails (line 140)', async () => {
-    mockConstructEvent.mockReturnValueOnce(makeCreatedEvent());
-    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'test@restaurant.com' });
-    mockMaybeSingle.mockResolvedValueOnce({ data: null, error: null }); // idempotency guard: no existing sub
-    // createSubscription succeeds (default), updateRestaurantPlan fails
-    updateRestaurantPlan.mockResolvedValueOnce({ success: false, message: 'Plan update failed' });
-
-    const { req, res } = createMockReqRes();
-    await handler(req, res);
-    expect(res.status).toHaveBeenCalledWith(200);
-  });
-});
-
-// ============================================================
-// subscription.updated - failure paths (lines 159-160, 173)
-// ============================================================
-describe('StripeWebhook: subscription.updated failure paths', () => {
-  function makeUpdatedEvent(hasRestaurantId = true) {
-    return {
-      type: 'customer.subscription.updated',
-      data: {
-        object: {
-          id: 'sub_updated_test',
-          customer: 'cus_updated',
-          items: { data: [{ price: { id: 'price_test_123' } }] },
-          metadata: hasRestaurantId ? { restaurant_id: 'rest-1' } : {},
-          status: 'active',
-          current_period_start: 1700000000,
-          current_period_end: 1702688400,
-          trial_end: null,
-        },
-      },
-    };
-  }
-
-  test('breaks early when restaurant_id cannot be resolved (lines 159-160)', async () => {
-    mockConstructEvent.mockReturnValueOnce(makeUpdatedEvent(false));
-    // Handler: customers.retrieve for email
-    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'unknown@example.com' });
-    // resolveRestaurantId Method 2: customer metadata — no restaurant_id
-    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'unknown@example.com', metadata: {} });
-    // Method 3: subscriptions table — no match
-    mockSubscriptionsSingle.mockResolvedValueOnce({ data: null, error: { message: 'not found' } });
-
-    // Override email lookup (Method 4) to return no data
-    const { query: supabase } = require('../_lib/supabase');
-    supabase.schema.mockImplementationOnce(() => ({
-      from: jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            limit: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({ data: null, error: { message: 'not found' } }),
-            }),
-          }),
-        }),
-      }),
-    }));
-
-    const { req, res } = createMockReqRes();
-    await handler(req, res);
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(updateSubscription).not.toHaveBeenCalled();
-  });
-
-  test('logs error when updateSubscription fails (line 173)', async () => {
-    mockConstructEvent.mockReturnValueOnce(makeUpdatedEvent(true));
-    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'test@restaurant.com' });
-    updateSubscription.mockResolvedValueOnce({ success: false, message: 'update failed' });
-
-    const { req, res } = createMockReqRes();
-    await handler(req, res);
-    expect(res.status).toHaveBeenCalledWith(200);
-  });
-});
-
-// ============================================================
-// subscription.deleted - failure paths (lines 193-194, 204)
-// ============================================================
-describe('StripeWebhook: subscription.deleted failure paths', () => {
-  function makeDeletedEvent(hasRestaurantId = true) {
-    return {
-      type: 'customer.subscription.deleted',
-      data: {
-        object: {
-          id: 'sub_deleted_test',
-          customer: 'cus_deleted',
-          metadata: hasRestaurantId ? { restaurant_id: 'rest-1' } : {},
-          status: 'canceled',
-        },
-      },
-    };
-  }
-
-  test('breaks early when restaurant_id cannot be resolved (lines 193-194)', async () => {
-    mockConstructEvent.mockReturnValueOnce(makeDeletedEvent(false));
-    // Handler: customers.retrieve for email
-    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'unknown@example.com' });
-    // resolveRestaurantId Method 2: customer metadata — no restaurant_id
-    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'unknown@example.com', metadata: {} });
-    // Method 3: subscriptions table — no match
-    mockSubscriptionsSingle.mockResolvedValueOnce({ data: null, error: { message: 'not found' } });
-
-    // Method 4: email lookup — no match
-    const { query: supabase } = require('../_lib/supabase');
-    supabase.schema.mockImplementationOnce(() => ({
-      from: jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            limit: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({ data: null, error: { message: 'not found' } }),
-            }),
-          }),
-        }),
-      }),
-    }));
-
-    const { req, res } = createMockReqRes();
-    await handler(req, res);
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(updateSubscription).not.toHaveBeenCalled();
-  });
-
-  test('logs error when updateSubscription (cancel) fails (line 204)', async () => {
-    mockConstructEvent.mockReturnValueOnce(makeDeletedEvent(true));
-    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'test@restaurant.com' });
-    updateSubscription.mockResolvedValueOnce({ success: false, message: 'cancel failed' });
-
-    const { req, res } = createMockReqRes();
-    await handler(req, res);
-    expect(res.status).toHaveBeenCalledWith(200);
-  });
-});
-
-// ============================================================
-// Email catch blocks (lines 233, 257, 277)
-// ============================================================
 describe('StripeWebhook: email error catch blocks', () => {
   test('logs error when payment receipt email throws (line 233)', async () => {
     mockConstructEvent.mockReturnValueOnce({
@@ -834,7 +511,7 @@ describe('StripeWebhook: email error catch blocks', () => {
 // Top-level catch block (lines 289-290)
 // ============================================================
 describe('StripeWebhook: top-level catch block', () => {
-  test('returns 500 when processing throws unexpectedly (lines 289-290)', async () => {
+  test('returns 500 when Stripe cannot supply the authoritative subscription', async () => {
     mockConstructEvent.mockReturnValueOnce({
       type: 'customer.subscription.created',
       data: {
@@ -850,8 +527,7 @@ describe('StripeWebhook: top-level catch block', () => {
         },
       },
     });
-    // Make customers.retrieve throw inside the try block → caught by outer catch
-    mockCustomersRetrieve.mockRejectedValueOnce(new Error('Stripe API unreachable'));
+    mockRetrieveSubscription.mockRejectedValueOnce(new Error('Stripe API unreachable'));
 
     const { req, res } = createMockReqRes();
     await handler(req, res);

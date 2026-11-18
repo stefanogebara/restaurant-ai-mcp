@@ -2,15 +2,8 @@ const Stripe = require('stripe');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('StripeWebhook');
-const { getPlanFromPriceId, getPlanLimits } = require('./_services/subscription-limits');
-const {
-  createSubscription,
-  updateSubscription,
-  getSubscriptionByCustomerId,
-  updateRestaurantPlan,
-  query: supabase,
-  supabaseAdmin,
-} = require('./_lib/supabase');
+const { getPlanFromPriceId } = require('./_services/subscription-limits');
+const { query: supabase, supabaseAdmin } = require('./_lib/supabase');
 const { sendPaymentReceiptEmail, sendPaymentFailedEmail, sendTrialEndingEmail, sendReferralRewardEmail } = require('./_lib/email');
 const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 
@@ -228,6 +221,98 @@ async function rewardReferralIfEligible(refereeRestaurantId, refereeStripeCustom
   }
 }
 
+const SUBSCRIPTION_EVENTS = new Set([
+  'customer.subscription.created', 'customer.subscription.updated', 'customer.subscription.deleted',
+  'customer.subscription.paused', 'customer.subscription.resumed',
+]);
+
+const DB_STATUS = {
+  active: 'active', trialing: 'trialing', past_due: 'past_due', canceled: 'canceled',
+  unpaid: 'unpaid', paused: 'unpaid', incomplete: 'unpaid', incomplete_expired: 'canceled',
+};
+
+function objectId(value) {
+  return typeof value === 'string' ? value : value?.id;
+}
+
+function stripeTime(seconds) {
+  return Number.isFinite(seconds) ? new Date(seconds * 1000).toISOString() : null;
+}
+
+async function projectSubscriptionEvent(event) {
+  const object = event.data.object;
+  const isSubscriptionEvent = SUBSCRIPTION_EVENTS.has(event.type);
+  const isCheckout = ['checkout.session.completed', 'checkout.session.async_payment_succeeded'].includes(event.type)
+    && object.mode === 'subscription';
+  if (!isSubscriptionEvent && !isCheckout) return null;
+
+  const subscriptionId = isCheckout ? objectId(object.subscription) : object.id;
+  if (!subscriptionId) throw new Error('Stripe subscription ID missing');
+  // Observe Stripe again on every delivery. A delayed event can carry a snapshot
+  // that predates a successful retry, a plan change, or a cancellation.
+  const observedAt = new Date().toISOString();
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId, { expand: ['customer'] });
+  const customerId = objectId(subscription.customer);
+  const customer = typeof subscription.customer === 'string'
+    ? await stripe.customers.retrieve(customerId) : subscription.customer;
+  const { data: existing, error: lookupError } = await supabaseAdmin
+    .from('subscriptions')
+    .select('restaurant_id, customer_email')
+    .eq('subscription_id', subscriptionId)
+    .maybeSingle();
+  if (lookupError) throw new Error('Could not read Stripe subscription mapping');
+
+  const bindings = new Set([
+    existing?.restaurant_id, subscription.metadata?.restaurant_id,
+    isCheckout ? object.metadata?.restaurant_id : null,
+    customer?.deleted ? null : customer?.metadata?.restaurant_id,
+  ].filter(Boolean));
+  if (bindings.size !== 1) throw new Error('Stripe subscription restaurant binding is missing or inconsistent');
+  const [restaurantId] = bindings;
+  if (isCheckout && objectId(object.customer) !== customerId) throw new Error('Stripe Checkout customer mismatch');
+
+  const planItems = subscription.items?.data?.filter(({ price }) => price?.id && getPlanFromPriceId(price.id)) || [];
+  if (planItems.length !== 1) throw new Error('Stripe subscription has no single configured base price');
+  const [planItem] = planItems;
+  const priceId = planItem.price.id;
+  const tier = getPlanFromPriceId(priceId);
+  const plan = { starter: 'Starter', growth: 'Growth', scale: 'Scale' }[tier];
+  const status = DB_STATUS[subscription.status];
+  const periodStart = stripeTime(planItem.current_period_start ?? subscription.current_period_start);
+  const periodEnd = stripeTime(planItem.current_period_end ?? subscription.current_period_end);
+  if (!plan || !status || (['active', 'trialing', 'past_due'].includes(status) && (!periodStart || !periodEnd))) {
+    throw new Error('Incomplete Stripe subscription state');
+  }
+
+  const { data, error } = await supabaseAdmin.rpc('project_stripe_subscription', {
+    p_restaurant_id: restaurantId, p_event_id: event.id, p_event_type: event.type,
+    p_observed_at: observedAt, p_subscription_id: subscriptionId, p_customer_id: customerId,
+    p_customer_email: customer?.email || existing?.customer_email || '', p_plan: plan, p_price_id: priceId,
+    p_status: status, p_period_start: periodStart, p_period_end: periodEnd,
+    p_trial_end: stripeTime(subscription.trial_end), p_canceled_at: status === 'canceled'
+      ? stripeTime(subscription.ended_at ?? subscription.canceled_at) || observedAt : null,
+  });
+  if (error || !['applied', 'duplicate', 'stale'].includes(data)) {
+    throw new Error('Stripe subscription projection failed', { cause: error });
+  }
+  return data;
+}
+
+async function stripeRawBody(req) {
+  const value = req.rawBody ?? req.body;
+  if (Buffer.isBuffer(value) || typeof value === 'string') return value;
+  if (!req[Symbol.asyncIterator]) return null;
+  const chunks = [];
+  let size = 0;
+  for await (const chunk of req) {
+    const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    size += bytes.length;
+    if (size > 1024 * 1024) throw new Error('Webhook exceeds body limit');
+    chunks.push(bytes);
+  }
+  return size ? Buffer.concat(chunks, size) : null;
+}
+
 module.exports = async (req, res) => {
   // Enable CORS
   setWebhookCors(req, res);
@@ -258,19 +343,7 @@ module.exports = async (req, res) => {
     // — that fallback would silently re-serialise a parsed body and let
     // attackers feed handcrafted events that "verify" against any signature.
     //
-    // Accept the body in any form that's still the raw wire bytes:
-    //   - req.rawBody (Buffer or string) — Vercel's standard exposure
-    //   - req.body (Buffer) — alternate runtimes
-    //   - req.body (string) — express-raw or similar middleware
-    // PARSED OBJECT bodies are rejected — that's the dangerous case.
-    let bodyForVerify = null;
-    if (req.rawBody) {
-      bodyForVerify = req.rawBody;
-    } else if (Buffer.isBuffer(req.body)) {
-      bodyForVerify = req.body;
-    } else if (typeof req.body === 'string') {
-      bodyForVerify = req.body;
-    }
+    const bodyForVerify = await stripeRawBody(req);
     if (!bodyForVerify) {
       logger.error('Webhook rejected: no raw body available for signature verification (parsed-body endpoint?)');
       return res.status(400).json({ error: 'Invalid webhook request' });
@@ -279,6 +352,18 @@ module.exports = async (req, res) => {
   } catch (err) {
     logger.error('Webhook signature verification failed:', err.message);
     return res.status(400).json({ error: 'Invalid webhook request' });
+  }
+
+  try {
+    const projection = await projectSubscriptionEvent(event);
+    if (projection) {
+      return res.status(200).json({ received: true, ...(projection === 'duplicate' ? { deduplicated: true } : {}) });
+    }
+  } catch (error) {
+    logger.error('Stripe subscription event not applied', {
+      eventId: event.id, type: event.type, error: error.message, code: error.cause?.code,
+    });
+    return res.status(500).json({ error: 'Webhook processing failed' });
   }
 
   // Idempotency guard: every Stripe event handler used to assume single
@@ -333,207 +418,6 @@ module.exports = async (req, res) => {
             logger.error('Failed to propagate restaurant_id to Stripe customer metadata:', err.message);
           }
         }
-
-        break;
-
-      case 'customer.subscription.created':
-        const subscriptionCreated = event.data.object;
-        logger.info('Subscription created:', subscriptionCreated.id);
-
-        // Get customer email from Stripe
-        const customer = await stripe.customers.retrieve(subscriptionCreated.customer);
-        if (!customer || customer.deleted) {
-          logger.error('Customer not found or deleted for subscription:', subscriptionCreated.id, 'Customer ID:', subscriptionCreated.customer);
-          break;
-        }
-        const priceId = subscriptionCreated.items.data[0].price.id;
-        const planName = getPlanFromPriceId(priceId);
-
-        // Resolve restaurant_id from Stripe metadata or customer email
-        const createRestaurantId = await resolveRestaurantId(subscriptionCreated, customer.email, event.type);
-        if (!createRestaurantId) {
-          logger.error('Cannot create subscription without restaurant_id. Subscription:', subscriptionCreated.id, 'Customer email:', customer.email, 'Customer ID:', subscriptionCreated.customer);
-          // Throw to return 500 so Stripe retries this event
-          throw new Error(`Cannot resolve restaurant for subscription ${subscriptionCreated.id}`);
-        }
-
-        // Idempotency guard: skip if subscription with this Stripe ID already exists
-        const { data: existingSub } = await supabase
-          .from('subscriptions')
-          .select('id')
-          .eq('subscription_id', subscriptionCreated.id)
-          .limit(1)
-          .maybeSingle();
-
-        if (existingSub) {
-          logger.info('Subscription already exists in database, skipping creation:', subscriptionCreated.id);
-          break;
-        }
-
-        // Create subscription record in database
-        const createResult = await createSubscription(createRestaurantId, {
-          'Subscription ID': subscriptionCreated.id,
-          'Customer ID': subscriptionCreated.customer,
-          'Customer Email': customer.email,
-          'Plan Name': planName || 'unknown',
-          'Price ID': priceId,
-          'Status': subscriptionCreated.status,
-          'Current Period Start': new Date(subscriptionCreated.current_period_start * 1000).toISOString().split('T')[0],
-          'Current Period End': new Date(subscriptionCreated.current_period_end * 1000).toISOString().split('T')[0],
-          'Trial End': subscriptionCreated.trial_end ? new Date(subscriptionCreated.trial_end * 1000).toISOString().split('T')[0] : null,
-          'Created At': new Date().toISOString().split('T')[0]
-        }, { idempotency_key: `stripe-event-${event.id}` });
-
-        if (!createResult.success) {
-          logger.error('Failed to create subscription in database:', createResult.message);
-        } else {
-          logger.info('Subscription saved to database:', subscriptionCreated.id);
-
-          // Cancel the synthetic 'Free' subscription created at onboarding
-          // (Brazil only). Otherwise both rows stay active=true and lookups
-          // like manager-usage.maybeSingle() pick nondeterministically,
-          // rolling paying customers back to free-tier limits.
-          const { error: cancelFreeErr } = await supabase
-            .from('subscriptions')
-            .update({ status: 'canceled', canceled_at: new Date().toISOString().split('T')[0] })
-            .eq('restaurant_id', createRestaurantId)
-            .eq('plan_name', 'Free')
-            .eq('status', 'active')
-            .neq('subscription_id', subscriptionCreated.id);
-          if (cancelFreeErr) {
-            logger.warn('Could not cancel pre-existing Free row', { restaurantId: createRestaurantId, error: cancelFreeErr.message });
-          }
-        }
-
-        // Grava o plano em restaurant_config.metric_profile (o comentário antigo
-        // dizia restaurant_info — desatualizado; a tabela foi aposentada em
-        // 02/08/2026 e updateRestaurantPlan já apontava pro config).
-        const planUpdateResult = await updateRestaurantPlan(createRestaurantId, planName, customer.email);
-        if (!planUpdateResult.success) {
-          logger.error('Failed to update restaurant plan:', planUpdateResult.message);
-        } else {
-          logger.info('Restaurant plan updated to:', planName);
-        }
-
-        break;
-
-      case 'customer.subscription.updated':
-        const subscriptionUpdated = event.data.object;
-        logger.info('Subscription updated:', subscriptionUpdated.id);
-
-        // Update subscription in database
-        const updatedPriceId = subscriptionUpdated.items.data[0].price.id;
-        const updatedPlanName = getPlanFromPriceId(updatedPriceId);
-
-        // Resolve restaurant_id from Stripe metadata or customer lookup
-        const updateCustomer = await stripe.customers.retrieve(subscriptionUpdated.customer);
-        const updateRestaurantId = await resolveRestaurantId(subscriptionUpdated, updateCustomer.email, event.type);
-        if (!updateRestaurantId) {
-          logger.error('Cannot update subscription without restaurant_id. Customer:', subscriptionUpdated.customer);
-          break;
-        }
-
-        // T.1 Downgrade detection. Read the previous plan from our DB and
-        // compare its monthly reservation limit against the new plan's.
-        // If the new limit is strictly lower (downgrade), set
-        // downgrade_grace_until = current_period_end so the middleware
-        // continues soft-billing overages until the period closes. After
-        // that the middleware hard-blocks at the new limit. If the new
-        // limit is HIGHER or equal (upgrade or same), clear any in-flight
-        // grace from a prior downgrade.
-        let downgradeGraceValue = null;       // value to write (ISO string or null)
-        let hasDowngradeDecision = false;     // whether to include the key
-        try {
-          const { data: prevSub } = await supabase
-            .from('subscriptions')
-            .select('plan_name, downgrade_grace_until')
-            .eq('subscription_id', subscriptionUpdated.id)
-            .maybeSingle();
-          if (prevSub?.plan_name && updatedPlanName) {
-            const prevLimit = getPlanLimits(prevSub.plan_name)?.maxReservationsPerMonth ?? -1;
-            const newLimit = getPlanLimits(updatedPlanName)?.maxReservationsPerMonth ?? -1;
-            // -1 = unlimited. Any → unlimited is an upgrade.
-            const isDowngrade = newLimit !== -1 && (prevLimit === -1 || newLimit < prevLimit);
-            if (isDowngrade) {
-              hasDowngradeDecision = true;
-              downgradeGraceValue = new Date(subscriptionUpdated.current_period_end * 1000).toISOString();
-              logger.info('Downgrade detected — extending soft-bill grace to period end', {
-                metric: 'downgrade_grace_set',
-                restaurantId: updateRestaurantId,
-                prevPlan: prevSub.plan_name,
-                newPlan: updatedPlanName,
-                prevLimit,
-                newLimit,
-                graceUntil: downgradeGraceValue,
-              });
-            } else if (prevSub.downgrade_grace_until) {
-              hasDowngradeDecision = true;
-              downgradeGraceValue = null;
-              logger.info('Plan upgraded/unchanged — clearing downgrade grace', {
-                metric: 'downgrade_grace_cleared',
-                restaurantId: updateRestaurantId,
-                prevPlan: prevSub.plan_name,
-                newPlan: updatedPlanName,
-              });
-            }
-          }
-        } catch (graceErr) {
-          logger.warn('Downgrade detection failed (non-fatal)', { error: graceErr?.message });
-        }
-
-        const subscriptionUpdateFields = {
-          'Plan Name': updatedPlanName || 'unknown',
-          'Price ID': updatedPriceId,
-          'Status': subscriptionUpdated.status,
-          'Current Period Start': new Date(subscriptionUpdated.current_period_start * 1000).toISOString().split('T')[0],
-          'Current Period End': new Date(subscriptionUpdated.current_period_end * 1000).toISOString().split('T')[0],
-          'Trial End': subscriptionUpdated.trial_end ? new Date(subscriptionUpdated.trial_end * 1000).toISOString().split('T')[0] : null,
-        };
-        if (hasDowngradeDecision) {
-          subscriptionUpdateFields['Downgrade Grace Until'] = downgradeGraceValue;
-        }
-
-        const updateResult = await updateSubscription(updateRestaurantId, subscriptionUpdated.id, subscriptionUpdateFields);
-
-        if (!updateResult.success) {
-          logger.error('Failed to update subscription in database:', updateResult.message);
-        } else {
-          logger.info('Subscription updated in database:', subscriptionUpdated.id);
-        }
-
-        // Grava o plano em restaurant_config.metric_profile (ver acima)
-        if (updatedPlanName) {
-          await updateRestaurantPlan(updateRestaurantId, updatedPlanName);
-        }
-
-        break;
-
-      case 'customer.subscription.deleted':
-        const subscriptionDeleted = event.data.object;
-        logger.info('Subscription cancelled:', subscriptionDeleted.id);
-
-        // Resolve restaurant_id from Stripe metadata or customer lookup
-        const deleteCustomer = await stripe.customers.retrieve(subscriptionDeleted.customer);
-        const deleteRestaurantId = await resolveRestaurantId(subscriptionDeleted, deleteCustomer.email, event.type);
-        if (!deleteRestaurantId) {
-          logger.error('Cannot cancel subscription without restaurant_id. Customer:', subscriptionDeleted.customer);
-          break;
-        }
-
-        // Mark subscription as canceled in database
-        const cancelResult = await updateSubscription(deleteRestaurantId, subscriptionDeleted.id, {
-          'Status': 'canceled',
-          'Canceled At': new Date().toISOString().split('T')[0]
-        });
-
-        if (!cancelResult.success) {
-          logger.error('Failed to cancel subscription in database:', cancelResult.message);
-        } else {
-          logger.info('Subscription canceled in database:', subscriptionDeleted.id);
-        }
-
-        // Downgrade restaurant plan to Starter when subscription is cancelled
-        await updateRestaurantPlan(deleteRestaurantId, 'Starter');
 
         break;
 
@@ -675,3 +559,5 @@ module.exports = async (req, res) => {
     });
   }
 };
+
+module.exports.config = { api: { bodyParser: false } };

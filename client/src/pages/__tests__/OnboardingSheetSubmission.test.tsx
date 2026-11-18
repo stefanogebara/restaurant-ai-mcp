@@ -22,10 +22,10 @@ const draft = {
 };
 const saved = { success: true, restaurant: { restaurant_id: 'new-restaurant', booking_url: '/book/sheet-bistro' },
   setup: { restaurant: 'ok', voice_agent: 'ok', knowledge_base: 'ok', whatsapp_registry: 'ok', subscription: 'ok' } };
-function setup(overrides = {}) {
+function setup(overrides = {}, route = '/onboarding') {
   localStorage.setItem('onboarding_step:sheet-owner', '1');
   localStorage.setItem('onboarding_data:sheet-owner', JSON.stringify({ ...draft, ...overrides }));
-  return render(<MemoryRouter><Onboarding /></MemoryRouter>);
+  return render(<MemoryRouter initialEntries={[route]}><Onboarding /></MemoryRouter>);
 }
 function selectDetails() {
   fireEvent.change(screen.getByLabelText('Country'), { target: { value: 'BR' } });
@@ -79,6 +79,23 @@ describe('single-sheet launch submission', () => {
     expect(screen.getByRole('heading', { name: 'Your restaurant has been created.' })).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Colocar no ar' })).not.toBeInTheDocument();
     expect(api.mock.calls.filter(([url]) => url === '/api/onboarding/complete')).toHaveLength(1);
+  });
+
+  it('keeps the selected tier on the setup receipt and offers checkout as a separate action', async () => {
+    const view = setup({ areas: existingAreas }, '/onboarding?plan=scale');
+    expect(screen.getByText('Selected plan: Enterprise')).toBeVisible();
+    expect(screen.queryByRole('link', { name: 'Resume checkout' })).not.toBeInTheDocument();
+    selectDetails();
+    fireEvent.click(screen.getByRole('button', { name: 'Colocar no ar' }));
+
+    const resume = await screen.findByRole('link', { name: 'Resume checkout' });
+    expect(resume).toHaveAttribute('href', '/subscription/manage?plan=scale');
+    expect(screen.getByRole('link', { name: 'Go to Dashboard' })).toBeVisible();
+    expect(api.mock.calls.some(([url]) => url === '/api/create-checkout-session')).toBe(false);
+
+    view.unmount();
+    render(<MemoryRouter><Onboarding /></MemoryRouter>);
+    expect(screen.getByRole('link', { name: 'Resume checkout' })).toHaveAttribute('href', '/subscription/manage?plan=scale');
   });
 
   it('requires explicit acceptance of the declared initial layout when there is no researched capacity', async () => {

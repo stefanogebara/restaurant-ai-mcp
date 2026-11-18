@@ -16,6 +16,7 @@ import { trackSignupStarted } from '../lib/analytics';
 import { useTranslation } from 'react-i18next';
 import LoginBrandPanel from '../components/auth/LoginBrandPanel';
 import { supabase } from '../lib/supabase';
+import { parseBillingPlan, withBillingPlan } from '../lib/billingHandoff';
 
 type AuthMode = 'signin' | 'signup' | 'forgot' | 'reset';
 
@@ -42,17 +43,13 @@ export default function Login() {
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  // Convert do demo (from=demo) nunca teve conta — abrir em "Bem-vindo de
-  // volta" com signup escondido no rodapé era a tela mais genérica do produto
-  // no momento de maior intenção do funil (auditoria 24/ago). Lazy initializer:
-  // lê a URL uma vez, antes do efeito que a limpa.
-  const [mode, setMode] = useState<AuthMode>(() => {
-    try {
-      return new URLSearchParams(window.location.search).get('from') === 'demo'
-        ? 'signup'
-        : 'signin';
-    } catch { return 'signin'; }
-  });
+  const from = (location.state as { from?: { pathname: string; search: string } })?.from;
+  const fromPlanHandoff = from?.pathname === '/welcome' || from?.pathname === '/onboarding' || from?.pathname === '/subscription/manage';
+  const selectedPlan = parseBillingPlan(searchParams.get('plan'))
+    ?? (fromPlanHandoff ? parseBillingPlan(new URLSearchParams(from.search).get('plan')) : null);
+  const [mode, setMode] = useState<AuthMode>(
+    () => searchParams.get('from') === 'demo' || selectedPlan ? 'signup' : 'signin',
+  );
 
   // Identidade do demo + captura síncrona dos params (ver o hook). Vale para
   // as duas coisas: a variante "Assumir o {restaurante}" e o forwarding do
@@ -118,8 +115,8 @@ export default function Login() {
   // in to let them call updateUser, so we must NOT redirect them away from the
   // "set new password" form. mode==='reset' && hasRecoverySession means the
   // PASSWORD_RECOVERY event already fired and we're waiting on the new password.
-  const from = (location.state as { from?: { pathname: string; search: string } })?.from;
-  const redirectTo = from ? `${from.pathname}${from.search || ''}` : '/welcome';
+  const redirectTo = selectedPlan ? withBillingPlan('/welcome', selectedPlan)
+    : from ? `${from.pathname}${from.search || ''}` : '/welcome';
   const isInRecoveryFlow = mode === 'reset' && hasRecoverySession;
   if (!loading && user && !isInRecoveryFlow) {
     return <Navigate to={redirectTo} replace />;
@@ -137,58 +134,25 @@ export default function Login() {
     );
   }
 
-  const handleGoogleSignIn = async () => {
+  const handleOAuthSignIn = async (provider: 'google' | 'apple') => {
     setIsSigningIn(true);
     setError(null);
-    if (mode === 'signup') trackSignupStarted({ method: 'google' });
+    if (mode === 'signup') trackSignupStarted({ method: provider });
 
-    // Token do contexto capturado no primeiro render — `searchParams` já foi
-    // limpo pelo efeito de scrub quando este clique acontece.
     const extraRedirectParams: Record<string, string> = {};
     if (demoCtx.token) {
-      extraRedirectParams['from'] = 'demo';
-      extraRedirectParams['token'] = demoCtx.token;
+      extraRedirectParams.from = 'demo';
+      extraRedirectParams.token = demoCtx.token;
     }
-
-    // H8: preserve the user's intended destination through OAuth. ProtectedRoute
-    // saves it as location.state.from, but state is lost on the OAuth round-trip
-    // — pass it as a URL query param (`next`) so Welcome.tsx can honour it.
-    const fromState = (location.state as { from?: { pathname: string; search: string } })?.from;
-    if (fromState?.pathname && fromState.pathname !== '/login') {
-      extraRedirectParams['next'] = `${fromState.pathname}${fromState.search || ''}`;
+    if (selectedPlan) {
+      extraRedirectParams.plan = selectedPlan;
+    } else if (from?.pathname && from.pathname !== '/login') {
+      extraRedirectParams.next = `${from.pathname}${from.search || ''}`;
     }
 
     try {
-      await signInWithGoogle(Object.keys(extraRedirectParams).length > 0 ? extraRedirectParams : undefined);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : '';
-      const key = AUTH_ERROR_KEYS[msg.toLowerCase()];
-      setError(key ? t(key) : (msg || t('login.errors.generic')));
-      setIsSigningIn(false);
-    }
-  };
-
-  // Same param-preservation contract as Google — demo conversion tokens and
-  // the post-login destination both survive the Apple round-trip.
-  const handleAppleSignIn = async () => {
-    setIsSigningIn(true);
-    setError(null);
-    if (mode === 'signup') trackSignupStarted({ method: 'apple' });
-
-    // Token do contexto capturado no primeiro render — `searchParams` já foi
-    // limpo pelo efeito de scrub quando este clique acontece.
-    const extraRedirectParams: Record<string, string> = {};
-    if (demoCtx.token) {
-      extraRedirectParams['from'] = 'demo';
-      extraRedirectParams['token'] = demoCtx.token;
-    }
-    const fromState = (location.state as { from?: { pathname: string; search: string } })?.from;
-    if (fromState?.pathname && fromState.pathname !== '/login') {
-      extraRedirectParams['next'] = `${fromState.pathname}${fromState.search || ''}`;
-    }
-
-    try {
-      await signInWithApple(Object.keys(extraRedirectParams).length > 0 ? extraRedirectParams : undefined);
+      const signIn = provider === 'google' ? signInWithGoogle : signInWithApple;
+      await signIn(Object.keys(extraRedirectParams).length > 0 ? extraRedirectParams : undefined);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '';
       const key = AUTH_ERROR_KEYS[msg.toLowerCase()];
@@ -225,7 +189,7 @@ export default function Login() {
         await signInWithEmail(email, password);
       } else {
         trackSignupStarted({ method: 'email' });
-        const { needsConfirmation } = await signUpWithEmail(email, password);
+        const { needsConfirmation } = await signUpWithEmail(email, password, selectedPlan ?? undefined);
         if (needsConfirmation) {
           setSuccessMessage(t('login.confirmationSent'));
           setIsSigningIn(false);
@@ -259,6 +223,7 @@ export default function Login() {
       })();
       const resetUrl = new URL(window.location.origin + '/login');
       resetUrl.searchParams.set('reset', 'true');
+      if (selectedPlan) resetUrl.searchParams.set('plan', selectedPlan);
       if (pendingDemoToken) {
         resetUrl.searchParams.set('from', 'demo');
         resetUrl.searchParams.set('token', pendingDemoToken);
@@ -364,6 +329,11 @@ export default function Login() {
                   : mode === 'signin' ? t('login.signInSubtitle')
                   : t('login.signUpSubtitle')}
               </p>
+              {selectedPlan && (mode === 'signin' || mode === 'signup') && (
+                <p className="mt-3 text-sm text-deep-charcoal">
+                  {t('subscription.selectedPlan', { plan: t(`landing.pricing.${selectedPlan}.name`) })}
+                </p>
+              )}
             </div>
 
             {/* Error Message */}
@@ -501,7 +471,7 @@ export default function Login() {
               <>
                 {/* Google Sign In Button */}
                 <button
-                  onClick={handleGoogleSignIn}
+                  onClick={() => handleOAuthSignIn('google')}
                   disabled={isSigningIn}
                   className={`
                     w-full flex items-center justify-center gap-3 px-6 py-4
@@ -541,7 +511,7 @@ export default function Login() {
                     .env.example, "Apple SSO" section). */}
                 {appleSsoEnabled && (
                   <button
-                    onClick={handleAppleSignIn}
+                    onClick={() => handleOAuthSignIn('apple')}
                     disabled={isSigningIn}
                     className={`
                       w-full flex items-center justify-center gap-3 px-6 py-4 mt-3

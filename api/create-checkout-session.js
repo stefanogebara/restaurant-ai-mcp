@@ -1,77 +1,191 @@
 const Stripe = require('stripe');
 const { verifyAuth } = require('./_lib/auth');
+const { getSubscriptions, supabaseAdmin } = require('./_lib/supabase');
 const { getMeteredPriceMap } = require('./_lib/stripe-usage-reporter');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const logger = createSecureLogger('CheckoutSession');
+
+const terminalStatuses = new Set(['canceled', 'incomplete_expired']);
+const planDisplay = {
+  Starter: 'Plano Essencial',
+  Growth: 'Plano Profissional',
+  Scale: 'Plano Enterprise',
+};
+
+function resolvePlan(priceId, planName) {
+  const plans = Object.entries({
+    Starter: process.env.STRIPE_STARTER_PRICE_ID,
+    Growth: process.env.STRIPE_GROWTH_PRICE_ID,
+    Scale: process.env.STRIPE_SCALE_PRICE_ID,
+  });
+  const selectedPrice = priceId == null || priceId === ''
+    ? plans.find(([name]) => name === planName)?.[1]
+    : priceId;
+  const matches = plans.filter(([, price]) => price && price === selectedPrice);
+  const hasPlanName = planName != null && planName !== '';
+  if (matches.length !== 1 || (hasPlanName && planName !== matches[0][0])) return null;
+  return { name: matches[0][0], priceId: selectedPrice };
+}
+
+async function loadCustomers(restaurantId) {
+  const result = await getSubscriptions(restaurantId);
+  if (!result.success) throw new Error('Unable to look up billing records');
+
+  const customers = new Map();
+  for (const { fields } of result.data.records) {
+    const customerId = fields['Customer ID'];
+    const subscriptionId = fields['Subscription ID'];
+    const hasStripeCustomer = typeof customerId === 'string' && customerId.startsWith('cus_');
+    const hasStripeSubscription = typeof subscriptionId === 'string' && subscriptionId.startsWith('sub_');
+    const needsBilling = hasStripeSubscription && !terminalStatuses.has(fields.Status);
+    if (!hasStripeCustomer) {
+      if (needsBilling) throw new Error('Stripe subscription has no customer');
+      continue;
+    }
+    customers.set(customerId, needsBilling || customers.get(customerId));
+  }
+
+  const verified = [];
+  for (const [customerId, needsBilling] of customers) {
+    let customer;
+    try {
+      customer = await stripe.customers.retrieve(customerId);
+    } catch (error) {
+      if (error.code !== 'resource_missing' || needsBilling) throw error;
+    }
+    if (!customer || customer.deleted) {
+      if (needsBilling) throw new Error('Stripe customer is unavailable');
+      continue;
+    }
+    if (customer.id !== customerId || (customer.metadata?.restaurant_id && customer.metadata.restaurant_id !== restaurantId)) {
+      return { forbidden: true };
+    }
+    verified.push(customer);
+  }
+
+  if (verified.length === 0) {
+    // During the first checkout the webhook has not recorded a customer yet.
+    // A stable Stripe idempotency key below covers retries before Search catches up.
+    const query = `metadata['restaurant_id']:'${restaurantId}'`;
+    for await (const customer of stripe.customers.search({ query })) {
+      if (!customer.deleted && customer.metadata?.restaurant_id === restaurantId) verified.push(customer);
+    }
+  }
+  return { customers: verified };
+}
+
+async function latestCheckout(customerId, restaurantId) {
+  for await (const session of stripe.checkout.sessions.list({ customer: customerId })) {
+    if (session.mode === 'subscription' && session.metadata?.restaurant_id === restaurantId) return session;
+  }
+  return null;
+}
+
+async function existingSubscription(restaurantId, customers) {
+  for (const { id: customer } of customers) {
+    for await (const subscription of stripe.subscriptions.list({ customer, status: 'all' })) {
+      const subscriptionRestaurantId = subscription.metadata?.restaurant_id;
+      if (subscriptionRestaurantId && subscriptionRestaurantId !== restaurantId) return { forbidden: true };
+      if (!terminalStatuses.has(subscription.status)) return { exists: true };
+    }
+  }
+  return {};
+}
+
+async function checkoutLineItems(priceId) {
+  const lineItems = [{ price: priceId, quantity: 1 }];
+  const meteredIds = [...new Set(Object.values(getMeteredPriceMap()).map(item => item.priceId))]
+    .filter(id => id && id !== priceId);
+  if (meteredIds.length === 0) return lineItems;
+
+  const [base, ...metered] = await Promise.allSettled(
+    [priceId, ...meteredIds].map(id => stripe.prices.retrieve(id)),
+  );
+  if (base.status !== 'fulfilled' || !base.value.currency) {
+    logger.warn('Could not retrieve base price currency, skipping metered items');
+    return lineItems;
+  }
+  for (const [index, price] of metered.entries()) {
+    if (price.status === 'fulfilled' && price.value.currency === base.value.currency) {
+      lineItems.push({ price: meteredIds[index] });
+    }
+  }
+  return lineItems;
+}
+
+function checkoutInProgress(res) {
+  return res.status(409).json({
+    code: 'CHECKOUT_IN_PROGRESS',
+    error: 'A checkout is already in progress. Complete the open checkout or try again after it expires.',
+  });
+}
+
+function respondWithSession(res, session) {
+  if (!session.url) return checkoutInProgress(res);
+  return res.status(200).json({ sessionId: session.id, url: session.url });
+}
 
 module.exports = async (req, res) => {
   setInternalCors(req, res);
   if (handlePreflight(req, res)) return;
-
-  if (await checkAndApplyRateLimit(req, res, 'api')) return;
+  res.setHeader('Cache-Control', 'no-store');
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Require authentication
+  if (await checkAndApplyRateLimit(req, res, 'api')) return;
+
   const auth = await verifyAuth(req);
-  if (auth.error) {
-    return res.status(auth.status).json({ error: auth.error });
+  if (auth.error) return res.status(auth.status).json({ error: auth.error });
+  const { restaurant_id: restaurantId, role } = auth.user;
+  if (!restaurantId) {
+    return res.status(400).json({ error: 'Restaurant setup required before subscribing. Please complete onboarding first.' });
   }
+  if (role !== 'owner') return res.status(403).json({ error: 'Forbidden' });
+
+  const { priceId, planName, betaCode } = req.body || {};
+  const plan = resolvePlan(priceId, planName);
+  if (!plan) return res.status(400).json({ error: 'Invalid plan selected' });
+  const isBeta = Boolean(process.env.BETA_CODE && betaCode === process.env.BETA_CODE);
+  const trialDays = isBeta ? 30 : plan.name === 'Growth' ? 14 : 0;
 
   try {
-    const { planName, betaCode } = req.body;
-    let { priceId } = req.body;
+    const { customers, forbidden } = await loadCustomers(restaurantId);
+    if (forbidden) return res.status(403).json({ error: 'Forbidden' });
 
-    // Validate beta access code (grants 30-day free trial on any plan)
-    const isBetaAccess = betaCode && process.env.BETA_CODE && betaCode === process.env.BETA_CODE;
-
-    // Resolve priceId server-side if not provided by client (VITE_ vars may be missing from bundle)
-    const serverPriceMap = {
-      Starter: process.env.STRIPE_STARTER_PRICE_ID,
-      Growth: process.env.STRIPE_GROWTH_PRICE_ID,
-      Scale: process.env.STRIPE_SCALE_PRICE_ID,
-    };
-    if (!priceId && planName) {
-      priceId = serverPriceMap[planName] || null;
+    if (customers.length === 0) {
+      customers.push(await stripe.customers.create({
+        metadata: { restaurant_id: restaurantId, seatable_checkout: '1' },
+      }, { idempotencyKey: `seatable-customer-v1:${restaurantId}` }));
     }
 
-    if (!priceId) {
-      return res.status(400).json({ error: 'Price ID is required' });
+    const customer = customers[0].id;
+    const latest = await latestCheckout(customer, restaurantId);
+    // Check current Stripe state across all mapped customers, including when
+    // the webhook is still catching up or the local row is marked canceled.
+    const billing = await existingSubscription(restaurantId, customers);
+    if (billing.forbidden) return res.status(403).json({ error: 'Forbidden' });
+    if (billing.exists) {
+      return res.status(409).json({
+        code: 'SUBSCRIPTION_EXISTS',
+        error: 'This restaurant already has a Stripe subscription. Manage it in the billing portal.',
+      });
     }
 
-    // CRITICAL: validate priceId is one of OUR plan prices, not an arbitrary
-    // Stripe price the caller picked from the URL. Before this gate, an
-    // attacker could pass `{ priceId: 'price_test_one_cent' }` and check out
-    // at $0.01 — the Stripe API happily creates a session with any active
-    // price in the account, including test prices, draft prices, or
-    // promotional prices we forgot to retire. The allowlist below is the
-    // ONLY thing distinguishing "real plan" from "anything else in Stripe".
-    const ALLOWED_PRICE_IDS = new Set(
-      Object.values(serverPriceMap).filter(Boolean),
-    );
-    if (!ALLOWED_PRICE_IDS.has(priceId)) {
-      logger.warn('Rejected checkout with non-plan priceId', { restaurantIdHint: auth.user?.restaurant_id });
-      return res.status(400).json({ error: 'Invalid plan selected' });
+    if (latest?.status === 'open') {
+      if (latest.metadata.plan_price_id === plan.priceId && latest.metadata.trial_days === String(trialDays)) {
+        return respondWithSession(res, latest);
+      }
+      return checkoutInProgress(res);
     }
 
-    // Get restaurant_id from authenticated user for multi-tenancy
-    const restaurantId = auth.user?.restaurant_id || null;
-
-    if (!restaurantId) {
-      return res.status(400).json({ error: 'Restaurant setup required before subscribing. Please complete onboarding first.' });
-    }
-
-    if (isBetaAccess) logger.info('Beta access granted for restaurant:', restaurantId);
-
-    // Check if this restaurant was referred — apply referee discount if so
     let discounts;
     try {
-      const { supabaseAdmin } = require('./_lib/supabase');
       const { data: referral } = await supabaseAdmin
         .from('referrals')
         .select('id')
@@ -79,109 +193,41 @@ module.exports = async (req, res) => {
         .eq('status', 'pending')
         .limit(1)
         .single();
-      if (referral) {
-        discounts = [{ coupon: 'REFERRED_20_3M' }];
-        logger.info('Applying referral discount for restaurant:', restaurantId);
-      }
-    } catch (err) {
-      logger.warn('Referral lookup failed, proceeding without discount:', err.message);
+      if (referral) discounts = [{ coupon: 'REFERRED_20_3M' }];
+    } catch (error) {
+      logger.warn('Referral lookup failed', { code: error?.code });
     }
 
-    // Resolve origin against an explicit allowlist to prevent open-redirect via
-    // a spoofed Origin header. Attacker-supplied origins fall back to CLIENT_URL.
-    const ALLOWED_RETURN_ORIGINS = [
-      'https://seatable.one',
-      'https://restaurant-ai-mcp.vercel.app',
-      process.env.CLIENT_URL,
-    ].filter(Boolean);
+    const returnOrigin = process.env.CLIENT_URL || 'https://seatable.one';
+    const allowedOrigins = ['https://seatable.one', 'https://restaurant-ai-mcp.vercel.app', returnOrigin];
+    const origin = allowedOrigins.includes(req.headers.origin) ? req.headers.origin : returnOrigin;
+    const metadata = { restaurant_id: restaurantId, plan_name: plan.name, plan_price_id: plan.priceId };
 
-    const origin = ALLOWED_RETURN_ORIGINS.includes(req.headers.origin)
-      ? req.headers.origin
-      : (process.env.CLIENT_URL || 'https://seatable.one');
-
-    // Build line items: base subscription + metered prices
-    const lineItems = [
-      {
-        price: priceId,
-        quantity: 1,
-      },
-    ];
-
-    // Add metered price items for usage-based billing (unique price IDs only)
-    // Fetch base price + all unique metered prices in parallel to check currency compatibility
-    const meteredPriceMap = getMeteredPriceMap();
-    const uniqueMeteredIds = [...new Set(Object.values(meteredPriceMap).map(m => m.priceId))];
-    const allPriceIds = [priceId, ...uniqueMeteredIds];
-
-    const priceResults = await Promise.allSettled(
-      allPriceIds.map(id => stripe.prices.retrieve(id))
-    );
-
-    const basePriceResult = priceResults[0];
-    const baseCurrency = basePriceResult.status === 'fulfilled' ? basePriceResult.value.currency : null;
-
-    if (!baseCurrency) {
-      logger.warn('Could not retrieve base price currency, skipping metered items');
-    } else {
-      for (let i = 1; i < priceResults.length; i++) {
-        const result = priceResults[i];
-        if (result.status === 'fulfilled' && result.value.currency === baseCurrency) {
-          lineItems.push({ price: uniqueMeteredIds[i - 1] });
-        } else if (result.status === 'rejected') {
-          logger.warn('Skipping metered price (retrieve failed):', uniqueMeteredIds[i - 1]);
-        }
-      }
-    }
-
-    // Tier-specific description shown on Stripe Checkout + invoices + receipts.
-    // Audit BUG #16: all three plan prices hang off a single Stripe Product
-    // named "Seatable Subscription", so the Checkout page can't tell the
-    // tiers apart. The shared product name is now generic ("Seatable —
-    // Gestão de Restaurantes com IA", via stripe-rename-products.cjs); this
-    // subscription description is what disambiguates "Plano Profissional"
-    // from "Plano Essencial" for the customer.
-    const PLAN_DISPLAY = {
-      Starter: 'Plano Essencial · R$ 497/mês',
-      Growth: 'Plano Profissional · R$ 1.497/mês',
-      Scale: 'Plano Enterprise · R$ 2.997/mês',
-    };
-    const subscriptionDescription = PLAN_DISPLAY[planName] || undefined;
-
-    // Create Checkout Session
+    // Requests for different plans still compete for the same checkout slot.
+    // Once it expires or its subscription ends, its ID anchors a new slot.
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
-      payment_method_types: ['card'],
-      line_items: lineItems,
+      customer,
+      line_items: await checkoutLineItems(plan.priceId),
       locale: 'auto',
       success_url: `${origin}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/precos`,
+      cancel_url: `${origin}/subscription/manage?plan=${plan.name.toLowerCase()}`,
       ...(discounts ? { discounts } : { allow_promotion_codes: true }),
       billing_address_collection: 'required',
-      customer_email: req.body.email || undefined,
-      metadata: {
-        plan_name: planName || 'Unknown Plan',
-        restaurant_id: restaurantId || '',
-      },
+      metadata: { ...metadata, trial_days: String(trialDays) },
       subscription_data: {
-        ...(isBetaAccess ? { trial_period_days: 30 } : planName === 'Growth' ? { trial_period_days: 14 } : {}),
-        ...(subscriptionDescription ? { description: subscriptionDescription } : {}),
-        metadata: {
-          plan_name: planName || 'Unknown Plan',
-          restaurant_id: restaurantId || '',
-        },
+        ...(trialDays > 0 ? { trial_period_days: trialDays } : {}),
+        description: planDisplay[plan.name],
+        metadata,
       },
-    });
+    }, { idempotencyKey: `seatable-checkout-v1:${restaurantId}:${customer}:${latest?.id || 'first'}` });
 
-    return res.status(200).json({
-      sessionId: session.id,
-      url: session.url,
-    });
+    return respondWithSession(res, session);
   } catch (error) {
-    logger.error('Error creating checkout session:', error.message);
-    const stripeMessage = error?.message || 'Failed to create checkout session';
-    return res.status(400).json({
-      error: stripeMessage,
-      message: stripeMessage,
-    });
+    if (error?.type === 'StripeIdempotencyError' || error?.code === 'idempotency_key_in_use') {
+      return checkoutInProgress(res);
+    }
+    logger.error('Error creating checkout session', { code: error?.code });
+    return res.status(503).json({ error: 'Unable to start checkout. Please try again.' });
   }
 };

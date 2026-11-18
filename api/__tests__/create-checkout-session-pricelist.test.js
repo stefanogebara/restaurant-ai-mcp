@@ -1,157 +1,213 @@
-/**
- * Tests for the Phase R.1 plan-priceId allowlist guard in
- * api/create-checkout-session.js.
- *
- * Before this guard, an authenticated user could pass any active Stripe
- * priceId in the request body — including test prices, draft prices, or
- * a $0.01 promo price that should have been retired. The API would
- * happily create a Checkout Session at the picked price. The allowlist
- * pins the accepted priceIds to the 3 plan env vars (Starter / Growth /
- * Scale) and rejects everything else with 400 "Invalid plan selected".
- */
+const mockCreateCheckout = jest.fn();
+const mockListCheckout = jest.fn();
+const mockListSubscriptions = jest.fn();
+const mockRetrievePrice = jest.fn();
+const mockRetrieveCustomer = jest.fn();
+const mockSearchCustomers = jest.fn();
+const mockCreateCustomer = jest.fn();
 
+jest.mock('stripe', () => jest.fn(() => ({
+  checkout: { sessions: { create: mockCreateCheckout, list: mockListCheckout } },
+  subscriptions: { list: mockListSubscriptions },
+  prices: { retrieve: mockRetrievePrice },
+  customers: {
+    retrieve: mockRetrieveCustomer,
+    search: mockSearchCustomers,
+    create: mockCreateCustomer,
+  },
+})));
+jest.mock('../_lib/cors', () => ({ setInternalCors: jest.fn(), handlePreflight: () => false }));
+jest.mock('../_lib/rate-limit', () => ({ checkAndApplyRateLimit: async () => false }));
 jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn() }),
 }));
-
-jest.mock('../_lib/cors', () => ({
-  setInternalCors: jest.fn(),
-  handlePreflight: jest.fn(() => false),
-}));
-
-jest.mock('../_lib/rate-limit', () => ({
-  checkAndApplyRateLimit: jest.fn().mockResolvedValue(false),
-}));
-
-jest.mock('../_lib/auth', () => ({
-  verifyAuth: jest.fn().mockResolvedValue({
-    user: { restaurant_id: 'rest-1', sub: 'user-1' },
-  }),
-}));
-
-// Stub the Supabase referral lookup so the handler doesn't try to talk to
-// a real DB. Returns "no referral found" — safe path.
+jest.mock('../_lib/auth', () => ({ verifyAuth: jest.fn() }));
+jest.mock('../_lib/stripe-usage-reporter', () => ({ getMeteredPriceMap: () => ({}) }));
 jest.mock('../_lib/supabase', () => ({
+  getSubscriptions: jest.fn(),
   supabaseAdmin: {
-    from: jest.fn(() => ({
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: null, error: null }),
-    })),
+    from: () => ({
+      select() { return this; },
+      eq() { return this; },
+      limit() { return this; },
+      single: async () => ({ data: null, error: null }),
+    }),
   },
 }));
 
-// Stripe SDK — mock the entire module so we can assert checkout.sessions.create
-// is NEVER reached when the allowlist gate fires.
-const mockSessionsCreate = jest.fn().mockResolvedValue({ id: 'cs_test_xxx', url: 'https://checkout.stripe.com/c/cs_test' });
-const mockPricesRetrieve = jest.fn().mockResolvedValue({ id: 'price_x', currency: 'usd' });
-jest.mock('stripe', () => jest.fn(() => ({
-  checkout: { sessions: { create: mockSessionsCreate } },
-  prices: { retrieve: mockPricesRetrieve },
-})));
+const { verifyAuth } = require('../_lib/auth');
+const { getSubscriptions } = require('../_lib/supabase');
+const handler = require('../create-checkout-session');
+const owner = { restaurant_id: 'rest-1', sub: 'user-1', role: 'owner' };
+const checkout = { id: 'cs_test_a', url: 'https://checkout.stripe.com/c/cs_test_a' };
 
-// Mock the metered-price helper so the handler can proceed past line items.
-jest.mock('../_lib/stripe-usage-reporter', () => ({
-  getMeteredPriceMap: () => ({}),
-}));
-
-function createReq(body) {
-  return {
-    method: 'POST',
-    headers: { authorization: 'Bearer fake', origin: 'https://seatable.one' },
-    body,
-  };
+function setRecords(...fields) {
+  getSubscriptions.mockResolvedValue({ success: true, data: { records: fields.map(row => ({ fields: row })) } });
 }
-function createRes() {
+
+async function post(body) {
   const res = {
     statusCode: null,
     body: null,
-    status(code) { res.statusCode = code; return res; },
-    json(data) { res.body = data; return res; },
     setHeader: jest.fn(),
-    end: jest.fn(),
+    status(code) { this.statusCode = code; return this; },
+    json(data) { this.body = data; return this; },
   };
+  await handler({
+    method: 'POST', headers: { authorization: 'Bearer mocked', origin: 'https://seatable.one' }, body,
+  }, res);
   return res;
 }
 
-describe('POST /api/create-checkout-session — priceId allowlist', () => {
-  const originalEnv = { ...process.env };
+const originalEnv = process.env;
+beforeEach(() => {
+  jest.resetAllMocks();
+  process.env = {
+    ...originalEnv,
+    STRIPE_STARTER_PRICE_ID: 'price_starter',
+    STRIPE_GROWTH_PRICE_ID: 'price_growth',
+    STRIPE_SCALE_PRICE_ID: 'price_scale',
+    BETA_CODE: 'test-beta',
+  };
+  verifyAuth.mockResolvedValue({ user: owner });
+  setRecords();
+  mockRetrievePrice.mockResolvedValue({ currency: 'brl' });
+  mockListCheckout.mockReturnValue([]);
+  mockListSubscriptions.mockReturnValue([]);
+  mockSearchCustomers.mockReturnValue([]);
+  mockCreateCustomer.mockResolvedValue({ id: 'cus_new', metadata: { restaurant_id: 'rest-1' } });
+  mockRetrieveCustomer.mockImplementation(async id => ({ id, metadata: {} }));
+  mockCreateCheckout.mockResolvedValue(checkout);
+});
+afterEach(() => { process.env = originalEnv; });
 
-  beforeEach(() => {
-    process.env.STRIPE_STARTER_PRICE_ID = 'price_starter_prod';
-    process.env.STRIPE_GROWTH_PRICE_ID = 'price_growth_prod';
-    process.env.STRIPE_SCALE_PRICE_ID = 'price_scale_prod';
-    mockSessionsCreate.mockClear();
-  });
+test.each([
+  [{ priceId: 'price_unlisted' }],
+  [{ priceId: '' }],
+  [{ planName: 'ScalePlus' }],
+  [{ planName: 'Growth', priceId: 'price_starter' }],
+  [{ planName: 'constructor' }],
+])('rejects an invalid or inconsistent plan %j before accessing billing data', async body => {
+  expect((await post(body)).statusCode).toBe(400);
+  expect(getSubscriptions).not.toHaveBeenCalled();
+  expect(mockCreateCheckout).not.toHaveBeenCalled();
+});
 
-  afterEach(() => {
-    process.env = { ...originalEnv };
-  });
+test.each([
+  [{ planName: 'Growth', priceId: '' }, 'Growth', 'price_growth', 14],
+  [{ priceId: 'price_growth' }, 'Growth', 'price_growth', 14],
+  [{ priceId: 'price_growth', planName: '' }, 'Growth', 'price_growth', 14],
+  [{ planName: 'Starter' }, 'Starter', 'price_starter', undefined],
+  [{ priceId: 'price_scale', betaCode: 'test-beta' }, 'Scale', 'price_scale', 30],
+])('derives the plan and trial from the price for %j', async (body, plan, price, trialDays) => {
+  const res = await post(body);
+  expect(res.statusCode).toBe(200);
+  expect(res.body).toEqual({ sessionId: checkout.id, url: checkout.url });
+  const [params, options] = mockCreateCheckout.mock.calls[0];
+  expect(params.customer).toBe('cus_new');
+  expect(params.cancel_url).toBe(`https://seatable.one/subscription/manage?plan=${plan.toLowerCase()}`);
+  expect(params.line_items).toEqual([{ price, quantity: 1 }]);
+  expect(params.metadata).toMatchObject({ restaurant_id: 'rest-1', plan_name: plan, plan_price_id: price });
+  expect(params.subscription_data.metadata).toMatchObject({ restaurant_id: 'rest-1', plan_name: plan });
+  expect(params.subscription_data.trial_period_days).toBe(trialDays);
+  expect(options.idempotencyKey).toEqual(expect.any(String));
+});
 
-  it('rejects an arbitrary Stripe priceId not in the allowlist (no $0.01 attacks)', async () => {
-    jest.isolateModules(() => {
-      const handler = require('../create-checkout-session');
-      // Fire the handler in this isolated module scope so env vars stick.
-      // (We re-import inside isolateModules to ensure module-level Stripe()
-      // captures our mocked stripe constructor.)
-      return handler(createReq({ priceId: 'price_test_one_cent' }), createRes()).then(() => {});
-    });
-  });
+test('checks authenticated owner access before reading or writing Stripe data', async () => {
+  verifyAuth.mockResolvedValue({ user: { ...owner, role: 'manager' } });
+  expect((await post({ planName: 'Starter' })).statusCode).toBe(403);
+  expect(getSubscriptions).not.toHaveBeenCalled();
+  expect(mockSearchCustomers).not.toHaveBeenCalled();
+  expect(mockCreateCheckout).not.toHaveBeenCalled();
+});
 
-  // The above pattern is awkward with async — switch to direct require +
-  // dynamic env assertion. Each test re-requires the handler so that the
-  // module captures the current process.env snapshot.
-  it('rejects a malicious test priceId not in the allowlist', async () => {
-    jest.resetModules();
-    const handler = require('../create-checkout-session');
-    const res = createRes();
-    await handler(createReq({ priceId: 'price_test_one_cent' }), res);
-    expect(res.statusCode).toBe(400);
-    expect(res.body.error).toMatch(/invalid plan/i);
-    expect(mockSessionsCreate).not.toHaveBeenCalled();
-  });
+test('keeps the onboarding response for an authenticated user without a restaurant', async () => {
+  verifyAuth.mockResolvedValue({ user: { sub: owner.sub, role: 'authenticated' } });
+  const res = await post({ planName: 'Starter' });
+  expect(res.statusCode).toBe(400);
+  expect(res.body.error).toMatch(/Restaurant setup required/);
+});
 
-  it('rejects an empty-string priceId', async () => {
-    jest.resetModules();
-    const handler = require('../create-checkout-session');
-    const res = createRes();
-    await handler(createReq({ priceId: '' }), res);
-    expect(res.statusCode).toBe(400);
-    expect(mockSessionsCreate).not.toHaveBeenCalled();
-  });
+test.each(['active', 'trialing', 'past_due', 'unpaid', 'paused', 'incomplete'])(
+  'blocks Checkout for a Stripe subscription with status %s',
+  async status => {
+    setRecords(
+      { 'Subscription ID': 'free_rest-1', 'Customer ID': 'synthetic' },
+      { 'Subscription ID': 'sub_existing', 'Customer ID': 'cus_existing' },
+    );
+    mockListSubscriptions.mockReturnValue([{ id: 'sub_existing', status }]);
+    const res = await post({ planName: 'Growth' });
+    expect(res.statusCode).toBe(409);
+    expect(res.body.code).toBe('SUBSCRIPTION_EXISTS');
+    expect(mockListSubscriptions).toHaveBeenCalledWith(expect.objectContaining({ customer: 'cus_existing' }));
+    expect(mockCreateCheckout).not.toHaveBeenCalled();
+  },
+);
 
-  it('rejects an unknown planName when priceId is omitted', async () => {
-    jest.resetModules();
-    const handler = require('../create-checkout-session');
-    const res = createRes();
-    await handler(createReq({ planName: 'ScalePlus' }), res);
-    // No priceId resolves → 400 from the existing "Price ID is required"
-    // path (which now happens BEFORE the allowlist check).
-    expect(res.statusCode).toBe(400);
-    expect(mockSessionsCreate).not.toHaveBeenCalled();
-  });
+test('reuses a verified legacy customer after the previous subscription has ended', async () => {
+  setRecords({ 'Subscription ID': 'sub_old', 'Customer ID': 'cus_legacy', Status: 'active' });
+  mockListSubscriptions.mockReturnValue([{ id: 'sub_old', status: 'canceled' }]);
+  const res = await post({ planName: 'Starter', email: 'request@example.com' });
+  expect(res.statusCode).toBe(200);
+  expect(mockCreateCustomer).not.toHaveBeenCalled();
+  const [params] = mockCreateCheckout.mock.calls[0];
+  expect(params.customer).toBe('cus_legacy');
+  expect(params).not.toHaveProperty('customer_email');
+});
 
-  it('accepts a valid Starter priceId from env (proves the gate isn\'t over-blocking)', async () => {
-    jest.resetModules();
-    const handler = require('../create-checkout-session');
-    const res = createRes();
-    await handler(createReq({ priceId: 'price_starter_prod' }), res);
-    // Allowlist passes. Downstream logic might 400 for unrelated reasons
-    // (Stripe price currency lookup, etc.) but the allowlist itself is
-    // not the source of any 400.
-    if (res.statusCode === 400) {
-      expect(res.body.error).not.toMatch(/invalid plan/i);
-    }
-  });
+test('refuses a mapped customer when its Stripe metadata belongs to another tenant', async () => {
+  setRecords({ 'Customer ID': 'cus_foreign' });
+  mockRetrieveCustomer.mockResolvedValue({ id: 'cus_foreign', metadata: { restaurant_id: 'rest-2' } });
+  expect((await post({ planName: 'Starter' })).statusCode).toBe(403);
+  expect(mockCreateCustomer).not.toHaveBeenCalled();
+  expect(mockCreateCheckout).not.toHaveBeenCalled();
+});
 
-  it('resolves planName → env priceId and accepts it', async () => {
-    jest.resetModules();
-    const handler = require('../create-checkout-session');
-    const res = createRes();
-    await handler(createReq({ planName: 'Starter' }), res);
-    if (res.statusCode === 400) {
-      expect(res.body.error).not.toMatch(/invalid plan/i);
-    }
-  });
+test('uses stable tenant-scoped keys for concurrent attempts, including different plans', async () => {
+  await Promise.all([post({ planName: 'Starter' }), post({ planName: 'Scale' })]);
+  const [firstCustomer, secondCustomer] = mockCreateCustomer.mock.calls;
+  const [firstCheckout, secondCheckout] = mockCreateCheckout.mock.calls;
+  expect(firstCustomer[1].idempotencyKey).toBe(secondCustomer[1].idempotencyKey);
+  expect(firstCheckout[1].idempotencyKey).toBe(secondCheckout[1].idempotencyKey);
+});
+
+test('recovers a pending Stripe customer and resumes the existing matching checkout', async () => {
+  mockSearchCustomers.mockReturnValue([{ id: 'cus_pending', metadata: { restaurant_id: 'rest-1' } }]);
+  mockListCheckout.mockReturnValue([{
+    ...checkout, mode: 'subscription', status: 'open',
+    metadata: { restaurant_id: 'rest-1', plan_price_id: 'price_growth', trial_days: '14' },
+  }]);
+  expect((await post({ planName: 'Growth' })).body).toEqual({ sessionId: checkout.id, url: checkout.url });
+  expect(mockCreateCustomer).not.toHaveBeenCalled();
+  expect(mockCreateCheckout).not.toHaveBeenCalled();
+});
+
+test('does not start a different plan while a same-tenant checkout is open', async () => {
+  mockListCheckout.mockReturnValue([{
+    ...checkout, mode: 'subscription', status: 'open',
+    metadata: { restaurant_id: 'rest-1', plan_price_id: 'price_starter', trial_days: '0' },
+  }]);
+  const res = await post({ planName: 'Scale' });
+  expect(res.statusCode).toBe(409);
+  expect(res.body.code).toBe('CHECKOUT_IN_PROGRESS');
+  expect(mockCreateCheckout).not.toHaveBeenCalled();
+});
+
+test('uses a new idempotency key after Checkout expires', async () => {
+  await post({ planName: 'Starter' });
+  mockListCheckout.mockReturnValue([{
+    ...checkout, mode: 'subscription', status: 'expired', metadata: { restaurant_id: 'rest-1' },
+  }]);
+  expect((await post({ planName: 'Starter' })).statusCode).toBe(200);
+  expect(mockCreateCheckout.mock.calls[0][1].idempotencyKey)
+    .not.toBe(mockCreateCheckout.mock.calls[1][1].idempotencyKey);
+});
+
+test('fails closed on billing lookup errors and hides provider details', async () => {
+  setRecords({ 'Customer ID': 'cus_legacy' });
+  mockRetrieveCustomer.mockRejectedValue(new Error('private@example.com'));
+  const res = await post({ planName: 'Starter' });
+  expect(res.statusCode).toBe(503);
+  expect(JSON.stringify(res.body)).not.toContain('private@example.com');
+  expect(mockCreateCheckout).not.toHaveBeenCalled();
 });
