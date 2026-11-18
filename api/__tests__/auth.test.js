@@ -199,6 +199,21 @@ describe('verifyJWT', () => {
     expect(result.role).not.toBe('owner');
   });
 
+  it('recognizes a newly created restaurant on the same verified token without waiting for cache expiry', async () => {
+    const token = jwt.sign({ sub: 'just-onboarded-owner' }, TEST_SECRET, { expiresIn: '1h' });
+
+    expect((await verifyJWT(token)).restaurant_id).toBeUndefined();
+    const livenessChecks = mockGetUser.mock.calls.length;
+    mockSingle.mockResolvedValueOnce({
+      data: { id: 'new-restaurant', timezone: 'America/Sao_Paulo' }, error: null,
+    });
+
+    expect(await verifyJWT(token)).toMatchObject({
+      restaurant_id: 'new-restaurant', timezone: 'America/Sao_Paulo', role: 'owner',
+    });
+    expect(mockGetUser).toHaveBeenCalledTimes(livenessChecks);
+  });
+
   it('grants a team member only the active restaurant membership', async () => {
     const token = jwt.sign({
       sub: 'team-member-with-stale-metadata',

@@ -160,12 +160,33 @@ async function verifyJWT(token) {
   }
 }
 
+async function attachRestaurantScope(decoded) {
+  // JWT user_metadata is editable by the user, and top-level tenant claims can
+  // become stale. The service-role APIs must receive only DB-backed tenant scope.
+  const restaurant = decoded.sub ? await getRestaurantIdForUser(decoded.sub) : null;
+  delete decoded.restaurant_id;
+  delete decoded.timezone;
+  decoded.role = 'authenticated';
+  if (restaurant) {
+    decoded.restaurant_id = restaurant.restaurantId;
+    decoded.timezone = restaurant.timezone;
+    decoded.role = restaurant.role || 'owner';
+  }
+  return decoded;
+}
+
 async function verificarToken(token) {
   if (!token) return null;
 
   // Check token cache first to avoid repeated verification calls
   const cached = tokenCache.get(token);
   if (cached && Date.now() - cached.timestamp < TOKEN_CACHE_TTL) {
+    // Onboarding can create a restaurant while the verified token is cached.
+    // Refresh missing tenant scope without extending the session liveness TTL.
+    if (cached.decoded.sub && !cached.decoded.restaurant_id) {
+      const refreshed = await attachRestaurantScope({ ...cached.decoded });
+      if (refreshed.restaurant_id) cached.decoded = refreshed;
+    }
     return cached.decoded;
   }
 
@@ -275,17 +296,7 @@ async function verificarToken(token) {
     return null;
   }
 
-  // JWT user_metadata is editable by the user, and top-level tenant claims can
-  // become stale. The service-role APIs must receive only DB-backed tenant scope.
-  const restaurant = decoded.sub ? await getRestaurantIdForUser(decoded.sub) : null;
-  delete decoded.restaurant_id;
-  delete decoded.timezone;
-  decoded.role = 'authenticated';
-  if (restaurant) {
-    decoded.restaurant_id = restaurant.restaurantId;
-    decoded.timezone = restaurant.timezone;
-    decoded.role = restaurant.role || 'owner';
-  }
+  await attachRestaurantScope(decoded);
 
   // Cache verified token to avoid repeated verification on subsequent requests
   tokenCache.set(token, { decoded, timestamp: Date.now() });
