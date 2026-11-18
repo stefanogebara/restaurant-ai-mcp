@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
+import { getOnboardingStatus } from '../lib/onboardingStatus';
 import { authFetch } from '../services/api';
 import { LS_PENDING_DEMO_TOKEN } from '../config/localStorageKeys';
 import { parseBillingPlan, readBillingPlan, rememberBillingPlan, withBillingPlan } from '../lib/billingHandoff';
@@ -59,22 +59,10 @@ export default function Welcome() {
     // Check if user has completed onboarding (has restaurant_config)
     const checkOnboardingStatus = async () => {
       try {
-        // Use maybeSingle() — for a fresh user with no restaurant yet, .single()
-        // returns a 406 (PGRST116) that floods the console (audit BUG #3).
-        // maybeSingle() returns { data: null } cleanly for the 0-row case.
-        const { data, error } = await supabase
-          .schema('restaurant')
-          .from('restaurant_config')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('is_active', true)
-          .limit(1)
-          .maybeSingle();
-
+        const { restaurant, needs_recovery } = await getOnboardingStatus();
         if (cancelled) return;
-        if (error) throw error;
 
-        if (data) {
+        if (restaurant) {
           // User has completed onboarding → attempt demo conversion if pending.
           // Fire-and-forget so we don't block navigation by ~1s, BUT preserve the
           // token in localStorage if the conversion fails — the previous .finally
@@ -100,6 +88,10 @@ export default function Welcome() {
                 // Keep token for retry on next page load.
               });
           }
+          if (needs_recovery) {
+            navigate(withBillingPlan('/onboarding', selectedPlan ?? readBillingPlan(user.id)), { replace: true });
+            return;
+          }
           // Priority: explicit `next=` (user's original target) wins over
           // the default dashboard. Demo conversion still wraps it.
           const baseDestination = nextPath || (selectedPlan
@@ -123,7 +115,7 @@ export default function Welcome() {
         // restaurante de ninguém: mostramos o erro e oferecemos tentar de
         // novo. (O backend também passou a barrar isso com 409.)
         if (cancelled) return;
-        console.error('[Welcome] restaurant_config lookup failed', err);
+        console.error('[Welcome] onboarding status lookup failed', err);
         setLookupFailed(true);
       } finally {
         if (!cancelled) setChecking(false);

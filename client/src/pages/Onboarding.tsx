@@ -12,7 +12,7 @@
  * to post-onboarding settings to reduce friction.
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import ThiingsIcon from '../components/common/ThiingsIcon';
@@ -28,6 +28,8 @@ import SheetCompletion from '../components/onboarding/folha/SheetCompletion';
 import LaunchProgress from '../components/onboarding/folha/LaunchProgress';
 import FindOnGoogle from '../components/onboarding/folha/FindOnGoogle';
 import { readLaunchResponse, type LaunchSteps } from '../lib/onboardingLaunch';
+import { getOnboardingStatus, retryOnboardingStep, type OnboardingStatus, type RetryStep } from '../lib/onboardingStatus';
+import { getSheetCopy } from '../components/onboarding/folha/sheetCopy';
 import { FolhaDeConfirmacao } from '../components/onboarding/folha/FolhaDeConfirmacao';
 import { ORDEM_PADRAO } from '../lib/personaProposta';
 import OnboardingSuccessModal from '../components/onboarding/OnboardingSuccessModal';
@@ -38,20 +40,11 @@ import { mapDemoSessionToOnboarding } from '../lib/demoPrefill';
 import { authFetch } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { trackOnboardingStepCompleted, trackOnboardingCompleted } from '../lib/analytics';
-import { parseBillingPlan, readBillingPlan, rememberBillingPlan } from '../lib/billingHandoff';
+import { parseBillingPlan, readBillingPlan, rememberBillingPlan, withBillingPlan } from '../lib/billingHandoff';
 import { LS_CUSTOMER_EMAIL, LS_REFERRAL_CODE, LS_ONBOARDING_DATA, LS_ONBOARDING_STEP, LS_PENDING_DEMO_TOKEN, lsOnboardingDataKey, lsOnboardingStepKey } from '../config/localStorageKeys';
 import { parseOnboardingError } from '../utils/onboardingErrorMessage';
 
 import { STEP_NAME_KEYS, TOTAL_STEPS } from '../components/onboarding/passos';
-
-interface SheetReceipt {
-  restaurantId: string;
-  bookingUrl: string | null;
-  setup: Record<string, string> | null;
-  /** The new voice agent, so a reload still offers the test call. */
-  agentId?: string | null;
-  name?: string | null;
-}
 
 type SheetEntry = 'manual' | 'google' | 'google-hours' | 'website' | 'website-hours';
 
@@ -64,52 +57,40 @@ function readSheetEntry(key: string): SheetEntry | null {
   return null;
 }
 
-function readSheetReceipt(key: string): SheetReceipt | null {
-  try {
-    const receipt = JSON.parse(localStorage.getItem(key) || 'null');
-    if (!receipt || typeof receipt.restaurantId !== 'string' || !receipt.restaurantId) return null;
-    return {
-      restaurantId: receipt.restaurantId,
-      bookingUrl: typeof receipt.bookingUrl === 'string' && receipt.bookingUrl.startsWith('https://seatable.one/book/') ? receipt.bookingUrl : null,
-      setup: receipt.setup && typeof receipt.setup === 'object' && !Array.isArray(receipt.setup) ? receipt.setup : null,
-      agentId: typeof receipt.agentId === 'string' && /^agent_[A-Za-z0-9]{1,80}$/.test(receipt.agentId) ? receipt.agentId : null,
-      name: typeof receipt.name === 'string' ? receipt.name.slice(0, 200) : null,
-    };
-  } catch { return null; }
-}
-
 export default function Onboarding() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const copy = getSheetCopy(i18n?.language);
   useDocumentTitle(t('pageTitles.onboarding'));
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { error: showError, success: showSuccessToast } = useToast();
   const { user } = useAuth();
-  const receiptKey = `${lsOnboardingDataKey(user?.id ?? 'anon')}:completed`;
-  const [savedReceipt] = useState(() => readSheetReceipt(receiptKey));
   const planFromUrl = parseBillingPlan(searchParams.get('plan'));
   const userId = user?.id;
   const selectedPlan = planFromUrl ?? (userId ? readBillingPlan(userId) : null);
   const showSubscribeBanner = selectedPlan || searchParams.get('reason') === 'subscribe';
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [serverStatus, setServerStatus] = useState<OnboardingStatus>();
+  const [statusUnavailable, setStatusUnavailable] = useState(false);
+  const [checking, setChecking] = useState(true);
+  const [retrying, setRetrying] = useState<RetryStep | null>(null);
   // Previously this was a bare boolean — the user saw "Setup failed" with no
   // explanation, no detail, and no way to know what to do. Now we keep the
   // actual server-side message so it can be surfaced inline.
   const [submitError, setSubmitError] = useState<string | null>(null);
   // Estágio visível da criação (G3.1) e placar da instalação (G3.2).
   const [submitStage, setSubmitStage] = useState<string | null>(null);
-  const [setupScorecard, setSetupScorecard] = useState<Record<string, string> | null>(savedReceipt?.setup ?? null);
+  const [setupScorecard, setSetupScorecard] = useState<Record<string, string> | null>(null);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [sheetCompleted, setSheetCompleted] = useState(Boolean(savedReceipt));
+  const [sheetCompleted, setSheetCompleted] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const [ownReferral, setOwnReferral] = useState<{ code: string; url: string } | null>(null);
-  const [bookingUrl, setBookingUrl] = useState<string | null>(savedReceipt?.bookingUrl ?? null);
+  const [bookingUrl, setBookingUrl] = useState<string | null>(null);
   // Folha: o progresso real da criação (um evento por etapa) e o que a tela
   // final precisa para a ligação de teste.
   const [launchSteps, setLaunchSteps] = useState<LaunchSteps>({});
-  const [voiceAgentId, setVoiceAgentId] = useState<string | null>(savedReceipt?.agentId ?? null);
-  const [completedName, setCompletedName] = useState<string | null>(savedReceipt?.name ?? null);
+  const [voiceAgentId, setVoiceAgentId] = useState<string | null>(null);
   // If the server tells us *which* field is bad we can offer a one-click jump
   // back to the step that owns it instead of making the owner hunt for it.
   const [submitErrorJumpStep, setSubmitErrorJumpStep] = useState<number | null>(null);
@@ -279,7 +260,51 @@ export default function Onboarding() {
   // Once onboarding completes we stop persisting — otherwise the persist
   // effect below immediately re-writes the localStorage keys that
   // completeOnboarding() just cleared, leaving stale data behind.
-  const completedRef = useRef(Boolean(savedReceipt));
+  const completedRef = useRef(false);
+  const refreshSetup = useCallback(async (signal?: AbortSignal) => {
+    try {
+      const result = await getOnboardingStatus(signal);
+      if (signal?.aborted) return;
+      if (result.restaurant) completedRef.current = true;
+      setServerStatus(result);
+      setStatusUnavailable(false);
+      return result;
+    } catch {
+      if (!signal?.aborted) setStatusUnavailable(true);
+    } finally {
+      if (!signal?.aborted) setChecking(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+    const controller = new AbortController();
+    void refreshSetup(controller.signal);
+    return () => controller.abort();
+  }, [userId, refreshSetup]);
+
+  const inProgress = Object.values(serverStatus?.steps ?? {}).some(step => step?.status === 'working');
+  useEffect(() => {
+    if (!inProgress || retrying) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => { void refreshSetup(controller.signal); }, 8000);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [inProgress, retrying, refreshSetup, serverStatus]);
+
+  async function retryStep(step: RetryStep) {
+    const restaurantId = serverStatus?.restaurant?.restaurant_id;
+    if (!restaurantId || retrying) return;
+    setRetrying(step);
+    try {
+      setServerStatus(await retryOnboardingStep(restaurantId, step));
+      setStatusUnavailable(false);
+    } catch {
+      // A lost reply may still have committed the attempt.
+      await refreshSetup();
+    } finally {
+      setRetrying(null);
+    }
+  }
 
   // Pre-fill from demo session if user arrived via demo conversion
   useEffect(() => {
@@ -325,10 +350,10 @@ export default function Onboarding() {
   // Persist progress so "Save & Exit" and accidental refreshes are recoverable
   // (restored on mount by restoreOnboarding). Stops once onboarding completes.
   useEffect(() => {
-    if (completedRef.current) return;
+    if (completedRef.current || !serverStatus || serverStatus.restaurant) return;
     localStorage.setItem(draftDataKey, JSON.stringify(onboardingData));
     localStorage.setItem(draftStepKey, currentStep.toString());
-  }, [onboardingData, currentStep, draftDataKey, draftStepKey]);
+  }, [onboardingData, currentStep, draftDataKey, draftStepKey, serverStatus]);
 
   // Cross-tab sync — without this, opening /onboarding in two tabs lets the
   // user advance Tab B to Step 4, submit, and create the restaurant, while
@@ -416,6 +441,7 @@ export default function Onboarding() {
       window.setTimeout(() => setSubmitStage(t('onboarding.stageAlmost')), 12000),
     ];
     const limparEstagios = () => estagios.forEach((id) => window.clearTimeout(id));
+    let mayHaveCreated = true;
     try {
       const response = await authFetch('/api/onboarding/complete', {
         method: 'POST',
@@ -438,6 +464,9 @@ export default function Onboarding() {
         }),
       });
 
+      // Bad form input is definitive. Every other failure can be checked
+      // against the durable server receipt before offering another submit.
+      mayHaveCreated = ![400, 422].includes(response.status);
       const { ok, data } = await readLaunchResponse(response, (key, step) => {
         setLaunchSteps((prev) => ({ ...prev, [key]: step }));
       });
@@ -492,18 +521,7 @@ export default function Onboarding() {
         setBookingUrl(`https://seatable.one${data.restaurant.booking_url}`);
       }
       if (modo === 'folha') {
-        const agentId = typeof data.restaurant.voice_agent_id === 'string' ? data.restaurant.voice_agent_id : null;
-        setVoiceAgentId(agentId);
-        setCompletedName(onboardingData.restaurant_name || null);
-        const receipt: SheetReceipt = {
-          restaurantId: data.restaurant.restaurant_id,
-          bookingUrl: data.restaurant.booking_url ? `https://seatable.one${data.restaurant.booking_url}` : null,
-          setup: data.setup && typeof data.setup === 'object' ? data.setup : null,
-          agentId,
-          name: onboardingData.restaurant_name || null,
-        };
-        // A reload after a confirmed creation must show its receipt, never a second launch form.
-        try { localStorage.setItem(receiptKey, JSON.stringify(receipt)); } catch { /* completion still works when storage is unavailable */ }
+        setVoiceAgentId(typeof data.restaurant.voice_agent_id === 'string' ? data.restaurant.voice_agent_id : null);
       }
 
       // Mark complete BEFORE clearing storage so the persist effect doesn't
@@ -564,9 +582,18 @@ export default function Onboarding() {
 
       // Advance to Step 5 (Import History); Step 6 is Teach Your AI and the
       // success modal fires after it.
-      if (modo === 'folha') setSheetCompleted(true);
-      else setCurrentStep(5);
+      if (modo === 'folha' || Object.values(data.setup ?? {}).some(value => value !== 'ok')) {
+        setSheetCompleted(true);
+        void refreshSetup();
+      } else setCurrentStep(5);
     } catch (err: unknown) {
+      if (mayHaveCreated) {
+        const recovered = await refreshSetup();
+        if (recovered?.restaurant) {
+          setSheetCompleted(true);
+          return;
+        }
+      }
       const message = err instanceof Error
         ? err.message
         : t('onboarding.completeError', 'Failed to complete onboarding. Please try again.');
@@ -589,15 +616,48 @@ export default function Onboarding() {
     </p>
   );
 
-  if (sheetCompleted) {
+  const existing = serverStatus?.restaurant;
+  const haveServerReceipt = existing && Boolean(serverStatus?.steps.restaurant);
+  if (sheetCompleted || haveServerReceipt) {
+    const link = existing?.booking_url;
+    const authoritativeSteps = haveServerReceipt ? serverStatus?.steps : undefined;
     return (
-      <SheetCompletion setup={setupScorecard} bookingUrl={bookingUrl} steps={launchSteps}
-        agentId={voiceAgentId} restaurantName={completedName ?? onboardingData.restaurant_name} selectedPlan={selectedPlan} />
+      <SheetCompletion setup={setupScorecard}
+        bookingUrl={link ? `https://seatable.one${link}` : bookingUrl}
+        steps={authoritativeSteps ?? launchSteps}
+        agentId={haveServerReceipt ? existing.voice_agent_id : voiceAgentId}
+        restaurantName={existing?.restaurant_name ?? onboardingData.restaurant_name}
+        selectedPlan={selectedPlan} retrying={retrying} onRetry={retryStep}
+        statusUnavailable={statusUnavailable} onRefresh={() => { void refreshSetup(); }} />
     );
   }
 
   if (modo === 'folha' && isSubmitting) {
     return <LaunchProgress name={onboardingData.restaurant_name} steps={launchSteps} />;
+  }
+
+  if (checking || statusUnavailable || existing) {
+    const destination = selectedPlan
+      ? withBillingPlan('/subscription/manage', selectedPlan)
+      : '/host-dashboard/simple';
+    return (
+      <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-4 px-6 text-center text-deep-charcoal">
+        {checking ? <p role="status">{copy.statusLoading}</p> : statusUnavailable ? (
+          <>
+            <p role="alert">{copy.statusUnavailable}</p>
+            <button type="button" className="min-h-11 text-burgundy underline"
+              onClick={() => { setChecking(true); void refreshSetup(); }}>{copy.tryAgain}</button>
+          </>
+        ) : (
+          <>
+            <h1 className="font-serif text-3xl">{copy.savedTitle}</h1>
+            <a href={destination} className="min-h-11 text-burgundy underline">
+              {selectedPlan ? t('subscription.resumeCheckout', 'Resume checkout') : t('onboarding.goToDashboard', 'Go to Dashboard')}
+            </a>
+          </>
+        )}
+      </main>
+    );
   }
 
   if (modo === 'folha' && !step0Done && !pendingDemoAtMount && !onboardingData.restaurant_name?.trim()) {

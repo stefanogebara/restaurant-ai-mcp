@@ -20,30 +20,7 @@ const { suggestTimezone } = require('../_lib/timezone');
 const { checkAndApplyRateLimit } = require('../_lib/rate-limit');
 const logger = createSecureLogger('Onboarding');
 
-// ============ Voice Defaults ============
-
-/**
- * Fallback ElevenLabs voice ID used when no voice is selected during onboarding.
- * Rachel (English) — ElevenLabs built-in voice available on all plans.
- * Override via ELEVENLABS_DEFAULT_VOICE_ID environment variable.
- */
-const ELEVENLABS_DEFAULT_VOICE_ID =
-  process.env.ELEVENLABS_DEFAULT_VOICE_ID || '21m00Tcm4TlvDq8ikWAM';
-
-/**
- * Returns a language-appropriate default ElevenLabs voice ID.
- * Language-specific overrides can be set via ELEVENLABS_VOICE_ID_ES / _PT env vars.
- * Falls back to ELEVENLABS_DEFAULT_VOICE_ID when no language-specific override exists.
- */
-const DEFAULT_VOICE_IDS = {
-  'en': ELEVENLABS_DEFAULT_VOICE_ID,
-  'es': process.env.ELEVENLABS_VOICE_ID_ES || ELEVENLABS_DEFAULT_VOICE_ID,
-  'pt': process.env.ELEVENLABS_VOICE_ID_PT || ELEVENLABS_DEFAULT_VOICE_ID,
-};
-
-function getDefaultVoiceId(language) {
-  return DEFAULT_VOICE_IDS[language] || DEFAULT_VOICE_IDS['en'];
-}
+const { findOwnerRestaurant, runSetupStep } = require('../_services/onboardingRecovery');
 
 // ============ Explicit Country + Language Resolution ============
 
@@ -121,9 +98,6 @@ async function generateUniqueSlug(name, supabaseClient) {
   return `${baseSlug.slice(0, 40)}-${Date.now().toString(36).slice(-6)}`;
 }
 
-// The 14-day trial outside Brazil is on Growth (Profissional), as documented.
-const TRIAL_PLAN = 'Growth';
-
 // Live setup progress (2026-11-16). A client that sends
 // `Accept: text/event-stream` gets one event per setup result as soon as that
 // result is known, so the onboarding screen shows what really happened instead
@@ -176,7 +150,7 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const rateLimited = await checkAndApplyRateLimit(req, res, 'onboarding_complete', 10, 60);
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'onboarding_complete');
   if (rateLimited) return;
 
   // Require authentication
@@ -185,10 +159,9 @@ module.exports = async (req, res) => {
     return res.status(auth.status).json({ error: auth.error });
   }
 
-  // Mesas gravadas por este request e ainda sem restaurant_config. Se algo
-  // lançar antes do config ser salvo, o catch de fora apaga essas mesas
-  // (15/11/2026: antes só a falha do próprio insert do config desfazia).
-  let tablesAwaitingConfig = null;
+  const userId = auth.user?.sub || auth.user?.id;
+  if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
   const progress = setupProgress(req, res);
 
   try {
@@ -202,7 +175,6 @@ module.exports = async (req, res) => {
       email,
     } = req.body;
     const {
-      restaurant_id,
       restaurant_type,
       city,
       country,
@@ -234,10 +206,6 @@ module.exports = async (req, res) => {
       // Token do demo que originou este cadastro. Só o TOKEN vem do cliente —
       // o conhecimento é lido do banco aqui no servidor (ver bloco abaixo).
       demo_token,
-      // Escape hatch de suporte: reescrever um restaurante JÁ concluído exige
-      // intenção explícita (ver a guarda de duplicata mais abaixo). O wizard
-      // nunca envia isto.
-      confirm_overwrite,
     } = req.body;
 
     // Validate required fields — hardened to reject empty strings and
@@ -329,9 +297,6 @@ module.exports = async (req, res) => {
       }));
     }
 
-    // Generate Restaurant ID
-    const generatedRestaurantId = restaurant_id || `REST-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
-
     // Validate restaurant_type against allowed values
     // Must include all slugified types sent by the frontend (Step1Welcome.tsx)
     const ALLOWED_RESTAURANT_TYPES = [
@@ -393,6 +358,8 @@ module.exports = async (req, res) => {
       }
     }
 
+    const restaurantId = crypto.randomUUID();
+
     // Metadados do cadastro, gravados em restaurant_config.metric_profile.
     //
     // Antes iam para restaurant_info junto com uma cópia de restaurant_name,
@@ -412,7 +379,7 @@ module.exports = async (req, res) => {
     // - Professional/Pro → advanced template
     const onboardingMetricProfile = {
         customer_email,
-        restaurant_id: generatedRestaurantId,
+        restaurant_id: restaurantId,
         restaurant_type: validatedRestaurantType,  // Use validated value
         city,
         country,
@@ -436,54 +403,6 @@ module.exports = async (req, res) => {
         buffer_time: buffer_time || 15,
         onboarding_completed_at: new Date().toISOString()
     };
-
-    // O id do restaurante nasce aqui, e não de uma linha de restaurant_info.
-    //
-    // restaurant.restaurant_info foi APOSENTADA em 02/08/2026: era legado com
-    // ZERO linhas contra 37 em restaurant_config, e existia neste fluxo só para
-    // emprestar um id temporário às mesas — que o passo 3b depois realinhava
-    // para o id do config. Gerar o id de uma vez remove a linha, o realinhamento
-    // e a classe inteira de bugs que vinha junto (o passo 1 adotava a linha de
-    // OUTRO dono e o rollback a apagava; em 02/08 isso destruiu um registro
-    // real).
-    //
-    // O UUID é gerado aqui e usado como restaurant_config.id no passo 3, então
-    // mesas, registry, assinatura e config compartilham a mesma chave desde o
-    // primeiro insert.
-    const restaurantId = crypto.randomUUID();
-    logger.info(` Id do restaurante gerado: ${restaurantId}`);
-
-    // Get user ID from the verified auth token (already available, no lookup needed)
-    const userId = auth.user?.sub || null;
-    if (userId) {
-      logger.info(' User ID from auth token:', userId);
-    } else {
-      logger.warn(' No user ID in auth token, restaurant_config will not be saved');
-    }
-
-    // Guarda de restaurante duplicado (G3.3), ANTES de qualquer gravação.
-    // Um UPDATE completo e silencioso do config existente deixava um cliente
-    // sobrescrever o próprio restaurante vivo com um wizard novo; um cadastro
-    // concluído exige intenção explícita. Até 15/11/2026 esta checagem vinha
-    // depois das mesas, e cada 409 deixava um jogo de mesas órfão.
-    let existingConfig = null;
-    if (userId) {
-      const { data } = await supabaseAdmin
-        .schema('restaurant')
-        .from('restaurant_config')
-        .select('id, user_id, slug, onboarding_completed')
-        .eq('user_id', userId)
-        .single();
-      existingConfig = data || null;
-      if (existingConfig?.onboarding_completed && confirm_overwrite !== true) {
-        logger.warn(` Blocked silent overwrite of completed restaurant ${existingConfig.id}`);
-        return res.status(409).json({
-          error: 'restaurant_already_exists',
-          message: 'Esta conta já tem um restaurante configurado.',
-          restaurant: { restaurant_id: existingConfig.id, slug: existingConfig.slug },
-        });
-      }
-    }
 
     // STEP 2: Create Tables. O id acabou de ser gerado: não há mesa antiga
     // deste restaurante para apagar antes.
@@ -533,16 +452,7 @@ module.exports = async (req, res) => {
       }
     }
 
-    const { data: tablesData, error: tablesError } = await supabaseAdmin
-      .from('tables')
-      .insert(tablesToInsert)
-      .select();
-
-    if (tablesError) throw tablesError;
-    tablesAwaitingConfig = restaurantId;
-    logger.info(` Created ${tablesData.length} tables`);
-
-    // STEP 3: Create/Update Restaurant Config (for AI Agent)
+    // STEP 3: Prepare restaurant configuration.
     logger.info(' Step 3: Creating restaurant_config for AI agent...');
 
 
@@ -683,6 +593,7 @@ module.exports = async (req, res) => {
       // Id FIXADO, não gerado pelo banco: é o mesmo que as mesas já usam, o que
       // torna o antigo passo 3b (realinhar mesas) desnecessário.
       id: restaurantId,
+      user_id: userId,
       restaurant_name,
       restaurant_type: mappedType,
       slug: restaurantSlug,
@@ -847,151 +758,28 @@ module.exports = async (req, res) => {
     restaurantConfigData.ai_config.greeting_message = greetingMessages[finalVoiceLanguage] || greetingMessages.en;
     restaurantConfigData.ai_config.farewell_message = farewellMessages[finalVoiceLanguage] || farewellMessages.en;
 
-    // If we have a user_id, add it; otherwise use service role to insert
-    if (userId) {
-      restaurantConfigData.user_id = userId;
-    }
-
-    // Placar da instalação (G3 — Onboarding do Aha). O endpoint devolvia
-    // `200 success` mesmo quando o agente de voz, o registro de WhatsApp, a
-    // assinatura ou o sync de conhecimento falhavam: o dono via "Bem-vindo a
-    // bordo! Seu restaurante está pronto" sobre uma instalação materialmente
-    // quebrada, e só descobria dias depois que ninguém atendia o telefone.
-    // Nada disso vira erro fatal — o restaurante existe e o painel funciona —
-    // mas o cliente PRECISA saber o que ficou pendente.
-    const setupScorecard = {
-      restaurant: 'ok',
-      whatsapp_registry: 'pending',
-      voice_agent: 'pending',
-      knowledge_base: 'pending',
-      subscription: 'pending',
-    };
-
-    let configResult;
-    try {
-      // existingConfig was read by the duplicate guard, before the tables.
-      if (userId) {
-        if (existingConfig) {
-          // Update existing config
-          const { data, error } = await supabaseAdmin
-            .schema('restaurant')
-            .from('restaurant_config')
-            .update(restaurantConfigData)
-            .eq('user_id', userId)
-            .select()
-            .single();
-
-          if (error) throw error;
-          configResult = data;
-          tablesAwaitingConfig = null;
-          logger.info(' Restaurant config updated');
-        } else {
-          // Insert new config
-          const { data, error } = await supabaseAdmin
-            .schema('restaurant')
-            .from('restaurant_config')
-            .insert(restaurantConfigData)
-            .select()
-            .single();
-
-          if (error) throw error;
-          configResult = data;
-          tablesAwaitingConfig = null;
-          logger.info(' Restaurant config created');
-        }
-      } else {
-        // No user_id, skip restaurant_config creation
-        logger.info(' Skipping restaurant_config creation (no user_id)');
-      }
-      // O antigo passo 3b — realinhar tables.restaurant_id do id do
-      // restaurant_info para o do config — foi removido em 02/08/2026. Não há
-      // mais o que realinhar: as mesas já nascem com `restaurantId`, que é o
-      // mesmo id usado no insert do restaurant_config.
-
-      // STEP 3c: Register in restaurant_registry so the WhatsApp router can
-      // see this restaurant. Without this row, inbound WA messages never
-      // reach the new account — getAllActiveRestaurants() reads from here,
-      // not from restaurant_config, so a fresh signup is invisible to the
-      // webhook until a registry row exists. We reuse configResult.id as
-      // the registry id so directMatch / restaurant_aliases lookups resolve
-      // to the same row the rest of the stack uses.
-      if (configResult) {
-        const aliasBase = (restaurant_name || '').trim().toLowerCase();
-        const restaurantAliases = Array.from(new Set([
-          aliasBase,
-          // Drop any trailing numeric suffix / stray punctuation for a softer alias
-          aliasBase.replace(/[\s-]+\d+$/, '').trim(),
-        ].filter(Boolean)));
-
-        const { error: registryError } = await supabaseAdmin
-          .from('restaurant_registry')
-          .upsert({
-            id: configResult.id,
-            restaurant_name: configResult.restaurant_name,
-            restaurant_aliases: restaurantAliases,
-            customer_email: email || customer_email,
-            language: finalVoiceLanguage,
-            timezone: resolvedTimezone,
-            // Same plan and status as the subscription row below (2026-11-16):
-            // Brazil starts on the free plan, everyone else on a Growth trial.
-            plan_name: resolvedCountryIso === 'BR' ? 'free' : TRIAL_PLAN.toLowerCase(),
-            subscription_status: resolvedCountryIso === 'BR' ? 'active' : 'trialing',
-            is_active: true,
-          }, { onConflict: 'id' });
-
-        if (registryError) {
-          // Not a hard-fail yet — existing restaurants created before this
-          // step shipped survive without a registry row (they just can't
-          // receive WA). Log loudly so we catch regressions.
-          logger.warn(' Could not insert into restaurant_registry:', {
-            message: registryError.message, code: registryError.code,
-          });
-          setupScorecard.whatsapp_registry = 'failed';
-        } else {
-          logger.info(` Restaurant registered in registry: ${configResult.id}`);
-          setupScorecard.whatsapp_registry = 'ok';
-        }
-      }
-    } catch (configError) {
-      logger.error(' Error saving restaurant_config:', {
-        message: configError?.message,
-        code: configError?.code,
-        details: configError?.details,
-      });
-      // Roll back the half-created restaurant so the user isn't stranded with
-      // a dashboard-less account. Without this, the previous implementation
-      // returned 200 OK while the user's dashboard / AI agent / WhatsApp
-      // router were all invisible to them.
-      try {
-        // Só as mesas: são as únicas linhas que este request criou antes de
-        // falhar, e todas nasceram sob `restaurantId`, que é exclusivo deste
-        // cadastro. Não há mais linha de restaurant_info para desfazer — o id é
-        // gerado, não emprestado de um registro alheio (era daí que vinha o
-        // estrago de 02/08/2026).
-        await supabaseAdmin.from('tables').delete().eq('restaurant_id', restaurantId);
-        tablesAwaitingConfig = null;
-        logger.info(' Rolled back tables after config failure');
-      } catch (rollbackErr) {
-        logger.warn(' Rollback failed (leaving orphaned rows):', rollbackErr.message);
-      }
-      return res.status(500).json({
-        success: false,
-        error: 'restaurant_config_insert_failed',
-        message: configError?.message || 'Could not save restaurant configuration. Please try again.',
+    const { data: createdId, error: createError } = await supabaseAdmin.rpc('create_onboarding_restaurant', {
+      p_config: restaurantConfigData,
+      p_tables: tablesToInsert,
+      p_customer_email: customer_email,
+    });
+    if (createError) throw createError;
+    if (!createdId) {
+      const existing = await findOwnerRestaurant(userId);
+      return res.status(409).json({
+        error: 'restaurant_already_exists',
+        message: 'Esta conta já tem um restaurante configurado.',
+        restaurant: existing ? { restaurant_id: existing.id, slug: existing.slug } : null,
       });
     }
 
-    // The restaurant exists from here on: the live progress stream may open.
-    // Its id and link travel in this first event, so a connection that drops
-    // later still lets the client show the finished restaurant, not a retry
-    // that would only hit the 409 above.
-    progress.step('restaurant', setupScorecard.restaurant, {
-      restaurant_id: configResult?.id || restaurantId,
-      booking_url: `/book/${restaurantSlug}`,
+    const bookingUrl = `/book/${restaurantSlug}`;
+    const setup = { restaurant: 'ok' };
+    progress.step('restaurant', setup.restaurant, {
+      restaurant_id: createdId, booking_url: bookingUrl,
       tables: tablesToInsert.length,
       seats: tablesToInsert.reduce((sum, table) => sum + (Number(table.capacity) || 0), 0),
     });
-    progress.step('whatsapp_registry', setupScorecard.whatsapp_registry);
 
     // Invalidate SEO city+cuisine cache so the page rebuilds with this restaurant included
     try {
@@ -1010,242 +798,44 @@ module.exports = async (req, res) => {
       logger.warn('SEO cache invalidation failed (non-critical)', { err: seoErr.message });
     }
 
-    // STEP 4: Create ElevenLabs Agent
-    // Uses the service directly (no HTTP call) to bypass subscription guards.
-    // During onboarding the subscription doesn't exist yet, and the agent should
-    // be provisioned for ALL plans — voice settings UI is gated separately.
-    logger.info(' Step 4: Creating ElevenLabs agent...');
-    logger.info(' Voice config:', {
-      selected_voice_id,
-      selected_voice_language,
-      restaurant_name
-    });
+    const config = { id: createdId, user_id: userId };
+    const registry = await runSetupStep(config, 'whatsapp_registry');
+    setup.whatsapp_registry = registry.status;
+    progress.step('whatsapp_registry', registry.status);
 
-    // Transform business_hours array to object format for agent service
-    // From: [{ day: "Monday", is_open: true, open_time: "12:00", close_time: "23:00" }]
-    // To: { monday: { isOpen: true, open: "12:00", close: "23:00" } }
-    const agentBusinessHours = {};
-    if (Array.isArray(validatedBusinessHours)) {
-      validatedBusinessHours.forEach(dayConfig => {
-        const dayKey = dayConfig.day.toLowerCase();
-        agentBusinessHours[dayKey] = {
-          isOpen: dayConfig.is_open,
-          open: dayConfig.open_time,
-          close: dayConfig.close_time
-        };
-      });
-    }
-
-    // Use the correct restaurant_config UUID (not the generated REST-xxx string)
-    const canonicalRestaurantId = configResult?.id || null;
-
-    let agentId = null;
-    try {
-      const { createAgent, syncKnowledgeBase } = require('../_services/elevenlabsAgentService');
-
-      // Teto de 15s: a chamada à ElevenLabs é externa e NÃO tinha limite
-      // nenhum — era ela que dominava a espera de 3-10s no clique mais
-      // comprometido do produto, e um dia ruim do provedor podia segurar o
-      // dono num botão "Configurando..." até a lambda morrer.
-      const agentResult = await Promise.race([
-        createAgent({
-          restaurantId: canonicalRestaurantId,
-          restaurant_name,
-          voice_id: selected_voice_id || getDefaultVoiceId(finalVoiceLanguage),
-          language: finalVoiceLanguage,
-          business_hours: agentBusinessHours,
-          phone: phone_number,
-          address: `${city}, ${country}`
-        }),
-        new Promise((resolve) => setTimeout(
-          () => resolve({ success: false, error: 'timeout', timedOut: true }), 15000)),
-      ]);
-
-      if (agentResult.success) {
-        agentId = agentResult.agent_id;
-        setupScorecard.voice_agent = 'ok';
-
-        // A gravação espelhada em restaurant_info saiu com a aposentadoria da
-        // tabela (02/08/2026). restaurant_config é a única fonte do agente —
-        // é de lá que o webhook e o phone-integration leem.
-        // Save agent_id to restaurant_config for webhook routing
-        if (canonicalRestaurantId) {
-          const { error: linkError } = await supabaseAdmin
-            .schema('restaurant')
-            .from('restaurant_config')
-            .update({
-              elevenlabs_agent_id: agentId,
-              agent_language: finalVoiceLanguage
-            })
-            .eq('id', canonicalRestaurantId);
-
-          // Sem o id no restaurante, nenhuma ligação chega a este agente: o
-          // placar não pode dizer "ok" (15/11/2026). O id fica no log para
-          // religar à mão.
-          if (linkError) {
-            setupScorecard.voice_agent = 'failed';
-            logger.error(' Agent created but not linked to restaurant_config:', { agentId, error: linkError.message });
-          } else {
-            logger.info(' Agent saved to restaurant_config');
-          }
-        }
-
-        logger.info(' ElevenLabs agent created:', agentId);
-        logger.info(' Agent URL: https://elevenlabs.io/app/conversational-ai/' + agentId);
-        // Reported before the knowledge sync, which can take up to 8 more seconds.
-        progress.step('voice_agent', setupScorecard.voice_agent, {
-          language: finalVoiceLanguage,
-          agent_id: setupScorecard.voice_agent === 'ok' ? agentId : null,
-        });
-
-        // Step 4b: sync da base de conhecimento — AGUARDADO com teto de 8s.
-        //
-        // Era fire-and-forget, que na Vercel é a mesma classe de bug do
-        // welcome email (#53): a lambda congela logo após a resposta e a
-        // promise pendente só completa se o MESMO container descongelar. Ou
-        // seja: o documento de conhecimento do agente provavelmente NUNCA era
-        // gerado. Isso ficou mais grave com a G2 — é este sync que leva a
-        // persona e o cardápio do demo para dentro do agente de voz.
-        if (canonicalRestaurantId) {
-          const kb = await Promise.race([
-            syncKnowledgeBase(canonicalRestaurantId).catch((err) => {
-              logger.error('KB sync error:', err.message);
-              return { success: false, error: err.message };
-            }),
-            new Promise((resolve) => setTimeout(
-              () => resolve({ success: false, error: 'timeout' }), 8000)),
-          ]);
-          if (kb?.success) {
-            setupScorecard.knowledge_base = 'ok';
-            logger.info('KB synced to ElevenLabs agent', { documentId: kb.documentId });
-          } else {
-            setupScorecard.knowledge_base = 'failed';
-            logger.warn('KB sync skipped or failed:', kb?.error);
-          }
-        }
-      } else {
-        setupScorecard.voice_agent = agentResult.timedOut ? 'timeout' : 'failed';
-        logger.error(' Failed to create agent:', {
-          error: agentResult.error,
-          details: agentResult.details
-        });
-      }
-    } catch (agentError) {
-      logger.error(' Error creating ElevenLabs agent:', {
-        message: agentError.message,
-        stack: agentError.stack
-      });
-      setupScorecard.voice_agent = 'failed';
-      logger.warn(' Continuing without agent creation');
-    }
-    // Already sent on the success path (ignored then); this covers the failures.
-    progress.step('voice_agent', setupScorecard.voice_agent, { language: finalVoiceLanguage, agent_id: null });
-    progress.step('knowledge_base', setupScorecard.knowledge_base);
-
-    // STEP 5: Create subscription (Brazil gets free plan; all others get 14-day Growth trial)
-    logger.info(' Step 5: Creating subscription...');
-
-    const isBrazil = resolvedCountryIso === 'BR';
-
-    let trialSubscription = null;
-    try {
-      const now = new Date();
-      const canonicalRestaurantId = configResult?.id || restaurantId;
-
-      let subscriptionData;
-      if (isBrazil) {
-        // Brazil: permanent free plan with far-future expiry
-        const farFuture = new Date('2099-12-31T23:59:59.000Z');
-        subscriptionData = {
-          restaurant_id: canonicalRestaurantId,
-          subscription_id: `free_${canonicalRestaurantId}`,
-          customer_id: userId || `user_${Date.now()}`,
-          customer_email: customer_email,
-          plan_name: 'Free',
-          price_id: 'free',
-          status: 'active',
-          current_period_start: now.toISOString(),
-          current_period_end: farFuture.toISOString(),
-          trial_end: null
-        };
-      } else {
-        // All other countries: 14-day Growth trial
-        const trialEnd = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
-        subscriptionData = {
-          restaurant_id: canonicalRestaurantId,
-          subscription_id: `trial_${canonicalRestaurantId}`,
-          customer_id: userId || `user_${Date.now()}`,
-          customer_email: customer_email,
-          // Growth (Profissional) whatever the client sends: the onboarding
-          // sheet always sent plan 'Starter' (Stefano's decision, 2026-11-16).
-          plan_name: TRIAL_PLAN,
-          price_id: 'trial',
-          status: 'trialing',
-          current_period_start: now.toISOString(),
-          current_period_end: trialEnd.toISOString(),
-          trial_end: trialEnd.toISOString()
-        };
-      }
-
-      const { data: subData, error: subError } = await supabaseAdmin
-        .from('subscriptions')
-        .insert(subscriptionData)
-        .select()
-        .single();
-
-      if (subError) {
-        setupScorecard.subscription = 'failed';
-        logger.warn(' Could not create subscription:', subError.message);
-      } else {
-        trialSubscription = subData;
-        setupScorecard.subscription = 'ok';
-        logger.info(' Subscription created:', subscriptionData.plan_name, isBrazil ? '(free/Brazil)' : '(trial)');
-      }
-    } catch (trialError) {
-      setupScorecard.subscription = 'failed';
-      logger.warn(' Subscription creation error (non-fatal):', trialError.message);
-    }
-    progress.step('subscription', setupScorecard.subscription, {
-      plan: isBrazil ? 'free' : 'trial',
-      trial_end: trialSubscription?.trial_end || null,
-    });
-
-    logger.info(' Onboarding complete!');
+    // The initial plan is independent of the provider and can finish even
+    // if the voice request hits its timeout.
+    const planPromise = runSetupStep(config, 'subscription');
+    const voice = await runSetupStep(config, 'voice_agent');
+    setup.voice_agent = voice.status;
+    progress.step('voice_agent', voice.status, { language: finalVoiceLanguage, agent_id: voice.agent_id ?? null });
+    const knowledge = await runSetupStep({ ...config, elevenlabs_agent_id: voice.agent_id }, 'knowledge_base');
+    setup.knowledge_base = knowledge.status;
+    progress.step('knowledge_base', knowledge.status);
+    const subscription = await planPromise;
+    const { status, ...planDetail } = subscription;
+    setup.subscription = status;
+    progress.step('subscription', status, planDetail);
 
     return progress.finish({
       success: true,
-      message: 'Onboarding completed successfully',
       restaurant: {
-        restaurant_id: canonicalRestaurantId,
+        restaurant_id: createdId,
         restaurant_name,
         slug: restaurantSlug,
-        booking_url: `/book/${restaurantSlug}`,
-        record_id: restaurantId,
+        booking_url: bookingUrl,
+        record_id: createdId,
         tables_created: tablesToInsert.length,
-        ai_config_saved: !!userId,
-        trial_active: !!trialSubscription,
-        trial_end: trialSubscription?.trial_end || null,
-        // Lets the final screen open a browser call with THIS agent; the
-        // signed-URL endpoint answers 403 rather than another agent.
-        voice_agent_id: setupScorecard.voice_agent === 'ok' ? agentId : null,
+        ai_config_saved: true,
+        trial_active: status === 'ok',
+        trial_end: subscription.trial_end ?? null,
+        voice_agent_id: voice.agent_id ?? null,
       },
-      // Placar honesto: o cliente decide o que dizer ao dono. "Bem-vindo a
-      // bordo!" sobre um agente de voz que não existe é a pior forma de
-      // descobrir o problema — dias depois, com o telefone tocando sem
-      // resposta.
-      setup: setupScorecard,
+      setup,
     });
   } catch (error) {
     logger.error(' Error:', error);
-    if (tablesAwaitingConfig) {
-      try {
-        await supabaseAdmin.from('tables').delete().eq('restaurant_id', tablesAwaitingConfig);
-        logger.info(' Rolled back tables after an error before the restaurant was saved');
-      } catch (rollbackErr) {
-        logger.warn(' Rollback failed (leaving orphaned tables):', rollbackErr.message);
-      }
-    }
-    if (progress.open) return progress.fail(error.message || 'Failed to complete onboarding');
+    if (progress.open) return progress.fail('Could not finish setup in this connection');
     return res.status(500).json({
       error: 'Failed to complete onboarding',
       message: error.message,

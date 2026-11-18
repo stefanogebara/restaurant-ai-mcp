@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
   user: null as null | { id: string },
   signInWithGoogle: vi.fn(),
   signUpWithEmail: vi.fn(),
-  restaurant: vi.fn(),
+  restaurant: null as null | { restaurant_id: string },
   toastError: vi.fn(),
   openPortal: vi.fn(),
 }));
@@ -22,12 +22,9 @@ vi.mock('../../contexts/AuthContext', () => ({
 vi.mock('../../contexts/ToastContext', () => ({ useToast: () => ({ error: mocks.toastError }) }));
 vi.mock('../../lib/analytics', () => ({ trackPricingPlanClicked: vi.fn(), trackSignupStarted: vi.fn() }));
 vi.mock('../../components/auth/LoginBrandPanel', () => ({ default: () => null }));
-vi.mock('../../lib/supabase', () => {
-  const lookup = {
-    from: () => lookup, select: () => lookup, eq: () => lookup, limit: () => lookup, maybeSingle: mocks.restaurant,
-  };
-  return { supabase: { schema: () => lookup, auth: { onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }) } } };
-});
+vi.mock('../../lib/supabase', () => ({
+  supabase: { auth: { onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }) } },
+}));
 vi.mock('../../services/api', () => ({ authFetch: vi.fn() }));
 vi.mock('../../hooks/usePermission', () => ({ usePermission: () => ({ can: () => true }) }));
 vi.mock('../../hooks/useSubscriptionManage', () => ({
@@ -58,7 +55,10 @@ beforeEach(() => {
   localStorage.clear();
   sessionStorage.clear();
   mocks.user = null;
-  mocks.restaurant.mockResolvedValue({ data: null, error: null });
+  mocks.restaurant = null;
+  vi.mocked(authFetch).mockImplementation(async url => url === '/api/onboarding/status'
+    ? Response.json({ restaurant: mocks.restaurant, steps: {}, needs_recovery: false })
+    : Response.json({ error: 'Checkout unavailable' }, { status: 400 }));
 });
 
 describe('selected plan handoff', () => {
@@ -68,7 +68,7 @@ describe('selected plan handoff', () => {
     expect(await screen.findByText('/login?plan=growth')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: /google/i }));
     expect(mocks.signInWithGoogle).toHaveBeenCalledWith({ plan: 'growth' });
-    expect(authFetch).not.toHaveBeenCalled();
+    expect(vi.mocked(authFetch).mock.calls.some(([url]) => url === '/api/create-checkout-session')).toBe(false);
   });
 
   it('passes the selected tier to email signup and waits for confirmation', async () => {
@@ -79,14 +79,14 @@ describe('selected plan handoff', () => {
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: 'TestPassword1' } });
     fireEvent.click(screen.getByRole('button', { name: /create account/i }));
     await waitFor(() => expect(mocks.signUpWithEmail).toHaveBeenCalledWith('owner@example.com', 'TestPassword1', 'starter'));
-    expect(authFetch).not.toHaveBeenCalled();
+    expect(vi.mocked(authFetch).mock.calls.some(([url]) => url === '/api/create-checkout-session')).toBe(false);
   });
 
   it('carries an OAuth or email confirmation return into onboarding', async () => {
     mocks.user = { id: 'owner' };
     renderRoute('/welcome?plan=scale');
     expect(await screen.findByText('/onboarding?plan=scale')).toBeVisible();
-    expect(authFetch).not.toHaveBeenCalled();
+    expect(vi.mocked(authFetch).mock.calls.some(([url]) => url === '/api/create-checkout-session')).toBe(false);
   });
 
   it('ignores an unrecognized tier', async () => {
@@ -97,16 +97,15 @@ describe('selected plan handoff', () => {
 
   it('requires an explicit click to start Checkout for the selected tier even with an onboarding trial', async () => {
     mocks.user = { id: 'owner' };
-    mocks.restaurant.mockResolvedValue({ data: { id: 'restaurant' }, error: null });
+    mocks.restaurant = { restaurant_id: 'restaurant' };
     vi.mocked(useSubscriptionData).mockReturnValue({
       data: { status: 'trialing', planName: 'Growth', planPrice: '', hasBillingPortal: false },
     } as ReturnType<typeof useSubscriptionData>);
-    vi.mocked(authFetch).mockResolvedValue(new Response(JSON.stringify({ error: 'Checkout unavailable' }), { status: 400 }));
 
     renderRoute('/welcome?plan=growth');
     expect(await screen.findByText('/subscription/manage?plan=growth')).toBeVisible();
     expect(screen.getByText('Selected plan: Professional')).toBeVisible();
-    expect(authFetch).not.toHaveBeenCalled();
+    expect(vi.mocked(authFetch).mock.calls.some(([url]) => url === '/api/create-checkout-session')).toBe(false);
     fireEvent.click(screen.getByRole('button', { name: 'Continue to Stripe Checkout' }));
     expect(authFetch).toHaveBeenCalledWith('/api/create-checkout-session', expect.objectContaining({
       method: 'POST',
@@ -121,12 +120,11 @@ describe('selected plan handoff', () => {
     vi.mocked(useSubscriptionData).mockReturnValue({
       data: { status: 'canceled', planName: 'Starter', planPrice: '', hasBillingPortal: true },
     } as ReturnType<typeof useSubscriptionData>);
-    vi.mocked(authFetch).mockResolvedValue(new Response(JSON.stringify({ error: 'Checkout unavailable' }), { status: 400 }));
 
     renderRoute('/subscription/manage');
     fireEvent.click(screen.getByRole('button', { name: /manage billing/i }));
     expect(mocks.openPortal).toHaveBeenCalledTimes(1);
-    expect(authFetch).not.toHaveBeenCalled();
+    expect(vi.mocked(authFetch).mock.calls.some(([url]) => url === '/api/create-checkout-session')).toBe(false);
     fireEvent.click(screen.getAllByRole('button', { name: 'Resubscribe' })[0]);
     expect(authFetch).toHaveBeenCalledWith('/api/create-checkout-session', expect.objectContaining({
       body: JSON.stringify({ planName: 'Starter' }),

@@ -22,10 +22,12 @@ const draft = {
 };
 const saved = { success: true, restaurant: { restaurant_id: 'new-restaurant', booking_url: '/book/sheet-bistro' },
   setup: { restaurant: 'ok', voice_agent: 'ok', knowledge_base: 'ok', whatsapp_registry: 'ok', subscription: 'ok' } };
-function setup(overrides = {}, route = '/onboarding') {
+async function setup(overrides = {}, route = '/onboarding') {
   localStorage.setItem('onboarding_step:sheet-owner', '1');
   localStorage.setItem('onboarding_data:sheet-owner', JSON.stringify({ ...draft, ...overrides }));
-  return render(<MemoryRouter initialEntries={[route]}><Onboarding /></MemoryRouter>);
+  const view = render(<MemoryRouter initialEntries={[route]}><Onboarding /></MemoryRouter>);
+  await screen.findByRole('button', { name: 'Colocar no ar' });
+  return view;
 }
 function selectDetails() {
   fireEvent.change(screen.getByLabelText('Country'), { target: { value: 'BR' } });
@@ -37,14 +39,33 @@ function payload() {
   const request = api.mock.calls.find(([url]) => url === '/api/onboarding/complete');
   return JSON.parse(String(request?.[1]?.body)) as OnboardingData;
 }
+type LaunchReply = { restaurant: typeof saved.restaurant; setup: Record<string, string> };
+function setupResponses(reply: LaunchReply | null = saved, httpStatus = 200) {
+  let launched = false;
+  api.mockImplementation(async url => {
+    if (url === '/api/onboarding/status') {
+      return Response.json({
+        restaurant: launched && reply ? { ...reply.restaurant, restaurant_name: 'Sheet Bistro', voice_agent_id: null } : null,
+        steps: launched && reply ? Object.fromEntries(Object.entries(reply.setup).map(([key, status]) => [key, { status }])) : {},
+        needs_recovery: Boolean(launched && reply && Object.values(reply.setup).some(status => status !== 'ok')),
+      });
+    }
+    if (url === '/api/onboarding/complete') {
+      launched = Boolean(reply);
+      return Response.json(reply ? { ...reply, success: true } : { success: false, error: 'Could not save setup' }, { status: httpStatus });
+    }
+    return Response.json({ success: false });
+  });
+}
+
 beforeEach(() => {
   localStorage.clear(); vi.clearAllMocks();
-  api.mockImplementation(async url => ({ ok: true, json: async () => url === '/api/onboarding/complete' ? saved : { success: false } }) as Response);
+  setupResponses();
 });
 
 describe('single-sheet launch submission', () => {
   it('submits selected country, edited hours and exactly the explicitly accepted seating, then shows a single completed result', async () => {
-    const view = setup();
+    const view = await setup();
     expect(screen.getByText('Initial hours — please confirm')).toBeVisible();
     expect(screen.queryByText(/do seu Google/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Achamos isto/)).not.toBeInTheDocument();
@@ -76,13 +97,13 @@ describe('single-sheet launch submission', () => {
     expect(localStorage.getItem('onboarding_data:sheet-owner')).toBeNull();
     view.unmount();
     render(<MemoryRouter><Onboarding /></MemoryRouter>);
-    expect(screen.getByRole('heading', { name: 'Your restaurant has been created.' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Your restaurant has been created.' })).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Colocar no ar' })).not.toBeInTheDocument();
     expect(api.mock.calls.filter(([url]) => url === '/api/onboarding/complete')).toHaveLength(1);
   });
 
   it('keeps the selected tier on the setup receipt and offers checkout as a separate action', async () => {
-    const view = setup({ areas: existingAreas }, '/onboarding?plan=scale');
+    const view = await setup({ areas: existingAreas }, '/onboarding?plan=scale');
     expect(screen.getByText('Selected plan: Enterprise')).toBeVisible();
     expect(screen.queryByRole('link', { name: 'Resume checkout' })).not.toBeInTheDocument();
     selectDetails();
@@ -95,11 +116,11 @@ describe('single-sheet launch submission', () => {
 
     view.unmount();
     render(<MemoryRouter><Onboarding /></MemoryRouter>);
-    expect(screen.getByRole('link', { name: 'Resume checkout' })).toHaveAttribute('href', '/subscription/manage?plan=scale');
+    expect(await screen.findByRole('link', { name: 'Resume checkout' })).toHaveAttribute('href', '/subscription/manage?plan=scale');
   });
 
   it('requires explicit acceptance of the declared initial layout when there is no researched capacity', async () => {
-    setup({ profile_data: undefined });
+    await setup({ profile_data: undefined });
     fireEvent.change(screen.getByLabelText('Country'), { target: { value: 'BR' } });
     fireEvent.click(screen.getByRole('radio', { name: /^Direct/ }));
     expect(screen.getByRole('button', { name: 'Colocar no ar' })).toBeDisabled();
@@ -114,9 +135,8 @@ describe('single-sheet launch submission', () => {
   });
 
   it('shows partial readiness without claiming every integration is ready or asking for creation again', async () => {
-    api.mockImplementation(async url => ({ ok: true, json: async () => url === '/api/onboarding/complete'
-      ? { ...saved, setup: { restaurant: 'ok', voice_agent: 'failed', whatsapp_registry: 'ok' } } : {} }) as Response);
-    setup({ areas: existingAreas }); selectDetails();
+    setupResponses({ ...saved, setup: { restaurant: 'ok', voice_agent: 'failed', whatsapp_registry: 'ok' } });
+    await setup({ areas: existingAreas }); selectDetails();
     fireEvent.click(screen.getByRole('button', { name: 'Colocar no ar' }));
     expect(await screen.findByRole('heading', { name: 'Your restaurant has been created.' })).toBeVisible();
     expect(screen.getByText('Voice agent').parentElement).toHaveTextContent('Needs attention');
@@ -126,22 +146,22 @@ describe('single-sheet launch submission', () => {
   });
 
   it.each([false, true])('keeps the sheet retryable on a failed response (HTTP 200: %s)', async http200 => {
-    api.mockResolvedValue({ ok: http200, json: async () => ({ success: false, error: 'Could not save setup' }) } as Response);
-    setup({ areas: existingAreas }); selectDetails();
+    setupResponses(null, http200 ? 200 : 500);
+    await setup({ areas: existingAreas }); selectDetails();
     fireEvent.click(screen.getByRole('button', { name: 'Colocar no ar' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not save setup');
     await waitFor(() => expect(screen.getByRole('button', { name: 'Colocar no ar' })).toBeEnabled());
     expect(screen.queryByRole('heading', { name: 'Your restaurant has been created.' })).not.toBeInTheDocument();
   });
 
-  it('blocks invalid hours and missing country before sending a launch request', () => {
-    setup({ areas: existingAreas });
+  it('blocks invalid hours and missing country before sending a launch request', async () => {
+    await setup({ areas: existingAreas });
     expect(screen.getByRole('button', { name: 'Colocar no ar' })).toBeDisabled();
     selectDetails();
     fireEvent.click(within(screen.getByRole('region', { name: 'Horários' })).getByRole('button', { name: 'Ajustar' }));
     fireEvent.change(screen.getByLabelText('Monday closing time'), { target: { value: '10:00' } });
     expect(screen.getByRole('button', { name: 'Colocar no ar' })).toBeDisabled();
     expect(screen.getByRole('alert')).toBeVisible();
-    expect(api).not.toHaveBeenCalled();
+    expect(api.mock.calls.some(([url]) => url === '/api/onboarding/complete')).toBe(false);
   });
 });

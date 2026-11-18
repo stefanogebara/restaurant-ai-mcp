@@ -73,6 +73,12 @@ const RATE_LIMITS = {
     message: 'Too many requests. Please slow down.',
   },
 
+  onboarding_step_retry: {
+    windowMs: 60 * 1000,
+    maxRequests: 15,
+    message: 'Too many setup attempts. Please wait a moment.',
+  },
+
   // Standard API limits
   api: {
     windowMs: 60 * 1000,      // 1 minute

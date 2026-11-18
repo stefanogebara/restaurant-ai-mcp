@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../../common/ThiingsIcon';
 import { getSheetCopy } from './sheetCopy';
+import type { RetryStep } from '../../../lib/onboardingStatus';
 import { LAUNCH_STEPS, type LaunchStep, type LaunchStepKey, type LaunchSteps } from '../../../lib/onboardingLaunch';
 
 /**
@@ -19,9 +20,11 @@ export interface LaunchStepListProps {
   /** Final statuses (the endpoint's `setup`); events win when both exist. */
   setup?: Record<string, string> | null;
   phase: 'working' | 'done';
+  retrying?: RetryStep | null;
+  onRetry?: (step: RetryStep) => void;
 }
 
-export function LaunchStepList({ steps, setup, phase }: LaunchStepListProps) {
+export function LaunchStepList({ steps, setup, phase, retrying, onRetry }: LaunchStepListProps) {
   const { i18n } = useTranslation();
   const copy = getSheetCopy(i18n.language);
   const languageNames = useMemo(() => {
@@ -37,7 +40,9 @@ export function LaunchStepList({ steps, setup, phase }: LaunchStepListProps) {
 
   function stateOf(key: LaunchStepKey): RowState {
     const status = statusOf(key);
+    if (retrying === key || status === 'working') return 'working';
     if (status === 'ok') return 'done';
+    if (status === 'blocked' || status === 'skipped') return 'waiting';
     if (status === 'unknown') return 'unknown';
     if (status !== undefined) return 'attention';
     if (phase === 'done') return 'unknown';
@@ -46,6 +51,9 @@ export function LaunchStepList({ steps, setup, phase }: LaunchStepListProps) {
 
   function detailOf(key: LaunchStepKey, state: RowState, step?: LaunchStep): string {
     if (state === 'working') return copy.stepWorking;
+    if (step?.status === 'skipped') return copy.stepSkipped;
+    if (step?.status === 'blocked') return copy.stepBlocked;
+    if (step?.status === 'reconcile') return copy.stepReconcile;
     if (state === 'attention') return copy.needsAttention;
     if (state === 'unknown') return copy.notReported;
     if (state !== 'done' || !step) return state === 'done' ? copy.configured : '';
@@ -53,10 +61,14 @@ export function LaunchStepList({ steps, setup, phase }: LaunchStepListProps) {
       return copy.stepTables.replace('{{tables}}', String(step.tables)).replace('{{seats}}', String(step.seats ?? 0));
     }
     if (key === 'voice_agent' && step.language) {
-      const name = languageNames?.of(step.language) || step.language;
-      return copy.stepLanguage.replace('{{language}}', name.toLocaleLowerCase(i18n.language || 'en'));
+      let name = step.language;
+      try { name = languageNames?.of(step.language) || name; } catch { /* show the stored locale */ }
+      const locale = i18n.language || 'en';
+      const localized = /^(pt|es)(-|$)/i.test(locale) ? name.toLocaleLowerCase(locale) : name;
+      return copy.stepLanguage.replace('{{language}}', localized);
     }
     if (key === 'subscription' && step.plan === 'free') return copy.stepFree;
+    if (key === 'subscription' && step.plan === 'trial_ended') return copy.stepTrialEnded;
     if (key === 'subscription' && step.plan === 'trial' && step.trial_end) {
       const end = new Date(step.trial_end);
       if (!Number.isNaN(end.getTime())) return copy.stepTrial.replace('{{date}}', dateFormat.format(end));
@@ -69,9 +81,10 @@ export function LaunchStepList({ steps, setup, phase }: LaunchStepListProps) {
       {LAUNCH_STEPS.map((key) => {
         const state = stateOf(key);
         const detail = detailOf(key, state, steps[key]);
+        const retry = key !== 'restaurant' && onRetry && steps[key]?.retry;
         return (
           <li key={key} data-testid={`launch-step-${key}`} data-state={state}
-            className="flex items-center gap-4 py-4">
+            className="grid grid-cols-[1.5rem_1fr_auto] items-center gap-x-3 py-4">
             <span className="flex h-6 w-6 shrink-0 items-center justify-center" aria-hidden="true">
               {state === 'done' && <ThiingsIcon name="check-circle" pxSize={22} className="text-emerald-600 motion-safe:animate-fade-in-up" />}
               {state === 'attention' && <ThiingsIcon name="alert-circle" pxSize={22} className="text-amber-600" />}
@@ -84,11 +97,18 @@ export function LaunchStepList({ steps, setup, phase }: LaunchStepListProps) {
             <span className={`flex-1 text-[15px] ${state === 'waiting' ? 'text-muted-stone' : 'text-deep-charcoal'}`}>
               {copy[key]}
             </span>
-            <span className={`text-right text-[14px] ${
+            <span className={`max-w-40 text-right text-[14px] ${
               state === 'done' ? 'text-emerald-700' : state === 'attention' ? 'text-amber-700' : 'text-muted-stone'
             }`}>
               {detail}
             </span>
+            {retry && (
+              <button type="button" disabled={Boolean(retrying)}
+                onClick={() => onRetry(key)}
+                className="col-start-2 col-span-2 min-h-11 justify-self-start rounded-full px-1 text-left text-[14px] font-medium text-burgundy underline underline-offset-4 hover:text-burgundy-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-burgundy disabled:opacity-50">
+                {copy.retryStep.replace('{{step}}', copy[key])}
+              </button>
+            )}
           </li>
         );
       })}

@@ -9,6 +9,7 @@ const { checkSubscription, requireFeature } = require('./_lib/subscription-middl
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { validateElevenLabsVoiceId } = require('./_lib/validation');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
+const { runPendingProviderStep } = require('./_services/onboardingRecovery');
 const { createAgent, getOrCreateWebhookSecret } = require('./_services/elevenlabsAgentService');
 
 const logger = createSecureLogger('ElevenLabsAgentCreate');
@@ -77,6 +78,19 @@ module.exports = async (req, res) => {
     const voiceCheck = validateElevenLabsVoiceId(configuredVoice);
     if (!voiceCheck.valid || !config.restaurant_name) {
       return res.status(400).json({ success: false, error: 'Restaurant voice configuration is incomplete' });
+    }
+
+    const tracked = await runPendingProviderStep(config.id, 'voice_agent');
+    if (tracked) {
+      if (tracked.status !== 'ok' || !tracked.agent_id) {
+        const status = ['working', 'reconcile'].includes(tracked.status) ? 409 : 502;
+        return res.status(status).json({ success: false, error: 'Voice setup is incomplete. Check onboarding setup.' });
+      }
+      return res.status(200).json({
+        success: true, agent_id: tracked.agent_id,
+        agent_url: `https://elevenlabs.io/app/conversational-ai/${tracked.agent_id}`,
+        voice_id: configuredVoice, language,
+      });
     }
 
     // The service permits tool creation without headers when secret lookup

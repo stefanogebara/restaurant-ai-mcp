@@ -41,6 +41,14 @@ jest.mock('../_lib/supabase', () => {
     let tabela = null;
     const ctx = { op: null, filtros: {} };
     const chain = {
+      rpc: (name, payload) => {
+        mockDb.ops.push({ op: name, payload });
+        return Promise.resolve(name === 'create_onboarding_restaurant'
+          ? (mockDb.configInsertFalha
+            ? { data: null, error: { code: '22P02', message: 'boom' } }
+            : { data: payload.p_config.id, error: null })
+          : { data: { status: 'ok' }, error: null });
+      },
       schema: (s) => construir(s),
       from: (t) => { tabela = t; return chain; },
       select: () => chain,
@@ -48,6 +56,7 @@ jest.mock('../_lib/supabase', () => {
       update: (p) => { ctx.op = 'update'; ctx.payload = p; return chain; },
       upsert: (p) => { ctx.op = 'upsert'; ctx.payload = p; return chain; },
       delete: () => { ctx.op = 'delete'; return chain; },
+      or: () => chain, gt: () => chain,
       eq: (col, val) => { ctx.filtros[col] = val; return chain; },
       neq: () => chain, in: () => chain, is: () => chain, not: () => chain,
       order: () => chain, limit: () => chain, gte: () => chain, lt: () => chain,
@@ -109,7 +118,6 @@ function resposta() {
 }
 const pedido = () => ({ method: 'POST', headers: { authorization: 'Bearer x' }, body: corpo(), query: {} });
 
-const buscasInfo = () => mockDb.ops.filter((o) => o.tabela === 'restaurant_info' && o.op === 'select');
 const deletesInfo = () => mockDb.ops.filter((o) => o.tabela === 'restaurant_info' && o.op === 'delete');
 
 beforeEach(() => {
@@ -139,12 +147,12 @@ describe('não encostar em restaurant_info', () => {
     // Lido do insert das mesas: o delete prévio (no-op num id recém-gerado)
     // saiu em 15/11/2026.
     await handler(pedido(), resposta());
-    const mesas = mockDb.ops.find((o) => o.tabela === 'tables' && o.op === 'insert')?.payload || [];
+    const payload = mockDb.ops.find((o) => o.op === 'create_onboarding_restaurant').payload;
+    const mesas = payload.p_tables;
     const idDasMesas = mesas[0]?.restaurant_id;
     expect(idDasMesas).toMatch(/^[0-9a-f-]{36}$/i); // uuid gerado, não emprestado
     expect(new Set(mesas.map((m) => m.restaurant_id))).toEqual(new Set([idDasMesas]));
-    const config = mockDb.ops.find((o) => o.tabela === 'restaurant_config' && o.op === 'insert')?.payload;
-    expect(config?.id).toBe(idDasMesas);
+    expect(payload.p_config.id).toBe(idDasMesas);
   });
 });
 
@@ -160,26 +168,12 @@ describe('rollback não apaga o que não criou', () => {
     expect(deletesInfo()).toHaveLength(0); // <<< o dano de 02/08 não se repete
   });
 
-  test('na falha do config, apaga as MESAS e nada de restaurant_info', async () => {
+  test('falha na transação não toca nas mesas por fora da função de criação', async () => {
     mockDb.configInsertFalha = true;
-
     const res = resposta();
     await handler(pedido(), res);
-
-    // Diagnóstico embutido: se falhar, quero ver ONDE parou, não adivinhar.
-    const trilha = mockDb.ops.map((o) => `${o.tabela}.${o.op}`).join(' > ');
-    const erros = mockLogger.error.mock.calls.map(
-      (c) => `${c[0]} :: ${c[1]?.message || c[1]?.stack || JSON.stringify(c[1])}`.slice(0, 260)
-    );
-    const mesasApagadas = mockDb.ops.filter((o) => o.tabela === 'tables' && o.op === 'delete');
-    expect([res.code, res.corpo?.error, deletesInfo().length, mesasApagadas.length >= 1, trilha, erros])
-      .toEqual([500, 'restaurant_config_insert_failed', 0, true, trilha, erros]);
-  });
-
-  test('as mesas são apagadas nos dois casos — essas são sempre nossas', async () => {
-    mockDb.infoExistente = 'info-de-alguem';
-    mockDb.configInsertFalha = true;
-    await handler(pedido(), resposta());
-    expect(mockDb.ops.some((o) => o.tabela === 'tables' && o.op === 'delete')).toBe(true);
+    expect(res.code).toBe(500);
+    expect(mockDb.ops.filter(o => o.tabela === 'tables')).toEqual([]);
+    expect(deletesInfo()).toEqual([]);
   });
 });

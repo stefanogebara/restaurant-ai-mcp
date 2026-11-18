@@ -25,7 +25,7 @@ function createChainableMock(resolvedValue = { data: null, error: null }) {
       return (...args) => {
         calls.push({ method: prop, args });
         if ((prop === 'insert' || prop === 'update') && args[0] && typeof args[0] === 'object') {
-          if ('restaurant_type' in args[0]) capturedConfigWrite = args[0];
+          if ('restaurant_type' in args[0]) mockConfigWrite = args[0];
         }
         return proxy;
       };
@@ -35,53 +35,22 @@ function createChainableMock(resolvedValue = { data: null, error: null }) {
   return proxy;
 }
 
-// Track subscription inserts
-let capturedSubscriptionInsert = null;
-// Track the restaurant_config write (insert/update) so tests can assert what
-// actually lands in the DB — e.g. the restaurant_type vocabulary mapping.
-let capturedConfigWrite = null;
+let capturedSubscriptionInsert;
+let mockConfigWrite;
+let mockExistingConfig;
+let mockCreateError;
+let mockLinkError;
+let mockDemo;
+let mockAttempt;
 
 const mockSupabaseAdmin = {
-  from: jest.fn((table) => {
-    if (table === 'subscriptions') {
-      return {
-        insert: jest.fn((data) => {
-          capturedSubscriptionInsert = data;
-          return {
-            select: jest.fn(() => ({
-              single: jest.fn(() =>
-                Promise.resolve({ data: { ...data, id: 'sub-uuid' }, error: null })
-              ),
-            })),
-          };
-        }),
-      };
-    }
-    if (table === 'tables') {
-      return {
-        delete: jest.fn(() => createChainableMock({ data: null, error: null })),
-        insert: jest.fn(() => createChainableMock({ data: [], error: null })),
-        update: jest.fn(() => createChainableMock({ data: null, error: null })),
-      };
-    }
-    return createChainableMock({ data: null, error: null });
-  }),
-  schema: jest.fn(() => ({
-    from: jest.fn(() =>
-      createChainableMock({ data: { id: 'config-uuid', slug: 'test-restaurant' }, error: null })
-    ),
-  })),
+  rpc: jest.fn(),
+  from: jest.fn(),
+  schema: jest.fn(),
   auth: {
     admin: {
-      listUsers: jest.fn(() =>
-        Promise.resolve({ data: { users: [] }, error: null })
-      ),
-      createUser: jest.fn(() =>
-        Promise.resolve({
-          data: { user: { id: 'user-uuid' } },
-          error: null,
-        })
-      ),
+      listUsers: jest.fn(async () => ({ data: { users: [] }, error: null })),
+      createUser: jest.fn(async () => ({ data: { user: { id: 'user-uuid' } }, error: null })),
     },
   },
 };
@@ -109,24 +78,17 @@ jest.mock('../_lib/rate-limit', () => ({
   checkAndApplyRateLimit: jest.fn().mockResolvedValue(false),
 }));
 
-// Rede fora do alcance do teste. Não é usado na criação de agente, mas outros
-// imports podem disparar fetch — o global cobre todos eles.
-global.fetch = jest.fn(() =>
-  Promise.resolve({
-    ok: false,
-    status: 500,
-    text: () => Promise.resolve('mock error'),
-  })
-);
-
 // Mock elevenlabsAgentService to prevent actual ElevenLabs API calls
 jest.mock('../_services/elevenlabsAgentService', () => ({
   createAgent: jest.fn(() =>
     Promise.resolve({ success: false, error: 'mock: no API key' })
   ),
-  syncKnowledgeBase: jest.fn(() =>
-    Promise.resolve({ success: false, error: 'mock: no agent' })
-  ),
+
+}));
+
+jest.mock('../_lib/elevenlabs-knowledge-base', () => ({
+  buildKnowledgeDoc: () => 'restaurant knowledge',
+  loadKnowledgeBaseData: async () => ({ config: mockConfigWrite, managerFacts: [], menuItems: [] }),
 }));
 
 // ---------------------------------------------------------------------------
@@ -174,9 +136,81 @@ const handler = require('../onboarding/complete');
 // Reset mocks between tests
 // ---------------------------------------------------------------------------
 beforeEach(() => {
-  capturedConfigWrite = null;
   jest.clearAllMocks();
+  require('../_services/elevenlabsAgentService').createAgent.mockReset()
+    .mockResolvedValue({ success: false, error: 'mock: no API key' });
+  process.env.ELEVENLABS_API_KEY = 'test-only';
+  global.fetch = jest.fn(async url => ({
+    ok: true, json: async () => url.endsWith('/knowledge-base/text') ? { id: 'doc-1' } : {},
+  }));
+  mockConfigWrite = null;
   capturedSubscriptionInsert = null;
+  mockExistingConfig = null;
+  mockCreateError = null;
+  mockLinkError = null;
+  mockDemo = null;
+  mockAttempt = {};
+
+  mockSupabaseAdmin.rpc.mockImplementation(async (name, payload) => {
+    if (name === 'create_onboarding_restaurant') {
+      if (mockCreateError) return { data: null, error: mockCreateError };
+      if (mockExistingConfig) return { data: null, error: null };
+      mockConfigWrite = payload.p_config;
+      return { data: payload.p_config.id, error: null };
+    }
+    if (name !== 'apply_onboarding_database_step') throw new Error('Unexpected RPC ' + name);
+    if (payload.p_step === 'whatsapp_registry') return { data: { status: 'ok' }, error: null };
+    const isFree = mockConfigWrite.country === 'BR';
+    capturedSubscriptionInsert = {
+      id: 'sub-uuid',
+      plan_name: isFree ? 'Free' : 'Growth',
+      price_id: isFree ? 'free' : 'trial',
+      status: isFree ? 'active' : 'trialing',
+      current_period_end: isFree ? '2099-12-31' : null,
+      trial_end: isFree ? null : new Date(Date.now() + 14 * 86400000).toISOString(),
+    };
+    return { data: { status: 'ok', subscription: capturedSubscriptionInsert }, error: null };
+  });
+
+  mockSupabaseAdmin.from.mockImplementation(table => {
+    if (table !== 'onboarding_setup_steps') return createChainableMock();
+    const chain = {
+      update(values) { Object.assign(mockAttempt, values); return chain; },
+      eq(field, value) { if (field === 'step') mockAttempt.step = value; return chain; },
+      gt() { return chain; }, or() { return chain; }, select() { return chain; },
+      maybeSingle: async () => ({ data: { ...mockAttempt }, error: null }),
+    };
+    return chain;
+  });
+
+  mockSupabaseAdmin.schema.mockImplementation(() => ({
+    from() {
+      let result;
+      let demoRead = false;
+      const chain = {
+        select() { return chain; },
+        eq(field) { demoRead ||= field === 'demo_token'; return chain; },
+        is() { return chain; },
+        order() { return chain; },
+        or() { return chain; },
+        limit() { return chain; },
+        update(values) {
+          if (mockLinkError && values.elevenlabs_agent_id) {
+            result = { data: null, error: mockLinkError };
+          } else {
+            Object.assign(mockConfigWrite, values);
+            result = { data: mockConfigWrite, error: null };
+          }
+          return chain;
+        },
+        maybeSingle: async () => result ?? {
+          data: demoRead ? mockDemo : mockExistingConfig ?? mockConfigWrite, error: null,
+        },
+        then: resolve => resolve({ data: [], error: null }),
+      };
+      return chain;
+    },
+  }));
 });
 
 // ---------------------------------------------------------------------------
@@ -300,7 +334,7 @@ describe('Explicit supported country is required before any writes', () => {
     [{ country: 'BR' }, 'unsupported country'],
     [['BR'], 'unsupported country'],
   ])('rejects country %p with no persistence or provider work', async (country, reason) => {
-    const { createAgent, syncKnowledgeBase } = require('../_services/elevenlabsAgentService');
+    const { createAgent } = require('../_services/elevenlabsAgentService');
     const { req, res } = mockReqRes({
       ...BASE_BODY,
       country,
@@ -319,10 +353,10 @@ describe('Explicit supported country is required before any writes', () => {
     expect(mockSupabaseAdmin.from).not.toHaveBeenCalled();
     expect(mockSupabaseAdmin.schema).not.toHaveBeenCalled();
     expect(mockSupabaseAdmin.auth.admin.createUser).not.toHaveBeenCalled();
-    expect(capturedConfigWrite).toBeNull();
+    expect(mockConfigWrite).toBeNull();
     expect(capturedSubscriptionInsert).toBeNull();
     expect(createAgent).not.toHaveBeenCalled();
-    expect(syncKnowledgeBase).not.toHaveBeenCalled();
+    expect(mockSupabaseAdmin.rpc).not.toHaveBeenCalled();
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
@@ -335,7 +369,7 @@ describe('Explicit supported country is required before any writes', () => {
       await handler(req, res);
 
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(capturedConfigWrite).toEqual(expect.objectContaining({
+      expect(mockConfigWrite).toEqual(expect.objectContaining({
         country: 'BR', city: 'São Paulo', timezone: 'America/Sao_Paulo', agent_language: 'pt',
       }));
       expect(createAgent).toHaveBeenCalledWith(expect.objectContaining({ language: 'pt' }));
@@ -351,7 +385,7 @@ describe('Explicit supported country is required before any writes', () => {
     const { req, res } = mockReqRes({ ...BASE_BODY, country: 'US' });
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(capturedConfigWrite).toEqual(expect.objectContaining({
+    expect(mockConfigWrite).toEqual(expect.objectContaining({
       country: 'US', timezone: 'America/New_York', agent_language: 'en',
     }));
     expect(capturedSubscriptionInsert.plan_name).toBe('Growth');
@@ -384,11 +418,11 @@ describe('Country resolver stays compatible with the onboarding picker', () => {
     await handler(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(capturedConfigWrite).toEqual(expect.objectContaining({
+    expect(mockConfigWrite).toEqual(expect.objectContaining({
       country: code, agent_language: language, timezone: suggestTimezone(code),
     }));
-    expect(capturedConfigWrite.timezone).not.toBe('UTC');
-    expect(() => new Intl.DateTimeFormat('en', { timeZone: capturedConfigWrite.timezone })).not.toThrow();
+    expect(mockConfigWrite.timezone).not.toBe('UTC');
+    expect(() => new Intl.DateTimeFormat('en', { timeZone: mockConfigWrite.timezone })).not.toThrow();
     expect(createAgent).toHaveBeenCalledWith(expect.objectContaining({ language }));
     expect(capturedSubscriptionInsert.plan_name).toBe(code === 'BR' ? 'Free' : 'Growth');
   });
@@ -404,7 +438,7 @@ describe('Country resolver stays compatible with the onboarding picker', () => {
     const { req, res } = mockReqRes({ ...BASE_BODY, country, city: '' });
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(capturedConfigWrite).toEqual(expect.objectContaining({ country, timezone, agent_language: language }));
+    expect(mockConfigWrite).toEqual(expect.objectContaining({ country, timezone, agent_language: language }));
   });
 });
 
@@ -637,8 +671,7 @@ describe('ElevenLabs agent creation', () => {
 
     // createAgent should have been called with the UUID from configResult, not REST-xxx
     const callArgs = createAgent.mock.calls[0][0];
-    // configResult.id from mock is 'config-uuid'
-    expect(callArgs.restaurantId).toBe('config-uuid');
+    expect(callArgs.restaurantId).toBe(mockConfigWrite.id);
   });
 });
 
@@ -763,8 +796,8 @@ describe('restaurant_type — vocabulário unificado (G0.4)', () => {
     const { req, res } = mockReqRes({ ...BASE_BODY, restaurant_type: 'casual_dining' });
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(capturedConfigWrite).toBeDefined();
-    expect(capturedConfigWrite.restaurant_type).toBe('casual_dining');
+    expect(mockConfigWrite).toBeDefined();
+    expect(mockConfigWrite.restaurant_type).toBe('casual_dining');
   });
 
   test("cozinha do enum do banco ('italian') é preservada", async () => {
@@ -772,14 +805,14 @@ describe('restaurant_type — vocabulário unificado (G0.4)', () => {
     const { req, res } = mockReqRes({ ...BASE_BODY, restaurant_type: 'italian' });
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(capturedConfigWrite.restaurant_type).toBe('italian');
+    expect(mockConfigWrite.restaurant_type).toBe('italian');
   });
 
   test("tile com hífen segue mapeando ('fine-dining' → fine_dining)", async () => {
     authComSub();
     const { req, res } = mockReqRes({ ...BASE_BODY, restaurant_type: 'fine-dining' });
     await handler(req, res);
-    expect(capturedConfigWrite.restaurant_type).toBe('fine_dining');
+    expect(mockConfigWrite.restaurant_type).toBe('fine_dining');
   });
 });
 
@@ -803,22 +836,8 @@ describe('demo_token carrega o conhecimento do demo (G2.1)', () => {
     verifyAuth.mockResolvedValueOnce({ user: { sub: 'user-1', id: 'user-1' } });
   };
 
-  /** Cadeia que serve a busca do demo (maybeSingle) e a escrita do config. */
   function comDemo(demoRow) {
-    const { supabaseAdmin } = require('../_lib/supabase');
-    supabaseAdmin.schema.mockImplementation(() => ({
-      from: () => {
-        const chain = {};
-        chain.select = () => chain;
-        chain.eq = () => chain;
-        chain.limit = () => Promise.resolve({ data: [], error: null });
-        chain.maybeSingle = () => Promise.resolve({ data: demoRow, error: null });
-        chain.single = () => Promise.resolve({ data: { id: 'config-uuid', slug: 'test' }, error: null });
-        chain.insert = (payload) => { if ('restaurant_type' in payload) capturedConfigWrite = payload; return chain; };
-        chain.update = (payload) => { if ('restaurant_type' in payload) capturedConfigWrite = payload; return chain; };
-        return chain;
-      },
-    }));
+    mockDemo = demoRow;
   }
 
   const DEMO = {
@@ -844,9 +863,9 @@ describe('demo_token carrega o conhecimento do demo (G2.1)', () => {
     await handler(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(capturedConfigWrite.agent_language).toBe('es');
-    expect(capturedConfigWrite.ai_config.language).toBe('es-ES');
-    expect(capturedConfigWrite.ai_config.greeting_message).toMatch(/^¡/);
+    expect(mockConfigWrite.agent_language).toBe('es');
+    expect(mockConfigWrite.ai_config.language).toBe('es-ES');
+    expect(mockConfigWrite.ai_config.greeting_message).toMatch(/^¡/);
     expect(createAgent).toHaveBeenCalledWith(expect.objectContaining({ language: 'es' }));
   });
 
@@ -862,9 +881,9 @@ describe('demo_token carrega o conhecimento do demo (G2.1)', () => {
     await handler(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(capturedConfigWrite.agent_language).toBe('pt');
-    expect(capturedConfigWrite.ai_config.language).toBe('pt-BR');
-    expect(capturedConfigWrite.ai_config.greeting_message).toMatch(/^Obrigado/);
+    expect(mockConfigWrite.agent_language).toBe('pt');
+    expect(mockConfigWrite.ai_config.language).toBe('pt-BR');
+    expect(mockConfigWrite.ai_config.greeting_message).toMatch(/^Obrigado/);
     expect(createAgent).toHaveBeenCalledWith(expect.objectContaining({ language: 'pt' }));
   });
 
@@ -878,8 +897,8 @@ describe('demo_token carrega o conhecimento do demo (G2.1)', () => {
     await handler(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(capturedConfigWrite.agent_language).toBe('fr');
-    expect(capturedConfigWrite.ai_config.language).toBe('fr-FR');
+    expect(mockConfigWrite.agent_language).toBe('fr');
+    expect(mockConfigWrite.ai_config.language).toBe('fr-FR');
     expect(createAgent).toHaveBeenCalledWith(expect.objectContaining({ language: 'fr' }));
   });
 
@@ -891,8 +910,8 @@ describe('demo_token carrega o conhecimento do demo (G2.1)', () => {
     const { req, res } = mockReqRes({ ...BASE_BODY, country: 'Spain', selected_voice_language: value });
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(capturedConfigWrite.agent_language).toBe('es');
-    expect(capturedConfigWrite.ai_config.language).toBe('es-ES');
+    expect(mockConfigWrite.agent_language).toBe('es');
+    expect(mockConfigWrite.ai_config.language).toBe('es-ES');
   });
 
   // ── A folha de confirmação ───────────────────────────────────────────────
@@ -927,7 +946,7 @@ describe('demo_token carrega o conhecimento do demo (G2.1)', () => {
     await handler(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    const p = capturedConfigWrite.restaurant_profile;
+    const p = mockConfigWrite.restaurant_profile;
     expect(p).toBeDefined();
     expect(p._fonte).toBe('pesquisa');
     expect(p.persona_summary).toBe('Restaurante nordestino contemporâneo.');
@@ -944,8 +963,8 @@ describe('demo_token carrega o conhecimento do demo (G2.1)', () => {
     const { req, res } = mockReqRes({ ...BASE_BODY, demo_token: 'tok-1', voz_preset: 'fine_dining' });
     await handler(req, res);
 
-    expect(capturedConfigWrite.ai_personality._derived_from_preset).toBe('fine_dining');
-    expect(capturedConfigWrite.ai_personality.communication_style).toBe('formal');
+    expect(mockConfigWrite.ai_personality._derived_from_preset).toBe('fine_dining');
+    expect(mockConfigWrite.ai_personality.communication_style).toBe('formal');
   });
 
   // Quem respondeu as doze perguntas não pode ter o trabalho descartado.
@@ -959,7 +978,7 @@ describe('demo_token carrega o conhecimento do demo (G2.1)', () => {
     });
     await handler(req, res);
 
-    expect(capturedConfigWrite.restaurant_profile).toEqual(daEntrevista);
+    expect(mockConfigWrite.restaurant_profile).toEqual(daEntrevista);
   });
 
   // Perfil é enriquecimento, não requisito: sem pesquisa o restaurante nasce
@@ -971,7 +990,7 @@ describe('demo_token carrega o conhecimento do demo (G2.1)', () => {
     await handler(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(capturedConfigWrite.restaurant_profile).toBeUndefined();
+    expect(mockConfigWrite.restaurant_profile).toBeUndefined();
   });
 
   test('persona, scraped_data e menu_url do demo entram no config novo', async () => {
@@ -981,11 +1000,11 @@ describe('demo_token carrega o conhecimento do demo (G2.1)', () => {
     await handler(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(capturedConfigWrite.ai_personality).toEqual(DEMO.ai_personality);
+    expect(mockConfigWrite.ai_personality).toEqual(DEMO.ai_personality);
     // É isto que o syncKnowledgeBase lia vazio até agora.
-    expect(capturedConfigWrite.scraped_data.menu.popular_dishes).toEqual(['baião de dois']);
-    expect(capturedConfigWrite.scraped_data.top_reviews).toHaveLength(1);
-    expect(capturedConfigWrite.menu_url).toBe('https://exemplo.com/cardapio.pdf');
+    expect(mockConfigWrite.scraped_data.menu.popular_dishes).toEqual(['baião de dois']);
+    expect(mockConfigWrite.scraped_data.top_reviews).toHaveLength(1);
+    expect(mockConfigWrite.menu_url).toBe('https://exemplo.com/cardapio.pdf');
   });
 
   test('max/min party do demo vencem os hardcoded; escolha do Passo 3 continua vencendo', async () => {
@@ -996,9 +1015,9 @@ describe('demo_token carrega o conhecimento do demo (G2.1)', () => {
 
     // 12 era hardcoded no payload e discordava do 8 que a recepcionista do
     // demo usou a conversa inteira.
-    expect(capturedConfigWrite.reservation_settings.max_party_size).toBe(8);
+    expect(mockConfigWrite.reservation_settings.max_party_size).toBe(8);
     // advance_booking_days É escolha do dono no Passo 3 — o demo não sobrepõe.
-    expect(capturedConfigWrite.reservation_settings.advance_booking_days).toBe(60);
+    expect(mockConfigWrite.reservation_settings.advance_booking_days).toBe(60);
   });
 
   test('sem demo_token nada é carregado', async () => {
@@ -1007,8 +1026,8 @@ describe('demo_token carrega o conhecimento do demo (G2.1)', () => {
     const { req, res } = mockReqRes({ ...BASE_BODY });
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(capturedConfigWrite.ai_personality).toBeUndefined();
-    expect(capturedConfigWrite.scraped_data).toBeUndefined();
+    expect(mockConfigWrite.ai_personality).toBeUndefined();
+    expect(mockConfigWrite.scraped_data).toBeUndefined();
   });
 
   test('idioma do demo só entra quando a resolução pelo país caiu em en', async () => {
@@ -1017,14 +1036,14 @@ describe('demo_token carrega o conhecimento do demo (G2.1)', () => {
     comDemo(DEMO);
     const { req, res } = mockReqRes({ ...BASE_BODY, country: 'US', phone_number: '+55 11 98765-4321', demo_token: 'tok-1' });
     await handler(req, res);
-    expect(capturedConfigWrite.agent_language).toBe('pt');
+    expect(mockConfigWrite.agent_language).toBe('pt');
 
     // Já quando o país resolve sozinho, quem manda é o país.
     authComSub();
     comDemo({ ...DEMO, agent_language: 'pt' });
     const r2 = mockReqRes({ ...BASE_BODY, country: 'Spain', demo_token: 'tok-1' });
     await handler(r2.req, r2.res);
-    expect(capturedConfigWrite.agent_language).toBe('es');
+    expect(mockConfigWrite.agent_language).toBe('es');
   });
 
   test('falha ao ler o demo não derruba o cadastro', async () => {
@@ -1038,8 +1057,8 @@ describe('demo_token carrega o conhecimento do demo (G2.1)', () => {
         chain.limit = () => Promise.resolve({ data: [], error: null });
         chain.maybeSingle = () => Promise.reject(new Error('boom'));
         chain.single = () => Promise.resolve({ data: { id: 'config-uuid', slug: 'test' }, error: null });
-        chain.insert = (payload) => { capturedConfigWrite = payload; return chain; };
-        chain.update = (payload) => { capturedConfigWrite = payload; return chain; };
+        chain.insert = (payload) => { mockConfigWrite = payload; return chain; };
+        chain.update = (payload) => { mockConfigWrite = payload; return chain; };
         return chain;
       },
     }));
@@ -1075,233 +1094,53 @@ describe('placar da instalação (G3.2)', () => {
     expect(body.setup.restaurant).toBe('ok');
   });
 
-  test('agente que estoura o teto é reportado como timeout, não como sucesso', async () => {
-    jest.useFakeTimers();
-    const { createAgent } = require('../_services/elevenlabsAgentService');
-    createAgent.mockImplementationOnce(() => new Promise(() => {})); // nunca resolve
-    authComSub();
+  test('um resultado incerto do provedor é reportado para reconciliação', async () => {
+    require('../_services/elevenlabsAgentService').createAgent.mockResolvedValueOnce({ success: false, uncertain: true });
     const { req, res } = mockReqRes({ ...BASE_BODY });
-    const p = handler(req, res);
-    await jest.advanceTimersByTimeAsync(16000);
-    await p;
-    jest.useRealTimers();
-
-    const body = res.json.mock.calls[0][0];
-    expect(body.setup.voice_agent).toBe('timeout');
-    // Mesmo assim o restaurante existe: nunca vira erro fatal.
+    await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json.mock.calls[0][0].setup.voice_agent).toBe('reconcile');
   });
 });
 
-describe('guarda de restaurante duplicado (G3.3)', () => {
-  const authComSub = () => {
-    const { verifyAuth } = require('../_lib/auth');
-    verifyAuth.mockResolvedValueOnce({ user: { sub: 'user-1', id: 'user-1' } });
-  };
-
-  function comConfigExistente(existente) {
-    const { supabaseAdmin } = require('../_lib/supabase');
-    supabaseAdmin.schema.mockImplementation(() => ({
-      from: () => {
-        const chain = {};
-        chain.select = () => chain;
-        chain.eq = () => chain;
-        chain.limit = () => Promise.resolve({ data: [], error: null });
-        chain.maybeSingle = () => Promise.resolve({ data: null, error: null });
-        chain.single = () => Promise.resolve({ data: existente, error: null });
-        chain.insert = (payload) => { capturedConfigWrite = payload; return chain; };
-        chain.update = (payload) => { capturedConfigWrite = payload; return chain; };
-        return chain;
-      },
-    }));
-  }
-
-  test('restaurante JÁ concluído não é sobrescrito em silêncio — 409', async () => {
-    authComSub();
-    comConfigExistente({ id: 'rest-vivo', slug: 'mocoto', onboarding_completed: true });
-    const { req, res } = mockReqRes({ ...BASE_BODY });
-    await handler(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(409);
-    const body = res.json.mock.calls[0][0];
-    expect(body.error).toBe('restaurant_already_exists');
-    // O cliente recebe para onde mandar o dono.
-    expect(body.restaurant.slug).toBe('mocoto');
-  });
-
-  test('confirm_overwrite explícito destrava (escape hatch de suporte)', async () => {
-    authComSub();
-    comConfigExistente({ id: 'rest-vivo', slug: 'mocoto', onboarding_completed: true });
-    const { req, res } = mockReqRes({ ...BASE_BODY, confirm_overwrite: true });
-    await handler(req, res);
-    expect(res.status).toHaveBeenCalledWith(200);
-  });
-
-  test('config existente mas onboarding NÃO concluído segue atualizando', async () => {
-    authComSub();
-    comConfigExistente({ id: 'rest-parcial', slug: 'x', onboarding_completed: false });
-    const { req, res } = mockReqRes({ ...BASE_BODY });
-    await handler(req, res);
-    expect(res.status).toHaveBeenCalledWith(200);
-  });
-});
-
-// ============================================================
-// Nada fica pela metade (15/11/2026). A auditoria do onboarding achou três
-// furos no código (não na produção — os 72 órfãos de lá são de demos): as
-// mesas eram gravadas ANTES da guarda de duplicado, um erro entre as mesas e
-// o config não desfazia nada, e o vínculo do agente ao restaurante podia
-// falhar calado com o placar dizendo "ok".
-// ============================================================
-describe('onboarding não deixa nada pela metade', () => {
-  const { supabaseAdmin } = require('../_lib/supabase');
-  const originalFrom = supabaseAdmin.from.getMockImplementation();
-  let ops;
-
-  beforeEach(() => {
-    ops = [];
-    // The endpoint keys the owner by user.sub (as the G3.3 tests above).
-    require('../_lib/auth').verifyAuth.mockResolvedValueOnce({ user: { sub: 'user-1', id: 'user-1' } });
-    supabaseAdmin.from.mockImplementation((table) => {
-      const api = originalFrom(table);
-      if (table !== 'tables') return api;
-      return {
-        ...api,
-        insert: (...a) => { ops.push('insert'); return api.insert(...a); },
-        delete: (...a) => { ops.push('delete'); return api.delete(...a); },
-      };
-    });
-  });
-  afterAll(() => { supabaseAdmin.from.mockImplementation(originalFrom); });
-
-  // restaurant_config: guarda lê `existing`; insert devolve o restaurante
-  // novo ou o erro pedido; o update do vínculo do agente devolve `linkResult`.
-  function configDb({ existing = null, insertError = null, linkResult = { data: null, error: null } } = {}) {
-    supabaseAdmin.schema.mockImplementation(() => ({
-      from: () => {
-        let wrote = null;
-        const chain = {};
-        chain.select = () => chain;
-        chain.limit = () => Promise.resolve({ data: [], error: null });
-        chain.maybeSingle = () => Promise.resolve({ data: null, error: null });
-        chain.insert = (payload) => { wrote = 'insert'; capturedConfigWrite = payload; return chain; };
-        chain.update = (payload) => {
-          wrote = 'update';
-          if ('elevenlabs_agent_id' in payload) return { eq: () => Promise.resolve(linkResult) };
-          capturedConfigWrite = payload;
-          return chain;
-        };
-        chain.eq = () => chain;
-        chain.single = () => {
-          if (wrote === 'insert') return Promise.resolve(insertError
-            ? { data: null, error: insertError }
-            : { data: { id: 'rest-novo', slug: 'test-restaurant' }, error: null });
-          return Promise.resolve({ data: existing, error: null });
-        };
-        return chain;
-      },
-    }));
-  }
-
-  test('conta com restaurante concluído recebe 409 antes de qualquer mesa ser gravada', async () => {
-    configDb({ existing: { id: 'rest-vivo', slug: 'mocoto', onboarding_completed: true } });
-    const { req, res } = mockReqRes({ ...BASE_BODY });
+describe('atomic restaurant creation', () => {
+  test.each([false, true])('existing config is protected even with overwrite=%s', async (confirm_overwrite) => {
+    mockExistingConfig = { id: 'rest-vivo', slug: 'mocoto', onboarding_completed: true };
+    const { req, res } = mockReqRes({ ...BASE_BODY, confirm_overwrite });
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(409);
-    expect(ops).toEqual([]);
-  });
-
-  test('um erro depois das mesas e antes do restaurante desfaz as mesas', async () => {
-    configDb();
-    // Membro sem papel quebra a montagem do config, depois das mesas gravadas.
-    const { req, res } = mockReqRes({ ...BASE_BODY, team_members: [{ email: 'a@b.test' }] });
-    await handler(req, res);
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(ops).toEqual(['insert', 'delete']);
-  });
-
-  test('falha ao gravar o restaurante desfaz as mesas uma vez', async () => {
-    configDb({ insertError: { message: 'insert failed', code: 'XX000' } });
-    const { req, res } = mockReqRes({ ...BASE_BODY });
-    await handler(req, res);
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(ops).toEqual(['insert', 'delete']);
-  });
-
-  test('cadastro normal grava as mesas uma vez e não apaga nada', async () => {
-    configDb();
-    const { req, res } = mockReqRes({ ...BASE_BODY });
-    await handler(req, res);
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(ops).toEqual(['insert']);
-  });
-
-  test('agente criado mas não vinculado ao restaurante aparece como falha, não "ok"', async () => {
-    const { createAgent } = require('../_services/elevenlabsAgentService');
-    createAgent.mockResolvedValueOnce({ success: true, agent_id: 'agent_novo_0001' });
-    configDb({ linkResult: { data: null, error: { message: 'update failed' } } });
-    const { req, res } = mockReqRes({ ...BASE_BODY });
-    await handler(req, res);
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json.mock.calls[0][0].setup.voice_agent).toBe('failed');
-  });
-
-  test('agente criado e vinculado continua "ok"', async () => {
-    const { createAgent } = require('../_services/elevenlabsAgentService');
-    createAgent.mockResolvedValueOnce({ success: true, agent_id: 'agent_novo_0001' });
-    configDb();
-    const { req, res } = mockReqRes({ ...BASE_BODY });
-    await handler(req, res);
-    expect(res.json.mock.calls[0][0].setup.voice_agent).toBe('ok');
-  });
-});
-
-// 2026-11-16 (Stefano's decision): outside Brazil the 14-day trial starts on
-// Growth (Profissional), whatever the client sends — the sheet always sent
-// plan 'Starter'. The WhatsApp registry records the same plan and status.
-describe('trial plan and registry status', () => {
-  const { supabaseAdmin } = require('../_lib/supabase');
-  const originalFrom = supabaseAdmin.from.getMockImplementation();
-  let registryWrite;
-
-  beforeEach(() => {
-    registryWrite = null;
-    require('../_lib/auth').verifyAuth.mockResolvedValueOnce({ user: { sub: 'user-1', id: 'user-1' } });
-    supabaseAdmin.schema.mockImplementation(() => ({
-      from: () => {
-        let wrote = null;
-        const chain = {};
-        chain.select = () => chain; chain.eq = () => chain;
-        chain.limit = () => Promise.resolve({ data: [], error: null });
-        chain.maybeSingle = () => Promise.resolve({ data: null, error: null });
-        chain.insert = () => { wrote = 'insert'; return chain; };
-        chain.update = (p) => ('elevenlabs_agent_id' in p ? { eq: () => Promise.resolve({ error: null }) } : chain);
-        chain.single = () => Promise.resolve(wrote === 'insert'
-          ? { data: { id: 'rest-novo', slug: 'test-restaurant', restaurant_name: 'Test Restaurant' }, error: null }
-          : { data: null, error: null });
-        return chain;
-      },
-    }));
-    supabaseAdmin.from.mockImplementation((table) => {
-      if (table === 'restaurant_registry') return { upsert: (p) => { registryWrite = p; return Promise.resolve({ error: null }); } };
-      return originalFrom(table);
+    expect(res.json.mock.calls[0][0]).toMatchObject({
+      error: 'restaurant_already_exists', restaurant: { slug: 'mocoto' },
     });
+    expect(mockSupabaseAdmin.rpc).toHaveBeenCalledTimes(1);
+    expect(require('../_services/elevenlabsAgentService').createAgent).not.toHaveBeenCalled();
   });
-  afterAll(() => { supabaseAdmin.from.mockImplementation(originalFrom); });
 
-  test('outside Brazil: Growth trial even when the client sends Starter, registry growth/trialing', async () => {
-    const { req, res } = mockReqRes({ ...BASE_BODY, country: 'Spain', city: 'Madrid', phone_number: '+34612345678', plan: 'Starter' });
+  test('a failed atomic insert never starts provisioning or compensating deletes', async () => {
+    mockCreateError = { code: 'XX000', message: 'insert failed' };
+    const { req, res } = mockReqRes(BASE_BODY);
     await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(mockSupabaseAdmin.rpc).toHaveBeenCalledTimes(1);
+    expect(mockSupabaseAdmin.from).not.toHaveBeenCalledWith('tables');
+  });
+
+  test('config and tables use the same generated restaurant ID', async () => {
+    const { req, res } = mockReqRes(BASE_BODY);
+    await handler(req, res);
+    const [, { p_config, p_tables }] = mockSupabaseAdmin.rpc.mock.calls[0];
+    expect(new Set(p_tables.map(table => table.restaurant_id))).toEqual(new Set([p_config.id]));
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(capturedSubscriptionInsert).toMatchObject({ plan_name: 'Growth', status: 'trialing', price_id: 'trial' });
-    expect(registryWrite).toMatchObject({ plan_name: 'growth', subscription_status: 'trialing' });
   });
 
-  test('Brazil: free plan, registry free/active', async () => {
-    const { req, res } = mockReqRes({ ...BASE_BODY, plan: 'Starter' });
+  test('an agent that could not be linked is available for retry and withheld from the browser', async () => {
+    mockLinkError = { message: 'update failed' };
+    require('../_services/elevenlabsAgentService').createAgent.mockResolvedValueOnce({ success: true, agent_id: 'agent_novo_0001' });
+    const { req, res } = mockReqRes(BASE_BODY);
     await handler(req, res);
-    expect(capturedSubscriptionInsert).toMatchObject({ plan_name: 'Free', status: 'active' });
-    expect(registryWrite).toMatchObject({ plan_name: 'free', subscription_status: 'active' });
+    expect(res.json.mock.calls[0][0]).toMatchObject({
+      setup: { voice_agent: 'failed' }, restaurant: { voice_agent_id: null },
+    });
   });
 });
 
@@ -1320,9 +1159,8 @@ describe('live setup progress (Accept: text/event-stream)', () => {
   }
 
   test('one event per result, in setup order, then the same body as the JSON path', async () => {
-    const { createAgent, syncKnowledgeBase } = require('../_services/elevenlabsAgentService');
+    const { createAgent } = require('../_services/elevenlabsAgentService');
     createAgent.mockResolvedValueOnce({ success: true, agent_id: 'agent-live-1' });
-    syncKnowledgeBase.mockResolvedValueOnce({ success: true, documentId: 'doc-1' });
     // An owner id makes the handler save the config, which the agent link and knowledge sync need.
     require('../_lib/auth').verifyAuth.mockResolvedValueOnce({ user: { sub: 'owner-uuid' } });
 

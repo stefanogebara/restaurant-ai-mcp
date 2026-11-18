@@ -21,6 +21,7 @@ vi.mock('../../components/voice/useVoiceAgent', () => ({
 const voiceOptions: Array<{ agentId: string; useSignedUrl?: boolean }> = [];
 
 const api = vi.mocked(authFetch);
+const noRestaurant = { restaurant: null, steps: {}, needs_recovery: false };
 const originalFetch = globalThis.fetch;
 afterAll(() => { globalThis.fetch = originalFetch; });
 
@@ -54,6 +55,7 @@ function controlledStream() {
 
 beforeEach(() => {
   localStorage.clear(); vi.clearAllMocks(); voiceOptions.length = 0;
+  api.mockImplementation(async () => Response.json(noRestaurant));
 });
 
 describe('the onboarding sheet goes live in front of the owner', () => {
@@ -63,10 +65,10 @@ describe('the onboarding sheet goes live in front of the owner', () => {
     const stream = controlledStream();
     api.mockImplementation(async (url) => (url === '/api/onboarding/complete'
       ? stream.response
-      : { ok: true, json: async () => ({}) } as Response));
+      : Response.json(noRestaurant)));
     render(<MemoryRouter><Onboarding /></MemoryRouter>);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Colocar no ar' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Colocar no ar' }));
     expect(await screen.findByRole('heading', { name: 'Setting up Casa Azul.' })).toBeVisible();
     const [, init] = api.mock.calls.find(([url]) => url === '/api/onboarding/complete')!;
     expect(new Headers(init?.headers).get('Accept')).toBe('text/event-stream');
@@ -90,16 +92,14 @@ describe('the onboarding sheet goes live in front of the owner', () => {
     stream.close();
 
     expect(await screen.findByRole('heading', { name: 'Casa Azul is live.' })).toBeVisible();
-    expect(screen.getByTestId('launch-step-voice_agent')).toHaveTextContent(/speaks portuguese/i);
+    expect(screen.getByTestId('launch-step-voice_agent')).toHaveTextContent('speaks Portuguese');
     expect(screen.getByTestId('launch-step-subscription')).toHaveTextContent('free plan');
     expect(voiceOptions.at(-1)).toMatchObject({ agentId: 'agent_casa1', useSignedUrl: true });
     fireEvent.click(screen.getByRole('button', { name: 'Call her' }));
     expect(startCall).toHaveBeenCalled();
     expect(screen.getByRole('img', { name: 'QR code for your booking link' })).toHaveAttribute('src', '/api/booking-qr?slug=casa-azul');
 
-    // A reload shows the same finished screen, with the call still offered.
-    const receipt = JSON.parse(localStorage.getItem('onboarding_data:live-owner:completed')!);
-    expect(receipt).toMatchObject({ restaurantId: 'r-1', agentId: 'agent_casa1', name: 'Casa Azul' });
+    expect(localStorage.getItem('onboarding_data:live-owner:completed')).toBeNull();
   });
 
   it('a new owner starts with the Google search, and the pick opens the sheet with the Google photo', async () => {
@@ -112,7 +112,7 @@ describe('the onboarding sheet goes live in front of the owner', () => {
     })) as unknown as typeof fetch;
     render(<MemoryRouter><Onboarding /></MemoryRouter>);
 
-    expect(screen.getByRole('heading', { name: 'Which restaurant is yours?' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Which restaurant is yours?' })).toBeVisible();
     fireEvent.change(screen.getByLabelText(/Restaurant name/i), { target: { value: 'Casa Azul' } });
     fireEvent.change(screen.getByLabelText(/City/i), { target: { value: 'Lisboa' } });
     fireEvent.click(screen.getByRole('button', { name: /Search Google Maps/i }));
@@ -126,16 +126,16 @@ describe('the onboarding sheet goes live in front of the owner', () => {
     expect(within(hours).queryByText(/do seu google|from your google/i)).not.toBeInTheDocument();
   });
 
-  it('returns to the blank confirmation sheet after a new restaurant skips search and reloads', () => {
+  it('returns to the blank confirmation sheet after a new restaurant skips search and reloads', async () => {
     const tree = <MemoryRouter><Onboarding /></MemoryRouter>;
     const first = render(tree);
-    fireEvent.click(screen.getByRole('button', { name: /skip.*fill/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /skip.*fill/i }));
     expect(screen.queryByRole('heading', { name: 'Which restaurant is yours?' })).not.toBeInTheDocument();
 
     first.unmount();
     render(tree);
     expect(screen.queryByRole('heading', { name: 'Which restaurant is yours?' })).not.toBeInTheDocument();
-    expect(screen.getByText('Initial hours — please confirm')).toBeVisible();
+    expect(await screen.findByText('Initial hours — please confirm')).toBeVisible();
   });
 
   it('a demo convert never sees the Google search', () => {
