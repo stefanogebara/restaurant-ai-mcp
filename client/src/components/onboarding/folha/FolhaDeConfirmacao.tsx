@@ -39,7 +39,8 @@ export interface FolhaDeConfirmacaoProps {
   enviando?: boolean;
   /** De onde vieram os dados: muda a frase da fonte, não o layout. */
   veioDoDemo?: boolean;
-  origem?: 'manual' | 'demo' | 'google';
+  origem?: 'manual' | 'demo' | 'google' | 'website';
+  origemDosHorarios?: 'google' | 'website';
   /** What Google showed when the owner picked the restaurant (never saved). */
   google?: { photoRef?: string | null; rating?: number | null; reviews?: number | null } | null;
 }
@@ -59,6 +60,7 @@ export function FolhaDeConfirmacao({
   enviando = false,
   veioDoDemo = false,
   origem,
+  origemDosHorarios,
   google = null,
 }: FolhaDeConfirmacaoProps) {
   const { t, i18n } = useTranslation();
@@ -205,7 +207,8 @@ export function FolhaDeConfirmacao({
 
         <BlocoConfirmavel
           titulo={t('onboarding.folha.horarios', 'Horários')}
-          fonte={fonte || copy.initialHours}
+          fonte={origemDosHorarios === 'google' ? t('onboarding.folha.fonteGoogle')
+            : origemDosHorarios === 'website' ? copy.websiteHours : copy.initialHours}
           pendente={pendente('business_hours')}
           resumo={
             diasAbertos.length

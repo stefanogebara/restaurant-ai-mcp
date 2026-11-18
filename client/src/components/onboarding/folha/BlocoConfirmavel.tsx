@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 /**
@@ -46,12 +46,13 @@ export function BlocoConfirmavel({
   abertoInicialmente = false,
 }: BlocoConfirmavelProps) {
   const { t } = useTranslation();
+  const headingId = useId();
   const [aberto, setAberto] = useState(abertoInicialmente || pendente);
 
   return (
     <section
       className={`py-5 ${pendente ? 'border-l-2 border-amber-500 pl-4 -ml-4' : ''}`}
-      aria-labelledby={`bloco-${titulo}`}
+      aria-labelledby={headingId}
     >
       <div className="flex items-baseline justify-between gap-4">
         <div className="min-w-0">
@@ -60,7 +61,7 @@ export function BlocoConfirmavel({
               vez do token do DESIGN.md. Só apareceu no screenshot — no texto
               da página a diferença é invisível. */}
           <h2
-            id={`bloco-${titulo}`}
+            id={headingId}
             className="font-sans text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone"
           >
             {titulo}

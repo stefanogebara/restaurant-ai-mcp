@@ -53,6 +53,17 @@ interface SheetReceipt {
   name?: string | null;
 }
 
+type SheetEntry = 'manual' | 'google' | 'google-hours' | 'website' | 'website-hours';
+
+function readSheetEntry(key: string): SheetEntry | null {
+  try {
+    const stored = localStorage.getItem(key);
+    if (stored === 'manual' || stored === 'google' || stored === 'google-hours'
+      || stored === 'website' || stored === 'website-hours') return stored;
+  } catch { /* the search is still available */ }
+  return null;
+}
+
 function readSheetReceipt(key: string): SheetReceipt | null {
   try {
     const receipt = JSON.parse(localStorage.getItem(key) || 'null');
@@ -230,7 +241,9 @@ export default function Onboarding() {
   //
   // The skip button on Step 0 also flips this so a brand-new restaurant with
   // no Google presence can proceed.
-  const [step0Done, setStep0Done] = useState(restored.step > 1);
+  const sheetEntryKey = `${draftDataKey}:entry`;
+  const [sheetEntry, setSheetEntry] = useState(() => readSheetEntry(sheetEntryKey));
+  const [step0Done, setStep0Done] = useState(restored.step > 1 || Boolean(sheetEntry));
   const [hasPrefillFromScrape, setHasPrefillFromScrape] = useState(false);
   // Na folha, a busca no Google vem primeiro — exceto para quem veio do demo
   // (o token decide já no primeiro render, sem piscar a busca antes do prefill).
@@ -238,11 +251,21 @@ export default function Onboarding() {
   // Foto e nota do Google para o topo da folha. Só exibição: não vai ao rascunho nem ao servidor.
   const [googleCard, setGoogleCard] = useState<{ photoRef?: string | null; rating?: number | null; reviews?: number | null } | null>(null);
 
+  function rememberSheetEntry(entry: SheetEntry) {
+    setSheetEntry(entry);
+    try { localStorage.setItem(sheetEntryKey, entry); } catch { /* continue in this tab */ }
+    setStep0Done(true);
+  }
+
   function applyAndAdvancePastStep0(scraped: ScrapedRestaurant) {
+    const imported = applyScrapedData(scraped);
+    const source = scraped.source === 'website' ? 'website' : 'google';
+    const hasHours = Boolean(imported.business_hours?.some(day => day.is_open));
+    rememberSheetEntry(hasHours ? `${source}-hours` : source);
     setGoogleCard({ photoRef: scraped.photo_ref ?? null, rating: scraped.rating ?? null, reviews: scraped.review_count ?? null });
     setOnboardingData((prev) => ({
       ...prev,
-      ...applyScrapedData(scraped),
+      ...imported,
       // Porte estimado pelo Google (avaliações + faixa de preço) para o passo
       // de mesas chegar proposto. Um questionário já respondido pelo dono
       // (seat_count preenchido) SEMPRE vence a estimativa.
@@ -251,7 +274,6 @@ export default function Onboarding() {
         : { ...prev.profile_data, ...(estimarPerfilPeloPorte(scraped) ?? {}) },
     }));
     setHasPrefillFromScrape(true);
-    setStep0Done(true);
   }
 
   // Once onboarding completes we stop persisting — otherwise the persist
@@ -490,6 +512,7 @@ export default function Onboarding() {
       completedRef.current = true;
       localStorage.removeItem(draftDataKey);
       localStorage.removeItem(draftStepKey);
+      localStorage.removeItem(sheetEntryKey);
       // Legacy unscoped keys — may still exist for pre-migration drafts.
       localStorage.removeItem(LS_ONBOARDING_DATA);
       localStorage.removeItem(LS_ONBOARDING_STEP);
@@ -581,7 +604,7 @@ export default function Onboarding() {
     return (
       <div className="min-h-screen flex flex-col">
         {subscribeBanner}
-        <FindOnGoogle onFound={applyAndAdvancePastStep0} onSkip={() => setStep0Done(true)} />
+        <FindOnGoogle onFound={applyAndAdvancePastStep0} onSkip={() => rememberSheetEntry('manual')} />
       </div>
     );
   }
@@ -599,7 +622,10 @@ export default function Onboarding() {
           onEscolherVoz={preset => updateData({ voz_preset: preset })}
           onConcluir={completeOnboarding}
           enviando={isSubmitting}
-          origem={isPreFilledFromDemo ? 'demo' : hasPrefillFromScrape ? 'google' : 'manual'}
+          origem={isPreFilledFromDemo ? 'demo' : sheetEntry?.startsWith('google') ? 'google'
+            : sheetEntry?.startsWith('website') ? 'website' : 'manual'}
+          origemDosHorarios={sheetEntry === 'google-hours' ? 'google'
+            : sheetEntry === 'website-hours' ? 'website' : undefined}
         />
         <div className="text-center pb-28 -mt-24">
           <button
@@ -702,7 +728,7 @@ export default function Onboarding() {
           <div className="flex-1">
             <Step0Search
               onPrefill={(scraped) => applyAndAdvancePastStep0(scraped)}
-              onSkip={() => setStep0Done(true)}
+              onSkip={() => rememberSheetEntry('manual')}
             />
           </div>
         </div>

@@ -103,6 +103,7 @@ export default function Step0Search({ onPrefill, onSkip, showHeader = true }: St
       const contact = menu?.contact && typeof menu.contact === 'object' ? menu.contact : null;
       const business_hours = menu?.business_hours && typeof menu.business_hours === 'object' ? menu.business_hours : null;
       onPrefill({
+        source: 'website',
         name: name.trim(),
         // Cidade digitada na busca — era coletada e descartada, e o Passo 1
         // perguntava de novo (auditoria 24/ago).
