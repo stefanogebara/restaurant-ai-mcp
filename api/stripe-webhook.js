@@ -6,6 +6,7 @@ const { getPlanFromPriceId } = require('./_services/subscription-limits');
 const { query: supabase, supabaseAdmin } = require('./_lib/supabase');
 const { sendPaymentReceiptEmail, sendPaymentFailedEmail, sendTrialEndingEmail, sendReferralRewardEmail } = require('./_lib/email');
 const { setWebhookCors, handlePreflight } = require('./_lib/cors');
+const { stripeMode, isHostedDepositEvent, handleHostedDepositEvent } = require('./_lib/hosted-reservation-deposit');
 
 // This is your Stripe webhook secret for verifying webhook signatures
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -352,6 +353,23 @@ module.exports = async (req, res) => {
   } catch (err) {
     logger.error('Webhook signature verification failed:', err.message);
     return res.status(400).json({ error: 'Invalid webhook request' });
+  }
+
+  // Hosted deposits have a durable attempt state. The generic insert-first
+  // receipt would swallow retries if attachment or release fails after it.
+  if (isHostedDepositEvent(event)) {
+    try {
+      const result = await handleHostedDepositEvent({
+        db: supabaseAdmin, stripe, event, livemode: stripeMode(process.env.STRIPE_SECRET_KEY),
+      });
+      return res.status(200).json({ received: true, hosted_deposit: result });
+    } catch (error) {
+      logger.error('Hosted deposit event not settled', {
+        eventId: event.id, type: event.type, code: error.code || error.cause?.code,
+        reason: error.type || error.message,
+      });
+      return res.status(500).json({ error: 'Webhook processing failed' });
+    }
   }
 
   try {
