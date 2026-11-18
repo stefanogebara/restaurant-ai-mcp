@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { usePermission } from '../hooks/usePermission';
-import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { SkeletonSubscription } from '../components/common/Skeleton';
 import { useToast } from '../contexts/ToastContext';
@@ -10,52 +10,21 @@ import { useSubscriptionData, useCustomerPortal } from '../hooks/useSubscription
 import { currencyFromLanguage, formatPriceLocale, type SupportedCurrency } from '../utils/currency';
 import { getPlanPrices } from '../config/planFeatures';
 import { authFetch } from '../services/api';
-import { LS_PAYMENT_VERIFIED_AT } from '../config/localStorageKeys';
+import { useAuth } from '../contexts/AuthContext';
+import {
+  BILLING_PLANS, hasRecentVerifiedCheckout, parseBillingPlan, readBillingPlan, rememberBillingPlan, type BillingPlan,
+} from '../lib/billingHandoff';
 
-/** Window during which we treat a fresh Stripe payment as "subscription pending
- *  activation" rather than "no subscription". Webhooks usually land within
- *  seconds; we give them 10 minutes before falling back to the upsell page. */
-const PENDING_ACTIVATION_WINDOW_MS = 10 * 60 * 1000;
+const planTiers = Object.keys(BILLING_PLANS);
 
-function readPendingActivationMarker(): boolean {
-  const raw = localStorage.getItem(LS_PAYMENT_VERIFIED_AT);
-  if (!raw) return false;
-  const ts = Number(raw);
-  if (!Number.isFinite(ts)) return false;
-  return Date.now() - ts < PENDING_ACTIVATION_WINDOW_MS;
-}
-
-const planTiers = ['starter', 'growth', 'scale'];
-
-// Open-redirect guard for /api/create-checkout-session responses. Stripe
-// hosted checkout returns absolute https URLs on a known set of domains. Reject
-// anything that doesn't match — a compromised backend or upstream bug returning
-// an attacker-controlled URL would otherwise carry the user off seatable.one
-// to a phishing page right when they're about to enter card details.
-const ALLOWED_CHECKOUT_HOSTS = new Set(['checkout.stripe.com', 'billing.stripe.com']);
 function isSafeCheckoutUrl(url: unknown): url is string {
-  if (typeof url !== 'string' || !url) return false;
-  // Allow same-origin relative paths too (some flows return /something).
-  if (url.startsWith('/') && !url.startsWith('//')) return true;
+  if (typeof url !== 'string') return false;
   try {
-    const parsed = new URL(url);
-    return parsed.protocol === 'https:' && ALLOWED_CHECKOUT_HOSTS.has(parsed.hostname);
+    return new URL(url).origin === 'https://checkout.stripe.com';
   } catch {
     return false;
   }
 }
-
-const PLAN_PRICE_IDS: Record<string, string> = {
-  starter: import.meta.env.VITE_STRIPE_STARTER_PRICE_ID || '',
-  growth: import.meta.env.VITE_STRIPE_GROWTH_PRICE_ID || '',
-  scale: import.meta.env.VITE_STRIPE_SCALE_PRICE_ID || '',
-};
-
-const PLAN_NAMES: Record<string, string> = {
-  starter: 'Starter',
-  growth: 'Growth',
-  scale: 'Scale',
-};
 
 /** Map any plan name variant to the canonical English tier key */
 function planNameToTierKey(raw: string): string {
@@ -92,10 +61,15 @@ export default function SubscriptionManage() {
   const { t, i18n } = useTranslation();
   const { can } = usePermission();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
   const { error } = useToast();
-  const { data: subscription, isLoading, refetch: refetchSubscription } = useSubscriptionData();
+  const { data: subscription, isLoading, isError, refetch: refetchSubscription } = useSubscriptionData();
   const portal = useCustomerPortal();
-  const [loadingCheckoutPlan, setLoadingCheckoutPlan] = useState<string | null>(null);
+  const [loadingCheckoutPlan, setLoadingCheckoutPlan] = useState<BillingPlan | null>(null);
+  const checkoutInFlight = useRef(false);
+  const planFromUrl = parseBillingPlan(searchParams.get('plan'));
+  const selectedPlan = planFromUrl ?? (user ? readBillingPlan(user.id) : null);
 
   // Derive currency from the active subscription's billing currency (so BRL subs show BRL prices,
   // EUR subs show EUR prices), falling back to i18n language detection for unauthenticated views.
@@ -104,15 +78,15 @@ export default function SubscriptionManage() {
   const prices = getPlanPrices(currency);
 
   const plans = [
-    { key: 'starter', name: t('subscription.starterName'), price: formatPriceLocale(prices.starter, currency), desc: t('subscription.starterDesc'), features: [t('subscription.starterF1'), t('subscription.starterF2'), t('subscription.starterF3'), t('subscription.starterF4'), t('subscription.starterF5')] },
-    { key: 'growth', name: t('subscription.growthName'), price: formatPriceLocale(prices.growth, currency), desc: t('subscription.growthDesc'), features: [t('subscription.growthF1'), t('subscription.growthF2'), t('subscription.growthF3'), t('subscription.growthF4'), t('subscription.growthF5')], featured: true },
-    { key: 'scale', name: t('subscription.scaleName'), price: formatPriceLocale(prices.scale, currency), desc: t('subscription.scaleDesc'), features: [t('subscription.scaleF1'), t('subscription.scaleF2'), t('subscription.scaleF3'), t('subscription.scaleF4'), t('subscription.scaleF5')] },
+    { key: 'starter' as const, name: t('subscription.starterName'), price: formatPriceLocale(prices.starter, currency), desc: t('subscription.starterDesc'), features: [t('subscription.starterF1'), t('subscription.starterF2'), t('subscription.starterF3'), t('subscription.starterF4'), t('subscription.starterF5')] },
+    { key: 'growth' as const, name: t('subscription.growthName'), price: formatPriceLocale(prices.growth, currency), desc: t('subscription.growthDesc'), features: [t('subscription.growthF1'), t('subscription.growthF2'), t('subscription.growthF3'), t('subscription.growthF4'), t('subscription.growthF5')], featured: true },
+    { key: 'scale' as const, name: t('subscription.scaleName'), price: formatPriceLocale(prices.scale, currency), desc: t('subscription.scaleDesc'), features: [t('subscription.scaleF1'), t('subscription.scaleF2'), t('subscription.scaleF3'), t('subscription.scaleF4'), t('subscription.scaleF5')] },
   ];
 
   const handleManageSubscription = () => {
     portal.mutate(undefined, {
       onSuccess: ({ url }) => { window.location.href = url; },
-      onError: (_err) => {
+      onError: () => {
         // For any portal failure (no subscription, portal not configured, etc.)
         // redirect to pricing so the user can pick/re-subscribe
         error(t('subscription.portalError', 'Could not open the billing portal. Redirecting to plans...'));
@@ -121,32 +95,28 @@ export default function SubscriptionManage() {
     });
   };
 
-  const handleUpgradeCheckout = async (planKey: string) => {
-    const priceId = PLAN_PRICE_IDS[planKey];
-    const planName = PLAN_NAMES[planKey];
-    if (!priceId) { error(t('subscription.priceNotConfigured', 'Price not configured. Please contact support.')); return; }
+  const handleCheckout = async (plan: BillingPlan, betaCode?: string | null) => {
+    if (checkoutInFlight.current) return;
+    checkoutInFlight.current = true;
+    setLoadingCheckoutPlan(plan);
     try {
-      setLoadingCheckoutPlan(planKey);
       const apiUrl = import.meta.env.VITE_API_URL
         ? `${import.meta.env.VITE_API_URL}/api/create-checkout-session`
         : '/api/create-checkout-session';
       const response = await authFetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId, planName }),
+        body: JSON.stringify({ planName: BILLING_PLANS[plan], ...(betaCode ? { betaCode } : {}) }),
       });
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || t('subscription.checkoutFailed', 'Failed to create checkout session'));
+      const body = await response.json().catch(() => null);
+      if (!response.ok || !isSafeCheckoutUrl(body?.url)) {
+        throw new Error(typeof body?.error === 'string' ? body.error : t('subscription.checkoutFailed'));
       }
-      const { url } = await response.json();
-      if (!isSafeCheckoutUrl(url)) {
-        console.error('[SubscriptionManage] backend returned unsafe checkout URL', url);
-        throw new Error(t('subscription.checkoutFailed', 'Failed to create checkout session'));
-      }
-      window.location.href = url;
+      if (user) rememberBillingPlan(user.id, plan);
+      window.location.assign(body.url);
     } catch (err: unknown) {
-      error(err instanceof Error ? err.message : t('subscription.genericError', 'Something went wrong. Please try again.'));
+      error(err instanceof Error ? err.message : t('subscription.genericError'));
+      checkoutInFlight.current = false;
       setLoadingCheckoutPlan(null);
     }
   };
@@ -163,18 +133,24 @@ export default function SubscriptionManage() {
     return <SkeletonSubscription />;
   }
 
-  // Treat "Free" plan (seeded by onboarding, no real Stripe customer) as no subscription
+  if (isError) {
+    return (
+      <div className="min-h-[50vh] flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <p role="alert" className="text-sm text-deep-charcoal">{t('subscription.lookupFailed')}</p>
+        <button type="button" onClick={() => void refetchSubscription()}
+          className="text-sm font-semibold text-burgundy underline underline-offset-2">
+          {t('welcome.lookupRetry')}
+        </button>
+      </div>
+    );
+  }
+
   const hasNoRealPlan = !subscription || subscription.status === 'none' || subscription.planName === 'Free';
+  if (user && subscription?.hasBillingPortal !== true && hasRecentVerifiedCheckout(user.id)) {
+    return <PendingActivation onRefetch={refetchSubscription} />;
+  }
   if (hasNoRealPlan) {
-    // If the user JUST paid (verify-session set LS_PAYMENT_VERIFIED_AT within the
-    // last 10 min) but Stripe's customer.subscription.created webhook hasn't
-    // landed in our DB yet, render an "activating" state with polling instead of
-    // the upsell cards. Showing the upsell to someone whose card was just
-    // charged looks like the payment failed.
-    if (readPendingActivationMarker()) {
-      return <PendingActivation onRefetch={() => refetchSubscription()} />;
-    }
-    return <NoPlanPricing />;
+    return <NoPlanPricing selectedPlan={selectedPlan} loadingPlan={loadingCheckoutPlan} onCheckout={handleCheckout} />;
   }
 
   const displayPlanName = normalizePlanName(subscription.planName);
@@ -202,6 +178,10 @@ export default function SubscriptionManage() {
             <h1 className="font-serif text-[32px] font-medium text-deep-charcoal tracking-tight mb-2">{t('subscription.title')}</h1>
             <p className="text-[15px] text-warm-stone font-light">{t('subscription.manageSubtitle')}</p>
           </div>
+
+          {(subscription.hasBillingPortal === false || subscription.status === 'canceled') && selectedPlan && (
+            <SelectedCheckout plan={selectedPlan} busy={Boolean(loadingCheckoutPlan)} onCheckout={() => handleCheckout(selectedPlan)} />
+          )}
 
           {/* Current Plan */}
           {/* Audit found double-labeling: the "ATUAL" pill here AND the
@@ -297,14 +277,13 @@ export default function SubscriptionManage() {
                   </ul>
                   <button
                     onClick={(isCurrent && !isCanceled) ? undefined : () => {
-                      // If no billing portal (DB override plan), route plan changes through Stripe checkout
-                      if (!subscription.hasBillingPortal) {
-                        handleUpgradeCheckout(p.key);
+                      if (isCanceled || !subscription.hasBillingPortal) {
+                        handleCheckout(p.key);
                       } else {
                         handleManageSubscription();
                       }
                     }}
-                    disabled={(isCurrent && !isCanceled) || portal.isPending || loadingCheckoutPlan === p.key}
+                    disabled={(isCurrent && !isCanceled) || portal.isPending || Boolean(loadingCheckoutPlan)}
                     className={`w-full py-3.5 rounded-full text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
                       (isCanceled || (isFeatured && !isCurrent)) ? 'bg-burgundy text-white hover:bg-burgundy-dark' :
                       (isCurrent && !isCanceled) ? 'border border-border-gray text-muted-stone cursor-default' :
@@ -334,80 +313,65 @@ export default function SubscriptionManage() {
 
 // ─── Plan picker shown to users with no active subscription ─────────────────
 
-function NoPlanPricing() {
-  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
-  const { error } = useToast();
+function SelectedCheckout({ plan, busy, onCheckout }: { plan: BillingPlan; busy: boolean; onCheckout: () => void }) {
   const { t } = useTranslation();
+  return (
+    <div className="hairline flex flex-wrap items-center justify-between gap-4 py-5 mb-6">
+      <p className="text-deep-charcoal">{t('subscription.selectedPlan', { plan: t(`landing.pricing.${plan}.name`) })}</p>
+      <button type="button" onClick={onCheckout} disabled={busy}
+        className="min-h-11 rounded-full bg-burgundy px-6 py-2 text-sm font-semibold text-white hover:bg-burgundy-dark disabled:opacity-60">
+        {busy ? t('subscription.loading') : t('subscription.continueCheckout')}
+      </button>
+    </div>
+  );
+}
+
+function NoPlanPricing({ selectedPlan, loadingPlan, onCheckout }: {
+  selectedPlan: BillingPlan | null;
+  loadingPlan: BillingPlan | null;
+  onCheckout: (plan: BillingPlan, betaCode: string | null) => void;
+}) {
+  const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
+  const betaFromUrl = searchParams.get('beta');
+  const betaCode = betaFromUrl || (() => {
+    try { return sessionStorage.getItem('seatable_beta_code'); }
+    catch { return null; }
+  })();
+
+  useEffect(() => {
+    if (betaFromUrl) {
+      try { sessionStorage.setItem('seatable_beta_code', betaFromUrl); } catch { /* URL still carries the code */ }
+    }
+  }, [betaFromUrl]);
 
   const NO_PLAN_TIERS = [
     {
-      key: 'starter',
+      key: 'starter' as const,
       name: t('subscription.starterName'),
-      priceId: import.meta.env.VITE_STRIPE_STARTER_PRICE_ID || '',
       brl: 'R$497',
       desc: t('subscription.starterDesc'),
       features: [t('subscription.starterF1'), t('subscription.starterF2'), t('subscription.starterF3'), t('subscription.starterF4'), t('subscription.starterF5')],
       highlighted: false,
-      planName: 'Starter',
     },
     {
-      key: 'growth',
+      key: 'growth' as const,
       name: t('subscription.growthName'),
-      priceId: import.meta.env.VITE_STRIPE_GROWTH_PRICE_ID || '',
       brl: 'R$1.497',
       desc: t('subscription.growthDesc'),
       features: [t('subscription.growthF1'), t('subscription.growthF2'), t('subscription.growthF3'), t('subscription.growthF4'), t('subscription.growthF5')],
       highlighted: true,
-      planName: 'Growth',
       trial: true,
     },
     {
-      key: 'scale',
+      key: 'scale' as const,
       name: t('subscription.scaleName'),
-      priceId: import.meta.env.VITE_STRIPE_SCALE_PRICE_ID || '',
       brl: 'R$2.997',
       desc: t('subscription.scaleDesc'),
       features: [t('subscription.scaleF1'), t('subscription.scaleF2'), t('subscription.scaleF3'), t('subscription.scaleF4'), t('subscription.scaleF5')],
       highlighted: false,
-      planName: 'Scale',
     },
   ];
-
-  // Beta access: read ?beta=CODE from URL and persist in sessionStorage
-  const betaCode = (() => {
-    const params = new URLSearchParams(window.location.search);
-    const fromUrl = params.get('beta');
-    if (fromUrl) { sessionStorage.setItem('seatable_beta_code', fromUrl); return fromUrl; }
-    return sessionStorage.getItem('seatable_beta_code') || null;
-  })();
-
-  const handleCheckout = async (priceId: string, planName: string) => {
-    if (!priceId) { error(t('subscription.priceNotConfigured', 'Price not configured. Please contact support.')); return; }
-    try {
-      setLoadingPlan(planName);
-      const apiUrl = import.meta.env.VITE_API_URL
-        ? `${import.meta.env.VITE_API_URL}/api/create-checkout-session`
-        : '/api/create-checkout-session';
-      const response = await authFetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId, planName, ...(betaCode ? { betaCode } : {}) }),
-      });
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || t('subscription.checkoutFailed', 'Failed to create checkout session'));
-      }
-      const { url } = await response.json();
-      if (!isSafeCheckoutUrl(url)) {
-        console.error('[SubscriptionManage] backend returned unsafe checkout URL', url);
-        throw new Error(t('subscription.checkoutFailed', 'Failed to create checkout session'));
-      }
-      window.location.href = url;
-    } catch (err: unknown) {
-      error(err instanceof Error ? err.message : t('subscription.genericError', 'Something went wrong. Please try again.'));
-      setLoadingPlan(null);
-    }
-  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -444,9 +408,13 @@ function NoPlanPricing() {
             </p>
           </div>
 
+          {selectedPlan && (
+            <SelectedCheckout plan={selectedPlan} busy={Boolean(loadingPlan)} onCheckout={() => onCheckout(selectedPlan, betaCode)} />
+          )}
+
           <div className="glass-panel grid grid-cols-1 md:grid-cols-3 gap-px bg-glass-border-dark rounded-[20px] overflow-hidden">
             {NO_PLAN_TIERS.map((tier) => {
-              const isLoading = loadingPlan === tier.planName;
+              const isLoading = loadingPlan === tier.key;
               return (
                 <div key={tier.key} className={`relative px-8 py-12 ${tier.highlighted ? 'bg-deep-charcoal' : 'bg-white/45 backdrop-blur-glass-card'}`}>
                   {tier.trial && !betaCode && (
@@ -473,7 +441,7 @@ function NoPlanPricing() {
                   </ul>
                   <button
                     type="button"
-                    onClick={() => handleCheckout(tier.priceId, tier.planName)}
+                    onClick={() => onCheckout(tier.key, betaCode)}
                     disabled={!!loadingPlan}
                     className={`w-full py-3.5 rounded-full text-sm font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-60 ${
                       tier.highlighted
@@ -533,7 +501,7 @@ function PendingActivation({ onRefetch }: { onRefetch: () => void }) {
             {t('subscription.activatingTitle', 'Activating your subscription')}
           </h1>
           <p className="text-sm text-warm-stone font-light mb-6">
-            {t('subscription.activatingDesc', "Payment received. We're finalising your plan — this usually takes 30 seconds. You can stay on this page or head to your dashboard.")}
+            {t('subscription.activationPending')}
           </p>
           <button
             type="button"

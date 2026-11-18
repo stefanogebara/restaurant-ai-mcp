@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { useTranslation } from 'react-i18next';
+import ResumeCheckout from './ResumeCheckout';
+import type { BillingPlan } from '../../lib/billingHandoff';
 
 interface OnboardingSuccessModalProps {
   countdown: number;
@@ -10,9 +12,10 @@ interface OnboardingSuccessModalProps {
    *  sobre um agente de voz que não existe é a pior forma de descobrir o
    *  problema — dias depois, com o telefone tocando sem resposta. */
   setup?: Record<string, string> | null;
+  selectedPlan?: BillingPlan | null;
 }
 
-export default function OnboardingSuccessModal({ countdown, ownReferral, bookingUrl, setup }: OnboardingSuccessModalProps) {
+export default function OnboardingSuccessModal({ countdown, ownReferral, bookingUrl, setup, selectedPlan }: OnboardingSuccessModalProps) {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const primaryButtonRef = useRef<HTMLButtonElement>(null);
@@ -148,6 +151,8 @@ export default function OnboardingSuccessModal({ countdown, ownReferral, booking
             );
           })()}
 
+          {selectedPlan && <ResumeCheckout plan={selectedPlan} />}
+
           <button
             ref={primaryButtonRef}
             type="button"
@@ -159,9 +164,11 @@ export default function OnboardingSuccessModal({ countdown, ownReferral, booking
             {t('onboarding.goToDashboard')}
             <ThiingsIcon name="arrow-right" pxSize={15} />
           </button>
-          <p className="text-sm text-stone-gray text-center">
-            {t('onboarding.redirectingIn', { count: countdown })}
-          </p>
+          {!selectedPlan && (
+            <p className="text-sm text-stone-gray text-center">
+              {t('onboarding.redirectingIn', { count: countdown })}
+            </p>
+          )}
         </div>
       </div>
     </div>

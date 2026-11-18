@@ -205,6 +205,7 @@ export const FEATURES = [
  */
 export const PRICING_TIERS = [
   {
+    key: "starter" as const,
     name: "Essencial",
     price: formatPriceLocale(PLAN_PRICES_USD.starter, 'USD'),
     brlPrice: formatPriceLocale(PLAN_PRICES_BRL.starter, 'BRL'),
@@ -212,8 +213,6 @@ export const PRICING_TIERS = [
     period: "/month",
     brlPeriod: "/mês",
     description: "WhatsApp AI + reservations for your restaurant",
-    priceId: import.meta.env.VITE_STRIPE_STARTER_PRICE_ID || "",
-    annualPriceId: import.meta.env.VITE_STRIPE_STARTER_ANNUAL_PRICE_ID || "",
     features: [
       "WhatsApp AI agent 24/7",
       "Smart reservations + confirmations",
@@ -221,10 +220,11 @@ export const PRICING_TIERS = [
       "Customer CRM",
       "Up to 100 reservations/month",
     ],
-    cta: "Start Free Trial",
+    cta: "Get Started",
     highlighted: false,
   },
   {
+    key: "growth" as const,
     name: "Profissional",
     price: formatPriceLocale(PLAN_PRICES_USD.growth, 'USD'),
     brlPrice: formatPriceLocale(PLAN_PRICES_BRL.growth, 'BRL'),
@@ -232,8 +232,6 @@ export const PRICING_TIERS = [
     period: "/month",
     brlPeriod: "/mês",
     description: "Voice AI + WhatsApp + full analytics",
-    priceId: import.meta.env.VITE_STRIPE_GROWTH_PRICE_ID || "",
-    annualPriceId: import.meta.env.VITE_STRIPE_GROWTH_ANNUAL_PRICE_ID || "",
     features: [
       "Everything in Essencial",
       "Voice AI agent (phone calls)",
@@ -246,6 +244,7 @@ export const PRICING_TIERS = [
     highlighted: true,
   },
   {
+    key: "scale" as const,
     name: "Enterprise",
     price: formatPriceLocale(PLAN_PRICES_USD.scale, 'USD'),
     brlPrice: formatPriceLocale(PLAN_PRICES_BRL.scale, 'BRL'),
@@ -253,8 +252,6 @@ export const PRICING_TIERS = [
     period: "/month",
     brlPeriod: "/mês",
     description: "Unlimited AI for high-volume restaurants",
-    priceId: import.meta.env.VITE_STRIPE_SCALE_PRICE_ID || "",
-    annualPriceId: import.meta.env.VITE_STRIPE_SCALE_ANNUAL_PRICE_ID || "",
     features: [
       "Everything in Profissional",
       "Unlimited reservations",
@@ -263,7 +260,7 @@ export const PRICING_TIERS = [
       "Custom integrations",
       "Dedicated account manager",
     ],
-    cta: "Start Free Trial",
+    cta: "Get Started",
     highlighted: false,
   }
 ];

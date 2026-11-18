@@ -50,7 +50,14 @@ module.exports = async (req, res) => {
     if (isRealStripeSub) {
       try {
         const stripeSub = await stripe.subscriptions.retrieve(subscriptionId);
-        const price = stripeSub.items.data[0].price;
+        const planPriceIds = new Set([
+          process.env.STRIPE_STARTER_PRICE_ID, process.env.STRIPE_GROWTH_PRICE_ID,
+          process.env.STRIPE_SCALE_PRICE_ID, sub['Price ID'],
+        ].filter(Boolean));
+        const item = stripeSub.items.data.find(({ price }) => planPriceIds.has(price?.id));
+        if (!item) throw new Error('Stripe subscription base price is unavailable');
+        const { price } = item;
+        const periodEnd = item.current_period_end ?? stripeSub.current_period_end;
 
         const planMapping = {
           [process.env.STRIPE_STARTER_PRICE_ID]: 'Starter',
@@ -66,8 +73,8 @@ module.exports = async (req, res) => {
           planName: planMapping[price.id] || sub['Plan Name'] || 'Unknown Plan',
           planPrice: `${symbol}${(price.unit_amount / 100).toFixed(0)}/${price.recurring.interval === 'month' ? 'mês' : price.recurring.interval}`,
           currency: stripeCurrency,
-          currentPeriodEnd: stripeSub.current_period_end
-            ? new Date(stripeSub.current_period_end * 1000).toLocaleDateString()
+          currentPeriodEnd: periodEnd
+            ? new Date(periodEnd * 1000).toLocaleDateString()
             : null,
           cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
           hasBillingPortal: true,
@@ -93,8 +100,9 @@ module.exports = async (req, res) => {
       planPrice: `${planPriceMap[planName] || 'R$497'}/mês`,
       currency: 'BRL',
       currentPeriodEnd: sub['Current Period End'] || null,
+      trialEnd: sub['Trial End'] || null,
       cancelAtPeriodEnd: false,
-      hasBillingPortal: false,
+      hasBillingPortal: Boolean(isRealStripeSub),
     });
   } catch (error) {
     logger.error('Error fetching subscription:', error);

@@ -1,23 +1,10 @@
-import { Loader2 } from 'lucide-react';
 import { PRICING_TIERS } from '../data/demoData';
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { authFetch } from '../../services/api';
-import { supabase } from '../../lib/supabase';
-import { trackCtaClicked, trackPricingPlanClicked } from '../../lib/analytics';
-import { useToast } from '../../contexts/ToastContext';
+import { trackPricingPlanClicked } from '../../lib/analytics';
+import { useAuth } from '../../contexts/AuthContext';
+import { withBillingPlan } from '../../lib/billingHandoff';
 import { currencyFromLanguage } from '../../utils/currency';
-
-const TIER_KEYS: Record<string, string> = {
-  Essencial: 'starter',
-  Profissional: 'growth',
-  Enterprise: 'scale',
-  // Legacy mappings
-  Starter: 'starter',
-  Growth: 'growth',
-  Scale: 'scale',
-};
 
 const FEATURE_COUNTS: Record<string, number> = {
   starter: 5,
@@ -34,77 +21,8 @@ function tierPrice(tier: (typeof PRICING_TIERS)[number], currency: 'BRL' | 'USD'
 
 export default function PricingSection() {
   const { t, i18n } = useTranslation();
-  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
-  const navigate = useNavigate();
-  const toast = useToast();
+  const { user } = useAuth();
   const currency = currencyFromLanguage(i18n.language);
-
-  // The landing page has no `#contact` section — this used to be a silent
-  // no-op for both the enterprise "contact us" link and the no-priceId tier
-  // fallback. Route both to the demo setup flow, which is the lowest-friction
-  // conversion path and what the rest of the landing CTAs use.
-  const goToContact = () => {
-    navigate('/demo/setup');
-  };
-
-  const handleSubscribe = async (priceId: string, planName: string, price = 0) => {
-    // Double-click guard. setLoadingPlan() is async (React state update)
-    // so the button's `disabled` prop doesn't apply for ~50ms after the
-    // first click — long enough for an impatient user to click twice and
-    // create two checkout sessions for the same plan (we eat the cost of
-    // the duplicate Stripe Checkout session AND the second confused
-    // browser-redirect race). Read the latest state synchronously via
-    // the closure: if a previous click is still in flight, drop this one.
-    if (loadingPlan) return;
-    trackPricingPlanClicked({ plan: planName, price });
-    try {
-      setLoadingPlan(planName);
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setLoadingPlan(null);
-        navigate('/login?redirect=pricing');
-        return;
-      }
-
-      const apiUrl = import.meta.env.VITE_API_URL
-        ? `${import.meta.env.VITE_API_URL}/api/create-checkout-session`
-        : '/api/create-checkout-session';
-
-      const response = await authFetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId, planName }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        if (response.status === 400 && errorData.error?.includes('Restaurant setup required')) {
-          setLoadingPlan(null);
-          navigate('/onboarding?reason=subscribe');
-          return;
-        }
-        throw new Error(errorData.error || 'Failed to create checkout session');
-      }
-
-      const { url } = await response.json();
-      // Guard against open-redirect and undefined URL. The previous version
-      // would assign `window.location.href = undefined` (navigates to /undefined)
-      // on a 200 + missing-url response, and would happily redirect off-domain
-      // if the checkout-session endpoint were ever compromised or buggy.
-      if (typeof url !== 'string' || !url.startsWith('https://checkout.stripe.com/')) {
-        console.error('[PricingSection] checkout session returned an invalid url', url);
-        toast.error(t('landing.pricing.checkoutError'));
-        setLoadingPlan(null);
-        return;
-      }
-      window.location.href = url;
-    } catch (error) {
-      console.error('Error creating checkout session:', error);
-      toast.error(t('landing.pricing.checkoutError'));
-      setLoadingPlan(null);
-    }
-  };
 
   return (
     <section id="pricing" className="py-24 px-6 sm:px-16">
@@ -118,22 +36,19 @@ export default function PricingSection() {
           <p className="text-lg text-warm-stone font-light">{t('landing.pricing.subheading')}</p>
         </div>
 
-        {/* Auth-wall hint — clicking a plan goes through a Google sign-in
-            before Stripe Checkout. Previously this was a silent surprise
-            ("clicked Start trial, got dumped on /login") so we now warn
-            inline above the grid. */}
         <p className="text-center text-xs text-warm-stone mb-6">
-          {t('landing.pricing.authWallHint', 'Clicking a plan opens a quick Google sign-in, then Stripe checkout. Your card is only charged after the 14-day free trial.')}
+          {t('landing.pricing.authWallHint')}
         </p>
 
         {/* Pricing Grid */}
         <div className="glass-panel grid grid-cols-1 md:grid-cols-3 gap-[1px] bg-glass-border-dark overflow-hidden">
-          {PRICING_TIERS.map((tier, index) => {
+          {PRICING_TIERS.map((tier) => {
             const isFeatured = !!tier.highlighted;
-            const tierKey = TIER_KEYS[tier.name] || tier.name.toLowerCase();
+            const tierKey = tier.key;
+            const planName = t(`landing.pricing.${tierKey}.name`, tier.name);
             const featureCount = FEATURE_COUNTS[tierKey] || tier.features.length;
             return (
-              <div key={index} className={`relative px-8 sm:px-9 py-12 ${isFeatured ? 'bg-deep-charcoal' : 'bg-white/45 backdrop-blur-[18px]'}`}>
+              <div key={tierKey} className={`relative px-8 sm:px-9 py-12 ${isFeatured ? 'bg-deep-charcoal' : 'bg-white/45 backdrop-blur-[18px]'}`}>
                 {/* "Mais popular" badge on the featured tier — anchors the
                     visitor's eye to the recommended plan. The audit found
                     the dark-charcoal background was doing all the work to
@@ -151,7 +66,7 @@ export default function PricingSection() {
 
                 {/* Plan label */}
                 <div className={`text-xs font-semibold tracking-[1.5px] uppercase mb-2 ${isFeatured ? 'text-rose-400' : 'text-warm-stone'}`}>
-                  {t(`landing.pricing.${tierKey}.name`, tier.name)}
+                  {planName}
                 </div>
 
                 {/* Price */}
@@ -182,42 +97,18 @@ export default function PricingSection() {
                   ))}
                 </ul>
 
-                {/* CTA Button — a11y notes:
-                    - aria-label spells out the plan + price + period so
-                      screen readers don't have to depend on visual layout
-                      of card → button to derive context.
-                    - aria-busy mirrors the spinner state so AT users
-                      hear "busy" rather than "button" while we navigate
-                      to Stripe. */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const id = tier.priceId;
-                    if (id) {
-                      handleSubscribe(id, tier.name);
-                    } else {
-                      trackCtaClicked({ cta: 'pricing_cta', location: `pricing_${tier.name.toLowerCase()}` });
-                      goToContact();
-                    }
-                  }}
-                  disabled={loadingPlan === tier.name}
-                  aria-busy={loadingPlan === tier.name}
-                  aria-label={`${tier.name} — ${tierPrice(tier, currency)} ${currency === 'BRL' ? tier.brlPeriod : tier.period}`}
-                  className={`w-full py-3.5 rounded-full text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2 ${
+                <Link
+                  to={withBillingPlan(user ? '/welcome' : '/login', tierKey)}
+                  onClick={() => trackPricingPlanClicked({ plan: tier.name, price: 0 })}
+                  aria-label={`${planName} — ${tierPrice(tier, currency)} /${t('landing.pricing.perMonth')}`}
+                  className={`w-full py-3.5 rounded-full text-sm font-semibold transition-colors flex items-center justify-center ${
                     isFeatured
                       ? 'bg-burgundy text-white hover:bg-burgundy-dark'
                       : 'border border-stone-300 text-deep-charcoal hover:border-muted-stone'
                   }`}
                 >
-                  {loadingPlan === tier.name ? (
-                    <>
-                      <Loader2 aria-hidden="true" className="w-4 h-4 animate-spin" />
-                      {t('common.loading')}
-                    </>
-                  ) : (
-                    t(`landing.pricing.${tierKey}.cta`, tier.cta)
-                  )}
-                </button>
+                  {t(`landing.pricing.${tierKey}.cta`, tier.cta)}
+                </Link>
               </div>
             );
           })}
@@ -234,9 +125,9 @@ export default function PricingSection() {
         {/* Bottom Note */}
         <p className="text-center text-sm text-muted-stone mt-6">
           {t('landing.pricing.customSolution')}{' '}
-          <button type="button" onClick={goToContact} className="text-burgundy hover:text-burgundy-dark font-medium transition-colors min-h-[44px] inline-flex items-center">
+          <Link to="/demo/setup" className="text-burgundy hover:text-burgundy-dark font-medium transition-colors min-h-[44px] inline-flex items-center">
             {t('landing.pricing.enterpriseLink')}
-          </button>
+          </Link>
         </p>
       </div>
     </section>

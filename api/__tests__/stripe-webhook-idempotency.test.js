@@ -104,10 +104,10 @@ describe('POST /api/stripe-webhook — event idempotency', () => {
     }
   });
 
-  it('inserts every event into the dedup table BEFORE processing', async () => {
+  it('claims non-subscription notification events in the legacy ledger', async () => {
     mockConstructEvent.mockReturnValue({
       id: 'evt_fresh_001',
-      type: 'customer.subscription.deleted',
+      type: 'customer.subscription.trial_will_end',
       data: { object: { id: 'sub_x', customer: 'cus_x', items: { data: [] } } },
     });
     mockInsert.mockResolvedValue({ error: null });
@@ -120,7 +120,7 @@ describe('POST /api/stripe-webhook — event idempotency', () => {
     expect(mockInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         event_id: 'evt_fresh_001',
-        event_type: 'customer.subscription.deleted',
+        event_type: 'customer.subscription.trial_will_end',
       }),
     );
   });
@@ -152,7 +152,7 @@ describe('POST /api/stripe-webhook — event idempotency', () => {
     // subscription.deleted is not.
     mockConstructEvent.mockReturnValue({
       id: 'evt_db_error_003',
-      type: 'customer.subscription.deleted',
+      type: 'customer.subscription.trial_will_end',
       data: { object: { id: 'sub_x', customer: 'cus_x', items: { data: [] } } },
     });
     mockInsert.mockResolvedValue({ error: { code: '08006', message: 'connection refused' } });

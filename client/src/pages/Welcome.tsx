@@ -9,15 +9,17 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { authFetch } from '../services/api';
 import { LS_PENDING_DEMO_TOKEN } from '../config/localStorageKeys';
+import { parseBillingPlan, readBillingPlan, rememberBillingPlan, withBillingPlan } from '../lib/billingHandoff';
 
 export default function Welcome() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const [checking, setChecking] = useState(true);
@@ -28,14 +30,15 @@ export default function Welcome() {
     if (authLoading) return;
 
     if (!user) {
-      navigate('/login', { replace: true });
+      navigate(withBillingPlan('/login', parseBillingPlan(params.get('plan'))), { replace: true });
       return;
     }
 
     // Check if this is a demo conversion (user clicked "Upgrade to keep your data").
     // Read from URL params first (Google OAuth carry-through), then localStorage
     // fallback (email/password login, or returning post-onboarding).
-    const params = new URLSearchParams(window.location.search);
+    const selectedPlan = parseBillingPlan(params.get('plan'));
+    if (selectedPlan) rememberBillingPlan(user.id, selectedPlan);
     const fromDemo = params.get('from') === 'demo';
     const urlToken = params.get('token');
     const localToken = localStorage.getItem(LS_PENDING_DEMO_TOKEN);
@@ -44,12 +47,14 @@ export default function Welcome() {
     // returns the user to the page they originally tried to visit.
     const nextRaw = params.get('next');
     // Only allow same-origin paths (defends against open-redirect via `next`)
-    const nextPath = nextRaw && nextRaw.startsWith('/') && !nextRaw.startsWith('//') ? nextRaw : null;
+    const nextPath = nextRaw && nextRaw.startsWith('/') && !nextRaw.startsWith('//') && !nextRaw.includes('\\') ? nextRaw : null;
 
     // Clean up demo / next params from the URL immediately (before async work)
     if ((fromDemo && urlToken) || nextPath) {
-      window.history.replaceState({}, '', window.location.pathname);
+      window.history.replaceState(window.history.state, '', withBillingPlan('/welcome', selectedPlan));
     }
+
+    let cancelled = false;
 
     // Check if user has completed onboarding (has restaurant_config)
     const checkOnboardingStatus = async () => {
@@ -66,7 +71,10 @@ export default function Welcome() {
           .limit(1)
           .maybeSingle();
 
-        if (!error && data) {
+        if (cancelled) return;
+        if (error) throw error;
+
+        if (data) {
           // User has completed onboarding → attempt demo conversion if pending.
           // Fire-and-forget so we don't block navigation by ~1s, BUT preserve the
           // token in localStorage if the conversion fails — the previous .finally
@@ -94,16 +102,18 @@ export default function Welcome() {
           }
           // Priority: explicit `next=` (user's original target) wins over
           // the default dashboard. Demo conversion still wraps it.
-          const baseDestination = nextPath || '/host-dashboard/simple';
+          const baseDestination = nextPath || (selectedPlan
+            ? withBillingPlan('/subscription/manage', selectedPlan)
+            : '/host-dashboard/simple');
           const destination = demoToken
-            ? (nextPath ? `${baseDestination}${nextPath.includes('?') ? '&' : '?'}converted=demo` : '/host-dashboard/simple?converted=demo')
+            ? `${baseDestination}${baseDestination.includes('?') ? '&' : '?'}converted=demo`
             : baseDestination;
           navigate(destination, { replace: true });
         } else {
           // No restaurant config → needs onboarding.
           // Keep pending_demo_token in localStorage so we retry convert after
           // onboarding completes and the user returns here.
-          navigate('/onboarding', { replace: true });
+          navigate(withBillingPlan('/onboarding', selectedPlan ?? readBillingPlan(user.id)), { replace: true });
         }
       } catch (err) {
         // NÃO despejar em /onboarding (G3.3). Se a consulta falha para um dono
@@ -112,15 +122,17 @@ export default function Welcome() {
         // conteúdo de um wizard novo. Um erro de rede não pode custar o
         // restaurante de ninguém: mostramos o erro e oferecemos tentar de
         // novo. (O backend também passou a barrar isso com 409.)
+        if (cancelled) return;
         console.error('[Welcome] restaurant_config lookup failed', err);
         setLookupFailed(true);
       } finally {
-        setChecking(false);
+        if (!cancelled) setChecking(false);
       }
     };
 
     checkOnboardingStatus();
-  }, [user, authLoading, navigate]);
+    return () => { cancelled = true; };
+  }, [user, authLoading, navigate, params]);
 
   if (lookupFailed) {
     return (

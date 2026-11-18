@@ -43,8 +43,9 @@ export default function VoiceAgentsOrphanAgentsPanel() {
       let cursor: string | null = '';
       for (let page = 1; cursor !== null && page <= 50; page += 1) {
         setProgress(`lendo página ${page} de agentes`);
-        const { data } = await api.get(`/elevenlabs-voice-settings?action=admin_agents_orphans${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`);
-        all.push(...(data.rows as AgentRow[]));
+        const path: string = `/elevenlabs-voice-settings?action=admin_agents_orphans${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`;
+        const { data } = await api.get<{ rows: AgentRow[]; next_cursor: string | null }>(path);
+        all.push(...data.rows);
         cursor = data.next_cursor || null;
         if (cursor) await sleep(1500);
       }

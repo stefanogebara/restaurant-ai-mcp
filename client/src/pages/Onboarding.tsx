@@ -38,6 +38,7 @@ import { mapDemoSessionToOnboarding } from '../lib/demoPrefill';
 import { authFetch } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { trackOnboardingStepCompleted, trackOnboardingCompleted } from '../lib/analytics';
+import { parseBillingPlan, readBillingPlan, rememberBillingPlan } from '../lib/billingHandoff';
 import { LS_CUSTOMER_EMAIL, LS_REFERRAL_CODE, LS_ONBOARDING_DATA, LS_ONBOARDING_STEP, LS_PENDING_DEMO_TOKEN, lsOnboardingDataKey, lsOnboardingStepKey } from '../config/localStorageKeys';
 import { parseOnboardingError } from '../utils/onboardingErrorMessage';
 
@@ -75,7 +76,10 @@ export default function Onboarding() {
   const { user } = useAuth();
   const receiptKey = `${lsOnboardingDataKey(user?.id ?? 'anon')}:completed`;
   const [savedReceipt] = useState(() => readSheetReceipt(receiptKey));
-  const showSubscribeBanner = searchParams.get('reason') === 'subscribe';
+  const planFromUrl = parseBillingPlan(searchParams.get('plan'));
+  const userId = user?.id;
+  const selectedPlan = planFromUrl ?? (userId ? readBillingPlan(userId) : null);
+  const showSubscribeBanner = selectedPlan || searchParams.get('reason') === 'subscribe';
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Previously this was a bare boolean — the user saw "Setup failed" with no
   // explanation, no detail, and no way to know what to do. Now we keep the
@@ -334,6 +338,10 @@ export default function Onboarding() {
     return () => window.removeEventListener('storage', handleStorage);
   }, [currentStep, draftStepKey]);
 
+  useEffect(() => {
+    if (userId && planFromUrl) rememberBillingPlan(userId, planFromUrl);
+  }, [userId, planFromUrl]);
+
   // Countdown redirect after onboarding success.
   // Lands the user IN their dashboard with the LaunchChecklist modal open
   // (?launch=1 triggers it in Dashboard.tsx) — not on a Stripe billing page.
@@ -341,7 +349,7 @@ export default function Onboarding() {
   // post-setup screen. Use window.location.href (not navigate) so React
   // Query / context state are reset cleanly for the new restaurant.
   useEffect(() => {
-    if (!showSuccessModal) return;
+    if (!showSuccessModal || selectedPlan) return;
     const interval = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) { clearInterval(interval); window.location.href = '/host-dashboard/simple?launch=1'; return 0; }
@@ -349,7 +357,7 @@ export default function Onboarding() {
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [showSuccessModal]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [showSuccessModal, selectedPlan]);
 
   const updateData = (updates: Partial<OnboardingData>) => {
     setOnboardingData((prev) => ({ ...prev, ...updates }));
@@ -550,10 +558,18 @@ export default function Onboarding() {
 
   const progressPercent = (currentStep / TOTAL_STEPS) * 100;
 
+  const subscribeBanner = showSubscribeBanner && (
+    <p className="hairline text-deep-charcoal text-[13px] text-center py-2.5 px-4">
+      {selectedPlan
+        ? t('subscription.selectedPlan', { plan: t(`landing.pricing.${selectedPlan}.name`) })
+        : t('onboarding.subscribeBanner')}
+    </p>
+  );
+
   if (sheetCompleted) {
     return (
       <SheetCompletion setup={setupScorecard} bookingUrl={bookingUrl} steps={launchSteps}
-        agentId={voiceAgentId} restaurantName={completedName ?? onboardingData.restaurant_name} />
+        agentId={voiceAgentId} restaurantName={completedName ?? onboardingData.restaurant_name} selectedPlan={selectedPlan} />
     );
   }
 
@@ -564,11 +580,7 @@ export default function Onboarding() {
   if (modo === 'folha' && !step0Done && !pendingDemoAtMount && !onboardingData.restaurant_name?.trim()) {
     return (
       <div className="min-h-screen flex flex-col">
-        {showSubscribeBanner && (
-          <div className="bg-burgundy text-white text-[13px] text-center py-2.5 px-4">
-            {t('onboarding.subscribeBanner')}
-          </div>
-        )}
+        {subscribeBanner}
         <FindOnGoogle onFound={applyAndAdvancePastStep0} onSkip={() => setStep0Done(true)} />
       </div>
     );
@@ -577,11 +589,7 @@ export default function Onboarding() {
   if (modo === 'folha') {
     return (
       <div className="min-h-screen flex flex-col">
-        {showSubscribeBanner && (
-          <div className="bg-burgundy text-white text-[13px] text-center py-2.5 px-4">
-            {t('onboarding.subscribeBanner')}
-          </div>
-        )}
+        {subscribeBanner}
         <FolhaDeConfirmacao
           google={googleCard}
           data={onboardingData}
@@ -614,11 +622,7 @@ export default function Onboarding() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Subscribe redirect banner */}
-      {showSubscribeBanner && (
-        <div className="bg-burgundy text-white text-[13px] text-center py-2.5 px-4">
-          {t('onboarding.subscribeBanner')}
-        </div>
-      )}
+      {subscribeBanner}
       {/* Top Bar */}
       <header className="flex items-center justify-between px-6 sm:px-12 py-5 border-b border-glass-border-dark bg-glass-panel backdrop-blur-glass-nav">
         <div className="font-serif text-xl text-deep-charcoal">
@@ -840,7 +844,7 @@ export default function Onboarding() {
 
       {/* Success Modal */}
       {showSuccessModal && (
-        <OnboardingSuccessModal countdown={countdown} ownReferral={ownReferral} bookingUrl={bookingUrl} setup={setupScorecard} />
+        <OnboardingSuccessModal countdown={countdown} ownReferral={ownReferral} bookingUrl={bookingUrl} setup={setupScorecard} selectedPlan={selectedPlan} />
       )}
     </div>
   );
