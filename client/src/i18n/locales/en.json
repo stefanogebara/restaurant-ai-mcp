@@ -363,7 +363,10 @@
       "probability": "No-show probability: {{score}}%"
     },
     "deposit": {
-      "held": "held",
+      "recorded": "Deposit recorded",
+      "authorized": "{{amount}} authorized",
+      "captured": "{{amount}} captured",
+      "capture": "Capture deposit",
       "release": "Release",
       "captureAmount": "Capture {{amount}}",
       "releaseTitle": "Release deposit hold (guest arrived)",

@@ -61,7 +61,7 @@ module.exports = async (req, res) => {
     // Keep deposit_amount for reporting purposes.
     const { error: clearError } = await supabaseAdmin
       .from('reservations')
-      .update({ deposit_payment_intent_id: null })
+      .update({ deposit_payment_intent_id: null, deposit_currency: paymentIntent.currency })
       .eq('id', reservation.id)
       .eq('restaurant_id', req.user.restaurant_id)
       .eq('deposit_payment_intent_id', payment.id);

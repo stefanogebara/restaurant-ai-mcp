@@ -66,6 +66,7 @@ module.exports = async (req, res) => {
       .update({
         deposit_payment_intent_id: null,
         deposit_amount: null,
+        deposit_currency: null,
       })
       .eq('id', reservation.id)
       .eq('restaurant_id', reservation.restaurant_id)

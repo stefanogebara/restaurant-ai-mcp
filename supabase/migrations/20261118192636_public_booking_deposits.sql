@@ -1,3 +1,6 @@
+ALTER TABLE public.reservations ADD COLUMN deposit_currency text
+  CHECK (deposit_currency ~ '^[a-z]{3}$');
+
 -- Keep the quote and the consumed Stripe intent after capture, release or a
 -- reservation deletion, when the dashboard no longer has an active hold.
 CREATE TABLE public.public_booking_deposits (
@@ -111,6 +114,8 @@ BEGIN
   END IF;
   v_status := v_booking->>'status';
   IF v_status = 'created' THEN
+    UPDATE public.reservations SET deposit_currency = v_quote.currency
+      WHERE id = (v_booking->>'id')::uuid AND restaurant_id = p_restaurant_id;
     UPDATE public.public_booking_deposits
        SET state = 'attached', reservation_id = (v_booking->>'id')::uuid
      WHERE id = p_quote_id;

@@ -363,7 +363,10 @@
       "probability": "Probabilidade de no-show: {{score}}%"
     },
     "deposit": {
-      "held": "retido",
+      "recorded": "Caução registrada",
+      "authorized": "Caução de {{amount}} autorizada",
+      "captured": "Caução de {{amount}} cobrada",
+      "capture": "Cobrar caução",
       "release": "Liberar",
       "captureAmount": "Cobrar {{amount}}",
       "releaseTitle": "Liberar depósito (cliente chegou)",

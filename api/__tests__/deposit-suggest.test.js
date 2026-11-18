@@ -32,6 +32,14 @@ describe('decorateWithDepositSuggestion', () => {
     expect(out.deposit_suggested).toBe(false);
   });
 
+  test('a captured deposit is not suggested again after the intent is cleared', () => {
+    const out = decorateWithDepositSuggestion(
+      { ...baseReservation, deposit_amount: 25 },
+      { enabled: true },
+    );
+    expect(out.deposit_suggested).toBe(false);
+  });
+
   test('very-high risk + enabled + no existing deposit → suggests', () => {
     const out = decorateWithDepositSuggestion(baseReservation, { enabled: true });
     expect(out.deposit_suggested).toBe(true);

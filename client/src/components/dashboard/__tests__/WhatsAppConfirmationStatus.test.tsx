@@ -107,6 +107,18 @@ describe('reservation receipt badges', () => {
     renderList({ status: 'failed', status_updated_at: updatedAt }, { ml_risk_score: 60, deposit_amount: 50 });
     const badgeRow = screen.getByText('WhatsApp · Sending failed').parentElement!.parentElement!;
     expect(within(badgeRow).getByText('Likely to skip')).toBeInTheDocument();
-    expect(within(badgeRow).getByText(/held/)).toBeInTheDocument();
+    expect(within(badgeRow).getByText('Deposit recorded')).toBeInTheDocument();
+  });
+
+  it('uses Stripe currency on the deposit badge and the capture action', () => {
+    renderList(null, { deposit_amount: 50.75, deposit_currency: 'eur', deposit_payment_intent_id: 'pi_test' });
+    expect(screen.getByText('€50.75 authorized')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Capture €50.75' })).toBeInTheDocument();
+  });
+
+  it('shows a captured deposit without a second capture action', () => {
+    renderList(null, { deposit_amount: 50.75, deposit_currency: 'eur' });
+    expect(screen.getByText('€50.75 captured')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /capture/i })).not.toBeInTheDocument();
   });
 });

@@ -5,22 +5,25 @@ import { api } from '../../services/api';
 interface DepositActionsProps {
   reservationId: string;
   depositAmount: number;
+  currency?: string | null;
   onActionComplete: () => void;
 }
 
-export default function DepositActions({ reservationId, depositAmount, onActionComplete }: DepositActionsProps) {
-  const { t } = useTranslation();
+export default function DepositActions({ reservationId, depositAmount, currency, onActionComplete }: DepositActionsProps) {
+  const { t, i18n } = useTranslation();
   const [isCapturing, setIsCapturing] = useState(false);
   const [isReleasing, setIsReleasing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const lang = navigator.language || 'pt-BR';
-  const isBRL = lang.toLowerCase().startsWith('pt');
-  const formatted = new Intl.NumberFormat(isBRL ? 'pt-BR' : 'en-US', {
-    style: 'currency',
-    currency: isBRL ? 'BRL' : 'USD',
-    minimumFractionDigits: 0,
+  const formatted = currency && new Intl.NumberFormat(i18n.language, {
+    style: 'currency', currency,
   }).format(depositAmount);
+  const captureLabel = formatted
+    ? t('dashboard.deposit.captureAmount', { amount: formatted })
+    : t('dashboard.deposit.capture');
+  const captureTitle = formatted
+    ? t('dashboard.deposit.captureTitle', { amount: formatted })
+    : captureLabel;
 
   const handleCapture = async () => {
     setIsCapturing(true);
@@ -67,9 +70,9 @@ export default function DepositActions({ reservationId, depositAmount, onActionC
         onClick={handleCapture}
         disabled={isCapturing || isReleasing}
         className="text-[11px] font-medium px-2 py-1 rounded-lg border border-red-600/30 text-red-600 hover:bg-red-600/[6%] transition-colors disabled:opacity-50"
-        title={t('dashboard.deposit.captureTitle', 'Capture {{amount}} deposit (no-show)', { amount: formatted })}
+        title={captureTitle}
       >
-        {isCapturing ? '...' : t('dashboard.deposit.captureAmount', 'Capture {{amount}}', { amount: formatted })}
+        {isCapturing ? '...' : captureLabel}
       </button>
     </div>
   );

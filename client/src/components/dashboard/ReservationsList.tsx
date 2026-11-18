@@ -504,7 +504,11 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
               riskScore={reservation.ml_risk_score}
               riskLevel={reservation.ml_risk_level}
             />
-            <DepositBadge amount={reservation.deposit_amount} />
+            <DepositBadge
+              amount={reservation.deposit_amount}
+              currency={reservation.deposit_currency}
+              held={Boolean(reservation.deposit_payment_intent_id)}
+            />
             {/* Phase AA: shows when backend says risk is high enough to
                 warrant requesting a deposit AND none is collected yet.
                 Clicking would hand off to the existing deposit-request
@@ -618,6 +622,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
           <DepositActions
             reservationId={reservation.reservation_id}
             depositAmount={reservation.deposit_amount}
+            currency={reservation.deposit_currency}
             onActionComplete={onDepositAction || (() => {})}
           />
         </div>
