@@ -96,6 +96,7 @@
     "customer_type",
     "date",
     "deposit_amount",
+    "deposit_currency",
     "deposit_payment_intent_id",
     "dietary_restrictions",
     "external_id",
