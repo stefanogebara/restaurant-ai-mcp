@@ -224,6 +224,11 @@ const updateReservation = async (restaurantId, recordId, fields) => {
 
   if (error) return handleSupabaseResponse(null, error, 'UPDATE reservation');
 
+  if (data.deposit_release_pending_at) {
+    const { settleChangedDeposit } = require('../deposit-change-release');
+    await settleChangedDeposit(data);
+  }
+
   return {
     success: true,
     data: {
@@ -346,7 +351,7 @@ const getUpcomingReservations = async (restaurantId, timezone) => {
 
   const { data, error } = await supabase
     .from('reservations')
-    .select('id, reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, special_requests, status, checked_in_at, ml_risk_score, ml_risk_level, ml_confidence, ml_model_version, deposit_amount, deposit_payment_intent_id, deposit_currency, deposit_captured_payment_intent_id, deposit_refunded_amount')
+    .select('id, reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, special_requests, status, checked_in_at, ml_risk_score, ml_risk_level, ml_confidence, ml_model_version, deposit_amount, deposit_payment_intent_id, deposit_currency, deposit_captured_payment_intent_id, deposit_refunded_amount, deposit_release_pending_at, deposit_reauthorization_required')
     .eq('restaurant_id', restaurantId)
     // SAFE: today and currentTime are server-generated date strings from getLocalDate/getLocalTime,
     // not user input. No injection risk via .or() interpolation.
@@ -385,6 +390,8 @@ const getUpcomingReservations = async (restaurantId, timezone) => {
     deposit_currency: r.deposit_currency || null,
     deposit_payment_intent_id: r.deposit_payment_intent_id || null,
     deposit_refunded_amount: r.deposit_refunded_amount || null,
+    deposit_release_pending: Boolean(r.deposit_release_pending_at),
+    deposit_reauthorization_required: Boolean(r.deposit_reauthorization_required),
     deposit_can_refund: Boolean(r.deposit_captured_payment_intent_id && Number(r.deposit_refunded_amount || 0) < Number(r.deposit_amount)),
   }));
 

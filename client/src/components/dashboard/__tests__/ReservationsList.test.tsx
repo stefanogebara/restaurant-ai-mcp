@@ -6,6 +6,9 @@ import type { UpcomingReservation } from '../../../types/host.types';
 
 // i18n mock — resolves nested keys from EN locale
 const enTranslations: Record<string, string> = {
+  'dashboard.deposit.releasePending': 'Card hold release pending',
+  'dashboard.deposit.requestNew': 'Request new deposit',
+  'dashboard.deposit.authorized': '{{amount}} authorized',
   'dashboard.reservationsList.upcoming': 'Upcoming Reservations',
   'dashboard.reservationsList.tomorrow': 'Tomorrow',
   'dashboard.reservationsList.today': 'Today',
@@ -158,6 +161,36 @@ describe('ReservationsList', () => {
     await user.click(checkInButtons[0]);
     expect(onCheckIn).toHaveBeenCalledTimes(1);
     expect(onCheckIn).toHaveBeenCalledWith(todayReservations[0]);
+  });
+
+  it('offers a new deposit after the old hold finishes releasing', () => {
+    const onRequestDeposit = vi.fn();
+    const pending = {
+      ...todayReservations[0],
+      deposit_release_pending: true,
+      deposit_reauthorization_required: true,
+      deposit_suggested: true,
+      deposit_amount: 25,
+      deposit_currency: 'eur',
+      deposit_payment_intent_id: 'pi_old',
+    };
+    const props = { ...defaultProps, onRequestDeposit };
+    const { rerender } = render(<ReservationsList {...props} todayReservations={[pending]} />);
+
+    expect(screen.getByText('Card hold release pending')).toBeVisible();
+    expect(screen.queryByText(/authorized/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /capture|release|request.*deposit/i })).not.toBeInTheDocument();
+
+    const released = { ...pending, deposit_release_pending: false, deposit_amount: undefined, deposit_payment_intent_id: null };
+    rerender(<ReservationsList {...props} todayReservations={[released]} />);
+    expect(screen.queryByText('Card hold release pending')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Request deposit' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Request new deposit' }));
+    expect(onRequestDeposit).toHaveBeenCalledExactlyOnceWith(released);
+
+    const captured = { ...released, deposit_amount: 25 };
+    rerender(<ReservationsList {...props} todayReservations={[captured]} />);
+    expect(screen.queryByRole('button', { name: /request.*deposit/i })).not.toBeInTheDocument();
   });
 
   it('displays special requests when present', () => {

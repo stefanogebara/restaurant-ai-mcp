@@ -134,6 +134,7 @@ jest.mock('../_lib/supabase', () => ({
   unlinkTables: mockUnlinkTables,
   getTableById: mockGetTableById,
   query: {
+    rpc: jest.fn().mockResolvedValue({ data: [], error: null }),
     schema: jest.fn(() => ({
       from: jest.fn(() => mockCreateChainableMock({ data: { slug: 'test-restaurant' }, error: null })),
     })),
@@ -260,6 +261,39 @@ describe('GET dashboard action', () => {
     expect(responseData.upcoming_reservations).toBeDefined();
     expect(responseData.summary).toBeDefined();
     expect(responseData.summary.total_capacity).toBe(6);
+  });
+
+  test('returns the restaurant’s cancelled deposits separately from service metrics', async () => {
+    const deposits = [
+      { reservation_id: 'pending', customer_name: 'Guest', date: '2026-01-15', time: '18:00', deposit_currency: 'eur', deposit_release_pending: true, deposit_outstanding_amount: null },
+      { reservation_id: 'partial', customer_name: 'Guest', date: '2026-01-15', time: '17:00', deposit_currency: 'eur', deposit_release_pending: false, deposit_outstanding_amount: 14.5 },
+    ];
+    const { query } = require('../_lib/supabase');
+    query.rpc.mockResolvedValueOnce({ data: deposits, error: null });
+    const { req, res } = mockReqRes({ action: 'dashboard', method: 'GET' });
+
+    await dashboardHandler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(query.rpc).toHaveBeenCalledWith('list_cancelled_reservation_deposits', { p_restaurant_id: RESTAURANT_ID });
+    const data = res.json.mock.calls[0][0];
+    expect(data.cancelled_reservation_deposits).toEqual(deposits);
+    expect(data.upcoming_reservations.map(row => row.reservation_id)).toEqual(['RES-001']);
+    expect(data.summary).toMatchObject({ upcoming_reservations: 1, peak_hours: '7PM' });
+  });
+
+  test('keeps the dashboard available if the cancelled deposits lookup fails', async () => {
+    const { query } = require('../_lib/supabase');
+    query.rpc.mockResolvedValueOnce({ data: null, error: { code: 'PGRST202' } });
+    const { req, res } = mockReqRes({ action: 'dashboard', method: 'GET' });
+
+    await dashboardHandler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    const data = res.json.mock.calls[0][0];
+    expect(data.cancelled_reservation_deposits).toBeNull();
+    expect(data.summary.upcoming_reservations).toBe(1);
+    expect(data.upcoming_reservations.map(row => row.reservation_id)).toEqual(['RES-001']);
   });
 
   test('dashboard summary calculates occupancy correctly', async () => {

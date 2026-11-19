@@ -24,10 +24,7 @@ interface ReservationsListProps {
   onCheckIn: (reservation: UpcomingReservation) => void;
   onIntervention: (reservation: UpcomingReservation) => void;
   onDepositAction?: () => void;
-  /** Phase AA: triggered by the deposit-suggest chip on high-risk
-   *  bookings. Parent decides how to surface the request (modal /
-   *  WhatsApp link / email). Optional — when absent, the chip renders
-   *  as a passive info badge instead of a clickable button. */
+  /** Opens the deposit request flow for suggested or replacement deposits. */
   onRequestDeposit?: (reservation: UpcomingReservation) => void;
   onAdd?: () => void;
   onEdit?: (reservation: UpcomingReservation) => void;
@@ -390,6 +387,13 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
     return tl('dinner');
   };
 
+  const depositReleasePending = reservation.deposit_release_pending;
+  const needsNewDeposit = reservation.deposit_reauthorization_required
+    && !depositReleasePending
+    && !reservation.deposit_payment_intent_id
+    && !reservation.deposit_amount
+    && !reservation.deposit_can_refund;
+
   const isHighRisk = reservation.ml_risk_level === 'high' || reservation.ml_risk_level === 'very-high';
 
   // customer_name is typed `string`, but the search filter and avatar-hue
@@ -499,7 +503,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
           {reservation.special_requests && <span className="hidden sm:inline"> · {reservation.special_requests}</span>}
         </div>
         {/* Risk and deposit badges */}
-        {(reservation.ml_risk_score != null || reservation.deposit_amount || reservation.deposit_suggested) && (
+        {(reservation.ml_risk_score != null || reservation.deposit_amount || depositReleasePending || reservation.deposit_suggested || needsNewDeposit) && (
           <div className="flex items-center gap-1.5 mt-1 flex-wrap">
             <NoShowRiskBadge
               riskScore={reservation.ml_risk_score}
@@ -510,15 +514,19 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
               currency={reservation.deposit_currency}
               held={Boolean(reservation.deposit_payment_intent_id)}
               refundedAmount={reservation.deposit_refunded_amount}
+              releasePending={depositReleasePending}
             />
-            {/* Phase AA: shows when backend says risk is high enough to
-                warrant requesting a deposit AND none is collected yet.
-                Clicking would hand off to the existing deposit-request
-                flow; the wiring lives one level up in the parent so
-                each surface can decide what "request" means (modal,
-                link copy, WhatsApp share, etc.). */}
+            {needsNewDeposit && onRequestDeposit && (
+              <button
+                type="button"
+                className="rounded-full border border-border-gray px-2.5 py-1 text-xs font-medium text-deep-charcoal hover:bg-soft-gray"
+                onClick={onRequestDeposit}
+              >
+                {t('dashboard.deposit.requestNew')}
+              </button>
+            )}
             <DepositSuggestChip
-              suggested={reservation.deposit_suggested}
+              suggested={!depositReleasePending && !reservation.deposit_reauthorization_required && reservation.deposit_suggested}
               reason={reservation.deposit_suggested_reason}
               onRequestDeposit={onRequestDeposit}
             />
@@ -619,7 +627,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
       </div>
 
       {/* Deposit Actions */}
-      {reservation.deposit_amount && reservation.deposit_payment_intent_id && (
+      {!depositReleasePending && reservation.deposit_amount && reservation.deposit_payment_intent_id && (
         <div className="basis-full pl-10 sm:basis-auto sm:pl-0 sm:flex-shrink-0">
           <DepositActions
             reservationId={reservation.reservation_id}

@@ -100,6 +100,8 @@
     "deposit_currency",
     "deposit_payment_intent_id",
     "deposit_refunded_amount",
+    "deposit_release_pending_at",
+    "deposit_reauthorization_required",
     "dietary_restrictions",
     "external_id",
     "first_time_visitor",

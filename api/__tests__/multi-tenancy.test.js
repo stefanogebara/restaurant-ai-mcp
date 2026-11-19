@@ -71,6 +71,7 @@ function createChainableMock(resolvedValue = { data: [], error: null }) {
 let latestChain = null;
 
 const mockSupabaseInstance = {
+  rpc: jest.fn().mockResolvedValue({ data: [], error: null }),
   from: jest.fn((table) => {
     latestChain = createChainableMock({ data: [], error: null });
     latestChain.__calls.push({ method: 'from', args: [table] });
@@ -497,6 +498,7 @@ describe('Cross-tenant isolation: Restaurant A cannot access Restaurant B data',
 describe('host-dashboard extracts restaurant_id from req.user', () => {
   test('dashboard action reads req.user.restaurant_id and passes it to data layer', async () => {
     const { req, res } = mockReqRes({ action: 'dashboard' });
+    req.query.restaurant_id = RESTAURANT_B;
 
     await handler(req, res);
 
@@ -511,6 +513,10 @@ describe('host-dashboard extracts restaurant_id from req.user', () => {
     // The handler sets req.user from authResult.user, which contains restaurant_id
     expect(req.user).toBeDefined();
     expect(req.user.restaurant_id).toBe(RESTAURANT_A);
+    expect(mockSupabaseInstance.rpc).toHaveBeenCalledWith(
+      'list_cancelled_reservation_deposits',
+      { p_restaurant_id: RESTAURANT_A },
+    );
   });
 
   test('dashboard action responds with 200 (not an auth error)', async () => {

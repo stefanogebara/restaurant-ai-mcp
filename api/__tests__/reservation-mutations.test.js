@@ -1,5 +1,7 @@
 'use strict';
 const mockRpc = jest.fn();
+const mockSettle = jest.fn();
+jest.mock('../_lib/deposit-change-release', () => ({ settleChangedDepositForReservation: (...args) => mockSettle(...args) }));
 jest.mock('../_lib/supabase', () => ({ supabaseAdmin: { rpc: (...args) => mockRpc(...args) } }));
 const { verifyGuestReservation, modifyGuestReservation, cancelGuestReservation } = require('../_lib/reservation-mutations');
 const actor = { restaurantId: '11111111-1111-4111-8111-111111111111', reservationId: 'RES-20261110-AbCdEf012_-3', customerPhone: '+1 (555) 555-0101' };
@@ -7,7 +9,10 @@ const row = { id: '22222222-2222-4222-8222-222222222222', restaurant_id: actor.r
   reservation_id: actor.reservationId, customer_phone: '+15555550101', customer_name: 'Guest',
   date: '2026-11-11', time: '20:00', party_size: 2, status: 'confirmed', table_ids: [], special_requests: '' };
 const ok = (changed = false, reservation = row) => ({ data: { success: true, changed, reservation, error: null }, error: null });
-beforeEach(() => { mockRpc.mockReset().mockResolvedValue(ok()); });
+beforeEach(() => {
+  mockRpc.mockReset().mockResolvedValue(ok());
+  mockSettle.mockReset().mockResolvedValue('unchanged');
+});
 
 test.each([
   ['verify', verifyGuestReservation, {}],
@@ -23,6 +28,8 @@ test.each([
     p_changes: action === 'modify' ? { date: '2028-02-29', time: '21:30', party_size: 3 } : {},
   });
   expect(result).toEqual({ success: true, changed: action !== 'verify', reservation: row, error: null });
+  if (action === 'verify') expect(mockSettle).not.toHaveBeenCalled();
+  else expect(mockSettle).toHaveBeenCalledWith(actor.restaurantId, row.id);
 });
 
 test.each([
@@ -76,6 +83,7 @@ test('preserves changed:false on a repeated cancellation', async () => {
   expect(await cancelGuestReservation(actor)).toMatchObject({ success: true, changed: true });
   expect(await cancelGuestReservation(actor)).toMatchObject({ success: true, changed: false });
   expect(mockRpc).toHaveBeenCalledTimes(2);
+  expect(mockSettle).toHaveBeenCalledTimes(2);
 });
 
 test('matches opaque formats exactly without imposing a voice-specific format globally', async () => {

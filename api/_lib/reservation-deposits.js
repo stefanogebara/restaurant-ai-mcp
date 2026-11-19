@@ -201,8 +201,8 @@ async function releaseRejectedDeposit(quoteId, restaurantId, intentId) {
   }
 }
 
-async function readReservationDeposit(reservation, reference = 'deposit_payment_intent_id') {
-  const payment = await getStripe().paymentIntents.retrieve(reservation[reference], { expand: ['latest_charge'] });
+async function readReservationDeposit(reservation, reference = 'deposit_payment_intent_id', stripeOptions) {
+  const payment = await getStripe().paymentIntents.retrieve(reservation[reference], { expand: ['latest_charge'] }, stripeOptions);
   const metadata = payment.metadata || {};
   if (payment.livemode !== stripeLiveMode() || payment.capture_method !== 'manual' ||
       metadata.restaurant_id !== reservation.restaurant_id ||
