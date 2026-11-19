@@ -6,14 +6,15 @@ interface DepositBadgeProps {
   held: boolean;
   refundedAmount?: number | null;
   releasePending?: boolean;
+  expired?: boolean;
 }
 
-export default function DepositBadge({ amount, currency, held, refundedAmount, releasePending }: DepositBadgeProps) {
+export default function DepositBadge({ amount, currency, held, refundedAmount, releasePending, expired }: DepositBadgeProps) {
   const { t, i18n } = useTranslation();
-  if (releasePending) {
+  if (expired || releasePending) {
     return (
-      <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
-        {t('dashboard.deposit.releasePending')}
+      <span role={expired ? 'status' : undefined} className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+        {t(expired ? 'dashboard.deposit.authorizationExpired' : 'dashboard.deposit.releasePending')}
       </span>
     );
   }

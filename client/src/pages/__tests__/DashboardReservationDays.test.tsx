@@ -12,6 +12,7 @@ vi.mock('../../hooks/useDashboardData', () => ({ useDashboardData: () => ({
   data: { data: { timezone: state.timezone, upcoming_reservations: state.reservations, tables: [], active_parties: [], restaurant_id: 'sandbox' } },
   isLoading: false, isError: false, refetch: vi.fn(),
 }) }));
+vi.mock('../../contexts/AuthContext', () => ({ useAuth: () => ({ role: 'owner' }) }));
 vi.mock('../../hooks/useRealtimeSubscription', () => ({ useRealtimeDashboard: vi.fn() }));
 vi.mock('../../hooks/useDocumentTitle', () => ({ useDocumentTitle: vi.fn() }));
 vi.mock('../../hooks/useCompleteService', () => ({ useCompleteService: () => ({ mutate: vi.fn() }) }));

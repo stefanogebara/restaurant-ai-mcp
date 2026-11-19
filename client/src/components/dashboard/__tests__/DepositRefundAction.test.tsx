@@ -43,6 +43,18 @@ it('hides the refund action from a manager', () => {
   expect(screen.queryByRole('button', { name: 'Refund deposit' })).not.toBeInTheDocument();
 });
 
+it('hides refund when the server rejects a stale owner session', async () => {
+  apiPost.mockRejectedValue({ isAxiosError: true, response: { status: 403, data: { code: 'owner_required' } } });
+  const refresh = vi.fn();
+  render(<DepositRefundAction reservationId="RES-1" onActionComplete={refresh} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Refund deposit' }));
+  fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Refund deposit' }));
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('Only the restaurant owner can charge or refund deposits.');
+  expect(screen.queryByRole('button', { name: 'Refund deposit' })).not.toBeInTheDocument();
+  expect(refresh).not.toHaveBeenCalled();
+});
+
 it('distinguishes a released hold, a full refund and a partial refund', () => {
   const { rerender } = render(<DepositBadge amount={null} currency="eur" held={false} />);
   expect(screen.queryByText(/captured|refunded/)).not.toBeInTheDocument();

@@ -27,6 +27,7 @@ import TableTimeline from '../components/dashboard/TableTimeline';
 import { useServiceMode } from '../hooks/useServiceMode';
 import ReservationsList from '../components/dashboard/ReservationsList';
 import CancelledReservationDeposits from '../components/dashboard/CancelledReservationDeposits';
+import NoShowReservationDeposits from '../components/dashboard/NoShowReservationDeposits';
 import CustomerProfileDrawer from '../components/dashboard/CustomerProfileDrawer';
 import ActivePartiesPanel from '../components/dashboard/ActivePartiesPanel';
 import WaitlistPanel from '../components/host/WaitlistPanel';
@@ -485,6 +486,10 @@ export default function Dashboard() {
               isLoading={isLoading}
               language={i18n.language === 'es' ? 'es' : 'en'}
               tables={tables}
+            />
+            <NoShowReservationDeposits
+              deposits={dashboardData?.data?.no_show_reservation_deposits}
+              onDepositAction={() => { void refetch(); }}
             />
             <CancelledReservationDeposits
               deposits={dashboardData?.data?.cancelled_reservation_deposits}

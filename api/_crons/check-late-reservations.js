@@ -11,7 +11,7 @@ const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { initSentry, captureMessage } = require('../_lib/sentry');
 const { logCronRun } = require('../_lib/cron-tracker');
-const { localToUtcDate } = require('../_lib/timezone');
+const { localSlotToInstant } = require('../_lib/timezone');
 const { isCronEnabled } = require('../_lib/cron-config');
 const { bearerEquals } = require('../_lib/secure-compare');
 initSentry();
@@ -47,35 +47,15 @@ module.exports = async (req, res) => {
     logger.info('Starting late reservation check...');
 
     const now = new Date();
-    const today = now.toISOString().split('T')[0]; // YYYY-MM-DD (UTC)
-    // Include yesterday UTC to handle restaurants in UTC- timezones (e.g. Americas)
-    // where the local date may be one day behind UTC after midnight
-    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-    // V.2 timezone fix.
-    //
-    // The previous query computed lateTimeThreshold = `now - 20 min` in
-    // LAMBDA local time (which is UTC on Vercel), then filtered the DB
-    // with `.lte('time', lateTimeThreshold)`. The `time` column stores
-    // each reservation's LOCAL time-of-day, so the comparison was
-    // mixing two different clocks. Concrete bug: a São Paulo restaurant
-    // (UTC-3) booking at 21:00 local = 00:00 UTC next day; at 21:21
-    // local (00:21 UTC) the threshold was '00:01' UTC and the query
-    // filter `time <= '00:01'` against the stored `time='21:00'` failed
-    // → reservation never flagged late.
-    //
-    // Fix: drop the time filter from the DB query (fetch ALL confirmed
-    // unchecked reservations for today/yesterday), then per-row build
-    // the UTC instant from (date, time, restaurant_timezone) and
-    // compare against `now`. Cron fires every 15 minutes, candidate
-    // set per tick is small (a handful of reservations per active
-    // restaurant), so the wider fetch is cheap.
-    logger.info(`Looking for reservations on [${yesterday}, ${today}] across all restaurants`);
-
+    // Include both neighboring UTC days for restaurants across midnight.
+    // Only the restaurant's local date and time can establish lateness.
+    const candidateDates = [-1, 0, 1].map(offset => (
+      new Date(now.getTime() + offset * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+    ));
     const { data: candidateReservations, error } = await supabaseAdmin
       .from('reservations')
       .select('id, reservation_id, customer_name, time, table_ids, restaurant_id, status, date')
-      .in('date', [today, yesterday])
+      .in('date', candidateDates)
       .eq('status', 'confirmed')
       .is('checked_in_at', null);
 
@@ -87,22 +67,11 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Pull each involved restaurant's timezone in one batch. Default to
-    // UTC for any row missing a configured tz — that matches the
-    // pre-fix behaviour for those restaurants instead of silently
-    // mis-flagging them.
+    // Missing or invalid timezones are skipped, since guessing can flag a
+    // guest before their reservation time.
     const restaurantIds = [...new Set((candidateReservations || []).map((r) => r.restaurant_id))];
     const timezoneByRestaurant = {};
     if (restaurantIds.length > 0) {
-      // De restaurant_config, não de restaurant_info.
-      //
-      // BUG VIVO ATÉ 02/08/2026: lia de restaurant_info, tabela legada que
-      // ficou com ZERO linhas. O mapa vinha VAZIO e TODO restaurante caía no
-      // default 'UTC'. Para São Paulo (UTC−3) isso faz localToUtcDate devolver
-      // um instante 3h ANTERIOR ao real, então a reserva cruzava o limiar de
-      // atraso cedo demais: cliente marcado como no-show até 3 horas antes de
-      // sequer estar atrasado. Os ids das reservas sempre foram de
-      // restaurant_config, então esta é a chave certa — e a que tem dado.
       const { data: tzRows, error: tzError } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
@@ -117,21 +86,19 @@ module.exports = async (req, res) => {
         return res.status(500).json({ success: false, error: 'timezone_lookup_failed' });
       }
       for (const row of (tzRows || [])) {
-        timezoneByRestaurant[row.id] = row.timezone || 'UTC';
+        timezoneByRestaurant[row.id] = row.timezone;
       }
     }
 
-    // Now filter to TRULY-late rows: reservation_at_utc <= now - 20 min.
+    // PostgREST sends PostgreSQL time values with seconds. Keep that
+    // precision so the 20-minute threshold cannot fire early.
     const lateThresholdMs = now.getTime() - LATE_THRESHOLD_MINUTES * 60 * 1000;
     const lateReservations = (candidateReservations || []).filter((r) => {
-      const tz = timezoneByRestaurant[r.restaurant_id] || 'UTC';
-      try {
-        const reservationUtc = localToUtcDate(r.date, r.time, tz);
-        return reservationUtc.getTime() <= lateThresholdMs;
-      } catch {
-        // Malformed date/time/tz — skip (don't mass-no-show on bad data).
-        return false;
-      }
+      const timezone = timezoneByRestaurant[r.restaurant_id];
+      const time = typeof r.time === 'string' && r.time.match(/^(\d{2}:\d{2})(?::([0-5]\d(?:\.\d+)?))?$/);
+      if (!timezone || !time) return false;
+      const instant = localSlotToInstant(r.date, time[1], timezone);
+      return instant !== null && instant.getTime() + Number(time[2] || 0) * 1000 <= lateThresholdMs;
     });
 
     logger.info(`Found ${lateReservations.length} late reservations (timezone-aware)`);
@@ -153,22 +120,27 @@ module.exports = async (req, res) => {
       try {
         // Mark as no-show
         // SEC-H2: Add restaurant_id filter as defense-in-depth alongside the PK match
-        const { error: updateError } = await supabaseAdmin
+        const { data: updated, error: updateError } = await supabaseAdmin
           .from('reservations')
           .update({
             status: 'no-show',
             notes: 'Automatically marked as no-show - 20+ minutes late without check-in'
           })
           .eq('id', recordId)
-          .eq('restaurant_id', reservationRestaurantId);
+          .eq('restaurant_id', reservationRestaurantId)
+          .eq('status', 'confirmed').is('checked_in_at', null)
+          .eq('date', reservation.date).eq('time', time).select('id').maybeSingle();
 
         if (updateError) {
           throw new Error(updateError.message);
         }
 
+        if (!updated) continue;
+
         logger.info(`Marked as no-show: ${resId} (${customerName} at ${time})`);
 
-        // If tables were assigned, release them back to Available status (batched, scoped by restaurant_id)
+        // Release assigned tables only while reserved. A late arrival may
+        // have occupied the table after we marked the no-show.
         if (tableIds && tableIds.length > 0) {
           try {
             const { error: tableError } = await supabaseAdmin
@@ -178,7 +150,7 @@ module.exports = async (req, res) => {
                 current_service_id: null
               })
               .in('id', tableIds)
-              .eq('restaurant_id', reservationRestaurantId);
+              .eq('restaurant_id', reservationRestaurantId).eq('status', 'reserved');
 
             if (tableError) {
               logger.error(`Failed to release tables [${tableIds.join(', ')}]:`, tableError.message);

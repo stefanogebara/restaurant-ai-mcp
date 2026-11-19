@@ -55,11 +55,12 @@ jest.mock('../_lib/supabase', () => {
               })),
             })),
             update: jest.fn(() => ({
-              eq: jest.fn(() => ({
-                eq: jest.fn(() => Promise.resolve({
-                  data: null,
-                  error: mockUpdateShouldFail ? { message: 'DB error' } : null,
-                })),
+              eq: jest.fn().mockReturnThis(),
+              is: jest.fn().mockReturnThis(),
+              select: jest.fn().mockReturnThis(),
+              maybeSingle: jest.fn(() => Promise.resolve({
+                data: { id: 'rec-001' },
+                error: mockUpdateShouldFail ? { message: 'DB error' } : null,
               })),
             })),
           };

@@ -1,3 +1,4 @@
+import { isAxiosError } from 'axios';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -17,7 +18,7 @@ export default function DepositRefundAction({ reservationId, onActionComplete }:
   const { success } = useToast();
   const [confirming, setConfirming] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<'pending' | 'error' | null>(null);
+  const [result, setResult] = useState<'pending' | 'owner_required' | 'error' | null>(null);
 
   if (role !== 'owner') return null;
 
@@ -29,8 +30,9 @@ export default function DepositRefundAction({ reservationId, onActionComplete }:
       if (data.state === 'pending') setResult('pending');
       if (data.state === 'refunded') success(t('dashboard.deposit.refundConfirmed'));
       onActionComplete?.(data.state);
-    } catch {
-      setResult('error');
+    } catch (error) {
+      const code = isAxiosError<{ code?: string }>(error) ? error.response?.data?.code : undefined;
+      setResult(code === 'owner_required' ? 'owner_required' : 'error');
     } finally {
       setConfirming(false);
       setLoading(false);
@@ -39,13 +41,17 @@ export default function DepositRefundAction({ reservationId, onActionComplete }:
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <button
-        type="button"
-        className="rounded-full border border-border-gray px-3 py-2 text-xs font-medium text-deep-charcoal hover:bg-soft-gray"
-        onClick={() => setConfirming(true)}
-      >
-        {t('dashboard.deposit.refund')}
-      </button>
+      {result === 'owner_required' ? (
+        <span role="alert" className="text-xs text-red-700">{t('dashboard.deposit.ownerRequired')}</span>
+      ) : (
+        <button
+          type="button"
+          className="rounded-full border border-border-gray px-3 py-2 text-xs font-medium text-deep-charcoal hover:bg-soft-gray"
+          onClick={() => setConfirming(true)}
+        >
+          {t('dashboard.deposit.refund')}
+        </button>
+      )}
       {result === 'pending' && <span role="status" className="rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-800">{t('dashboard.deposit.refundPending')}</span>}
       {result === 'error' && <span role="alert" className="rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-700">{t('dashboard.deposit.refundFailed')}</span>}
       {confirming && createPortal(

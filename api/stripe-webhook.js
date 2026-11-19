@@ -11,6 +11,7 @@ const { stripeMode, isHostedDepositEvent, handleHostedDepositEvent } = require('
 // This is your Stripe webhook secret for verifying webhook signatures
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 const { projectDepositRefund, refundIntentId } = require('./_lib/deposit-refunds');
+const { depositAuthorizationEventIntent, reconcileDepositAuthorizationEvent } = require('./_lib/deposit-authorization');
 
 /**
  * Look up restaurant_id from Stripe event metadata, Stripe customer metadata,
@@ -369,6 +370,17 @@ module.exports = async (req, res) => {
         eventId: event.id, type: event.type, code: error.code || error.cause?.code,
         reason: error.type || error.message,
       });
+      return res.status(500).json({ error: 'Webhook processing failed' });
+    }
+  }
+
+  const authorizationIntent = depositAuthorizationEventIntent(event);
+  if (authorizationIntent) {
+    try {
+      await reconcileDepositAuthorizationEvent(authorizationIntent, event.type === 'charge.expired');
+      return res.status(200).json({ received: true });
+    } catch (error) {
+      logger.warn('Deposit authorization event not applied', { eventId: event.id, code: error.code });
       return res.status(500).json({ error: 'Webhook processing failed' });
     }
   }
