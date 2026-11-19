@@ -8,7 +8,7 @@ import ConfirmModal from '../common/ConfirmModal';
 
 interface DepositRefundActionProps {
   reservationId: string;
-  onActionComplete?: () => void;
+  onActionComplete?: (state: 'pending' | 'refunded') => void;
 }
 
 export default function DepositRefundAction({ reservationId, onActionComplete }: DepositRefundActionProps) {
@@ -28,7 +28,7 @@ export default function DepositRefundAction({ reservationId, onActionComplete }:
       const { data } = await api.post<{ state: 'pending' | 'refunded' }>('/refund-deposit', { reservation_id: reservationId });
       if (data.state === 'pending') setResult('pending');
       if (data.state === 'refunded') success(t('dashboard.deposit.refundConfirmed'));
-      onActionComplete?.();
+      onActionComplete?.(data.state);
     } catch {
       setResult('error');
     } finally {

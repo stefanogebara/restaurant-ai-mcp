@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CancelledReservationDeposit } from '../../types/host.types';
 import { parseLocalDate } from '../../utils/timeFormatting';
@@ -11,7 +12,9 @@ interface CancelledReservationDepositsProps {
 
 export default function CancelledReservationDeposits({ deposits, onDepositAction }: CancelledReservationDepositsProps) {
   const { t, i18n } = useTranslation();
-  if (deposits !== null && !deposits?.length) return null;
+  const [refundedIds, setRefundedIds] = useState<Set<string>>(() => new Set());
+  const unresolved = deposits?.filter(deposit => !refundedIds.has(deposit.reservation_id));
+  if (deposits !== null && !unresolved?.length) return null;
 
   const dateFormat = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' });
 
@@ -20,9 +23,9 @@ export default function CancelledReservationDeposits({ deposits, onDepositAction
       <h2 id="cancelled-deposits-heading" className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">
         {t('dashboard.deposit.cancelledTitle')}
       </h2>
-      {deposits ? (
+      {unresolved ? (
         <ul className="mt-2">
-          {deposits.map((deposit) => {
+          {unresolved.map((deposit) => {
             const outstanding = deposit.deposit_outstanding_amount;
             const formatted = outstanding && deposit.deposit_currency
               ? new Intl.NumberFormat(i18n.language, { style: 'currency', currency: deposit.deposit_currency }).format(outstanding)
@@ -45,7 +48,15 @@ export default function CancelledReservationDeposits({ deposits, onDepositAction
                           ? t('dashboard.deposit.cancelledCapturedAmount', { amount: formatted })
                           : t('dashboard.deposit.cancelledCaptured')}
                       </span>
-                      <DepositRefundAction reservationId={deposit.reservation_id} onActionComplete={onDepositAction} />
+                      <DepositRefundAction
+                        reservationId={deposit.reservation_id}
+                        onActionComplete={(state) => {
+                          if (state === 'refunded') {
+                            setRefundedIds(ids => new Set(ids).add(deposit.reservation_id));
+                          }
+                          onDepositAction();
+                        }}
+                      />
                     </>
                   )}
                 </div>

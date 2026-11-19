@@ -211,7 +211,7 @@ export default function Dashboard() {
   const isDashboardEmpty = !hasReservations && !hasActiveParties && waitlistCount === 0;
 
   // ---- Error state ----
-  if (isError && !isLoading) {
+  if (isError && !isLoading && !dashboardData) {
     return (
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">

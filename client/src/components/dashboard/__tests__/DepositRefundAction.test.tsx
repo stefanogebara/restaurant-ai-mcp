@@ -79,6 +79,8 @@ it('shows cancelled holds and captured balances with the refund action on the ca
 
   await waitFor(() => expect(refresh).toHaveBeenCalledOnce());
   expect(apiPost).toHaveBeenCalledExactlyOnceWith('/refund-deposit', { reservation_id: 'CAPTURED' });
+  expect(within(section).queryByText('Captured guest')).not.toBeInTheDocument();
+  expect(within(section).getByText('Pending guest')).toBeVisible();
   rerender(<CancelledReservationDeposits deposits={[]} onDepositAction={refresh} />);
   expect(screen.queryByRole('region')).not.toBeInTheDocument();
   expect(screen.getByText('Refund confirmed.')).toBeVisible();
