@@ -8,8 +8,10 @@ process.env.STRIPE_CONNECT_WEBHOOK_SECRET = 'whsec_test_connect';
 
 // --- Stripe SDK mock ---
 const mockConstructEvent = jest.fn();
+const mockRetrieve = jest.fn();
 jest.mock('stripe', () => jest.fn().mockImplementation(() => ({
   webhooks: { constructEvent: mockConstructEvent },
+  accounts: { retrieve: mockRetrieve },
 })));
 
 // --- Supabase mock chain ---
@@ -17,8 +19,11 @@ jest.mock('stripe', () => jest.fn().mockImplementation(() => ({
 const mockIdempInsert = jest.fn();
 const mockReceipt = jest.fn();
 const mockConnectUpdateSelect = jest.fn();
-const mockKeepRevoked = jest.fn(() => ({ select: mockConnectUpdateSelect }));
-const mockConnectUpdateEq = jest.fn(() => ({ neq: mockKeepRevoked }));
+const mockRevisionEq = jest.fn(() => ({ neq: mockKeepRevoked }));
+const mockKeepRevoked = jest.fn(() => ({ select: () => ({ maybeSingle: mockConnectUpdateSelect }) }));
+const mockConnectUpdateEq = jest.fn(() => ({ eq: mockRevisionEq }));
+const mockReadMirror = jest.fn();
+const mirrorRevision = '2026-11-19T20:00:00.123456+00:00';
 const mockDeauthUpdateEq = jest.fn();
 const mockConnectUpdate = jest.fn(() => ({ eq: mockConnectUpdateEq }));
 const mockDeauthUpdate = jest.fn(() => ({ eq: mockDeauthUpdateEq }));
@@ -35,6 +40,7 @@ jest.mock('../_lib/supabase', () => ({
       from: jest.fn((tableName) => {
         if (schemaName === 'restaurant' && tableName === 'stripe_connect_accounts') {
           return {
+            select: () => ({ eq: (field, id) => ({ maybeSingle: () => mockReadMirror(field, id) }) }),
             // Branch on the status field to tell `account.updated` (computed status)
             // from `account.application.deauthorized` (status='revoked').
             update: jest.fn((fields) => {
@@ -104,7 +110,11 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockReceipt.mockResolvedValue({ data: null });
   mockIdempInsert.mockResolvedValue({ error: null });
-  mockConnectUpdateSelect.mockResolvedValue({ data: [{ id: 'row-1' }], error: null });
+  mockReadMirror.mockImplementation((field, id) => Promise.resolve({
+    data: { stripe_account_id: id, status: 'active', updated_at: mirrorRevision }, error: null,
+  }));
+  mockRetrieve.mockResolvedValue({ charges_enabled: true, payouts_enabled: true, details_submitted: true, default_currency: 'brl' });
+  mockConnectUpdateSelect.mockResolvedValue({ data: { status: 'active' }, error: null });
   mockDeauthUpdateEq.mockResolvedValue({ error: null });
 });
 
@@ -219,9 +229,62 @@ describe('account.updated', () => {
     }));
     expect(mockConnectUpdateEq).toHaveBeenCalledWith('stripe_account_id', 'acct_active');
     expect(mockKeepRevoked).toHaveBeenCalledWith('status', 'revoked');
+    expect(mockRevisionEq).toHaveBeenCalledWith('updated_at', mirrorRevision);
+    expect(mockRetrieve).toHaveBeenCalledWith('acct_active');
+  });
+
+  test('an old pending snapshot keeps a currently active account active', async () => {
+    mockConstructEvent.mockReturnValue({
+      id: 'evt_late', type: 'account.updated',
+      data: { object: { id: 'acct_active', charges_enabled: false, details_submitted: false } },
+    });
+    const res = makeRes();
+    await handler(makeReq(), res);
+    expect(res.statusCode).toBe(200);
+    expect(mockConnectUpdate).toHaveBeenCalledWith(expect.objectContaining({ status: 'active', charges_enabled: true }));
+  });
+
+  test('a provider failure leaves the mirror and receipt untouched so Stripe retries', async () => {
+    mockConstructEvent.mockReturnValue({
+      id: 'evt_provider', type: 'account.updated', data: { object: { id: 'acct_active' } },
+    });
+    mockRetrieve.mockRejectedValueOnce(new Error('provider unavailable'));
+    const res = makeRes();
+    await handler(makeReq(), res);
+    expect(res.statusCode).toBe(500);
+    expect(mockConnectUpdate).not.toHaveBeenCalled();
+    expect(mockIdempInsert).not.toHaveBeenCalled();
+  });
+
+  test('a competing update skips the stale write and remains retryable', async () => {
+    mockConstructEvent.mockReturnValue({
+      id: 'evt_concurrent', type: 'account.updated', data: { object: { id: 'acct_active' } },
+    });
+    mockConnectUpdateSelect.mockResolvedValueOnce({ data: null });
+    const res = makeRes();
+    await handler(makeReq(), res);
+    expect(res.statusCode).toBe(500);
+    expect(mockIdempInsert).not.toHaveBeenCalled();
+    const retry = makeRes();
+    await handler(makeReq(), retry);
+    expect(retry.statusCode).toBe(200);
+    expect(mockRetrieve).toHaveBeenCalledTimes(2);
+  });
+
+  test('a previously revoked binding ignores late account snapshots', async () => {
+    mockConstructEvent.mockReturnValue({
+      id: 'evt_revoked', type: 'account.updated', data: { object: { id: 'acct_gone' } },
+    });
+    mockReadMirror.mockResolvedValue({ data: { stripe_account_id: 'acct_gone', status: 'revoked' } });
+    const res = makeRes();
+    await handler(makeReq(), res);
+    expect(res.statusCode).toBe(200);
+    expect(mockRetrieve).not.toHaveBeenCalled();
+    expect(mockConnectUpdate).not.toHaveBeenCalled();
   });
 
   test('details_submitted only → status=restricted', async () => {
+    mockRetrieve.mockResolvedValue({ charges_enabled: false, payouts_enabled: false, details_submitted: true });
     mockConstructEvent.mockReturnValue({
       id: 'evt_a2',
       type: 'account.updated',
@@ -238,6 +301,7 @@ describe('account.updated', () => {
   });
 
   test('nothing submitted → status=pending', async () => {
+    mockRetrieve.mockResolvedValue({ charges_enabled: false, payouts_enabled: false, details_submitted: false });
     mockConstructEvent.mockReturnValue({
       id: 'evt_a3',
       type: 'account.updated',
@@ -253,17 +317,18 @@ describe('account.updated', () => {
     expect(mockConnectUpdate).toHaveBeenCalledWith(expect.objectContaining({ status: 'pending' }));
   });
 
-  test('row not found → 200 with warn (no Stripe retry storm)', async () => {
+  test('unknown account → 200 without querying Stripe', async () => {
     mockConstructEvent.mockReturnValue({
       id: 'evt_a4',
       type: 'account.updated',
       data: { object: { id: 'acct_unknown', charges_enabled: true, details_submitted: true } },
     });
-    mockConnectUpdateSelect.mockResolvedValue({ data: [], error: null });
+    mockReadMirror.mockResolvedValue({ data: null, error: null });
 
     const res = makeRes();
     await handler(makeReq(), res);
     expect(res.statusCode).toBe(200);
+    expect(mockRetrieve).not.toHaveBeenCalled();
   });
 
   test('DB error → 500 so Stripe retries', async () => {
@@ -279,7 +344,7 @@ describe('account.updated', () => {
     expect(res.statusCode).toBe(500);
     expect(mockIdempInsert).not.toHaveBeenCalled();
 
-    mockConnectUpdateSelect.mockResolvedValue({ data: [{ id: 'row-1' }] });
+    mockConnectUpdateSelect.mockResolvedValue({ data: { status: 'active' } });
     const retry = makeRes();
     await handler(makeReq(), retry);
     expect(retry.statusCode).toBe(200);

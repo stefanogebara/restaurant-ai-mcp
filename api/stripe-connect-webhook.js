@@ -22,7 +22,7 @@ const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { setWebhookCors } = require('./_lib/cors');
-const { connectAccountState } = require('./_lib/stripe-connect-account');
+const { ACCOUNT_SYNC_FIELDS, connectAccounts, refreshConnectAccount } = require('./_lib/stripe-connect-account');
 
 const logger = createSecureLogger('StripeConnectWebhook');
 const endpointSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET;
@@ -92,36 +92,17 @@ module.exports = async (req, res) => {
 
     switch (event.type) {
       case 'account.updated': {
-        const acct = event.data.object; // Stripe Account
-        const stripeAccountId = acct.id;
-        const state = connectAccountState(acct);
-        logger.info('Connect account updated', {
-          stripe_account_id: stripeAccountId,
-          charges_enabled: acct.charges_enabled,
-          payouts_enabled: acct.payouts_enabled,
-          details_submitted: acct.details_submitted,
-          new_status: state.status,
-        });
+        const stripeAccountId = event.data.object.id;
+        const { data: row, error } = await connectAccounts()
+          .select(ACCOUNT_SYNC_FIELDS).eq('stripe_account_id', stripeAccountId).maybeSingle();
+        if (error) throw error;
+        if (!row || row.status === 'revoked') break;
 
-        const { data: updated, error: updErr } = await supabaseAdmin
-          .schema('restaurant')
-          .from('stripe_connect_accounts')
-          .update(state)
-          .eq('stripe_account_id', stripeAccountId)
-          .neq('status', 'revoked')
-          .select('id');
-
-        if (updErr) {
-          logger.error('Failed to update stripe_connect_accounts', { stripe_account_id: stripeAccountId, error: updErr.message });
-          throw updErr; // 500 → Stripe retries
-        }
-        if (!updated || updated.length === 0) {
-          // No matching row. Could be a race (onboarding insert lost), or an
-          // account we don't own. Surface but don't fail — Stripe retries
-          // wouldn't help, the row will never materialize for an event we
-          // can't attribute.
-          logger.warn('No stripe_connect_accounts row matched account.updated', { stripe_account_id: stripeAccountId });
-        }
+        // Webhooks can arrive out of order. The event identifies the account,
+        // while Stripe's current account flags decide how new deposits route.
+        const state = await refreshConnectAccount(row);
+        if (!state) throw new Error('Connect account changed during refresh');
+        logger.info('Connect account refreshed', { stripe_account_id: stripeAccountId, status: state.status });
         break;
       }
 
