@@ -32,6 +32,7 @@ jest.mock('../_lib/reservation-deposits', () => ({
 }));
 
 const handler = require('../refund-deposit');
+const { checkAndApplyRateLimit } = require('../_lib/rate-limit');
 const { projectDepositRefund, refundIntentId } = require('../_lib/deposit-refunds');
 const { supabaseAdmin } = require('../_lib/supabase');
 
@@ -67,6 +68,7 @@ it('refunds through Connect, reverses the transfer and persists the confirmed am
   });
   mockList.mockReturnValueOnce(listing()).mockReturnValueOnce(listing(refund()));
   const res = await run();
+  expect(checkAndApplyRateLimit).toHaveBeenCalledWith(expect.anything(), res, 'refund_deposit');
   expect(mockFilters).toContainEqual(['restaurant_id', 'restaurant-A']);
   expect(mockReadReservationDeposit).toHaveBeenCalledWith(mockReservation, 'deposit_captured_payment_intent_id');
   expect(mockCreate).toHaveBeenCalledWith({ payment_intent: 'pi_capture', amount: 2500, reverse_transfer: true },

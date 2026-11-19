@@ -12,7 +12,7 @@ module.exports = async (req, res) => {
   setInternalCors(req, res);
   if (handlePreflight(req, res)) return;
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
-  if (await checkAndApplyRateLimit(req, res, 'api')) return;
+  if (await checkAndApplyRateLimit(req, res, 'refund_deposit')) return;
 
   const auth = await verifyAuth(req, { required: true });
   if (auth.error) return res.status(auth.status || 401).json({ success: false, error: auth.error });

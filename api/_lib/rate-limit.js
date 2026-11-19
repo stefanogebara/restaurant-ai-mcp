@@ -86,6 +86,12 @@ const RATE_LIMITS = {
     message: 'Too many requests. Please slow down.',
   },
 
+  refund_deposit: {
+    windowMs: 60 * 1000,
+    maxRequests: 20,
+    message: 'Too many refund requests. Please wait a moment.',
+  },
+
   // Chat/AI endpoints (expensive operations)
   chat: {
     windowMs: 60 * 1000,      // 1 minute
