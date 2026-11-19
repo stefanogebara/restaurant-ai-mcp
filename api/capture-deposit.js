@@ -57,11 +57,14 @@ module.exports = async (req, res) => {
       return res.status(409).json({ success: false, error: 'Stripe did not confirm capture of the full deposit' });
     }
 
-    // Null out the payment intent ID so DepositActions stops showing buttons.
-    // Keep deposit_amount for reporting purposes.
+    // Move the authorization out of the hold field and keep its Stripe reference for refunds.
     const { error: clearError } = await supabaseAdmin
       .from('reservations')
-      .update({ deposit_payment_intent_id: null, deposit_currency: paymentIntent.currency })
+      .update({
+        deposit_payment_intent_id: null,
+        deposit_captured_payment_intent_id: paymentIntent.id,
+        deposit_currency: paymentIntent.currency,
+      })
       .eq('id', reservation.id)
       .eq('restaurant_id', req.user.restaurant_id)
       .eq('deposit_payment_intent_id', payment.id);

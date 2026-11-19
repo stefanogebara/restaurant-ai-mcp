@@ -201,8 +201,8 @@ async function releaseRejectedDeposit(quoteId, restaurantId, intentId) {
   }
 }
 
-async function readReservationDeposit(reservation) {
-  const payment = await getStripe().paymentIntents.retrieve(reservation.deposit_payment_intent_id, { expand: ['latest_charge'] });
+async function readReservationDeposit(reservation, reference = 'deposit_payment_intent_id') {
+  const payment = await getStripe().paymentIntents.retrieve(reservation[reference], { expand: ['latest_charge'] });
   const metadata = payment.metadata || {};
   if (payment.livemode !== stripeLiveMode() || payment.capture_method !== 'manual' ||
       metadata.restaurant_id !== reservation.restaurant_id ||
@@ -226,7 +226,7 @@ async function readReservationDeposit(reservation) {
   // Older public deposits have no quote ID. Accept the tenant's single stored
   // reference to its legacy intent. Ambiguous historical rows need a review.
   const { data: references, error } = await supabaseAdmin.from('reservations').select('id')
-    .eq('deposit_payment_intent_id', payment.id).limit(2);
+    .eq(reference, payment.id).limit(2);
   if (error) throw new Error('Could not check legacy deposit ownership');
   return references.length === 1 && references[0].id === reservation.id ? payment : null;
 }

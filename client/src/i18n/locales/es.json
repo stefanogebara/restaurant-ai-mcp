@@ -328,6 +328,12 @@
       "probability": "Probabilidad de no-show: {{score}}%"
     },
     "deposit": {
+      "refund": "Reembolsar depósito",
+      "refundConfirmTitle": "¿Reembolsar el depósito cobrado?",
+      "refundConfirmMessage": "Stripe devolverá el importe restante a la tarjeta original.",
+      "refundPending": "Stripe está procesando el reembolso.",
+      "refundFailed": "No pudimos confirmar el reembolso. Verifica el estado antes de continuar.",
+      "refunded": "{{amount}} reembolsados",
       "recorded": "Depósito registrado",
       "authorized": "Depósito de {{amount}} autorizado",
       "captured": "Depósito de {{amount}} cobrado",

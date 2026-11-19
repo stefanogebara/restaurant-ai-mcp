@@ -2,13 +2,13 @@
 const { verifyJWT } = require('./_lib/auth');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
-const { ACCOUNT_FIELDS, connectAccounts, connectAccountState, connectStripe } = require('./_lib/stripe-connect-account');
+const { ACCOUNT_SYNC_FIELDS, connectAccounts, refreshConnectAccount } = require('./_lib/stripe-connect-account');
 
 const logger = createSecureLogger('stripe-connect-status');
 
 async function readAccount(restaurantId) {
   const { data, error } = await connectAccounts()
-    .select(ACCOUNT_FIELDS).eq('restaurant_id', restaurantId).maybeSingle();
+    .select(ACCOUNT_SYNC_FIELDS).eq('restaurant_id', restaurantId).maybeSingle();
   if (error) throw error;
   return data;
 }
@@ -26,20 +26,7 @@ module.exports = async (req, res) => {
     let row = await readAccount(user.restaurant_id);
     if (refresh && row && row.status !== 'revoked') {
       try {
-        const stripe = connectStripe();
-        if (!stripe) throw new Error('Stripe configuration unavailable');
-        const account = await stripe.accounts.retrieve(row.stripe_account_id);
-        const state = connectAccountState(account);
-        if (Object.keys(state).some(key => state[key] !== row[key])) {
-          const { data, error } = await connectAccounts().update(state)
-            .eq('restaurant_id', user.restaurant_id)
-            .eq('stripe_account_id', row.stripe_account_id)
-            .neq('status', 'revoked')
-            .select(ACCOUNT_FIELDS)
-            .maybeSingle();
-          if (error) throw error;
-          row = data || await readAccount(user.restaurant_id);
-        }
+        row = await refreshConnectAccount(row) || await readAccount(user.restaurant_id);
       } catch (error) {
         logger.warn('Could not refresh Connect status', { code: error.code, type: error.type });
         return res.status(503).json({ success: false, error: 'stripe_unavailable' });
@@ -47,7 +34,7 @@ module.exports = async (req, res) => {
     }
 
     if (!row) return res.json({ success: true, connected: false });
-    const { stripe_account_id, ...state } = row;
+    const { stripe_account_id, updated_at, ...state } = row;
     return res.json({
       success: true,
       connected: true,

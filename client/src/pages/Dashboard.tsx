@@ -477,6 +477,7 @@ export default function Dashboard() {
               onEdit={(r) => setEditReservation(r)}
               onCancel={(r) => setCancelReservation(r)}
               onRequestDeposit={(r) => setDepositRequestReservation(r)}
+              onDepositAction={() => { void refetch(); }}
               onCustomerClick={(r) => setSelectedCustomer(r)}
               avgSpendPerCover={avgSpendPerCover}
               byPartySize={revenueStats?.by_party_size}

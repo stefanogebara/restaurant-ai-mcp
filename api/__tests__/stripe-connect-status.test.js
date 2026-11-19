@@ -167,7 +167,7 @@ describe('multi-tenancy scoping', () => {
 });
 
 describe('owner return refresh', () => {
-  const pending = { stripe_account_id: 'acct_pending', status: 'pending' };
+  const pending = { stripe_account_id: 'acct_pending', status: 'pending', updated_at: '2026-11-19T20:00:00.123456+00:00' };
 
   test('a team member cannot refresh the binding', async () => {
     mockVerifyJWT.mockResolvedValue({ restaurant_id: 'rest-1', role: 'manager' });
@@ -190,6 +190,7 @@ describe('owner return refresh', () => {
     expect(mockRetrieve).toHaveBeenCalledWith('acct_pending');
     expect(mockWrite).toHaveBeenCalledWith(state);
     expect(res.body).toMatchObject({ status: 'active', payouts_enabled: false });
+    expect(res.body).not.toHaveProperty('updated_at');
   });
 
   test('Stripe failure does not claim that an existing account is ready', async () => {

@@ -363,6 +363,12 @@
       "probability": "No-show probability: {{score}}%"
     },
     "deposit": {
+      "refund": "Refund deposit",
+      "refundConfirmTitle": "Refund the captured deposit?",
+      "refundConfirmMessage": "Stripe will return the remaining amount to the original card.",
+      "refundPending": "Stripe is processing the refund.",
+      "refundFailed": "Could not confirm the refund. Check again before taking another action.",
+      "refunded": "{{amount}} refunded",
       "recorded": "Deposit recorded",
       "authorized": "{{amount}} authorized",
       "captured": "{{amount}} captured",
