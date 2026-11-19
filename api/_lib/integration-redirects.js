@@ -1,4 +1,4 @@
-const TABS = new Set(['pos', 'instagram']);
+const TABS = new Set(['pos', 'instagram', 'payments']);
 
 function integrationReturnUrl(clientUrl, tab, parameter, value) {
   if (!TABS.has(tab)) throw new Error('Unknown integration tab');

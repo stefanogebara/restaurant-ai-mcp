@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useRef, useId } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useRestaurantSettings, useUpdateRestaurantSettings } from '../hooks/useRestaurantSettings';
 import type { BusinessHours, ReservationSettings } from '../hooks/useRestaurantSettings';
@@ -46,8 +46,16 @@ export default function RestaurantSettingsPage() {
   const { t, i18n } = useTranslation();
   useDocumentTitle(t('pageTitles.settings'));
   const toast = useToast();
+  const { hash } = useLocation();
   const { data: settings, isLoading, error } = useRestaurantSettings();
   const updateMutation = useUpdateRestaurantSettings();
+
+  const settingsReady = Boolean(settings);
+  useEffect(() => {
+    if (settingsReady && hash === '#reservation-deposits') {
+      document.getElementById('reservation-deposits')?.scrollIntoView();
+    }
+  }, [settingsReady, hash]);
 
   // Basic info form
   const [info, setInfo] = useState({

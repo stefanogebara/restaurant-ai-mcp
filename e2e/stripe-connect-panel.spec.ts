@@ -1,7 +1,7 @@
 /**
  * StripeConnectPanel E2E
  *
- * Exercises the panel on /host-dashboard/voice-settings → POS tab:
+ * Exercises the panel on /host-dashboard/integrations → Payments tab:
  *   1. State rendering — pill colour + CTA label per { connected, status }
  *   2. "Connect Stripe" click → POST /api/stripe-connect-onboarding →
  *      window.location.href = response.url
@@ -40,22 +40,21 @@ async function stubStatus(page: Page, body: ConnectStatus) {
   );
 }
 
-async function gotoPosTab(page: Page) {
-  await page.goto('/host-dashboard/voice-settings');
+async function gotoPaymentsTab(page: Page) {
+  await page.goto('/host-dashboard/integrations');
   await page.waitForLoadState('networkidle');
-  // The POS tab is in a SettingsTabs strip. Click by visible label.
-  await page.getByRole('tab', { name: /POS/ }).click();
+  // The Payments tab is in a SettingsTabs strip. Click by visible label.
+  await page.getByRole('tab', { name: /Payments/ }).click();
 }
 
 test.describe('StripeConnectPanel', () => {
   test('not connected → renders "Connect Stripe" CTA, no status pill', async ({ page }) => {
     await stubStatus(page, { success: true, connected: false });
-    await gotoPosTab(page);
+    await gotoPaymentsTab(page);
 
-    await expect(page.getByRole('heading', { name: /Stripe \(receive bookings\)/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Stripe for booking deposits/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /Connect Stripe/i })).toBeVisible();
-    // No status pill — the connected-only details grid shouldn't render either.
-    await expect(page.getByText(/^Charges$/i)).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Set up deposits' })).toHaveCount(0);
   });
 
   test('pending → amber pill, "Continue onboarding" CTA', async ({ page }) => {
@@ -70,14 +69,14 @@ test.describe('StripeConnectPanel', () => {
       default_currency: 'brl',
       country: 'BR',
     });
-    await gotoPosTab(page);
+    await gotoPaymentsTab(page);
 
     await expect(page.getByText(/pending/i).first()).toBeVisible();
     await expect(page.getByRole('button', { name: /Continue onboarding/i })).toBeVisible();
-    await expect(page.getByText('acct_test_pending')).toBeVisible();
+    await expect(page.getByText(/Finish setting up your account/i)).toBeVisible();
   });
 
-  test('active → green pill, "Edit Stripe details" CTA, all flags Enabled', async ({ page }) => {
+  test('active → green pill and a link to configure deposits', async ({ page }) => {
     await stubStatus(page, {
       success: true,
       connected: true,
@@ -89,15 +88,14 @@ test.describe('StripeConnectPanel', () => {
       default_currency: 'brl',
       country: 'BR',
     });
-    await gotoPosTab(page);
+    await gotoPaymentsTab(page);
 
     await expect(page.getByText(/active/i).first()).toBeVisible();
-    await expect(page.getByRole('button', { name: /Edit Stripe details/i })).toBeVisible();
-    // Two "Enabled" cells for charges + payouts.
-    await expect(page.getByText(/Enabled/i)).toHaveCount(2);
+    await expect(page.getByRole('link', { name: 'Set up deposits' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Open Stripe' })).toBeVisible();
   });
 
-  test('revoked → red pill, "Fix Stripe issues" CTA', async ({ page }) => {
+  test('revoked → red pill, "Connect again" CTA', async ({ page }) => {
     await stubStatus(page, {
       success: true,
       connected: true,
@@ -109,19 +107,15 @@ test.describe('StripeConnectPanel', () => {
       default_currency: 'brl',
       country: 'BR',
     });
-    await gotoPosTab(page);
+    await gotoPaymentsTab(page);
 
     await expect(page.getByText(/revoked/i).first()).toBeVisible();
-    await expect(page.getByRole('button', { name: /Fix Stripe issues/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Connect again/i })).toBeVisible();
   });
 
-  test('click "Connect Stripe" → POSTs onboarding → navigates away from voice-settings', async ({ page }) => {
-    // Use a same-origin stub URL so we don't bounce through Stripe (synthetic
-    // acct ids would be rejected). The exact post-navigation URL depends on
-    // the host-dashboard's own routing (e.g. `/host-dashboard` redirects to
-    // `/host-dashboard/simple`), so we assert *navigation happened* + that
-    // the onboarding POST actually fired, not an exact URL match.
-    const STUB_URL = 'https://seatable.one/host-dashboard?stripe_redirect_stub=1';
+  test('click Connect Stripe posts onboarding and follows the hosted link', async ({ page }) => {
+    const STUB_URL = 'https://connect.stripe.com/setup/s/seatable-browser-fixture';
+    await page.route(STUB_URL, route => route.fulfill({ status: 200, body: 'Stripe fixture' }));
     await stubStatus(page, { success: true, connected: false });
     let onboardingPostHit = false;
     let onboardingMethod = '';
@@ -135,24 +129,25 @@ test.describe('StripeConnectPanel', () => {
       });
     });
 
-    await gotoPosTab(page);
+    await gotoPaymentsTab(page);
     await Promise.all([
-      page.waitForURL((u) => !u.pathname.endsWith('/voice-settings'), { timeout: 15_000 }),
+      page.waitForURL(STUB_URL, { timeout: 15_000 }),
       page.getByRole('button', { name: /Connect Stripe/i }).click(),
     ]);
     expect(onboardingPostHit).toBe(true);
     expect(onboardingMethod).toBe('POST');
-    // Same-origin redirect, but no longer on the voice-settings page.
-    expect(page.url()).not.toContain('/voice-settings');
+    expect(page.url()).toBe(STUB_URL);
   });
 
-  test('?stripe_connect=ok in URL → success toast + URL cleaned', async ({ page }) => {
-    await stubStatus(page, { success: true, connected: false });
-    await page.goto('/host-dashboard/voice-settings?stripe_connect=ok');
-    await page.waitForLoadState('networkidle');
-    await page.getByRole('tab', { name: /POS/ }).click();
-    // The panel's useEffect strips the ?stripe_connect param via
-    // window.history.replaceState. Assert the URL is clean.
-    await expect.poll(() => new URL(page.url()).searchParams.has('stripe_connect'), { timeout: 3000 }).toBe(false);
+  test('Stripe return waits for verification and keeps incomplete onboarding pending', async ({ page }) => {
+    let refreshed = false;
+    await page.route('**/api/stripe-connect-status', route => {
+      refreshed ||= route.request().method() === 'POST';
+      return route.fulfill({ json: { success: true, connected: true, status: 'pending' } });
+    });
+    await page.goto('/host-dashboard/integrations?stripe_connect=ok#integrations:pos');
+    await expect(page.getByRole('button', { name: /Continue onboarding/i })).toBeVisible();
+    expect(refreshed).toBe(true);
+    await expect(page).toHaveURL(/\/host-dashboard\/integrations#integrations:payments$/);
   });
 });

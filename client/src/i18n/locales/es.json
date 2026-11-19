@@ -3868,9 +3868,10 @@
     "pageTitle": "Canales e integraciones",
     "pageIntro": "Comparte tu enlace de reservas y conecta los servicios que ayudan a tu restaurante a llegar y atender a los clientes.",
     "tab": {
+      "payments": "Pagos",
       "booking": "Compartir reservas",
       "instagram": "Instagram",
-      "pos": "POS y pagos",
+      "pos": "Punto de venta",
       "developers": "Para desarrolladores"
     },
     "loadingBookingLink": "Cargando tu enlace de reservas...",
@@ -3949,7 +3950,7 @@
   },
   "stripeConnect": {
     "title": "Stripe para depósitos de reservas",
-    "subtitle": "Conecta tu cuenta de Stripe para que los depósitos de reservas lleguen directamente a tu banco.",
+    "subtitle": "Conecta Stripe para recibir depósitos de reservas en tu cuenta de Stripe. La suscripción de Seatable se cobra por separado.",
     "startCta": "Conectar Stripe",
     "resumeCta": "Editar datos en Stripe",
     "continueCta": "Continuar registro",
@@ -3971,6 +3972,23 @@
       "restricted": "Acción necesaria",
       "disabled": "Desactivado",
       "revoked": "Revocado"
+    },
+    "reconnectCta": "Volver a conectar",
+    "checking": "Consultando el estado en Stripe…",
+    "verifyFailed": "No se pudo confirmar el estado de tu cuenta en Stripe. Vuelve a intentarlo.",
+    "readFailed": "No se pudo cargar la conexión con Stripe. Vuelve a intentarlo.",
+    "checkAgain": "Verificar estado",
+    "ownerRequired": "Solo el propietario del restaurante puede conectar Stripe.",
+    "countryRequired": "Configura un país admitido para el restaurante antes de conectar Stripe.",
+    "configureDeposits": "Configurar depósitos",
+    "managePayments": "Gestionar conexión con Stripe",
+    "payoutsPending": "Stripe aún no ha habilitado los abonos a tu cuenta bancaria.",
+    "help": {
+      "active": "Ya puedes recibir depósitos de reservas con tarjeta.",
+      "pending": "Completa el registro en Stripe para recibir depósitos.",
+      "restricted": "Stripe aún necesita información para habilitar los depósitos. Abre Stripe para ver qué falta.",
+      "disabled": "Stripe desactivó esta conexión. Abre Stripe para ver más información.",
+      "revoked": "La cuenta está desconectada. Vuelve a conectarla para recibir nuevos depósitos."
     }
   },
   "instagramPanel": {

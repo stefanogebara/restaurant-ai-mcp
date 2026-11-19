@@ -10,9 +10,12 @@
  */
 
 const mockMaybeSingle = jest.fn();
+const mockSave = jest.fn();
+const mockRetrieve = jest.fn();
+const mockWrite = jest.fn(() => ({ eq: () => ({ eq: () => ({ neq: () => ({ select: () => ({ maybeSingle: mockSave }) }) }) }) }));
 const mockEq = jest.fn(() => ({ maybeSingle: mockMaybeSingle }));
 const mockSelect = jest.fn(() => ({ eq: mockEq }));
-const mockFrom = jest.fn(() => ({ select: mockSelect }));
+const mockFrom = jest.fn(() => ({ select: mockSelect, update: mockWrite }));
 const mockSchema = jest.fn(() => ({ from: mockFrom }));
 
 jest.mock('../_lib/supabase', () => ({
@@ -31,6 +34,9 @@ jest.mock('../_lib/secure-logger', () => ({
 jest.mock('../_lib/rate-limit', () => ({
   checkAndApplyRateLimit: jest.fn().mockResolvedValue(false),
 }));
+
+process.env.STRIPE_SECRET_KEY = 'sk_test_dummy';
+jest.mock('stripe', () => jest.fn(() => ({ accounts: { retrieve: mockRetrieve } })));
 
 const handler = require('../stripe-connect-status');
 
@@ -56,9 +62,9 @@ beforeEach(() => {
 });
 
 describe('method + auth guards', () => {
-  test('POST is rejected with 405', async () => {
+  test('DELETE is rejected with 405', async () => {
     const res = makeRes();
-    await handler(makeReq({ method: 'POST' }), res);
+    await handler(makeReq({ method: 'DELETE' }), res);
     expect(res.statusCode).toBe(405);
   });
 
@@ -157,5 +163,42 @@ describe('multi-tenancy scoping', () => {
     expect(mockSchema).toHaveBeenCalledWith('restaurant');
     expect(mockFrom).toHaveBeenCalledWith('stripe_connect_accounts');
     expect(mockEq).toHaveBeenCalledWith('restaurant_id', 'rest-from-jwt');
+  });
+});
+
+describe('owner return refresh', () => {
+  const pending = { stripe_account_id: 'acct_pending', status: 'pending' };
+
+  test('a team member cannot refresh the binding', async () => {
+    mockVerifyJWT.mockResolvedValue({ restaurant_id: 'rest-1', role: 'manager' });
+    const res = makeRes();
+    await handler(makeReq({ method: 'POST' }), res);
+    expect(res.statusCode).toBe(403);
+    expect(mockRetrieve).not.toHaveBeenCalled();
+  });
+
+  test('reads Stripe and persists the verified account state', async () => {
+    mockVerifyJWT.mockResolvedValue({ restaurant_id: 'rest-1', role: 'owner' });
+    mockMaybeSingle.mockResolvedValue({ data: pending });
+    const state = { details_submitted: true, charges_enabled: true, payouts_enabled: false,
+      default_currency: 'eur', status: 'active' };
+    mockRetrieve.mockResolvedValue({ ...state, capabilities: { transfers: 'active' } });
+    mockSave.mockResolvedValue({ data: { ...pending, ...state } });
+
+    const res = makeRes();
+    await handler(makeReq({ method: 'POST' }), res);
+    expect(mockRetrieve).toHaveBeenCalledWith('acct_pending');
+    expect(mockWrite).toHaveBeenCalledWith(state);
+    expect(res.body).toMatchObject({ status: 'active', payouts_enabled: false });
+  });
+
+  test('Stripe failure does not claim that an existing account is ready', async () => {
+    mockVerifyJWT.mockResolvedValue({ restaurant_id: 'rest-1', role: 'owner' });
+    mockMaybeSingle.mockResolvedValue({ data: pending });
+    mockRetrieve.mockRejectedValue(new Error('provider unavailable'));
+    const res = makeRes();
+    await handler(makeReq({ method: 'POST' }), res);
+    expect(res.statusCode).toBe(503);
+    expect(mockWrite).not.toHaveBeenCalled();
   });
 });

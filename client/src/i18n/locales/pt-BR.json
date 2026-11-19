@@ -3882,9 +3882,10 @@
     "pageTitle": "Canais e integrações",
     "pageIntro": "Compartilhe seu link de reservas e conecte os serviços que ajudam seu restaurante a receber e atender clientes.",
     "tab": {
+      "payments": "Pagamentos",
       "booking": "Compartilhar reservas",
       "instagram": "Instagram",
-      "pos": "Caixa e pagamentos",
+      "pos": "Ponto de venda",
       "developers": "Para desenvolvedores"
     },
     "loadingBookingLink": "Carregando seu link de reservas...",
@@ -3963,7 +3964,7 @@
   },
   "stripeConnect": {
     "title": "Stripe para depósitos de reservas",
-    "subtitle": "Conecte sua conta Stripe para que os depósitos de reservas sejam enviados diretamente ao seu banco.",
+    "subtitle": "Conecte a Stripe para receber cauções de reservas na sua conta Stripe. A assinatura da Seatable é cobrada separadamente.",
     "startCta": "Conectar Stripe",
     "resumeCta": "Editar dados no Stripe",
     "continueCta": "Continuar cadastro",
@@ -3985,6 +3986,23 @@
       "restricted": "Ação necessária",
       "disabled": "Desativado",
       "revoked": "Revogado"
+    },
+    "reconnectCta": "Conectar novamente",
+    "checking": "Consultando o status na Stripe…",
+    "verifyFailed": "Não foi possível confirmar o status da conta na Stripe. Tente novamente.",
+    "readFailed": "Não foi possível carregar a conexão com a Stripe. Tente novamente.",
+    "checkAgain": "Verificar status",
+    "ownerRequired": "Só o proprietário do restaurante pode conectar a Stripe.",
+    "countryRequired": "Defina um país aceito nas configurações do restaurante antes de conectar a Stripe.",
+    "configureDeposits": "Configurar cauções",
+    "managePayments": "Gerenciar conexão com a Stripe",
+    "payoutsPending": "A Stripe ainda não liberou os repasses para sua conta bancária.",
+    "help": {
+      "active": "Você já pode receber cauções de reservas por cartão.",
+      "pending": "Conclua o cadastro na Stripe para receber cauções.",
+      "restricted": "A Stripe ainda precisa de informações para liberar as cauções. Abra a Stripe para ver o que falta.",
+      "disabled": "A Stripe desativou esta conexão. Abra a Stripe para saber mais.",
+      "revoked": "A conta foi desconectada. Conecte novamente para receber novas cauções."
     }
   },
   "instagramPanel": {

@@ -15,8 +15,10 @@ jest.mock('stripe', () => jest.fn().mockImplementation(() => ({
 // --- Supabase mock chain ---
 // All factory-referenced names MUST be prefixed `mock` (jest hoist guard).
 const mockIdempInsert = jest.fn();
+const mockReceipt = jest.fn();
 const mockConnectUpdateSelect = jest.fn();
-const mockConnectUpdateEq = jest.fn(() => ({ select: mockConnectUpdateSelect }));
+const mockKeepRevoked = jest.fn(() => ({ select: mockConnectUpdateSelect }));
+const mockConnectUpdateEq = jest.fn(() => ({ neq: mockKeepRevoked }));
 const mockDeauthUpdateEq = jest.fn();
 const mockConnectUpdate = jest.fn(() => ({ eq: mockConnectUpdateEq }));
 const mockDeauthUpdate = jest.fn(() => ({ eq: mockDeauthUpdateEq }));
@@ -25,7 +27,7 @@ jest.mock('../_lib/supabase', () => ({
   supabaseAdmin: {
     from: jest.fn((tableName) => {
       if (tableName === 'stripe_webhook_events_processed') {
-        return { insert: mockIdempInsert };
+        return { insert: mockIdempInsert, select: () => ({ eq: () => ({ maybeSingle: mockReceipt }) }) };
       }
       throw new Error(`Unexpected from('${tableName}')`);
     }),
@@ -100,6 +102,7 @@ function makeReq({ method = 'POST', body = '{}', headers = {} } = {}) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockReceipt.mockResolvedValue({ data: null });
   mockIdempInsert.mockResolvedValue({ error: null });
   mockConnectUpdateSelect.mockResolvedValue({ data: [{ id: 'row-1' }], error: null });
   mockDeauthUpdateEq.mockResolvedValue({ error: null });
@@ -158,13 +161,13 @@ describe('signature verification', () => {
 });
 
 describe('idempotency', () => {
-  test('duplicate event (23505) → 200 with deduplicated:true and no handler dispatch', async () => {
+  test('previously processed event → 200 with deduplicated:true and no handler dispatch', async () => {
     mockConstructEvent.mockReturnValue({
       id: 'evt_dup',
       type: 'account.updated',
       data: { object: { id: 'acct_1', charges_enabled: true, payouts_enabled: true, details_submitted: true } },
     });
-    mockIdempInsert.mockResolvedValue({ error: { code: '23505', message: 'dup key' } });
+    mockReceipt.mockResolvedValue({ data: { event_id: 'evt_dup' } });
 
     const res = makeRes();
     await handler(makeReq(), res);
@@ -174,7 +177,7 @@ describe('idempotency', () => {
     expect(mockConnectUpdate).not.toHaveBeenCalled();
   });
 
-  test('non-23505 insert error → continues and processes event', async () => {
+  test('transient receipt insert error → 500 after applying the update', async () => {
     mockConstructEvent.mockReturnValue({
       id: 'evt_idem_err',
       type: 'account.updated',
@@ -185,7 +188,7 @@ describe('idempotency', () => {
     const res = makeRes();
     await handler(makeReq(), res);
 
-    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).toBe(500);
     expect(mockConnectUpdate).toHaveBeenCalledTimes(1);
   });
 });
@@ -215,6 +218,7 @@ describe('account.updated', () => {
       default_currency: 'brl',
     }));
     expect(mockConnectUpdateEq).toHaveBeenCalledWith('stripe_account_id', 'acct_active');
+    expect(mockKeepRevoked).toHaveBeenCalledWith('status', 'revoked');
   });
 
   test('details_submitted only → status=restricted', async () => {
@@ -273,6 +277,13 @@ describe('account.updated', () => {
     const res = makeRes();
     await handler(makeReq(), res);
     expect(res.statusCode).toBe(500);
+    expect(mockIdempInsert).not.toHaveBeenCalled();
+
+    mockConnectUpdateSelect.mockResolvedValue({ data: [{ id: 'row-1' }] });
+    const retry = makeRes();
+    await handler(makeReq(), retry);
+    expect(retry.statusCode).toBe(200);
+    expect(mockIdempInsert).toHaveBeenCalledWith({ event_id: 'evt_a5', event_type: 'account.updated' });
   });
 });
 

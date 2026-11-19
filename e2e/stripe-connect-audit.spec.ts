@@ -3,7 +3,7 @@
  *
  *   - StripeConnectStatusBadge on /host-dashboard/simple (each state)
  *   - StripeConnectNudgeBanner on /host-dashboard/simple (gating matrix)
- *   - StripeConnectPanel on /host-dashboard/voice-settings POS tab
+ *   - StripeConnectPanel on /host-dashboard/integrations Payments tab
  *   - Cross-surface click-through: nudge banner → panel → onboarding URL
  *
  * Strategy: stub /api/stripe-connect-status, /api/stripe-connect-onboarding,
@@ -116,7 +116,7 @@ test.describe('Dashboard — StripeConnectStatusBadge', () => {
       const badge = page.locator('[data-testid="stripe-connect-status-badge"]');
       await expect(badge).toBeVisible();
       await expect(badge).toContainText(copy);
-      expect(await badge.getAttribute('href')).toBe('/host-dashboard/voice-settings#tab=pos');
+      expect(await badge.getAttribute('href')).toBe('/host-dashboard/integrations#integrations:payments');
       const expectedToneClass = tone === 'amber' ? 'bg-amber-50' : 'bg-red-50';
       await expect(badge).toHaveClass(new RegExp(expectedToneClass));
       await screenshot(page, `dashboard-badge-${status}`);
@@ -158,7 +158,7 @@ test.describe('Dashboard — StripeConnectNudgeBanner', () => {
     await expect(banner).toContainText(/Connect your Stripe account/i);
     await expect(banner).toContainText(/currently routed through Seatable/i);
     const cta = banner.getByRole('link', { name: /Connect Stripe/i });
-    expect(await cta.getAttribute('href')).toBe('/host-dashboard/voice-settings#tab=pos');
+    expect(await cta.getAttribute('href')).toBe('/host-dashboard/integrations#integrations:payments');
     await screenshot(page, 'dashboard-nudge-banner');
   });
 });
@@ -167,8 +167,9 @@ test.describe('Dashboard — StripeConnectNudgeBanner', () => {
 // Cross-surface: nudge banner click → panel → onboarding redirect
 // ─────────────────────────────────────────────────────────────────────────────
 test.describe('Cross-surface — dashboard nudge → panel → Stripe redirect', () => {
-  test('clicks through end-to-end without leaving voice-settings until final redirect', async ({ page, context }) => {
-    const STUB_URL = 'https://seatable.one/host-dashboard?audit_redirect_stub=1';
+  test('clicks through end-to-end without leaving Payments until final redirect', async ({ page, context }) => {
+    const STUB_URL = 'https://connect.stripe.com/setup/s/seatable-audit-fixture';
+    await page.route(STUB_URL, route => route.fulfill({ status: 200, body: 'Stripe fixture' }));
     await stubAll(context, {
       connectStatus: { success: true, connected: false },
       depositEnabled: true,
@@ -179,15 +180,15 @@ test.describe('Cross-surface — dashboard nudge → panel → Stripe redirect',
     await page.goto('/host-dashboard/simple');
     await expect(page.locator('[data-testid="stripe-connect-nudge-banner"]')).toBeVisible();
 
-    // 2. Click the banner CTA → goes to voice settings
+    // 2. Click the banner CTA → goes to Payments
     await page.getByRole('link', { name: /Connect Stripe/i }).first().click();
-    await page.waitForURL(/voice-settings/);
+    await page.waitForURL(/integrations#integrations:payments/);
 
-    // 3. POS tab content rendered
-    await page.getByRole('tab', { name: /POS/ }).click();
-    await expect(page.getByRole('heading', { name: /Stripe \(receive bookings\)/i })).toBeVisible();
+    // 3. Payments tab content rendered
+    await page.getByRole('tab', { name: /Payments/ }).click();
+    await expect(page.getByRole('heading', { name: /Stripe for booking deposits/i })).toBeVisible();
 
-    // 4. Click panel's "Connect Stripe" button → navigates away from voice-settings
+    // 4. Click panel's "Connect Stripe" button → navigates away from Payments
     let onboardingPostHit = false;
     await page.route('**/api/stripe-connect-onboarding', (route) => {
       onboardingPostHit = true;
@@ -199,11 +200,11 @@ test.describe('Cross-surface — dashboard nudge → panel → Stripe redirect',
     });
 
     await Promise.all([
-      page.waitForURL((u) => !u.pathname.endsWith('/voice-settings'), { timeout: 15_000 }),
+      page.waitForURL(STUB_URL, { timeout: 15_000 }),
       page.getByRole('button', { name: /Connect Stripe/i }).click(),
     ]);
     expect(onboardingPostHit).toBe(true);
-    expect(page.url()).not.toContain('/voice-settings');
+    expect(page.url()).toBe(STUB_URL);
   });
 });
 
@@ -214,20 +215,20 @@ test.describe('Panel — CTA label per state', () => {
   for (const { status, cta } of [
     { status: 'not_connected' as const, cta: /Connect Stripe/i           },
     { status: 'pending'       as const, cta: /Continue onboarding/i      },
-    { status: 'active'        as const, cta: /Edit Stripe details/i      },
-    { status: 'restricted'    as const, cta: /Fix Stripe issues/i        },
-    { status: 'disabled'      as const, cta: /Fix Stripe issues/i        },
-    { status: 'revoked'       as const, cta: /Fix Stripe issues/i        },
+    { status: 'active'        as const, cta: /Set up deposits/i      },
+    { status: 'restricted'    as const, cta: /Resolve Stripe issues/i        },
+    { status: 'disabled'      as const, cta: /Resolve Stripe issues/i        },
+    { status: 'revoked'       as const, cta: /Connect again/i        },
   ]) {
     test(`status=${status} → CTA "${cta.source.slice(1, -2)}"`, async ({ page, context }) => {
       const body: StatusBody = status === 'not_connected'
         ? { success: true, connected: false }
         : { success: true, connected: true, status: status as Status, charges_enabled: false, payouts_enabled: false, details_submitted: false, account_id: 'acct_x' };
       await stubAll(context, { connectStatus: body, depositEnabled: false });
-      await page.goto('/host-dashboard/voice-settings');
+      await page.goto('/host-dashboard/integrations');
       await page.waitForLoadState('networkidle');
-      await page.getByRole('tab', { name: /POS/ }).click();
-      await expect(page.getByRole('button', { name: cta })).toBeVisible();
+      await page.getByRole('tab', { name: /Payments/ }).click();
+      await expect(page.getByRole(status === 'active' ? 'link' : 'button', { name: cta })).toBeVisible();
       await screenshot(page, `panel-${status}`);
     });
   }

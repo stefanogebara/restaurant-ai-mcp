@@ -25,7 +25,7 @@ const mockRowsQuery = jest.fn();
 const mockNeq = jest.fn(() => mockRowsQuery());
 const mockSelect = jest.fn(() => ({ neq: mockNeq }));
 const mockUpdateEq = jest.fn();
-const mockUpdate = jest.fn(() => ({ eq: mockUpdateEq }));
+const mockUpdate = jest.fn(() => ({ eq: () => ({ eq: () => ({ neq: mockUpdateEq }) }) }));
 const mockFrom = jest.fn(() => ({ select: mockSelect, update: mockUpdate }));
 const mockSchema = jest.fn(() => ({ from: mockFrom }));
 
