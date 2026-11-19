@@ -363,6 +363,12 @@
       "probability": "Probabilidade de no-show: {{score}}%"
     },
     "deposit": {
+      "refund": "Devolver caução",
+      "refundConfirmTitle": "Devolver a caução cobrada?",
+      "refundConfirmMessage": "A Stripe vai devolver o saldo da caução ao cartão usado na reserva.",
+      "refundPending": "A Stripe está processando a devolução.",
+      "refundFailed": "Não foi possível confirmar a devolução. Confira o status antes de continuar.",
+      "refunded": "{{amount}} devolvidos",
       "recorded": "Caução registrada",
       "authorized": "Caução de {{amount}} autorizada",
       "captured": "Caução de {{amount}} cobrada",

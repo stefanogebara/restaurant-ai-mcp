@@ -9,6 +9,7 @@ import DepositBadge from './DepositBadge';
 import WhatsAppConfirmationStatus from './WhatsAppConfirmationStatus';
 import CustomerTierBadge from './CustomerTierBadge';
 import DepositActions from './DepositActions';
+import DepositRefundAction from './DepositRefundAction';
 import { formatCurrency } from '../../utils/currency';
 import { predictReservationRevenue, type PartySizeRevenue } from '../../utils/revenuePredictor';
 
@@ -508,6 +509,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
               amount={reservation.deposit_amount}
               currency={reservation.deposit_currency}
               held={Boolean(reservation.deposit_payment_intent_id)}
+              refundedAmount={reservation.deposit_refunded_amount}
             />
             {/* Phase AA: shows when backend says risk is high enough to
                 warrant requesting a deposit AND none is collected yet.
@@ -618,13 +620,19 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
 
       {/* Deposit Actions */}
       {reservation.deposit_amount && reservation.deposit_payment_intent_id && (
-        <div className="flex-shrink-0 hidden sm:block">
+        <div className="basis-full pl-10 sm:basis-auto sm:pl-0 sm:flex-shrink-0">
           <DepositActions
             reservationId={reservation.reservation_id}
             depositAmount={reservation.deposit_amount}
             currency={reservation.deposit_currency}
             onActionComplete={onDepositAction || (() => {})}
           />
+        </div>
+      )}
+
+      {reservation.deposit_can_refund && (
+        <div className="basis-full pl-10 sm:basis-auto sm:pl-0 sm:flex-shrink-0">
+          <DepositRefundAction reservationId={reservation.reservation_id} onActionComplete={onDepositAction} />
         </div>
       )}
 

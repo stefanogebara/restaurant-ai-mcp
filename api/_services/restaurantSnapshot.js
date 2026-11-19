@@ -47,7 +47,7 @@ async function getRestaurantSnapshot(restaurantId) {
       .maybeSingle(),
     supabaseAdmin
       .from('reservations')
-      .select('deposit_amount')
+      .select('deposit_amount, deposit_refunded_amount')
       .eq('restaurant_id', restaurantId)
       .not('deposit_amount', 'is', null)
       .in('status', ['confirmed', 'pending'])
@@ -140,10 +140,12 @@ async function getRestaurantSnapshot(restaurantId) {
   );
 
   // Deposit summary for manager AI
-  const depositsTonight = depositRes.data || [];
+  const depositsTonight = (depositRes.data || [])
+    .map(row => Number(row.deposit_amount) - Number(row.deposit_refunded_amount || 0))
+    .filter(amount => amount > 0);
   const deposit_summary = {
     count: depositsTonight.length,
-    total_amount: depositsTonight.reduce((sum, r) => sum + (parseFloat(r.deposit_amount) || 0), 0),
+    total_amount: depositsTonight.reduce((sum, amount) => sum + amount, 0),
   };
 
   // Fetch recent feedback stats (non-blocking)
