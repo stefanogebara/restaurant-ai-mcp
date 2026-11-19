@@ -1,6 +1,7 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { renderWithProviders as render } from '../../../test/renderWithProviders';
+import CancelledReservationDeposits from '../CancelledReservationDeposits';
 import DepositBadge from '../DepositBadge';
 import DepositRefundAction from '../DepositRefundAction';
 
@@ -52,4 +53,43 @@ it('distinguishes a released hold, a full refund and a partial refund', () => {
 
   rerender(<DepositBadge amount={25} refundedAmount={10} currency="eur" held={false} />);
   expect(screen.getByText('€25.00 captured · €10.00 refunded')).toBeInTheDocument();
+});
+
+it('shows cancelled holds and captured balances with the refund action on the captured row', async () => {
+  apiPost.mockResolvedValue({ data: { state: 'refunded' } });
+  const refresh = vi.fn();
+  const booking = { date: '2026-03-20', time: '19:00', deposit_currency: 'eur' };
+  const pending = {
+    ...booking, reservation_id: 'PENDING', customer_name: 'Pending guest',
+    deposit_release_pending: true, deposit_outstanding_amount: null,
+  };
+  const captured = {
+    ...booking, reservation_id: 'CAPTURED', customer_name: 'Captured guest',
+    deposit_release_pending: false, deposit_outstanding_amount: 15,
+  };
+  const { rerender } = render(<CancelledReservationDeposits deposits={[pending, captured]} onDepositAction={refresh} />);
+
+  const section = screen.getByRole('region', { name: 'Deposits on canceled reservations' });
+  const [pendingRow, capturedRow] = within(section).getAllByRole('listitem');
+  expect(within(pendingRow).getByText('Card hold release pending')).toBeVisible();
+  expect(within(pendingRow).queryByRole('button', { name: 'Refund deposit' })).not.toBeInTheDocument();
+  expect(within(capturedRow).getByText('Captured deposit · €15.00 remaining')).toBeVisible();
+  fireEvent.click(within(capturedRow).getByRole('button', { name: 'Refund deposit' }));
+  fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Refund deposit' }));
+
+  await waitFor(() => expect(refresh).toHaveBeenCalledOnce());
+  expect(apiPost).toHaveBeenCalledExactlyOnceWith('/refund-deposit', { reservation_id: 'CAPTURED' });
+  expect(within(section).queryByText('Captured guest')).not.toBeInTheDocument();
+  expect(within(section).getByText('Pending guest')).toBeVisible();
+  rerender(<CancelledReservationDeposits deposits={[]} onDepositAction={refresh} />);
+  expect(screen.queryByRole('region')).not.toBeInTheDocument();
+  expect(screen.getByText('Refund confirmed.')).toBeVisible();
+});
+
+it('marks a failed cancelled deposit lookup separately from an empty result', () => {
+  const { rerender } = render(<CancelledReservationDeposits deposits={null} onDepositAction={vi.fn()} />);
+  expect(screen.getByRole('status')).toHaveTextContent('Could not load deposits on canceled reservations.');
+
+  rerender(<CancelledReservationDeposits deposits={[]} onDepositAction={vi.fn()} />);
+  expect(screen.queryByRole('region', { name: 'Deposits on canceled reservations' })).not.toBeInTheDocument();
 });

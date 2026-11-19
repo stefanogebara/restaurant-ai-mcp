@@ -66,6 +66,18 @@ describe('CancelReservationDialog', () => {
     expect(screen.getByText('Are you sure you want to cancel this reservation?')).toBeInTheDocument();
   });
 
+  it('explains that cancelling releases a held deposit', () => {
+    render(<CancelReservationDialog {...defaultProps} reservation={{ ...reservation, deposit_payment_intent_id: 'pi_held' }} />);
+    expect(screen.getByText(/The card hold will be released/)).toBeVisible();
+    expect(screen.queryByText(/The deposit stays charged/)).not.toBeInTheDocument();
+  });
+
+  it('explains how an owner can refund a captured deposit after cancellation', () => {
+    render(<CancelReservationDialog {...defaultProps} reservation={{ ...reservation, deposit_can_refund: true }} />);
+    expect(screen.getByText(/The deposit stays charged.*Refund deposit/)).toBeVisible();
+    expect(screen.queryByText(/The card hold will be released/)).not.toBeInTheDocument();
+  });
+
   it('shows reservation summary with guest name and details', () => {
     render(<CancelReservationDialog {...defaultProps} />);
     expect(screen.getByText('Bob Johnson')).toBeInTheDocument();

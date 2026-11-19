@@ -81,6 +81,10 @@ async function request(action, input) {
     const fields = ['id', 'reservation_id', 'restaurant_id', 'customer_name', 'customer_phone', 'date', 'time',
       'party_size', 'status', 'table_ids', 'special_requests'];
     const reservation = Object.fromEntries(fields.map(key => [key, row[key]]));
+    if (action === 'cancel' || (action === 'modify' && data.changed)) {
+      const { settleChangedDepositForReservation } = require('./deposit-change-release');
+      await settleChangedDepositForReservation(tenant, row.id);
+    }
     return { success: true, changed: data.changed, reservation, error: null };
   } catch (_) {
     // Never log provider/DB payloads or retry an ambiguously committed mutation.

@@ -26,6 +26,7 @@ import TableLayoutPanel from '../components/dashboard/TableLayoutPanel';
 import TableTimeline from '../components/dashboard/TableTimeline';
 import { useServiceMode } from '../hooks/useServiceMode';
 import ReservationsList from '../components/dashboard/ReservationsList';
+import CancelledReservationDeposits from '../components/dashboard/CancelledReservationDeposits';
 import CustomerProfileDrawer from '../components/dashboard/CustomerProfileDrawer';
 import ActivePartiesPanel from '../components/dashboard/ActivePartiesPanel';
 import WaitlistPanel from '../components/host/WaitlistPanel';
@@ -210,7 +211,7 @@ export default function Dashboard() {
   const isDashboardEmpty = !hasReservations && !hasActiveParties && waitlistCount === 0;
 
   // ---- Error state ----
-  if (isError && !isLoading) {
+  if (isError && !isLoading && !dashboardData) {
     return (
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
@@ -484,6 +485,10 @@ export default function Dashboard() {
               isLoading={isLoading}
               language={i18n.language === 'es' ? 'es' : 'en'}
               tables={tables}
+            />
+            <CancelledReservationDeposits
+              deposits={dashboardData?.data?.cancelled_reservation_deposits}
+              onDepositAction={() => { void refetch(); }}
             />
           </section>
 

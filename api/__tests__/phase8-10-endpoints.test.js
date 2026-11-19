@@ -532,6 +532,8 @@ describe('capture-deposit', () => {
     fromChain.select.mockReturnValue(fromChain);
     fromChain.eq.mockReturnValue(fromChain);
     fromChain.update.mockReturnValue(fromChain);
+    fromChain.is = jest.fn().mockReturnValue(fromChain);
+    fromChain.maybeSingle = jest.fn().mockResolvedValue({ data: { id: 'internal-id-1' } });
     fromChain.single.mockResolvedValue({
       data: {
         id: 'internal-id-1',
@@ -581,6 +583,27 @@ describe('capture-deposit', () => {
     expect(body.success).toBe(true);
     expect(body.amount_captured).toBe(30); // 3000 / 100
     expect(body.payment_intent_id).toBe('pi_test123');
+  });
+
+  it.each([{ status: 'cancelled' }, { deposit_release_pending_at: '2026-11-19T00:00:00Z' }])(
+    'rejects capture for a cancelled or invalidated authorization: %j',
+    async patch => {
+      const db = mockSupabaseAdmin.from();
+      const { data } = await db.single();
+      db.single.mockResolvedValue({ data: { ...data, ...patch } });
+      const res = mockRes();
+      await handler({ method: 'POST', headers: {}, body: { reservation_id: 'res-1' } }, res);
+      expect(res.status).toHaveBeenCalledWith(409);
+      expect(mockStripePaymentIntentsCapture).not.toHaveBeenCalled();
+    },
+  );
+
+  it('rejects capture when the hold was invalidated during the provider lookup', async () => {
+    mockSupabaseAdmin.from().maybeSingle.mockResolvedValue({ data: null });
+    const res = mockRes();
+    await handler({ method: 'POST', headers: {}, body: { reservation_id: 'res-1' } }, res);
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(mockStripePaymentIntentsCapture).not.toHaveBeenCalled();
   });
 
   it('returns 401 when auth fails', async () => {

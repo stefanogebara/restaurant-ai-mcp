@@ -62,6 +62,12 @@ export default function CancelReservationDialog({ isOpen, reservation, onClose }
 
   if (!isOpen) return null;
 
+  const depositMessage = reservation.deposit_can_refund
+    ? t('dashboard.deposit.cancelCaptured', 'The deposit stays charged. A restaurant owner can use Refund deposit under Deposits on canceled reservations.')
+    : reservation.deposit_payment_intent_id || reservation.deposit_release_pending
+      ? t('dashboard.deposit.cancelHeld', 'The card hold will be released. The bank may take time to update the balance.')
+      : null;
+
   return (
     <div
       className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
@@ -86,6 +92,8 @@ export default function CancelReservationDialog({ isOpen, reservation, onClose }
           <span className="font-semibold text-deep-charcoal">{reservation.customer_name}</span>
           <span className="text-muted-stone"> — {reservation.party_size}p, {reservation.date} {reservation.time}</span>
         </div>
+
+        {depositMessage && <p className="mb-4 text-sm text-deep-charcoal">{depositMessage}</p>}
 
         {/* Reason dropdown */}
         <div className="mb-5">

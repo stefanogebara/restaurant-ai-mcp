@@ -33,13 +33,17 @@ module.exports = async (req, res) => {
     // Fetch reservation to get payment_intent_id
     const { data: reservation, error: fetchError } = await supabaseAdmin
       .from('reservations')
-      .select('id, reservation_id, deposit_payment_intent_id, deposit_amount, restaurant_id')
+      .select('id, reservation_id, deposit_payment_intent_id, deposit_amount, restaurant_id, status, deposit_release_pending_at')
       .eq('reservation_id', reservation_id)
       .eq('restaurant_id', req.user.restaurant_id)
       .single();
 
     if (fetchError || !reservation) {
       return res.status(404).json({ success: false, error: 'Reservation not found' });
+    }
+
+    if (reservation.deposit_release_pending_at || ['cancelled', 'canceled'].includes(reservation.status?.toLowerCase())) {
+      return res.status(409).json({ success: false, error: 'This authorization can no longer be captured. Refresh the reservation.' });
     }
 
     if (!reservation.deposit_payment_intent_id) {
@@ -49,6 +53,15 @@ module.exports = async (req, res) => {
     const payment = await readReservationDeposit(reservation);
     if (!payment || (payment.status !== 'succeeded' && !isCapturable(payment, payment.amount))) {
       return res.status(409).json({ success: false, error: 'No matching deposit authorization can be captured' });
+    }
+    // Stripe reads can take time. Recheck the attached hold before starting a
+    // capture, since a reservation change may have queued its release meanwhile.
+    if (payment.status !== 'succeeded') {
+      const { data: currentHold, error: checkError } = await supabaseAdmin.from('reservations').select('id')
+        .eq('id', reservation.id).eq('restaurant_id', reservation.restaurant_id)
+        .eq('deposit_payment_intent_id', payment.id).is('deposit_release_pending_at', null).maybeSingle();
+      if (checkError) return res.status(503).json({ success: false, error: 'Could not verify the current authorization' });
+      if (!currentHold) return res.status(409).json({ success: false, error: 'This authorization can no longer be captured. Refresh the reservation.' });
     }
     const paymentIntent = payment.status === 'succeeded' ? payment : await getStripe().paymentIntents.capture(
       payment.id, {}, { idempotencyKey: `reservation-deposit-capture-${payment.id}` }
