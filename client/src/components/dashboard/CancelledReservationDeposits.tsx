@@ -36,7 +36,7 @@ export default function CancelledReservationDeposits({ deposits, onDepositAction
                     {dateFormat.format(parseLocalDate(deposit.date))} · {deposit.time.slice(0, 5)}
                   </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-col items-start gap-2 sm:flex-row sm:flex-wrap sm:items-center">
                   {deposit.deposit_release_pending && <DepositBadge held={false} releasePending />}
                   {outstanding != null && (
                     <>
