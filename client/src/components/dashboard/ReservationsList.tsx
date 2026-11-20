@@ -388,10 +388,10 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
   };
 
   const depositReleasePending = reservation.deposit_release_pending;
+  const depositExpired = reservation.deposit_authorization_expired;
   const needsNewDeposit = reservation.deposit_reauthorization_required
     && !depositReleasePending
-    && !reservation.deposit_payment_intent_id
-    && !reservation.deposit_amount
+    && (depositExpired || (!reservation.deposit_payment_intent_id && !reservation.deposit_amount))
     && !reservation.deposit_can_refund;
 
   const isHighRisk = reservation.ml_risk_level === 'high' || reservation.ml_risk_level === 'very-high';
@@ -503,7 +503,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
           {reservation.special_requests && <span className="hidden sm:inline"> · {reservation.special_requests}</span>}
         </div>
         {/* Risk and deposit badges */}
-        {(reservation.ml_risk_score != null || reservation.deposit_amount || depositReleasePending || reservation.deposit_suggested || needsNewDeposit) && (
+        {(reservation.ml_risk_score != null || reservation.deposit_amount || depositReleasePending || depositExpired || reservation.deposit_suggested || needsNewDeposit) && (
           <div className="flex items-center gap-1.5 mt-1 flex-wrap">
             <NoShowRiskBadge
               riskScore={reservation.ml_risk_score}
@@ -515,6 +515,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
               held={Boolean(reservation.deposit_payment_intent_id)}
               refundedAmount={reservation.deposit_refunded_amount}
               releasePending={depositReleasePending}
+              expired={depositExpired}
             />
             {needsNewDeposit && onRequestDeposit && (
               <button
@@ -526,7 +527,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
               </button>
             )}
             <DepositSuggestChip
-              suggested={!depositReleasePending && !reservation.deposit_reauthorization_required && reservation.deposit_suggested}
+              suggested={!depositReleasePending && !depositExpired && !reservation.deposit_reauthorization_required && reservation.deposit_suggested}
               reason={reservation.deposit_suggested_reason}
               onRequestDeposit={onRequestDeposit}
             />
@@ -627,9 +628,10 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
       </div>
 
       {/* Deposit Actions */}
-      {!depositReleasePending && reservation.deposit_amount && reservation.deposit_payment_intent_id && (
+      {!depositReleasePending && !depositExpired && reservation.deposit_amount && reservation.deposit_payment_intent_id && (
         <div className="basis-full pl-10 sm:basis-auto sm:pl-0 sm:flex-shrink-0">
           <DepositActions
+            key={reservation.deposit_payment_intent_id}
             reservationId={reservation.reservation_id}
             depositAmount={reservation.deposit_amount}
             currency={reservation.deposit_currency}

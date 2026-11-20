@@ -1,79 +1,98 @@
+import { isAxiosError } from 'axios';
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
+import ConfirmModal from '../common/ConfirmModal';
+
+type DepositAction = 'capture' | 'release';
+type DepositActionResult = 'captured' | 'released' | 'expired';
 
 interface DepositActionsProps {
   reservationId: string;
   depositAmount: number;
   currency?: string | null;
-  onActionComplete: () => void;
+  noShow?: boolean;
+  canCharge?: boolean;
+  onActionComplete: (result: DepositActionResult) => void;
 }
 
-export default function DepositActions({ reservationId, depositAmount, currency, onActionComplete }: DepositActionsProps) {
+export default function DepositActions({ reservationId, depositAmount, currency, noShow, canCharge, onActionComplete }: DepositActionsProps) {
   const { t, i18n } = useTranslation();
-  const [isCapturing, setIsCapturing] = useState(false);
-  const [isReleasing, setIsReleasing] = useState(false);
+  const [action, setAction] = useState<DepositAction | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [settled, setSettled] = useState(false);
+  const [chargeForbidden, setChargeForbidden] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const formatted = currency && new Intl.NumberFormat(i18n.language, {
-    style: 'currency', currency,
-  }).format(depositAmount);
-  const captureLabel = formatted
-    ? t('dashboard.deposit.captureAmount', { amount: formatted })
-    : t('dashboard.deposit.capture');
-  const captureTitle = formatted
-    ? t('dashboard.deposit.captureTitle', { amount: formatted })
-    : captureLabel;
+  const amount = new Intl.NumberFormat(i18n.language, currency
+    ? { style: 'currency', currency }
+    : { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(depositAmount);
+  const chargeLabel = t('dashboard.deposit.chargeAmount', { amount });
+  const disabled = action !== null || settled;
+  const showCharge = noShow && canCharge && !chargeForbidden;
 
-  const handleCapture = async () => {
-    setIsCapturing(true);
+  const submit = async (next: DepositAction) => {
+    if (disabled || (next === 'capture' && !showCharge)) return;
+    setAction(next);
     setError(null);
     try {
-      await api.post('/capture-deposit', { reservation_id: reservationId });
-      onActionComplete();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : t('dashboard.deposit.captureFailed', 'Failed to capture deposit');
-      setError(message);
+      await api.post(next === 'capture' ? '/capture-deposit' : '/release-deposit', { reservation_id: reservationId });
+      setSettled(true);
+      onActionComplete(next === 'capture' ? 'captured' : 'released');
+    } catch (error) {
+      const code = isAxiosError<{ code?: string }>(error) ? error.response?.data?.code : undefined;
+      if (code === 'deposit_authorization_expired') {
+        setSettled(true);
+        setError(t('dashboard.deposit.authorizationExpired'));
+        onActionComplete('expired');
+      } else if (next === 'capture' && code === 'owner_required') {
+        setChargeForbidden(true);
+        setError(t('dashboard.deposit.ownerRequired'));
+      } else {
+        setError(t(next === 'capture' ? 'dashboard.deposit.captureFailed' : 'dashboard.deposit.releaseFailed'));
+      }
     } finally {
-      setIsCapturing(false);
-    }
-  };
-
-  const handleRelease = async () => {
-    setIsReleasing(true);
-    setError(null);
-    try {
-      await api.post('/release-deposit', { reservation_id: reservationId });
-      onActionComplete();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : t('dashboard.deposit.releaseFailed', 'Failed to release deposit');
-      setError(message);
-    } finally {
-      setIsReleasing(false);
+      setConfirming(false);
+      setAction(null);
     }
   };
 
   return (
-    <div className="flex items-center gap-2">
-      {error && <span className="text-[11px] text-red-500">{error}</span>}
+    <div className="flex flex-wrap items-center gap-2">
+      {error && <span role="alert" className="text-xs text-red-700">{error}</span>}
       <button
         type="button"
-        onClick={handleRelease}
-        disabled={isReleasing || isCapturing}
-        className="text-[11px] font-medium px-2 py-1 rounded-lg border border-rose-600/30 text-rose-600 hover:bg-rose-600/[6%] transition-colors disabled:opacity-50"
-        title={t('dashboard.deposit.releaseTitle', 'Release deposit hold (guest arrived)')}
+        onClick={() => void submit('release')}
+        disabled={disabled}
+        className="rounded-full border border-border-gray px-3 py-2 text-xs font-medium text-deep-charcoal hover:bg-soft-gray disabled:opacity-50"
+        title={noShow ? undefined : t('dashboard.deposit.releaseTitle')}
       >
-        {isReleasing ? '...' : t('dashboard.deposit.release', 'Release')}
+        {action === 'release' ? t('common.loading') : t('dashboard.deposit.release')}
       </button>
-      <button
-        type="button"
-        onClick={handleCapture}
-        disabled={isCapturing || isReleasing}
-        className="text-[11px] font-medium px-2 py-1 rounded-lg border border-red-600/30 text-red-600 hover:bg-red-600/[6%] transition-colors disabled:opacity-50"
-        title={captureTitle}
-      >
-        {isCapturing ? '...' : captureLabel}
-      </button>
+      {showCharge && (
+        <button
+          type="button"
+          onClick={() => setConfirming(true)}
+          disabled={disabled}
+          className="rounded-full border border-border-gray px-3 py-2 text-xs font-semibold text-deep-charcoal hover:bg-soft-gray disabled:opacity-50"
+        >
+          {chargeLabel}
+        </button>
+      )}
+      {showCharge && confirming && createPortal(
+        <ConfirmModal
+          open
+          title={t('dashboard.deposit.chargeConfirmTitle', { amount })}
+          message={t('dashboard.deposit.chargeConfirmMessage')}
+          confirmLabel={chargeLabel}
+          confirmTone="danger"
+          onConfirm={() => void submit('capture')}
+          onCancel={() => { if (action === null) setConfirming(false); }}
+          isLoading={action === 'capture'}
+        />,
+        document.body,
+      )}
     </div>
   );
 }

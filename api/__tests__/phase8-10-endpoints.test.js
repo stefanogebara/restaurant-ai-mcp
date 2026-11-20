@@ -520,7 +520,7 @@ describe('capture-deposit', () => {
     process.env.STRIPE_SECRET_KEY = 'sk_test_dummy';
 
     mockVerifyAuth = jest.fn().mockResolvedValue({
-      user: { restaurant_id: 'rest-1' },
+      user: { restaurant_id: 'rest-1', role: 'owner' },
     });
     mockStripePaymentIntentsCapture = jest.fn().mockResolvedValue({
       id: 'pi_test123',
@@ -533,6 +533,8 @@ describe('capture-deposit', () => {
     fromChain.eq.mockReturnValue(fromChain);
     fromChain.update.mockReturnValue(fromChain);
     fromChain.is = jest.fn().mockReturnValue(fromChain);
+    fromChain.in = jest.fn().mockReturnValue(fromChain);
+    fromChain.or = jest.fn().mockReturnValue(fromChain);
     fromChain.maybeSingle = jest.fn().mockResolvedValue({ data: { id: 'internal-id-1' } });
     fromChain.single.mockResolvedValue({
       data: {
@@ -540,6 +542,7 @@ describe('capture-deposit', () => {
         reservation_id: 'res-1',
         deposit_payment_intent_id: 'pi_test123',
         deposit_amount: 30,
+        status: 'no-show',
         restaurant_id: 'rest-1',
       },
       error: null,
@@ -585,8 +588,11 @@ describe('capture-deposit', () => {
     expect(body.payment_intent_id).toBe('pi_test123');
   });
 
-  it.each([{ status: 'cancelled' }, { deposit_release_pending_at: '2026-11-19T00:00:00Z' }])(
-    'rejects capture for a cancelled or invalidated authorization: %j',
+  it.each([
+    { status: 'confirmed' }, { status: 'cancelled' }, { status: 'seated' },
+    { checked_in_at: '2026-11-19T00:00:00Z' }, { deposit_release_pending_at: '2026-11-19T00:00:00Z' },
+  ])(
+    'rejects capture for a booking without an eligible no-show: %j',
     async patch => {
       const db = mockSupabaseAdmin.from();
       const { data } = await db.single();
@@ -603,6 +609,15 @@ describe('capture-deposit', () => {
     const res = mockRes();
     await handler({ method: 'POST', headers: {}, body: { reservation_id: 'res-1' } }, res);
     expect(res.status).toHaveBeenCalledWith(409);
+    expect(mockStripePaymentIntentsCapture).not.toHaveBeenCalled();
+  });
+
+  it('rejects capture by a team member before loading the deposit', async () => {
+    mockVerifyAuth.mockResolvedValue({ user: { restaurant_id: 'rest-1', role: 'manager' } });
+    const res = mockRes();
+    await handler({ method: 'POST', headers: {}, body: { reservation_id: 'res-1' } }, res);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(mockSupabaseAdmin.from).not.toHaveBeenCalled();
     expect(mockStripePaymentIntentsCapture).not.toHaveBeenCalled();
   });
 
@@ -639,7 +654,7 @@ describe('capture-deposit', () => {
     fromChain.select.mockReturnValue(fromChain);
     fromChain.eq.mockReturnValue(fromChain);
     fromChain.single.mockResolvedValue({
-      data: { id: 'internal-id-1', deposit_payment_intent_id: null, restaurant_id: 'rest-1' },
+      data: { id: 'internal-id-1', deposit_payment_intent_id: null, restaurant_id: 'rest-1', status: 'no-show' },
       error: null,
     });
     mockSupabaseAdmin.from.mockReturnValue(fromChain);

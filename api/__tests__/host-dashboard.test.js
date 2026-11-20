@@ -94,6 +94,8 @@ const mockUpdateServiceRecord = jest.fn(() =>
     service_record: { reservation_id: 'RES-001', table_ids: '1', seated_at: new Date().toISOString() },
   })
 );
+const mockSeatBookedParty = jest.fn();
+const mockSettleArrivalDeposit = jest.fn().mockResolvedValue('released');
 const mockDeleteServiceRecord = jest.fn(() => Promise.resolve({ success: true }));
 const mockUpdateTable = jest.fn(() =>
   Promise.resolve({ success: true, data: { fields: { 'Table Number': 1 } } })
@@ -114,7 +116,11 @@ const mockGetTableById = jest.fn(() =>
   Promise.resolve({ success: true, table: { id: 't1', table_number: 1, status: 'available' } })
 );
 
+jest.mock('../_lib/deposit-change-release', () => ({
+  settleChangedDepositForReservation: mockSettleArrivalDeposit,
+}));
 jest.mock('../_lib/supabase', () => ({
+  supabaseAdmin: { rpc: mockSeatBookedParty },
   getAllTables: mockGetAllTables,
   getActiveServiceRecords: mockGetActiveServiceRecords,
   getUpcomingReservations: mockGetUpcomingReservations,
@@ -344,6 +350,20 @@ describe('POST check-in action', () => {
 
     expect(res.status).toHaveBeenCalledWith(404);
   });
+
+  test('advises seating when PostgREST table status is formatted for display', async () => {
+    const table = { id: 't1', table_number: 1, capacity: 4, status: 'Available' };
+    mockGetAllTables.mockResolvedValueOnce({ success: true, tables: [table] });
+    const { req, res } = mockReqRes({ action: 'check-in', body: { reservation_id: 'RES-001' } });
+
+    await dashboardHandler(req, res);
+
+    expect(mockFindBestTableCombination).toHaveBeenCalledWith([table], 4);
+    expect(res.json.mock.calls[0][0].success).toBe(true);
+    expect(mockSeatBookedParty).not.toHaveBeenCalled();
+    expect(mockSettleArrivalDeposit).not.toHaveBeenCalled();
+  });
+
 });
 
 describe('POST complete-service action', () => {
@@ -611,6 +631,32 @@ describe('POST seat-party action', () => {
     expect(data.service_record_id).toBeDefined();
     expect(mockCreateServiceRecord).toHaveBeenCalled();
     expect(mockUpdateTable).toHaveBeenCalled();
+  });
+
+  test('reconciles the hold after booked seating commits', async () => {
+    mockSeatBookedParty.mockResolvedValueOnce({
+      data: { state: 'seated', reservation_id: 'row-001', service_id: 'SRV-TEST-001', table_ids: ['t1'] },
+    });
+    const { req, res } = mockReqRes({ action: 'seat-party', body: { ...validSeatBody, reservation_id: 'RES-001' } });
+
+    await dashboardHandler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(mockSeatBookedParty).toHaveBeenCalledWith('seat_booked_party', expect.objectContaining({
+      p_restaurant_id: RESTAURANT_ID, p_reservation_id: 'RES-001', p_table_ids: ['t1'],
+    }));
+    expect(mockSettleArrivalDeposit).toHaveBeenCalledWith(RESTAURANT_ID, 'row-001');
+    expect(mockCreateServiceRecord).not.toHaveBeenCalled();
+  });
+
+  test('does not release the hold when booked seating conflicts', async () => {
+    mockSeatBookedParty.mockResolvedValueOnce({ data: { state: 'tables_unavailable' } });
+    const { req, res } = mockReqRes({ action: 'seat-party', body: { ...validSeatBody, reservation_id: 'RES-001' } });
+
+    await dashboardHandler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(mockSettleArrivalDeposit).not.toHaveBeenCalled();
   });
 
   test('rolls back service record when table update fails', async () => {

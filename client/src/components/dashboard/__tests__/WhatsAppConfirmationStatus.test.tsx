@@ -36,7 +36,7 @@ function renderList(receipt?: Receipt | null, extra: Partial<UpcomingReservation
     <I18nextProvider i18n={i18n}>
       <ReservationsList
         todayReservations={[{ ...reservation, ...extra, whatsapp_confirmation: receipt }]}
-        tomorrowReservations={[]} onCheckIn={vi.fn()} onIntervention={vi.fn()}
+        tomorrowReservations={[]} onCheckIn={vi.fn()} onIntervention={vi.fn()} onRequestDeposit={vi.fn()}
       />
     </I18nextProvider>,
   );
@@ -110,10 +110,20 @@ describe('reservation receipt badges', () => {
     expect(within(badgeRow).getByText('Deposit recorded')).toBeInTheDocument();
   });
 
-  it('uses Stripe currency on the deposit badge and the capture action', () => {
+  it('keeps release available for upcoming holds and hides charge', () => {
     renderList(null, { deposit_amount: 50.75, deposit_currency: 'eur', deposit_payment_intent_id: 'pi_test' });
     expect(screen.getByText('€50.75 authorized')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Capture €50.75' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Release' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /capture|charge/i })).not.toBeInTheDocument();
+  });
+
+  it('labels an expired upcoming hold and keeps the replacement action', () => {
+    renderList(null, { deposit_amount: 50.75, deposit_currency: 'eur', deposit_payment_intent_id: 'pi_old',
+      deposit_authorization_expired: true, deposit_reauthorization_required: true });
+    expect(screen.getByText('Card hold expired')).toBeInTheDocument();
+    expect(screen.queryByText(/authorized/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /capture|charge|release/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Request new deposit' })).toBeInTheDocument();
   });
 
   it('shows a captured deposit without a second capture action', () => {

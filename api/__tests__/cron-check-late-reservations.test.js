@@ -68,9 +68,15 @@ beforeEach(() => {
 });
 
 /** Monta o mock de reservas + mesas usado pelos casos de no-show. */
-function comReservas(reservas) {
+function comReservas(reservas, updated = { id: reservas[0]?.id }) {
   mockFrom.mockImplementation((table) => {
     if (table === 'reservations') {
+      const conditionalUpdate = {
+        eq: jest.fn().mockReturnThis(),
+        is: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        maybeSingle: jest.fn().mockResolvedValue({ data: updated, error: null }),
+      };
       return {
         select: jest.fn().mockReturnValue({
           in: jest.fn().mockReturnValue({
@@ -79,13 +85,13 @@ function comReservas(reservas) {
             }),
           }),
         }),
-        update: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) }),
-        }),
+        update: jest.fn().mockReturnValue(conditionalUpdate),
       };
     }
     if (table === 'tables') {
-      return { update: jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) }) };
+      const release = { in: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(),
+        then: resolve => Promise.resolve({ error: null }).then(resolve) };
+      return { update: jest.fn().mockReturnValue(release) };
     }
     return { select: jest.fn().mockReturnThis(), eq: jest.fn().mockResolvedValue({ data: null, error: null }) };
   });
@@ -124,36 +130,10 @@ describe('cron/check-late-reservations', () => {
   test('marks late reservations as no-show and releases tables', async () => {
     const lateRes = [{
       id: 'uuid-1', reservation_id: 'RES-001', customer_name: 'Ana',
-      time: '18:00', table_ids: ['t1'], restaurant_id: 'rest-1', status: 'confirmed', date: '2026-04-08',
+      time: '18:00:00', table_ids: ['t1'], restaurant_id: 'rest-1', status: 'confirmed', date: '2026-04-08',
     }];
 
-    // For the SELECT query — V.2 chain is select→in→eq→is (no .lte).
-    mockFrom.mockImplementation((table) => {
-      if (table === 'reservations') {
-        return {
-          select: jest.fn().mockReturnValue({
-            in: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                is: jest.fn().mockResolvedValue({ data: lateRes, error: null }),
-              }),
-            }),
-          }),
-          update: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              eq: jest.fn().mockResolvedValue({ error: null }),
-            }),
-          }),
-        };
-      }
-      if (table === 'tables') {
-        return {
-          update: jest.fn().mockReturnValue({
-            eq: jest.fn().mockResolvedValue({ error: null }),
-          }),
-        };
-      }
-      return { select: jest.fn().mockReturnThis(), eq: jest.fn().mockResolvedValue({ data: null, error: null }) };
-    });
+    comReservas(lateRes);
 
     const req = { headers: { authorization: 'Bearer test-cron-secret' } };
     const res = mockRes();
@@ -162,6 +142,20 @@ describe('cron/check-late-reservations', () => {
     const json = res.json.mock.calls[0][0];
     expect(json.success).toBe(true);
     expect(json.marked_as_no_show).toBe(1);
+  });
+
+  test('does not release assigned tables if the guest checked in after the scan', async () => {
+    const late = new Date(Date.now() - 40 * 60_000).toISOString();
+    comReservas([{
+      id: 'uuid-1', reservation_id: 'RES-001', customer_name: 'Ana',
+      time: late.slice(11, 16), table_ids: ['t1'], restaurant_id: 'rest-1',
+      status: 'confirmed', date: late.slice(0, 10),
+    }], null);
+
+    const res = mockRes();
+    await handler({ headers: { authorization: 'Bearer test-cron-secret' } }, res);
+    expect(res.json.mock.calls[0][0].marked_as_no_show).toBe(0);
+    expect(mockFrom).not.toHaveBeenCalledWith('tables');
   });
 
   test('busca o fuso em restaurant_config, nunca em restaurant_info', async () => {

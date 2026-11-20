@@ -13,7 +13,7 @@ async function handleDashboard(req, res) {
   // Pull deposit_config alongside slug — `decorateWithDepositSuggestion`
   // below uses `deposit_config.enabled` as a gate (no suggestion when the
   // restaurant hasn't opted into taking deposits at all).
-  const [tablesResult, activePartiesResult, upcomingReservationsResult, restaurantConfigResult, cancelledDeposits] = await Promise.all([
+  const [tablesResult, activePartiesResult, upcomingReservationsResult, restaurantConfigResult, cancelledDeposits, noShowDeposits] = await Promise.all([
     getAllTables(restaurantId),
     getActiveServiceRecords(restaurantId),
     getUpcomingReservations(restaurantId, timezone),
@@ -25,6 +25,8 @@ async function handleDashboard(req, res) {
       .single(),
     // Null marks a failed lookup so the deposit section can show its own error.
     supabase.rpc('list_cancelled_reservation_deposits', { p_restaurant_id: restaurantId })
+      .then(({ data, error }) => error ? null : (data ?? []), () => null),
+    supabase.rpc('list_no_show_reservation_deposits', { p_restaurant_id: restaurantId })
       .then(({ data, error }) => error ? null : (data ?? []), () => null),
   ]);
 
@@ -209,6 +211,7 @@ async function handleDashboard(req, res) {
     active_parties: activeParties,
     upcoming_reservations: upcomingReservationsResult.reservations,
     cancelled_reservation_deposits: cancelledDeposits,
+    no_show_reservation_deposits: noShowDeposits,
   });
 }
 

@@ -1,5 +1,6 @@
 const {
   getAllTables,
+  supabaseAdmin,
   findReservation,
   createServiceRecord,
   updateServiceRecord,
@@ -14,6 +15,7 @@ const { validateServiceRecord, sanitizeInput } = require('../../_lib/validation'
 const { DEFAULT_DINING_DURATION_MINUTES } = require('../../_lib/constants');
 const { createSecureLogger } = require('../../_lib/secure-logger');
 const { scheduleFeedback } = require('../feedbackService');
+const { settleChangedDepositForReservation } = require('../../_lib/deposit-change-release');
 
 const logger = createSecureLogger('HostDashboard');
 
@@ -48,7 +50,7 @@ async function handleCheckIn(req, res) {
     });
   }
 
-  const availableTables = tablesResult.tables.filter(t => t.status === 'available');
+  const availableTables = tablesResult.tables.filter(t => t.status?.toLowerCase() === 'available');
   const recommendations = findBestTableCombination(availableTables, partySize);
 
   if (recommendations.length === 0) {
@@ -129,7 +131,6 @@ async function handleCheckWalkIn(req, res) {
 async function handleSeatParty(req, res) {
   const restaurantId = req.user.restaurant_id;
   const {
-    type,
     reservation_id,
     customer_name,
     customer_phone,
@@ -164,6 +165,37 @@ async function handleSeatParty(req, res) {
   // Use configurable dining duration (default: 90 minutes)
   const diningDurationMs = DEFAULT_DINING_DURATION_MINUTES * 60 * 1000;
   const estimatedDeparture = new Date(Date.now() + diningDurationMs).toISOString();
+
+  if (reservation_id) {
+    const { data: seating, error } = await supabaseAdmin.rpc('seat_booked_party', {
+      p_restaurant_id: restaurantId, p_reservation_id: reservation_id, p_service_id: serviceId,
+      p_table_ids: table_ids, p_seated_at: seatedAt, p_estimated_departure: estimatedDeparture,
+    });
+    if (error || !seating) {
+      logger.error('Could not seat booked party', { code: error?.code });
+      return res.status(500).json({ success: false, error: 'Failed to seat party' });
+    }
+    if (seating.state === 'not_found') {
+      return res.status(404).json({ success: false, error: 'Reservation not found' });
+    }
+    if (seating.state !== 'seated') {
+      const conflicts = {
+        tables_unavailable: 'The selected tables are no longer available',
+        capture_in_progress: 'A deposit charge is being processed. Please retry seating shortly.',
+      };
+      return res.status(409).json({ success: false, error: conflicts[seating.state] || 'This reservation can no longer be seated' });
+    }
+    // The seating transaction already committed the pending release. A Stripe
+    // failure cannot undo seating, and the existing job retries the release.
+    await settleChangedDepositForReservation(restaurantId, seating.reservation_id);
+    return res.status(200).json({
+      success: true,
+      service_record_id: seating.service_id,
+      tables_assigned: seating.table_ids,
+      estimated_departure: seating.estimated_departure,
+      message: `Party of ${party_size} seated successfully`,
+    });
+  }
 
   // Convert table UUIDs to table numbers (Supabase schema uses integer[])
   const allTablesForConversion = await getAllTables(restaurantId);

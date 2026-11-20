@@ -133,10 +133,15 @@ function matchesAuthorization(payment, quote, purpose) {
     stripeId(payment.transfer_data?.destination) === quote.destination;
 }
 
+function captureDeadline(payment) {
+  const seconds = payment.latest_charge?.payment_method_details?.card?.capture_before;
+  return Number.isFinite(seconds) ? seconds * 1000 : null;
+}
+
 function isCapturable(payment, fullAmount) {
-  const captureBefore = payment.latest_charge?.payment_method_details?.card?.capture_before;
+  const deadline = captureDeadline(payment);
   return payment.status === 'requires_capture' && payment.amount_capturable === fullAmount &&
-    (!captureBefore || captureBefore * 1000 > Date.now());
+    (!deadline || deadline > Date.now());
 }
 
 async function readMatchingQuote(quoteId, booking) {
@@ -232,7 +237,7 @@ async function readReservationDeposit(reservation, reference = 'deposit_payment_
 }
 
 module.exports = {
-  abandonPublicDeposit, createPublicDeposit, getDepositDestination, getStripe, isCapturable,
+  abandonPublicDeposit, captureDeadline, createPublicDeposit, getDepositDestination, getStripe, isCapturable, stripeLiveMode,
   matchesAuthorization, quoteDeposit, readReservationDeposit, releaseRejectedDeposit,
   verifyPublicDeposit,
 };

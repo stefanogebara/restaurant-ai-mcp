@@ -148,6 +148,7 @@ export interface UpcomingReservation {
   deposit_can_refund?: boolean;
   deposit_payment_intent_id?: string | null;
   deposit_release_pending?: boolean;
+  deposit_authorization_expired?: boolean;
   deposit_reauthorization_required?: boolean;
   // Phase AA: backend signal that this booking is risky AND the
   // restaurant accepts deposits AND none has been collected yet.
@@ -166,6 +167,17 @@ export interface CancelledReservationDeposit {
   deposit_currency: string | null;
   deposit_release_pending: boolean;
   deposit_outstanding_amount: number | null;
+}
+
+export interface NoShowReservationDeposit {
+  reservation_id: string;
+  customer_name: string;
+  date: string;
+  time: string;
+  deposit_amount: number | null;
+  deposit_currency: string | null;
+  deposit_state: 'held' | 'captured' | 'expired';
+  deposit_outstanding_amount?: number | null;
 }
 
 export interface DashboardSummary {
@@ -188,6 +200,7 @@ export interface DashboardData {
   active_parties: ActiveParty[];
   upcoming_reservations: UpcomingReservation[];
   cancelled_reservation_deposits?: CancelledReservationDeposit[] | null;
+  no_show_reservation_deposits?: NoShowReservationDeposit[] | null;
 }
 
 export interface TableRecommendation {
