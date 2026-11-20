@@ -69,7 +69,8 @@ AS $$
 DECLARE
   booking public.reservations%ROWTYPE;
   existing_service public.service_records%ROWTYPE;
-  chosen_tables integer[];
+  -- service_records stores table numbers as text, including existing rows.
+  chosen_tables text[];
   tables_available boolean;
 BEGIN
   -- A repeat seating request reuses the first service record.
@@ -93,13 +94,13 @@ BEGIN
     RETURN jsonb_build_object('state', 'seated', 'reservation_id', booking.id,
       'service_id', existing_service.service_id, 'estimated_departure', existing_service.estimated_departure,
       'table_ids', (SELECT coalesce(jsonb_agg(t.id ORDER BY t.id), '[]'::jsonb) FROM public.tables t
-                     WHERE t.restaurant_id = p_restaurant_id AND t.table_number = ANY(existing_service.table_ids)));
+                     WHERE t.restaurant_id = p_restaurant_id AND t.table_number::text = ANY(existing_service.table_ids)));
   END IF;
   IF booking.status = 'seated' OR booking.checked_in_at IS NOT NULL THEN
     RETURN jsonb_build_object('state', 'invalid_status');
   END IF;
 
-  SELECT array_agg(t.table_number ORDER BY t.id), bool_and(t.status = 'available' AND t.is_active IS TRUE)
+  SELECT array_agg(t.table_number::text ORDER BY t.id), bool_and(t.status = 'available' AND t.is_active IS TRUE)
     INTO chosen_tables, tables_available
     FROM (SELECT id, table_number, status, is_active FROM public.tables
            WHERE restaurant_id = p_restaurant_id AND id = ANY(p_table_ids) ORDER BY id FOR UPDATE) t;
