@@ -389,10 +389,15 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
 
   const depositReleasePending = reservation.deposit_release_pending;
   const depositExpired = reservation.deposit_authorization_expired;
+  const depositLinkStatus = reservation.deposit_link_status;
   const needsNewDeposit = reservation.deposit_reauthorization_required
     && !depositReleasePending
     && (depositExpired || (!reservation.deposit_payment_intent_id && !reservation.deposit_amount))
     && !reservation.deposit_can_refund;
+  const heldDepositAmount = !depositReleasePending && !depositExpired && reservation.deposit_payment_intent_id
+    ? reservation.deposit_amount : undefined;
+  const showDepositDetails = reservation.deposit_amount || depositLinkStatus || depositReleasePending
+    || depositExpired || reservation.deposit_can_refund || reservation.deposit_suggested || needsNewDeposit;
 
   const isHighRisk = reservation.ml_risk_level === 'high' || reservation.ml_risk_level === 'very-high';
 
@@ -502,37 +507,9 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
           ) : null}
           {reservation.special_requests && <span className="hidden sm:inline"> · {reservation.special_requests}</span>}
         </div>
-        {/* Risk and deposit badges */}
-        {(reservation.ml_risk_score != null || reservation.deposit_amount || depositReleasePending || depositExpired || reservation.deposit_suggested || needsNewDeposit) && (
-          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-            <NoShowRiskBadge
-              riskScore={reservation.ml_risk_score}
-              riskLevel={reservation.ml_risk_level}
-            />
-            <DepositBadge
-              amount={reservation.deposit_amount}
-              currency={reservation.deposit_currency}
-              held={Boolean(reservation.deposit_payment_intent_id)}
-              refundedAmount={reservation.deposit_refunded_amount}
-              releasePending={depositReleasePending}
-              expired={depositExpired}
-            />
-            {needsNewDeposit && onRequestDeposit && (
-              <button
-                type="button"
-                className="rounded-full border border-border-gray px-2.5 py-1 text-xs font-medium text-deep-charcoal hover:bg-soft-gray"
-                onClick={onRequestDeposit}
-              >
-                {t('dashboard.deposit.requestNew')}
-              </button>
-            )}
-            <DepositSuggestChip
-              suggested={!depositReleasePending && !depositExpired && !reservation.deposit_reauthorization_required && reservation.deposit_suggested}
-              reason={reservation.deposit_suggested_reason}
-              onRequestDeposit={onRequestDeposit}
-            />
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-1.5 mt-1 empty:hidden">
+          <NoShowRiskBadge riskScore={reservation.ml_risk_score} riskLevel={reservation.ml_risk_level} />
+        </div>
         {/* CRM preference icons — hide on mobile to save space */}
         <div className="hidden sm:block">
           <CrmBadges reservation={reservation} />
@@ -626,25 +603,6 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
           </span>
         )}
       </div>
-
-      {/* Deposit Actions */}
-      {!depositReleasePending && !depositExpired && reservation.deposit_amount && reservation.deposit_payment_intent_id && (
-        <div className="basis-full pl-10 sm:basis-auto sm:pl-0 sm:flex-shrink-0">
-          <DepositActions
-            key={reservation.deposit_payment_intent_id}
-            reservationId={reservation.reservation_id}
-            depositAmount={reservation.deposit_amount}
-            currency={reservation.deposit_currency}
-            onActionComplete={onDepositAction || (() => {})}
-          />
-        </div>
-      )}
-
-      {reservation.deposit_can_refund && (
-        <div className="basis-full pl-10 sm:basis-auto sm:pl-0 sm:flex-shrink-0">
-          <DepositRefundAction reservationId={reservation.reservation_id} onActionComplete={onDepositAction} />
-        </div>
-      )}
 
       {/* Edit / Cancel — desktop hover-icon row */}
       {(onEdit || onCancel) && !reservation.checked_in && (
@@ -741,6 +699,45 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
                 </button>
               </div>
             </div>
+          )}
+        </div>
+      )}
+      {Boolean(showDepositDetails) && (
+        <div className="flex basis-full flex-wrap items-center gap-2 pl-10 sm:pl-[52px] empty:hidden">
+          <DepositBadge
+            amount={reservation.deposit_amount}
+            currency={reservation.deposit_currency}
+            held={Boolean(reservation.deposit_payment_intent_id)}
+            refundedAmount={reservation.deposit_refunded_amount}
+            releasePending={depositReleasePending}
+            expired={depositExpired}
+            linkStatus={depositLinkStatus}
+          />
+          {!depositReleasePending && (depositLinkStatus || needsNewDeposit) && onRequestDeposit && (
+            <button
+              type="button"
+              className="min-h-9 rounded-full border border-border-gray px-2.5 py-1 text-xs font-medium text-deep-charcoal hover:bg-soft-gray"
+              onClick={onRequestDeposit}
+            >
+              {t(depositLinkStatus === 'awaiting_authorization' ? 'dashboard.deposit.viewLink' : 'dashboard.deposit.requestNew')}
+            </button>
+          )}
+          <DepositSuggestChip
+            suggested={!depositReleasePending && !depositLinkStatus && !depositExpired && !reservation.deposit_reauthorization_required && reservation.deposit_suggested}
+            reason={reservation.deposit_suggested_reason}
+            onRequestDeposit={onRequestDeposit}
+          />
+          {heldDepositAmount && (
+            <DepositActions
+              key={reservation.deposit_payment_intent_id}
+              reservationId={reservation.reservation_id}
+              depositAmount={heldDepositAmount}
+              currency={reservation.deposit_currency}
+              onActionComplete={onDepositAction || (() => {})}
+            />
+          )}
+          {reservation.deposit_can_refund && (
+            <DepositRefundAction reservationId={reservation.reservation_id} onActionComplete={onDepositAction} />
           )}
         </div>
       )}

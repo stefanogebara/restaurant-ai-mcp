@@ -7,6 +7,9 @@ import type { UpcomingReservation } from '../../../types/host.types';
 // i18n mock — resolves nested keys from EN locale
 const enTranslations: Record<string, string> = {
   'dashboard.deposit.releasePending': 'Card hold release pending',
+  'dashboard.deposit.awaitingAuthorization': 'Awaiting authorization',
+  'dashboard.deposit.linkExpired': 'Deposit link expired',
+  'dashboard.deposit.viewLink': 'View deposit link',
   'dashboard.deposit.requestNew': 'Request new deposit',
   'dashboard.deposit.authorized': '{{amount}} authorized',
   'dashboard.reservationsList.upcoming': 'Upcoming Reservations',
@@ -191,6 +194,34 @@ describe('ReservationsList', () => {
     const captured = { ...released, deposit_amount: 25 };
     rerender(<ReservationsList {...props} todayReservations={[captured]} />);
     expect(screen.queryByRole('button', { name: /request.*deposit/i })).not.toBeInTheDocument();
+  });
+
+  it('distinguishes an open link and an expired link from a verified authorization', () => {
+    const onRequestDeposit = vi.fn();
+    const reservation = { ...todayReservations[0], deposit_suggested: true };
+    const pending: UpcomingReservation = { ...reservation, deposit_link_status: 'awaiting_authorization' };
+    const props = { ...defaultProps, onRequestDeposit };
+    const { rerender } = render(<ReservationsList {...props} todayReservations={[pending]} />);
+
+    expect(screen.getByText('Awaiting authorization')).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Request deposit' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /capture|release/i })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'View deposit link' }));
+    expect(onRequestDeposit).toHaveBeenLastCalledWith(pending);
+
+    const expired: UpcomingReservation = { ...pending, deposit_link_status: 'expired' };
+    rerender(<ReservationsList {...props} todayReservations={[expired]} />);
+    expect(screen.getByText('Deposit link expired')).toBeVisible();
+    expect(screen.queryByText('Awaiting authorization')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Request new deposit' }));
+    expect(onRequestDeposit).toHaveBeenLastCalledWith(expired);
+
+    const held = { ...reservation, deposit_amount: 18, deposit_currency: 'eur',
+      deposit_payment_intent_id: 'pi_test_authorized', deposit_suggested: false };
+    rerender(<ReservationsList {...props} todayReservations={[held]} />);
+    expect(screen.getByText(/18.00 authorized/)).toBeVisible();
+    expect(screen.queryByText('Deposit link expired')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /view deposit link|request new deposit/i })).not.toBeInTheDocument();
   });
 
   it('displays special requests when present', () => {

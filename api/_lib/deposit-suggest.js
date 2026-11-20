@@ -11,7 +11,7 @@
  *   2. Reservation is risky:
  *        - ml_risk_level is 'high' or 'very-high', OR
  *        - ml_risk_score >= DEFAULT_THRESHOLD (51) when level is missing
- *   3. No deposit is already authorized or captured
+ *   3. No Checkout link, authorization or capture is already shown
  *
  * Tunable via env:
  *   DEPOSIT_SUGGEST_THRESHOLD — numeric override for #2. Default 51.
@@ -48,8 +48,8 @@ function decorateWithDepositSuggestion(reservation, depositConfig) {
     return { ...r, deposit_suggested: false, deposit_suggested_reason: null };
   }
 
-  // Capture clears the intent ID and retains the collected amount.
-  if (r.deposit_payment_intent_id || Number(r.deposit_amount) > 0) {
+  // The list shows the link and its actions when a Checkout has already been issued.
+  if (r.deposit_link_status || r.deposit_payment_intent_id || Number(r.deposit_amount) > 0) {
     return { ...r, deposit_suggested: false, deposit_suggested_reason: null };
   }
 

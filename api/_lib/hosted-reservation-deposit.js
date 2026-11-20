@@ -2,7 +2,9 @@ const { randomUUID } = require('node:crypto');
 const { minChargeAmount, MIN_CHARGE_AMOUNT, resolveDepositCurrency } = require('./currency');
 
 const PURPOSE = 'reservation_deposit_post_booking';
-const CHECKOUT_EVENTS = new Set(['checkout.session.completed', 'checkout.session.async_payment_succeeded']);
+const CHECKOUT_EVENTS = new Set([
+  'checkout.session.completed', 'checkout.session.async_payment_succeeded', 'checkout.session.expired',
+]);
 const ATTEMPT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const STRIPE_READ = { timeout: 10000, maxNetworkRetries: 0 };
 
@@ -233,6 +235,11 @@ async function createSession(stripe, attempt) {
   }
 }
 
+async function expireLink(db, attempt, session) {
+  await read(db.rpc('expire_hosted_deposit_link', { p_id: attempt.id, p_session_id: session.id }),
+    'Could not record hosted deposit link expiry');
+}
+
 async function openCheckout(db, stripe, attempt) {
   const id = attempt.checkout_session_id ?? (await createSession(stripe, attempt)).id;
   // The result of an idempotent create can be an old snapshot after a guest
@@ -243,7 +250,8 @@ async function openCheckout(db, stripe, attempt) {
     return { result: await reconcileCompleted(db, stripe, session, attempt) };
   }
   if (session.status === 'expired') {
-    return { result: await settle(db, attempt, session, null, 'expired') };
+    await expireLink(db, attempt, session);
+    return { result: 'unavailable' };
   }
   if (session.status !== 'open' || !session.url) return { result: 'unavailable' };
 
@@ -269,6 +277,11 @@ async function handleHostedDepositEvent({ db, stripe, event, livemode }) {
 
   const session = await stripe.checkout.sessions.retrieve(object.id, {}, STRIPE_READ);
   verifySession(session, object.id, attempt);
+  if (event.type === 'checkout.session.expired') {
+    if (session.status !== 'expired') throw new Error('Hosted deposit Checkout expiry not confirmed');
+    await expireLink(db, attempt, session);
+    return 'expired';
+  }
   const result = await reconcileCompleted(db, stripe, session, attempt);
   if (!['attached', 'released'].includes(result)) throw new Error(`Hosted deposit webhook still pending: ${result}`);
   return result;

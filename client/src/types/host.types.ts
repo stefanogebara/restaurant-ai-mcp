@@ -148,6 +148,7 @@ export interface UpcomingReservation {
   deposit_can_refund?: boolean;
   deposit_payment_intent_id?: string | null;
   deposit_release_pending?: boolean;
+  deposit_link_status?: 'awaiting_authorization' | 'expired';
   deposit_authorization_expired?: boolean;
   deposit_reauthorization_required?: boolean;
   // Phase AA: backend signal that this booking is risky AND the
