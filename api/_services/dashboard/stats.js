@@ -6,6 +6,7 @@ const {
 } = require('../../_lib/supabase');
 const { decorateReservationConfirmations } = require('../reservationWhatsAppDelivery');
 const { decorateWithDepositSuggestion } = require('../../_lib/deposit-suggest');
+const { decorateHostedDepositLinks } = require('../../_lib/hosted-deposit-link-status');
 
 async function handleDashboard(req, res) {
   const restaurantId = req.user.restaurant_id;
@@ -40,14 +41,9 @@ async function handleDashboard(req, res) {
   const restaurantSlug = restaurantConfigResult.data?.slug || null;
   const depositConfig = restaurantConfigResult.data?.deposit_config || { enabled: false };
 
-  // AA.2: decorate each upcoming reservation with deposit_suggested +
-  // deposit_suggested_reason. Done here (not inside getUpcomingReservations)
-  // so the DB layer stays free of business-logic policy decisions.
-  upcomingReservationsResult.reservations = (upcomingReservationsResult.reservations || []).map(
-    (r) => decorateWithDepositSuggestion(r, depositConfig),
-  );
-
-  upcomingReservationsResult.reservations = await decorateReservationConfirmations(restaurantId, upcomingReservationsResult.reservations);
+  const upcoming = await decorateHostedDepositLinks(restaurantId, upcomingReservationsResult.reservations || []);
+  upcomingReservationsResult.reservations = await decorateReservationConfirmations(restaurantId,
+    upcoming.map(r => decorateWithDepositSuggestion(r, depositConfig)));
 
   const tables = tablesResult.tables;
 

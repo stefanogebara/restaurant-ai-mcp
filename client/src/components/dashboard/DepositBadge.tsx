@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import type { UpcomingReservation } from '../../types/host.types';
 
 interface DepositBadgeProps {
   amount?: number | null;
@@ -7,14 +8,18 @@ interface DepositBadgeProps {
   refundedAmount?: number | null;
   releasePending?: boolean;
   expired?: boolean;
+  linkStatus?: UpcomingReservation['deposit_link_status'];
 }
 
-export default function DepositBadge({ amount, currency, held, refundedAmount, releasePending, expired }: DepositBadgeProps) {
+export default function DepositBadge({ amount, currency, held, refundedAmount, releasePending, expired, linkStatus }: DepositBadgeProps) {
   const { t, i18n } = useTranslation();
-  if (expired || releasePending) {
+  if (releasePending || linkStatus || expired) {
+    const label = releasePending ? 'releasePending'
+      : linkStatus === 'awaiting_authorization' ? 'awaitingAuthorization'
+        : linkStatus === 'expired' ? 'linkExpired' : 'authorizationExpired';
     return (
-      <span role={expired ? 'status' : undefined} className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
-        {t(expired ? 'dashboard.deposit.authorizationExpired' : 'dashboard.deposit.releasePending')}
+      <span role={releasePending ? undefined : 'status'} className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+        {t(`dashboard.deposit.${label}`)}
       </span>
     );
   }

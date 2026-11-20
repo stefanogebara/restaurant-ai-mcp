@@ -208,10 +208,27 @@ test('marks a Checkout expired on its fresh provider status before allowing a re
   const f = fixture();
   f.attempt.checkout_session_id = f.session.id;
   f.session.status = 'expired';
-  f.db.rpc.mockResolvedValueOnce({ data: 'unavailable' });
   expect(await openCheckout(f.db, f.stripe, f.attempt)).toEqual({ result: 'unavailable' });
-  expect(f.db.rpc).toHaveBeenCalledWith('settle_hosted_reservation_deposit', expect.objectContaining({
-    p_observation: 'expired', p_intent_id: null,
-  }));
+  expect(f.db.rpc).toHaveBeenCalledWith('expire_hosted_deposit_link', {
+    p_id: f.attempt.id, p_session_id: f.session.id,
+  });
   expect(f.stripe.checkout.sessions.create).not.toHaveBeenCalled();
+});
+
+test('records a hosted checkout expiry only after Stripe confirms the linked session expired', async () => {
+  const f = fixture();
+  f.event.type = 'checkout.session.expired';
+  f.event.data.object.status = 'expired';
+  expect(isHostedDepositEvent(f.event)).toBe(true);
+  await expect(handleHostedDepositEvent(f)).rejects.toThrow('expiry not confirmed');
+  expect(f.db.rpc).not.toHaveBeenCalled();
+
+  f.session.status = 'expired';
+  expect(await handleHostedDepositEvent(f)).toBe('expired');
+  expect(f.db.rpc).toHaveBeenCalledTimes(1);
+  expect(f.db.rpc).toHaveBeenCalledWith('expire_hosted_deposit_link', {
+    p_id: f.attempt.id, p_session_id: f.session.id,
+  });
+  expect(f.stripe.paymentIntents.retrieve).not.toHaveBeenCalled();
+  expect(f.stripe.paymentIntents.cancel).not.toHaveBeenCalled();
 });

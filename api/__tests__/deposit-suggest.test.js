@@ -40,6 +40,12 @@ describe('decorateWithDepositSuggestion', () => {
     expect(out.deposit_suggested).toBe(false);
   });
 
+  test.each(['awaiting_authorization', 'expired'])('shows the link action in place of a new risk suggestion for %s', status => {
+    const out = decorateWithDepositSuggestion({ ...baseReservation, deposit_link_status: status }, { enabled: true });
+    expect(out.deposit_suggested).toBe(false);
+    expect(out.deposit_suggested_reason).toBeNull();
+  });
+
   test('very-high risk + enabled + no existing deposit → suggests', () => {
     const out = decorateWithDepositSuggestion(baseReservation, { enabled: true });
     expect(out.deposit_suggested).toBe(true);

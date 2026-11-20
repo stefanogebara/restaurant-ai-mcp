@@ -15,10 +15,7 @@ interface DepositRequestModalProps {
   } | null;
   /** Caller closes the modal — typically clears the selected reservation. */
   onClose: () => void;
-  /** Fires ONCE per successful link generation. Parent uses this to refetch
-   *  the dashboard so the chip disappears immediately (the endpoint sets
-   *  deposit_payment_intent_id atomically so the next dashboard fetch will
-   *  no longer flag the reservation as deposit_suggested). */
+  /** Refetch the dashboard so the pending status is visible as soon as the link is available. */
   onLinkGenerated?: () => void;
 }
 
@@ -39,9 +36,7 @@ interface LinkPayload {
  *   - Copy the URL
  *   - Open WhatsApp with the message + link pre-filled (wa.me deep link)
  *
- * The endpoint is idempotent: hitting it twice for the same reservation
- * returns `already_requested` so we just show the message instead of
- * creating a duplicate Stripe session.
+ * The endpoint reuses an open Checkout for the same reservation.
  */
 export default function DepositRequestModal({
   open,
@@ -78,9 +73,6 @@ export default function DepositRequestModal({
           return;
         }
         setPayload(json as LinkPayload);
-        // The endpoint atomically wrote deposit_payment_intent_id onto the
-        // reservation before returning; tell the parent so it can refetch
-        // and the chip disappears in this render cycle.
         onLinkGenerated?.();
       })
       .catch((err) => {
