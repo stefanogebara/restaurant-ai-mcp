@@ -448,33 +448,10 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* ---- O Palco: a planta do salão é a estrela da página ----
-              Redesign 2026-08-24 (candidato "Palco + Modo Serviço" do canvas):
-              o salão sobe para logo abaixo das métricas, em largura total,
-              como único objeto de vidro da página. Mesas ilustradas (pratos =
-              convidados sentados); à noite as ocupadas brilham. */}
-          <section className="glass-panel mb-8 sm:mb-10">
-            <TableLayoutPanel
-              refreshMode="periodic"
-              tables={tables}
-              activeParties={activeParties}
-              onRefresh={refetch}
-              isLoading={isLoading}
-              night={isNight}
-            />
-          </section>
-
-          {/* ---- A régua: essa mesa libera a tempo? ---- */}
-          <div className="mb-12 sm:mb-20">
-            <TableTimeline
-              tables={tables}
-              activeParties={activeParties}
-              todayReservations={todayReservations}
-              night={isNight}
-            />
-          </div>
-
-          {/* ---- Reservations Section ---- */}
+          {/* ---- Reservations Section ----
+              Above the dining room since 2026-11-21 (audit of 16/11): during
+              service the next arrivals are what the host looks for first; the
+              floor plan used to push them two screens down. */}
           <section className="mb-12 sm:mb-20">
             <ReservationsList
               refreshMode="periodic"
@@ -504,6 +481,32 @@ export default function Dashboard() {
               onDepositAction={() => { void refetch(); }}
             />
           </section>
+
+          {/* ---- O Palco: a planta do salão é a estrela da página ----
+              Redesign 2026-08-24 (candidato "Palco + Modo Serviço" do canvas):
+              o salão sobe para logo abaixo das métricas, em largura total,
+              como único objeto de vidro da página. Mesas ilustradas (pratos =
+              convidados sentados); à noite as ocupadas brilham. */}
+          <section className="glass-panel mb-8 sm:mb-10">
+            <TableLayoutPanel
+              refreshMode="periodic"
+              tables={tables}
+              activeParties={activeParties}
+              onRefresh={refetch}
+              isLoading={isLoading}
+              night={isNight}
+            />
+          </section>
+
+          {/* ---- A régua: essa mesa libera a tempo? ---- */}
+          <div className="mb-12 sm:mb-20">
+            <TableTimeline
+              tables={tables}
+              activeParties={activeParties}
+              todayReservations={todayReservations}
+              night={isNight}
+            />
+          </div>
 
           {/* ---- Fila + Na casa agora — listas no canvas, sem cards ---- */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
