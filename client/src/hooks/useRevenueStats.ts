@@ -21,10 +21,16 @@ async function fetchRevenueStats(): Promise<RevenueStats> {
   return res.json() as Promise<RevenueStats>;
 }
 
-export function useRevenueStats() {
+/**
+ * `enabled: false` waits: the dashboard only needs the average spend to price
+ * upcoming bookings, so it skips the call when there are none (2026-11-21).
+ * The revenue widgets call this without options and always fetch.
+ */
+export function useRevenueStats({ enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ['revenue-stats'],
     queryFn: fetchRevenueStats,
     staleTime: 2 * 60 * 1000,
+    enabled,
   });
 }
