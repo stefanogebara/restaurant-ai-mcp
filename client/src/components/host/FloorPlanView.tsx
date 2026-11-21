@@ -1,12 +1,13 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Table, ActiveParty } from '../../types/host.types';
+import type { Table, ActiveParty, TableShape } from '../../types/host.types';
+import { getTableSize as getTableGridSize } from '../../types/host.types';
+import { TABLE_VISUAL_SCALE } from '../floor-plan/floorPlanConstants';
 import ThiingsIcon from '../common/ThiingsIcon';
 import FloorPlanProgressRing from './FloorPlanProgressRing';
 import FloorPlanHoverCard from './FloorPlanHoverCard';
 import {
   getStatusStyle,
-  getTableSize,
   hasPositionData,
   autoLayoutTables,
   renderChairs,
@@ -102,17 +103,29 @@ export default function FloorPlanView({
         let manualPos: { table: Table; x: number; y: number; w: number; h: number }[] = [];
         let manualBounds = { width: 0, height: 0 };
         if (!useAuto) {
-          const CELL = compact ? 32 : 40;
+          // Same geometry as the editor (FloorPlanCanvas): each table fills its
+          // grid footprint x TABLE_VISUAL_SCALE, centred on its cells. This
+          // view used fixed sizes (84-160 px) on a 40-px cell, up to 2.5x the
+          // footprint the owner laid out, so neighbours overlapped on the
+          // dashboard while the Mesas page looked right (audit 2026-11-16).
+          // A larger cell keeps the tiles about as big as before.
+          const CELL_D = compact ? 52 : 64;
+          const pad = Math.ceil(CELL_D * (TABLE_VISUAL_SCALE - 1)) + 16;
           let mx = 0, my = 0;
           manualPos = locTables.map(t => {
-            const sz = getTableSize(t);
-            const px = (t.position_x || 0) * CELL;
-            const py = (t.position_y || 0) * CELL;
-            mx = Math.max(mx, px + sz.w);
-            my = Math.max(my, py + sz.h);
-            return { table: t, x: px, y: py, w: sz.w, h: sz.h };
+            const shape = (t.shape?.toLowerCase() || 'round') as TableShape;
+            const grid = getTableGridSize(shape, t.capacity || 2);
+            const fw = grid.width * CELL_D;
+            const fh = grid.height * CELL_D;
+            const w = fw * TABLE_VISUAL_SCALE;
+            const h = fh * TABLE_VISUAL_SCALE;
+            const x = pad + (t.position_x || 0) * CELL_D - (w - fw) / 2;
+            const y = pad + (t.position_y || 0) * CELL_D - (h - fh) / 2;
+            mx = Math.max(mx, x + w);
+            my = Math.max(my, y + h);
+            return { table: t, x, y, w, h };
           });
-          manualBounds = { width: mx + 40, height: my + 40 };
+          manualBounds = { width: mx + pad, height: my + pad };
         }
 
         const positions = useAuto ? layout!.positions : manualPos;
@@ -230,6 +243,7 @@ export default function FloorPlanView({
                   return (
                     <g
                       key={table.id}
+                      data-table-box={`${x},${y},${w},${h}`}
                       className="cursor-pointer"
                       onClick={() => onTableClick?.(table)}
                       onMouseEnter={() => setHoveredId(table.id)}
