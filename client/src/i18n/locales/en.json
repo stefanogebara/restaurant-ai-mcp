@@ -97,7 +97,18 @@
     "events": "Events",
     "campaigns": "Campaigns",
     "insights": "Insights",
-    "serviceScore": "Service Score"
+    "serviceScore": "Service Score",
+    "today": "Today",
+    "floor": "Floor",
+    "receptionist": "Receptionist",
+    "settingsGroup": "Settings",
+    "floorPlan": "Floor plan",
+    "voice": "Voice",
+    "calls": "Calls",
+    "restaurant": "Restaurant",
+    "plan": "Plan",
+    "askAI": "Ask the AI",
+    "askAIShort": "Ask"
   },
   "dashboard": {
     "overview": "Overview",

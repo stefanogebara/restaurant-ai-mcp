@@ -97,7 +97,18 @@
     "events": "Eventos",
     "campaigns": "Campanhas",
     "insights": "Insights",
-    "serviceScore": "A Partitura"
+    "serviceScore": "A Partitura",
+    "today": "Hoje",
+    "floor": "Salão",
+    "receptionist": "Recepcionista",
+    "settingsGroup": "Ajustes",
+    "floorPlan": "Planta",
+    "voice": "Voz",
+    "calls": "Chamadas",
+    "restaurant": "Restaurante",
+    "plan": "Plano",
+    "askAI": "Perguntar à IA",
+    "askAIShort": "Perguntar"
   },
   "dashboard": {
     "overview": "Visão Geral",

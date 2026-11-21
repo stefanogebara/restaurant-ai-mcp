@@ -24,7 +24,7 @@ vi.mock('../../../hooks/useRestaurantSettings', () => ({
 beforeEach(() => { subscriptionState.plan = 'Growth'; });
 
 describe('mobile sidebar navigation', () => {
-  it('keeps the mobile settings label short while naming its destination fully', () => {
+  it('puts Today, Floor, Ask and Settings on the phone bar', () => {
     render(
       <SidebarProvider>
         <MemoryRouter><Sidebar /></MemoryRouter>
@@ -34,7 +34,9 @@ describe('mobile sidebar navigation', () => {
     const mobileNavigation = screen.getByRole('navigation', { name: 'Mobile navigation' });
     const settingsLink = mobileNavigation.querySelector('a[href="/host-dashboard/settings"]');
     expect(settingsLink?.textContent?.trim()).toBe('Settings');
-    expect(settingsLink).toHaveAccessibleName('Restaurant Settings');
+    expect(within(mobileNavigation).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual([
+      '/host-dashboard/simple', '/host-dashboard/floor-plan', '/host-dashboard/manager-ai', '/host-dashboard/settings',
+    ]);
   });
 
   it('opens only from the bottom bar and closes inside the drawer', async () => {
@@ -79,12 +81,40 @@ function renderNavigation(path = '/host-dashboard/simple') {
   );
 }
 
+describe('the menu of five (2026-11-22)', () => {
+  it('shows five places and the Ask action, and no Marketing or Insights item', () => {
+    renderNavigation();
+    const navigation = screen.getByRole('navigation', { name: 'Main navigation' });
+    expect(within(navigation).getAllByRole('link').map((a) => a.textContent?.trim())).toEqual([
+      'Ask the AI', 'Today', 'Floor', 'Receptionist', 'Customers', 'Settings',
+    ]);
+    expect(within(navigation).queryByRole('link', { name: /Marketing|Insights|Team|Language|Integrations/ })).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['/host-dashboard', 'Today'], ['/host-dashboard/service', 'Floor'], ['/host-dashboard/tables', 'Floor'],
+    ['/host-dashboard/whatsapp', 'Receptionist'], ['/host-dashboard/insights', 'Customers'],
+    ['/host-dashboard/campaigns', 'Customers'], ['/host-dashboard/team', 'Settings'],
+    ['/settings/language', 'Settings'], ['/host-dashboard/integrations', 'Settings'],
+  ])('on %s the active item is %s', (path, label) => {
+    renderNavigation(path);
+    const navigation = screen.getByRole('navigation', { name: 'Main navigation' });
+    expect(within(navigation).getByRole('link', { current: 'page' })).toHaveTextContent(label);
+  });
+
+  it('marks Ask the AI, and no place, on the Manager AI page', () => {
+    renderNavigation('/host-dashboard/manager-ai');
+    const navigation = screen.getByRole('navigation', { name: 'Main navigation' });
+    expect(within(navigation).getByRole('link', { current: 'page' })).toHaveTextContent('Ask the AI');
+  });
+});
+
 describe('Voice overview navigation', () => {
   it('lets a Free owner follow the desktop Voice link without granting paid Voice features', async () => {
     subscriptionState.plan = 'Free';
     renderNavigation();
     const navigation = screen.getByRole('navigation', { name: 'Main navigation' });
-    const voiceLink = within(navigation).getByRole('link', { name: 'Voice & Calls' });
+    const voiceLink = within(navigation).getByRole('link', { name: 'Receptionist' });
     expect(voiceLink).toHaveAttribute('href', '/host-dashboard/voice-settings');
     expect(within(navigation).queryByRole('link', { name: /Voice.*Locked feature/ })).not.toBeInTheDocument();
     expect(hasFeatureAccess('free', 'voiceAI')).toBe(false);
@@ -100,7 +130,7 @@ describe('Voice overview navigation', () => {
     const moreButton = within(mobileNavigation).getByRole('button', { name: 'More' });
     await userEvent.click(moreButton);
     expect(drawer).toHaveClass('translate-x-0');
-    const voiceLink = within(screen.getByRole('navigation', { name: 'Main navigation' })).getByRole('link', { name: 'Voice & Calls' });
+    const voiceLink = within(screen.getByRole('navigation', { name: 'Main navigation' })).getByRole('link', { name: 'Receptionist' });
     expect(voiceLink).toHaveAttribute('href', '/host-dashboard/voice-settings');
     await userEvent.click(voiceLink);
     expect(screen.getByTestId('current-route')).toHaveTextContent('/host-dashboard/voice-settings');
@@ -112,13 +142,10 @@ describe('Voice overview navigation', () => {
     subscriptionState.plan = 'Free';
     renderNavigation();
     const navigation = screen.getByRole('navigation', { name: 'Main navigation' });
-    const marketing = within(navigation).getByRole('link', { name: 'Marketing - Locked feature' });
     const customers = within(navigation).getByRole('link', { name: 'Customers - Locked feature' });
-    expect(marketing).toHaveAttribute('href', '/subscription/manage');
     expect(customers).toHaveAttribute('href', '/subscription/manage');
-    expect(hasFeatureAccess('free', 'advancedAnalytics')).toBe(false);
     expect(hasFeatureAccess('free', 'customerLTV')).toBe(false);
-    await userEvent.click(marketing);
+    await userEvent.click(customers);
     expect(screen.getByTestId('current-route')).toHaveTextContent('/subscription/manage');
   });
 
@@ -130,7 +157,7 @@ describe('Voice overview navigation', () => {
   ])('keeps Voice navigation active for a %s owner on %s', (plan, path) => {
     subscriptionState.plan = plan;
     renderNavigation(path);
-    const voiceLink = within(screen.getByRole('navigation', { name: 'Main navigation' })).getByRole('link', { name: 'Voice & Calls' });
+    const voiceLink = within(screen.getByRole('navigation', { name: 'Main navigation' })).getByRole('link', { name: 'Receptionist' });
     expect(voiceLink).toHaveAttribute('href', '/host-dashboard/voice-settings');
     expect(voiceLink).toHaveAttribute('aria-current', 'page');
   });
@@ -163,7 +190,7 @@ it('skips closed mobile navigation and transfers/restores focus through the actu
 it('preserves the desktop visibility override and accessible Voice navigation', () => {
   const { container } = renderNavigation();
   expect(container.querySelector('aside')).toHaveClass('lg:visible');
-  const voice = screen.getByRole('link', { name: 'Voice & Calls' });
+  const voice = screen.getByRole('link', { name: 'Receptionist' });
   voice.focus(); expect(voice).toHaveFocus();
 });
 
@@ -196,7 +223,7 @@ it('releases the mobile dialog when the desktop media query changes to matching'
     outside.dispatchEvent(tab);
     expect(tab.defaultPrevented).toBe(false);
     expect(outside).toHaveFocus();
-    expect(screen.getByRole('link', { name: 'Voice & Calls' })).toHaveAttribute('href', '/host-dashboard/voice-settings');
+    expect(screen.getByRole('link', { name: 'Receptionist' })).toHaveAttribute('href', '/host-dashboard/voice-settings');
   } finally {
     outside.remove(); document.body.style.overflow = ''; vi.unstubAllGlobals();
   }

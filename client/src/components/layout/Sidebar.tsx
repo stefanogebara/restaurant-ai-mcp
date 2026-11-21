@@ -7,49 +7,11 @@ import { useSubscription } from '../../hooks/useSubscription';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRestaurantSettings } from '../../hooks/useRestaurantSettings';
 import { usePermission } from '../../hooks/usePermission';
-import { hasFeatureAccess, type PlanFeatures, type PlanType } from '../../config/planFeatures';
+import { hasFeatureAccess, type PlanType } from '../../config/planFeatures';
+import { ASK_AI_PATH, NAV_GROUPS, groupForPath } from './navGroups';
 import { languageOptions, preloadAndSwitchLanguage } from '../../i18n/config';
 import { LS_LANGUAGE } from '../../config/localStorageKeys';
 import { useDialogLifecycle } from '../../hooks/useDialogLifecycle';
-
-interface NavItem {
-  path: string;
-  label: string;
-  requiredFeature?: keyof PlanFeatures;
-}
-
-interface NavSection {
-  label: string;
-  items: NavItem[];
-}
-
-const navSections: NavSection[] = [
-  {
-    label: 'Main',
-    items: [
-      { path: '/host-dashboard/simple', label: 'Dashboard', requiredFeature: 'overview' },
-      { path: '/host-dashboard/floor-plan', label: 'Tables', requiredFeature: 'overview' },
-      { path: '/host-dashboard/service', label: 'Service Score', requiredFeature: 'overview' },
-    ]
-  },
-  {
-    label: 'AI',
-    items: [
-      { path: '/host-dashboard/manager-ai', label: 'Manager AI', requiredFeature: 'overview' },
-      // The saved phone overview is read-only; Voice settings enforce paid access.
-      { path: '/host-dashboard/voice-settings', label: 'Voice & Calls' },
-      { path: '/host-dashboard/whatsapp', label: 'WhatsApp', requiredFeature: 'overview' },
-      { path: '/host-dashboard/campaigns', label: 'Marketing', requiredFeature: 'advancedAnalytics' },
-    ]
-  },
-  {
-    label: 'Insights',
-    items: [
-      { path: '/host-dashboard/insights', label: 'Insights', requiredFeature: 'overview' },
-      { path: '/host-dashboard/customers', label: 'Customers', requiredFeature: 'customerLTV' },
-    ]
-  }
-];
 
 export default function Sidebar() {
   const location = useLocation();
@@ -105,39 +67,16 @@ export default function Sidebar() {
 
   const currentLanguage = languageOptions.find(l => l.code === i18n.language) || languageOptions[0];
 
-  const NAV_KEYS: Record<string, string> = {
-    Dashboard: 'navigation.dashboard',
-    Tables: 'navigation.tables',
-    'Service Score': 'navigation.serviceScore',
-    'Manager AI': 'navigation.managerAI',
-    'Voice Agent': 'navigation.voiceAgent',
-    'Voice & Calls': 'navigation.voiceAndCalls',
-    WhatsApp: 'navigation.whatsapp',
-    'Call History': 'navigation.callHistory',
-    Insights: 'navigation.insights',
-    Campaigns: 'navigation.campaigns',
-    Marketing: 'navigation.marketing',
-    Coupons: 'navigation.coupons',
-    Events: 'navigation.events',
-    Customers: 'navigation.customers',
-    Main: 'navigation.sectionMain',
-    AI: 'navigation.sectionAI',
-  };
-
-  const isActive = (path: string) => {
-    if (path === '/host-dashboard/simple') {
-      return location.pathname === '/host-dashboard/simple' || location.pathname === '/host-dashboard';
+  const activeGroup = groupForPath(location.pathname)?.key;
+  const onAskAI = location.pathname.startsWith(ASK_AI_PATH);
+  const itemClass = (active: boolean) => `
+    flex items-center gap-3 transition-all duration-150
+    ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
+    ${active
+      ? 'text-white bg-burgundy/10 border-l-2 border-l-burgundy font-medium'
+      : 'text-stone-400 hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
     }
-    // Voice & Calls highlights for both voice-settings and calls pages
-    if (path === '/host-dashboard/voice-settings') {
-      return location.pathname.startsWith('/host-dashboard/voice-settings') || location.pathname.startsWith('/host-dashboard/calls');
-    }
-    // Marketing highlights for campaigns, coupons, and events
-    if (path === '/host-dashboard/campaigns') {
-      return location.pathname.startsWith('/host-dashboard/campaigns') || location.pathname.startsWith('/host-dashboard/coupons') || location.pathname.startsWith('/host-dashboard/events');
-    }
-    return location.pathname.startsWith(path);
-  };
+  `;
 
   // Prefer the restaurant name (brand identity) over the auth email in the
   // sidebar — caught in 2026-05-17 audit: post-onboarding owners saw their
@@ -210,185 +149,74 @@ export default function Sidebar() {
 
           {/* Navigation */}
           <nav aria-label="Main navigation" className="flex-1 overflow-y-auto">
-            {navSections.map((section) => (
-              <div key={section.label} className="mb-5">
-                {/* Section Label */}
-                {!isCollapsed && (
-                  <div className="px-6 mb-2 text-[11px] font-semibold tracking-widest uppercase text-stone-500">
-                    {t(NAV_KEYS[section.label] ?? section.label, section.label)}
-                  </div>
-                )}
-                {isCollapsed && (
-                  <div className="w-full flex justify-center mb-2">
-                    <div className="w-6 h-px bg-charcoal-dark" />
-                  </div>
-                )}
-
-
-                {/* Nav Items */}
-                <div className="space-y-1">
-                {section.items.map((item) => {
-                  const active = isActive(item.path);
-                  const hasAccess = !item.requiredFeature || hasFeatureAccess(planType, item.requiredFeature);
-                  const isLocked = isSubscriptionLoading ? false : !hasAccess;
-
-                  if (isLocked) {
-                    // Audit BUG #10 — locked items used to be disabled buttons
-                    // with no click handler, so the lock icon felt like a
-                    // dead end. Route clicks to /subscription/manage so users
-                    // have a discoverable path to unlock the feature.
-                    return (
-                      <Link
-                        key={item.path}
-                        to="/subscription/manage"
-                        onClick={() => setIsMobileOpen(false)}
-                        className={`
-                          w-full flex items-center gap-3 text-left transition-all duration-150
-                          opacity-60 hover:opacity-100 hover:bg-white/[0.03] text-stone-400 hover:text-stone-200
-                          ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
-                        `}
-                        title={isCollapsed
-                          ? `${t(NAV_KEYS[item.label] ?? item.label, item.label)} - ${t('navigation.upgradeToUnlock', 'Upgrade to unlock')}`
-                          : t('navigation.upgradePlanToUnlock', 'Upgrade to Professional plan to unlock')}
-                        aria-label={`${t(NAV_KEYS[item.label] ?? item.label, item.label)} - ${t('navigation.lockedFeature', 'Locked feature')}`}
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-current opacity-40 flex-shrink-0" />
-                        {!isCollapsed && (
-                          <span className="text-sm flex items-center gap-2">
-                            {t(NAV_KEYS[item.label] ?? item.label, item.label)}
-                            <ThiingsIcon name="lock" pxSize={10} />
-                          </span>
-                        )}
-                      </Link>
-                    );
-                  }
-
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      onClick={() => setIsMobileOpen(false)}
-                      aria-current={active ? 'page' : undefined}
-                      aria-label={isCollapsed ? item.label : undefined}
-                      className={`
-                        flex items-center gap-3 transition-all duration-150
-                        ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
-                        ${active
-                          ? 'text-white bg-burgundy/10 border-l-2 border-l-burgundy font-medium'
-                          : 'text-stone-400 hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
-                        }
-                      `}
-                      title={isCollapsed ? item.label : undefined}
-                    >
-                      <span
-                        className={`
-                          w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors
-                          ${active ? 'bg-burgundy' : 'bg-current opacity-40'}
-                        `}
-                      />
-                      {!isCollapsed && (
-                        <span className="text-sm">{t(NAV_KEYS[item.label] ?? item.label, item.label)}</span>
-                      )}
-                    </Link>
-                  );
-                })}
-                </div>
-              </div>
-            ))}
-
-            {/* Settings */}
-            <div className="mb-5">
-              {!isCollapsed && (
-                <div className="px-6 mb-2 text-[11px] font-semibold tracking-widest uppercase text-stone-500">
-                  {t('navigation.sectionSettings', 'Settings')}
-                </div>
-              )}
-              {isCollapsed && (
-                <div className="w-full flex justify-center mb-2">
-                  <div className="w-6 h-px bg-charcoal-dark" />
-                </div>
-              )}
+            {/* Ask the Manager AI: an action, not a place (menu of five, 2026-11-22). */}
+            <div className={isCollapsed ? 'px-4 mb-5' : 'px-5 mb-6'}>
               <Link
-                to="/host-dashboard/settings"
+                to={ASK_AI_PATH}
                 onClick={() => setIsMobileOpen(false)}
-                className={`
-                  flex items-center gap-3 transition-all duration-150
-                  ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
-                  ${isActive('/host-dashboard/settings')
-                    ? 'text-white bg-burgundy/10 border-l-2 border-l-burgundy font-medium'
-                    : 'text-stone-400 hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
-                  }
-                `}
-                title={isCollapsed ? t('navigation.restaurantSettings', 'Restaurant Settings') : undefined}
+                aria-current={onAskAI ? 'page' : undefined}
+                title={isCollapsed ? t('navigation.askAI', 'Ask the AI') : undefined}
+                aria-label={isCollapsed ? t('navigation.askAI', 'Ask the AI') : undefined}
+                className={`flex items-center gap-2.5 rounded-full border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30 ${
+                  isCollapsed ? 'justify-center p-3' : 'px-4 py-2.5'
+                } ${onAskAI ? 'border-white/25 bg-white/10 text-white' : 'border-white/10 bg-white/[0.04] text-stone-300 hover:bg-white/[0.08] hover:text-white'}`}
               >
-                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors ${isActive('/host-dashboard/settings') ? 'bg-burgundy' : 'bg-current opacity-40'}`} />
-                {!isCollapsed && <span className="text-sm">{t('navigation.restaurantSettings', 'Restaurant Settings')}</span>}
-              </Link>
-              <Link
-                to="/settings/language"
-                onClick={() => setIsMobileOpen(false)}
-                className={`
-                  flex items-center gap-3 transition-all duration-150
-                  ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
-                  ${isActive('/settings/language')
-                    ? 'text-white bg-burgundy/10 border-l-2 border-l-burgundy font-medium'
-                    : 'text-stone-400 hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
-                  }
-                `}
-                title={isCollapsed ? t('navigation.languageSettings', 'Language') : undefined}
-              >
-                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors ${isActive('/settings/language') ? 'bg-burgundy' : 'bg-current opacity-40'}`} />
-                {!isCollapsed && <span className="text-sm">{t('navigation.languageSettings', 'Language')}</span>}
-              </Link>
-              <Link
-                to="/host-dashboard/integrations"
-                onClick={() => setIsMobileOpen(false)}
-                className={`
-                  flex items-center gap-3 transition-all duration-150
-                  ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
-                  ${isActive('/host-dashboard/integrations')
-                    ? 'text-white bg-burgundy/10 border-l-2 border-l-burgundy font-medium'
-                    : 'text-stone-400 hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
-                  }
-                `}
-                title={isCollapsed ? t('navigation.integrations', 'Integrations') : undefined}
-              >
-                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors ${isActive('/host-dashboard/integrations') ? 'bg-burgundy' : 'bg-current opacity-40'}`} />
-                {!isCollapsed && <span className="text-sm">{t('navigation.integrations', 'Integrations')}</span>}
+                <ThiingsIcon name="message-circle" pxSize={16} />
+                {!isCollapsed && <span className="text-sm">{t('navigation.askAI', 'Ask the AI')}</span>}
               </Link>
             </div>
 
-            {/* Team section — owner only */}
-            {can('manageTeam') && (
-              <div className="mb-5">
-                {!isCollapsed && (
-                  <div className="px-6 mb-2 text-[11px] font-semibold tracking-widest uppercase text-stone-500">
-                    {t('navigation.sectionManage', 'Manage')}
-                  </div>
-                )}
-                {isCollapsed && (
-                  <div className="w-full flex justify-center mb-2">
-                    <div className="w-6 h-px bg-charcoal-dark" />
-                  </div>
-                )}
-                <Link
-                  to="/host-dashboard/team"
-                  onClick={() => setIsMobileOpen(false)}
-                  className={`
-                    flex items-center gap-3 transition-all duration-150
-                    ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
-                    ${isActive('/host-dashboard/team')
-                      ? 'text-white bg-burgundy/10 border-l-2 border-l-burgundy font-medium'
-                      : 'text-stone-400 hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
-                    }
-                  `}
-                  title={isCollapsed ? t('navigation.team', 'Team') : undefined}
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors ${isActive('/host-dashboard/team') ? 'bg-burgundy' : 'bg-current opacity-40'}`} />
-                  {!isCollapsed && <span className="text-sm">{t('navigation.team', 'Team')}</span>}
-                </Link>
-              </div>
-            )}
+            <div className="space-y-1">
+              {NAV_GROUPS.map((group) => {
+                const label = t(group.labelKey, group.label);
+                const active = activeGroup === group.key;
+                const hasAccess = !group.requiredFeature || hasFeatureAccess(planType, group.requiredFeature);
+                const isLocked = isSubscriptionLoading ? false : !hasAccess;
+
+                if (isLocked) {
+                  // Audit BUG #10: a locked item leads to the plan page, never a dead end.
+                  return (
+                    <Link
+                      key={group.key}
+                      to="/subscription/manage"
+                      onClick={() => setIsMobileOpen(false)}
+                      className={`
+                        w-full flex items-center gap-3 text-left transition-all duration-150
+                        opacity-60 hover:opacity-100 hover:bg-white/[0.03] text-stone-400 hover:text-stone-200
+                        ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
+                      `}
+                      title={isCollapsed
+                        ? `${label} - ${t('navigation.upgradeToUnlock', 'Upgrade to unlock')}`
+                        : t('navigation.upgradePlanToUnlock', 'Upgrade to Professional plan to unlock')}
+                      aria-label={`${label} - ${t('navigation.lockedFeature', 'Locked feature')}`}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-40 flex-shrink-0" />
+                      {!isCollapsed && (
+                        <span className="text-sm flex items-center gap-2">
+                          {label}
+                          <ThiingsIcon name="lock" pxSize={10} />
+                        </span>
+                      )}
+                    </Link>
+                  );
+                }
+
+                return (
+                  <Link
+                    key={group.key}
+                    to={group.path}
+                    onClick={() => setIsMobileOpen(false)}
+                    aria-current={active ? 'page' : undefined}
+                    aria-label={isCollapsed ? label : undefined}
+                    className={itemClass(active)}
+                    title={isCollapsed ? label : undefined}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors ${active ? 'bg-burgundy' : 'bg-current opacity-40'}`} />
+                    {!isCollapsed && <span className="text-sm">{label}</span>}
+                  </Link>
+                );
+              })}
+            </div>
           </nav>
 
           {/* User Footer */}
@@ -526,29 +354,24 @@ export default function Sidebar() {
       >
         <div className="flex items-center justify-around px-2 py-1 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
           {([
-            { path: '/host-dashboard/simple', label: t('navigation.dashboard', 'Dashboard'), icon: 'layout-dashboard' },
-            { path: '/host-dashboard/floor-plan', label: t('navigation.tables', 'Tables'), icon: 'table' },
-            { path: '/host-dashboard/manager-ai', label: 'AI', icon: 'message-circle' },
-            { path: '/host-dashboard/settings', label: t('navigation.mobileSettings', 'Settings'), icon: 'settings' },
-          ] as const).map((item) => {
-            const active = isActive(item.path);
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                aria-label={item.path === '/host-dashboard/settings' ? t('navigation.restaurantSettings', 'Restaurant Settings') : undefined}
-                className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg transition-colors min-w-[60px] ${
-                  active
-                    ? 'text-white'
-                    : 'text-stone-500 active:text-stone-300'
-                }`}
-              >
-                <ThiingsIcon name={item.icon} pxSize={20} />
-                <span className="text-[10px] font-medium leading-tight">{item.label}</span>
-                {active && <span className="w-1 h-1 rounded-full bg-burgundy" />}
-              </Link>
-            );
-          })}
+            { path: '/host-dashboard/simple', label: t('navigation.today', 'Today'), icon: 'layout-dashboard', active: activeGroup === 'today' },
+            { path: '/host-dashboard/floor-plan', label: t('navigation.floor', 'Floor'), icon: 'table', active: activeGroup === 'floor' },
+            { path: ASK_AI_PATH, label: t('navigation.askAIShort', 'Ask'), icon: 'message-circle', active: onAskAI },
+            { path: '/host-dashboard/settings', label: t('navigation.settingsGroup', 'Settings'), icon: 'settings', active: activeGroup === 'settings' },
+          ] as const).map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              aria-current={item.active ? 'page' : undefined}
+              className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg transition-colors min-w-[60px] ${
+                item.active ? 'text-white' : 'text-stone-500 active:text-stone-300'
+              }`}
+            >
+              <ThiingsIcon name={item.icon} pxSize={20} />
+              <span className="text-[10px] font-medium leading-tight">{item.label}</span>
+              {item.active && <span className="w-1 h-1 rounded-full bg-burgundy" />}
+            </Link>
+          ))}
           <button
             type="button"
             onClick={() => setIsMobileOpen(true)}
