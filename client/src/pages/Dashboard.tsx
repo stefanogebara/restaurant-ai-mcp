@@ -53,6 +53,7 @@ import { useRevenueStats } from '../hooks/useRevenueStats';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { LS_FIRST_RESERVATION_TRACKED, LS_LAUNCH_CHECKLIST_DONE } from '../config/localStorageKeys';
 import LaunchChecklistModal from '../components/dashboard/LaunchChecklistModal';
+import MountWhenNear from '../components/common/MountWhenNear';
 import { useToast } from '../contexts/ToastContext';
 import { getDashboardDateContext } from '../utils/dashboardReservationDays';
 
@@ -133,8 +134,9 @@ export default function Dashboard() {
   const tomorrowReservations = reservations.filter((r) => r.date === tomorrow);
   const weekReservations = reservations.filter((r) => r.date > tomorrow && r.date <= weekEnd);
 
-  // Revenue stats (used by ReservationsList for per-reservation predictions)
-  const { data: revenueStats } = useRevenueStats();
+  // Revenue stats (used by ReservationsList for per-reservation predictions).
+  // No upcoming bookings, nothing to price: skip the call on load.
+  const { data: revenueStats } = useRevenueStats({ enabled: reservations.length > 0 });
   const avgSpendPerCover = revenueStats?.avg_spend_per_cover;
 
   const occupiedTables = tables.filter((t: { status: string }) => t.status === 'Occupied').length;
@@ -210,6 +212,12 @@ export default function Dashboard() {
   const hasReservations = todayReservations.length > 0 || tomorrowReservations.length > 0;
   const hasActiveParties = activeParties.length > 0;
   const isDashboardEmpty = !hasReservations && !hasActiveParties && waitlistCount === 0;
+  // Unknown is not empty, and not full either. While the dashboard or the
+  // waitlist is still loading, waitlistCount is null, so isDashboardEmpty was
+  // false and the five lower widgets mounted and fired their calls, then
+  // folded away a moment later (measured 2026-11-21: 5 of the 10 load calls).
+  // A failed waitlist call counts as known, so the section never stays hidden.
+  const emptinessKnown = !isLoading && (waitlistQuery.data !== undefined || Boolean(waitlistQuery.isError));
 
   // ---- Error state ----
   if (isError && !isLoading && !dashboardData) {
@@ -515,7 +523,7 @@ export default function Dashboard() {
           <div className="mt-10 sm:mt-16 mb-8 sm:mb-12" />
 
           {/* ---- Additional Widgets (progressive disclosure for new users) ---- */}
-          {isDashboardEmpty && !showInsightsWidgets ? (
+          {!emptinessKnown && !showInsightsWidgets ? null : isDashboardEmpty && !showInsightsWidgets ? (
             <div className="text-center py-6">
               <button
                 type="button"
@@ -527,7 +535,9 @@ export default function Dashboard() {
               </button>
             </div>
           ) : (
-            <>
+            // Below the fold: each widget fetches its own data, so they mount
+            // only when the host scrolls near them.
+            <MountWhenNear>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
                 <ManagerNotesPanel />
                 <RevenueByPartySizeWidget />
@@ -539,7 +549,7 @@ export default function Dashboard() {
               <div className="mt-6 sm:mt-8">
                 <ProactiveCommsPanel />
               </div>
-            </>
+            </MountWhenNear>
           )}
 
         </div>
