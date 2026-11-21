@@ -56,3 +56,14 @@ describe('vercel.json — bloco functions', () => {
     expect(semHandler).toEqual([]);
   });
 });
+
+// 2026-11-21: the functions ran in iad1 (Virginia, the Vercel default) while
+// the database is in Frankfurt (Supabase eu-central-1) and the voice server in
+// Paris (Fly cdg). Every database round trip crossed the Atlantic (~90 ms),
+// six of them in a row per dashboard call. The functions now run in fra1,
+// next to the database. Moving them elsewhere is a decision, not a cleanup.
+describe('vercel.json — região das funções', () => {
+  test('as funções rodam em fra1, ao lado do banco', () => {
+    expect(config.regions).toEqual(['fra1']);
+  });
+});

@@ -3,6 +3,7 @@
   "buildCommand": "cd client && npx vite build && node prepare-landing-output.cjs && node cache-bust-sw.cjs",
   "ignoreCommand": "bash vercel-ignore-build.sh",
   "outputDirectory": "client/dist",
+  "regions": ["fra1"],
   "functions": {
     "api/manager-chat.js": {
       "maxDuration": 120
