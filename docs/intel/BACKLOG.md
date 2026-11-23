@@ -237,6 +237,30 @@ mesma entrada de changelog adiciona `turn_prediction` como `commit_strategy` no 
 standalone da ElevenLabs — sem âncora no repo (o Seatable nunca chama esse WebSocket; telefone
 usa `register-call` opaco, OpenAI Realtime usa `server_vad` próprio), não muda este item.
 
+**Atualização 2026-11-23 — prazo concreto, e agora em dias: timeout de servidor em
+`/v1/convai` a partir de 26/11.** Changelog confirmado verbatim em dois permalinks
+(`elevenlabs.io/docs/changelog/2026/11/16` e `/17`): a partir de 26/11/2026 a API
+`/v1/convai` passa a aplicar timeout no lado do servidor e pode devolver HTTP 504 em picos
+de latência — a própria ElevenLabs instrui o cliente a tratar isso com retry e backoff.
+Isto **não é mecanismo novo**, é o mesmo buraco já registrado acima (`register-call` falha →
+`<Say>`+`<Hangup/>` imediato, zero retry) ganhando um gatilho concreto e um prazo. Confirmado
+por grep: zero `Gemini` em qualquer caminho de agente de voz do Seatable (os dois pontos de
+criação de agente, `api/elevenlabs-agent-create.js:120,237` e
+`api/_services/elevenlabsAgentService.js:879`, hardcodam `llm: 'gpt-4o-mini'`) — a metade
+"fallback de modelo Gemini" do changelog é inaplicável aqui, só a metade do timeout importa.
+
+**Mitigação isolada, menor que o spike de `queueing_config` e com prazo mais curto — vale
+fazer primeiro:** adicionar retry com backoff curto (1-2 tentativas) ao redor do `fetch` em
+`buildElevenLabsTwiml()` (`api/twilio-voice-connect.js`) quando a resposta de
+`register-call` for 504/5xx, em vez de cair direto em `Hangup`. **Caixa de tempo: 4h.**
+Checar antes de implementar: o timeout do webhook do Twilio (tipicamente ~15s) é mais
+restritivo que o `maxDuration` de 120s já configurado em `vercel.json` para
+`twilio-voice-connect.js` — se não sobrar orçamento de tempo para nem um retry com backoff
+sem o próprio Twilio cortar a chamada antes, a mitigação não é retry em linha e o problema
+fica só no spike maior (`queueing_config`, acima). **Medir:** 0 quedas para Hangup imediato
+em 5 simulações de 504 (mock de fetch); log `register_call_retry_count` criado, alimentando
+de quebra o `known_gap` de zero instrumentação de latência de voz.
+
 ---
 
 ### whatsapp-transbordo-humano — Transbordo humano no canal de hóspede

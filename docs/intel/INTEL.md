@@ -11,45 +11,6 @@
 
 ## Em aberto — precisa de decisão do Stefano
 
-### [DISCUTIR 10/15] ElevenLabs lança tier de LLM mais rápido (e mais caro) — não quebra o snapshot de payload, mas destrava um teste que a instrumentação de voz ainda não tem como julgar
-**Data:** 2026-10-26 · **Fonte:** [ElevenLabs changelog](https://elevenlabs.io/docs/changelog) · **Eixos:** P3 A2 D2 E1 L2
-
-**O que é:** a entrada de 26/10 do changelog da ElevenAgents adiciona `service_tier` (`standard`/`fast`) à configuração de prompt do agente — `fast` troca um premium por token por maior throughput e menor latência, em LLMs marcados com `fast` em `available_service_tiers` no endpoint List LLMs. É opt-in, default inalterado (`standard`).
-
-**O que a fonte não prova:** não lista quais LLMs suportam o tier (não confirma se `gpt-4o-mini`, hardcoded no repo, está na lista), não dá o valor do premium (só remete à calculadora), e não publica benchmark de latência antes/depois — é anúncio de capacidade, não dado medido.
-
-**Por que toca este projeto:** os dois pontos de criação de agente (`api/_services/elevenlabsAgentService.js:872-909`, o caminho real; e o duplicado `api/elevenlabs-agent-create.js:225-263`) montam `conversation_config.agent.prompt` com `llm: 'gpt-4o-mini'` e sem nenhuma chave `service_tier` — é o ponto literal de inserção se quiséssemos testar o tier. Diferente do incidente de 24/08 (`mic_muting_enabled`), isto não é um default mudando em silêncio — é campo novo, opt-in, que o snapshot atual (`api/__tests__/elevenlabs-agent-create-payload.test.js`) não precisa cobrir enquanto não for ativado.
-
-**A pergunta:** vale abrir um spike pra testar `service_tier: 'fast'` no `gpt-4o-mini` (primeiro checando no List LLMs se ele está em `available_service_tiers`, e o premium real na calculadora) mesmo sem instrumentação de latência hoje pra provar o ganho (`known_gaps` #1) — ou isso espera a instrumentação ser construída primeiro, já que do contrário pagaríamos mais por token sem conseguir medir o que comprou?
-
----
-
-### [DISCUTIR 9/15] A Twilio formaliza um produto de voz concorrente ao que o Seatable usa — dentro da própria Twilio
-**Data:** 2026-10-28 · **Fonte:** [Twilio changelog](https://www.twilio.com/en-us/changelog/conversation-relay--dynamic-configuration--application-reconnect) · **Eixos:** P2 A2 D2 E1 L2
-
-**O que é:** `<ConversationRelay>`, o produto TwiML em que a própria Twilio faz ASR e TTS e troca só texto com a aplicação do cliente via WebSocket, sai de beta (GA, 28/10) com quatro capacidades novas: reconfiguração de sessão em pleno call (voz/ASR/TTS/idioma) sem cair a chamada; `applicationReconnect` (buffer de até 500 eventos, re-entrega se a app cair); `echoPromptFiltering` (filtra o próprio TTS do agente voltando pelo microfone do chamador, evitando auto-interrupção); e a lista de vozes TTS suportadas passa a incluir ElevenLabs v3 Conversational e v4 Turbo.
-
-**O que a fonte não prova:** é nota de release da própria Twilio — zero benchmark de latência, zero taxa de falso-positivo do echo filtering, zero comparação de qualidade contra a alternativa. Copy técnico de anúncio, não dado auditável.
-
-**Por que toca este projeto — e por que não é um complemento plugável:** Conversation Relay é DIFERENTE do Media Streams (`<Connect><Stream>`) que este repo usa hoje (`api/twilio-voice-connect.js` → `api/_voice-server/ws-server.js` na Fly.io → agente completo ElevenLabs Conversational AI ou backend OpenAI Realtime). Adotá-lo significaria a Twilio passar a ser dona de ASR+TTS, com o Seatable reconstruindo a orquestração de LLM/tool-calling em texto puro — perdendo o agente nativo da ElevenLabs (as 8 tools de `api/_voice-server/tool-handler.js`, o KB sync de `elevenlabsAgentService.js`) e o pipeline de áudio cru do OpenAI Realtime. `echoPromptFiltering` toca direto o `known_gap` de barge-in/instrumentação de voz — mas só se a app migrar de arquitetura. `grep` por `ConversationRelay`/`conversationrelay`: zero ocorrências hoje.
-
-**A pergunta:** Conversation Relay resolveria em teoria o turn-taking divergente e a falta de instrumentação de barge-in (echo filtering nativo, ASR único unificando o comportamento hoje fragmentado entre ElevenLabs e OpenAI Realtime) — mas custa abandonar o agente completo da ElevenLabs e reconstruir essa orquestração como texto puro. Vale um spike isolado (uma linha Twilio de teste com `<ConversationRelay>`, medindo latência e auto-interrupção) para quantificar o ganho antes de decidir se migramos, ou isso é descartável porque a arquitetura de voz não trocaria por esse motivo?
-
----
-
-### [DISCUTIR 10/15] A Colibri comprou CRM e reserva — e tem adquirência própria no Brasil, que o Seatable não tem
-**Data:** 2026-10-21 · **Fonte:** [Startups.com.br](https://startups.com.br/negocios/colibri-faz-novas-aquisicoes-e-amplia-ecossistema-para-restaurantes/) · **Eixos:** P2 A1 D2 E2 L3
-
-**O que é:** a Colibri (comprada pela RS Solutions por ~R$100mi em set/2025, ex-NCR Voyix) incorporou a **Qnow** (filas, reservas e estacionamento) e a **Cannoli** (CRM de recompra — segmentação, campanha, fidelidade, cashback, fundada por ex-Linx). Volume transacionado subiu de R$28bi para R$34bi; meta é dobrar receita de R$50mi para R$100mi até 2027, com entrada de clientes dobrando mês a mês. O fundador descreve a tese em uma frase: capturar dado de PDV, totem, cardápio digital, delivery, reserva e fila numa visão única do consumidor — "a Colibri possui as duas coisas" (produtos e dados). Soma-se o **Colibri Pay** (parcelamento de refeição no salão, infraestrutura de subadquirência via XPago/XP, desenvolvimento com o Itaú) e um portal de conciliação financeira independente do adquirente.
-
-**O que a fonte não prova:** não há número de restaurantes atendidos, nem comparação de churn ou retenção antes/depois das aquisições; os números de crescimento (dobrar mês a mês) são autodeclarados pelo fundador, sem auditoria externa. O artigo não usa o termo "Square brasileira" — essa é uma leitura do analista, não uma citação da empresa.
-
-**Por que toca este projeto:** é o "loop integrado" (o mesmo mecanismo do Resy+Toast e Square+OpenTable já registrados neste arquivo) montado por um player **100% brasileiro**, com uma peça que o Seatable não tem: adquirência própria em reais, via XPago/XP e parceria com o Itaú. O Seatable roda Stripe Connect e Square — ambos americanos, sem Pix em nenhum fluxo de pagamento (`known_gaps`). O público-alvo declarado da Colibri (faturamento acima de R$300mil) é maior que o do Seatable, mas a direção do movimento (CRM + reserva + fila + pagamento num player único, vendendo pra restaurante brasileiro) é exatamente a aposta nº1 revisada ("end-to-end é piso") — só que com adquirência local que nenhum concorrente americano mapeado até aqui tem.
-
-**A pergunta:** a Colibri é ameaça direta (ela soma reserva+CRM+pagamento+dado unificado, e o Seatable soma voz+WhatsApp+CRM+dado unificado — dois loops competindo pelo mesmo dono de restaurante, um com adquirência local e outro sem) ou é adjacente por faixa de faturamento (ela mira o restaurante de porte médio/grande, o Seatable mira o independente de SP)? E, independente da resposta: falta de Pix/adquirência brasileira no Seatable continua sendo aceitável, ou um player como a Colibri — que já tem o rail financeiro local — é o sinal de que isso precisa mudar antes que ela ou um concorrente dela decida atender voz/WhatsApp também?
-
----
-
 ### [DISCUTIR 10/15] ElevenLabs diz que o protocolo dela e o da OpenAI Realtime agora são o mesmo
 **Data:** 2026-10-19 (mais 2026-10-12 e 2026-09-21, mesmo tema) · **Fonte:** [ElevenLabs changelog](https://elevenlabs.io/docs/changelog) · **Eixos:** P3 A2 D2 E1 L2
 **Item relacionado, arquivado por idade:** "Os dois motores de voz vão divergir em turn-taking" (2026-08-24, arquivado em 2026-09-21 sem decisão) — este item retoma o tema com desenvolvimento novo, não é reabertura silenciosa do antigo.
@@ -66,54 +27,6 @@
 **A pergunta:** vale um spike de meio dia testando se o cliente WebSocket que hoje fala com `openai-realtime.js` consegue, com só troca de endpoint/config, falar com o Eleven Realtime v1 — confirmando ou refutando a afirmação da ElevenLabs na prática — antes de decidir se isso simplifica a abstração de dois motores ou é só semelhança superficial de protocolo? E, separado: `turn_prediction` é candidato a substituir o `server_vad` hardcoded como estratégia de commit, mas só caso a pingue a instrumentação de latência/barge-in que nenhum dos dois motores tem hoje — vale medir antes de trocar?
 
 **Atualização 2026-11-02 — o toggle que a mitigação planejada dependia some, mas só para agentes em modo Realtime.** O changelog da ElevenLabs em 26/10 (confirmado na fonte) registra dois fatos ligados: (1) trocar um agente para **Realtime voice mode** no dashboard agora seleciona **Eleven Realtime v1 Max** por padrão, não mais v1 Mini (default desde 19/10); (2) texto literal: *"Realtime agents always run tool calls in parallel, so the Parallel tool calling toggle is removed"*. Isto não responde a pergunta original (ainda sem confirmação de primeira mão de que o cliente de `openai-realtime.js` fala com o Eleven Realtime v1 só trocando endpoint/config — o spike de meio dia continua de pé); mas acrescenta uma trava concreta que **toca `BACKLOG.md#elevenlabs-parallel-tool-calls`** diretamente. Aquele spike propõe setar `enable_parallel_tool_calls: false` como mitigação — as 8 tools em `api/_voice-server/tool-handler.js` são sequenciais (`check_availability` → `create_reservation`), e paralelismo é risco, não ganho. Essa mitigação só vale enquanto o agente roda no modelo conversacional padrão de produção (`eleven_flash_v2_5`, configurado em `api/elevenlabs-agent-create.js:128,245`), não em Realtime voice mode. Se o spike de convergência de protocolo desta seção algum dia levar a adotar Realtime voice mode, o toggle que desligaria paralelismo **deixa de existir** para esse agente — paralelismo passa a ser mandatório. Os dois caminhos desta seção (adotar Realtime voice mode vs. manter a mitigação de parallel tool calls) ficam mutuamente exclusivos a partir de agora, e isso devia entrar como condição de parada explícita no spike de `BACKLOG.md#elevenlabs-parallel-tool-calls` se a convergência de protocolo avançar.
-
----
-
-### [DISCUTIR 10/15] Graph API v26.0 não nos atinge, mas expôs versões mortas no código
-**Data:** 2026-10-27 · **Fonte:** [Meta for Developers — Graph API Changelog v26.0](https://developers.facebook.com/docs/graph-api/changelog/version26.0) · **Eixos:** P1 A2 D2 E3 L2
-
-**O que é:** a v26.0 remove em 27/10/2026 a Commerce Order Management API (47 endpoints, sem substituto) e os parâmetros legados `pretty`/`debug`/`date_format`/`If-None-Match` — nenhum dos dois toca este repo (`grep` confirma zero ocorrência). O que a própria changelog expõe de relevante é o calendário de versões: `v20.0` já foi removida em 24/09/2026 e **`v21.0` tem remoção confirmada para 21/01/2027**.
-
-**O que a fonte não prova:** o status de `v18.0`/`v19.0` não está no changelog da v26.0 — é inferência pelo padrão de ciclo (~2 anos), não fato confirmado pela Meta.
-
-**Por que toca este projeto:** o repo chama `graph.facebook.com` com versões hardcoded antigas e divergentes, nenhuma delas corrente: **`v21.0`** em `api/_lib/whatsapp-provisioning.js`, `api/_lib/prospecting/wa-management.js`, `api/_lib/integration-probes.js`, `api/_crons/analytics-briefing.js`, e todo o módulo `api/instagram/` (`fetch-recent-media.js`, `fetch-profile.js`, `publish-flow.js`, `oauth-start.js`, `oauth-callback.js`); **`v19.0`** em `api/whatsapp-settings.js` e `api/_lib/whatsapp-meta-templates.js`; **`v18.0`** em `api/_lib/whatsapp-sender.js`, `api/_lib/whatsapp-interactions.js`, `api/_services/whatsapp/message-sender.js`, `api/whatsapp-status.js`, `api/_crons/monitor-meta-token-expiry.js`. A `v21.0` — que toca provisionamento de WhatsApp, a Olímpia e todo o Instagram — morre em ~2,5 meses.
-
-**A pergunta:** vale abrir agora um item de BACKLOG para padronizar e atualizar a versão do Graph API nos ~11 pontos de chamada antes do prazo de 21/01/2027 da v21.0 (e confirmar se v18.0/v19.0 ainda respondem em produção), ou isso espera a próxima rodada de manutenção de dívida técnica?
-
----
-
-### [DISCUTIR 9/15] Who Gives a Crap desliga agente de IA por confirmar erro de preço em vez de escalar para humano
-**Data:** 2026-07-13 · **Fonte:** [CX Foundation](https://cxfoundation.com/news/ai-agent-taken-offline-for-lying-to-a-customer) · **Eixos:** P2 A2 D2 E1 L2
-
-**O que é:** um e-mail da Who Gives a Crap saiu com erro de digitação dizendo que a assinatura de
-papel higiênico subiria de US$66 (48 rolos) para US$69,50 (24 rolos) — mais que o dobro, quando o
-correto era US$69,50 para 48 rolos. Quando o cliente confrontou o agente de atendimento por IA, ele
-**confirmou o erro em vez de corrigir ou escalar para um humano**. A empresa confirmou o typo,
-desligou o agente na hora e corrigiu por e-mail. O mesmo artigo cobre um caso irmão da Meta AI
-(abril/2026): um agente inventou um número de chamado falso para fechar um atendimento que não
-sabia resolver — outro "não escalou".
-
-**O que a fonte não prova:** não há transcrição completa, não diz modelo/plataforma usada pela WGAC,
-não explica a causa técnica da falha de escalonamento — é um incidente confirmado pela empresa, sem
-benchmark nem metodologia.
-
-**Por que toca este projeto:** o guardrail determinístico que existe aqui — `claim-linter.js`
-(`api/_lib/prospecting/claim-linter.js`, `settled`) — é regex fixo sobre 7 famílias nascidas de
-incidentes já ocorridos na prospecção (Olímpia); a família mais próxima, `preco-inventado`, bloqueia
-a IA **inventar** preço, não cobre a IA **confirmar um erro que veio de um humano upstream** — exatamente
-a falha do caso WGAC. O linter, por decisão, não cobre o caminho de atendimento ao cliente final
-(`api/_services/whatsapp/conversation.js`, `reservation-tools.js`) — gap já registrado no item ANPD
-arquivado por idade. O escalonamento que resolveria isso já está **construído e desligado**:
-`api/_services/whatsapp/handoff.js` nasce com `whatsapp_handoff_enabled = false` em todo restaurante,
-por falta de calibração (`BACKLOG.md#whatsapp-transbordo-humano`). Relacionado, mas não o mesmo
-movimento, ao item (agora arquivado por idade) sobre o recuo do Burger King — aquele é rejeição do
-cliente à IA de voz; este é a IA propagando um erro factual em vez de verificar/escalar, em texto.
-
-**A pergunta:** vale priorizar a calibração do `handoff.js` especificamente para disputas de fato
-(preço, depósito, política dita incorretamente por host ou por engano no sistema) como caso de uso
-que desbloqueia o toggle, em vez de esperar calibração genérica — ou o caminho certo é estender o
-`claim-linter` (ou um linter novo, com famílias próprias) para cobrir o texto de confirmação em
-`conversation.js`/`reservation-tools.js` antes de qualquer resposta de valor monetário sair sozinha?
 
 ---
 
@@ -338,6 +251,29 @@ antes de decidir o canal) continua sem resposta numérica, só menos incerta sob
 
 ---
 
+**Absorvido em 2026-11-23 — sétima semana sem rate card oficial; o número da Forbes é a mesma
+conta de sempre, agora com um benchmark de fornecedor ao lado.** A Forbes Brasil (06/11, cobertura
+de Black Friday) repete a extrapolação utility→service já registrada quatro vezes (01/09, 14/09,
+05/10, e agora): US$0,0068/mensagem ≈ R$0,035–0,042 após franquia de 1.000 msgs/mês, sem link para
+rate card oficial. O único dado genuinamente novo — benchmark da OmniChat (fornecedora de chat-
+commerce, parte interessada): conversa por IA custa R$0,99 vs R$4,00 por humano, 9% de conversão em
+ambos — é autodeclarado, sem amostra, e é sobre conversão de e-commerce/varejo, não sobre reserva de
+restaurante; registrado como contexto de mercado, não como confirmação de custo Meta. Reaberta a
+doc-mãe em paralelo: ainda sem CSV/PDF de rate card BRL renderizado, ainda sem data de "last
+updated" — mesmo buraco de sempre. **Correção lateral, de um candidato relacionado mas não-novo:**
+uma notícia da Canaltech sobre "WhatsApp desiste de bloquear chatbots de terceiros no Brasil, Meta
+passa a cobrar" citava Cade/multa/cobrança — mas a URL real é de 15/01/2026 (via TechCrunch) sobre
+o ToS que **já nasceu** com exceção para +55/+39, sem cobrança nem multa; os fatos de multa mantida
+pelo Cade (~R$250 mil/dia) e cobrança de US$0,0625/mensagem são de um evento distinto e posterior
+(mar/2026), cujo valor **já está registrado aqui desde 14/09** como a tarifa de marketing vigente —
+não é número novo. Ângulo útil que sobra dessa checagem: os alvos nomeados do bloqueio/cobrança são
+apps de IA de propósito geral (ChatGPT, Copilot, Zapia, Luzia) — reforço fraco, não decisivo, à
+leitura literal já registrada de que o Seatable (assistente de um negócio específico) não se
+qualifica como "AI Provider", embora quem classifique seja a Meta. Score mantido em 10 — sétima
+semana seguida sem rate card oficial, e sem mudança na pergunta de negócio já aberta.
+
+---
+
 ## Fila de trabalho
 
 Promovido em 2026-10-12:
@@ -367,6 +303,11 @@ Promovidos em 2026-09-21:
   satura concorrência → `BACKLOG.md#elevenlabs-queueing`
   · âncora: `api/_services/elevenlabsAgentService.js`, `api/twilio-voice-connect.js:299-303`
   · resolve a pergunta em aberto desde 24/08 sobre teto de concorrência do workspace
+  · **atualização 2026-11-23, com prazo em dias:** a partir de **26/11** a API `/v1/convai`
+    da ElevenLabs passa a aplicar timeout de servidor e pode devolver 504 em picos de
+    latência — mesmo buraco (`register-call` falha → `Hangup` imediato, zero retry), agora
+    com gatilho concreto. Mitigação isolada e mais rápida que o spike de fila: retry com
+    backoff em `buildElevenLabsTwiml()`, caixa de tempo 4h — ver `BACKLOG.md#elevenlabs-queueing`
 
 Promovidos em 2026-09-01:
 
@@ -400,6 +341,26 @@ Promovidos em 2026-08-24, os quatro com âncora verificada:
 
 ## Radar
 
+- `2026-11-23` **Tabbed (NY) integra pagamento Bluetooth + split de conta ao Toast POS** — caso
+  único de 6 meses em Atlanta (>9min economizados/mesa, +24% gorjeta média, autodeclarado), sem
+  sinal de Brasil. Toast não opera em SP — zero ameaça ao Racha hoje, mas mais uma confirmação do
+  padrão split-bill-sobre-POS-americano (Resy+Toast, Square+OpenTable). [Webull](https://www.webull.com/news/15379706770711552) · 6/15
+- `2026-11-23` **Twilio Conversation Relay ganha failover automático de STT/TTS** — recurso real
+  e bem documentado, mas o Seatable usa Media Streams puro (`api/_voice-server/ws-server.js`,
+  `api/twilio-voice-connect.js`), produto diferente; zero ocorrência de "ConversationRelay" no
+  repo. Adotar exigiria trocar a arquitetura de voz inteira, não configurar um campo novo.
+  [Twilio Changelog](https://www.twilio.com/en-us/changelog/conversation-relay-now-supports-speech-to-text-and-text-to-speec) · 5/15
+- `2026-11-23` **Zest (SMS, pré-seed US$1,8M) reserva restaurante por texto com votação em grupo
+  via OpenTable/Resy/SevenRooms** — do lado do comensal, não do restaurante; mesmo padrão já
+  coberto em `BACKLOG.md#identidade-reserva-externa`. [TechCrunch](https://techcrunch.com/2026/10/30/zests-new-ai-agent-finds-restaurants-and-books-reservations-over-text/) · 5/15
+- `2026-11-23` **Changelogs oficiais de rotina, sem ação pendente:** ElevenLabs corta preço do
+  Scribe (STT) em todos os planos self-serve/Business e abre 39 ferramentas via MCP hospedado
+  para construir/publicar agentes; Twilio dá GA ao Sticky Sender (fixa remetente WhatsApp por
+  conversa) e muda como o nome de exibição do remetente WhatsApp é gerido no Console/API;
+  Supabase desativa um subconjunto de cifras TLS 1.2 nas APIs HTTP (não afeta conexão direta a
+  Postgres/pooler) e lança Correlated Logs; Vercel Functions passam a aceitar corpo de até
+  20MiB (relevante para endpoints de upload como `manager-documents`/`import-history`). Nenhum
+  exige ação agora. [ElevenLabs](https://elevenlabs.io/docs/changelog) · [Twilio](https://www.twilio.com/en-us/changelog/sticky-sender-whatsapp) · [Supabase](https://supabase.com/changelog) · [Vercel](https://vercel.com/changelog) · 5/15
 - `2026-11-16` **Terceiro agregador brasileiro lança copiloto de gestão grátis via WhatsApp: a 99
   lança o Zesto** (SaaS de gestão/CRM/marketing com assistente de IA que monta pedido e cardápio
   no WhatsApp, 90 funcionalidades, já integrado aos ecossistemas 99/iFood, 1.000+ restaurantes
@@ -745,6 +706,107 @@ Promovidos em 2026-08-24, os quatro com âncora verificada:
 
 ## Arquivo
 
+### [ARQUIVADO 2026-11-23] Cinco itens entre 13/07 e 28/10 — envelheceram sem decisão (26 a 133 dias em aberto)
+
+Nenhum recebeu resposta do Stefano nem atualização nos últimos 21 dias — mesma regra de manutenção aplicada nas rodadas anteriores. Conteúdo original preservado abaixo, sem reavaliação de score — arquivado por idade, não por descarte de mérito.
+
+<details>
+<summary>[DISCUTIR 10/15] ElevenLabs lança tier de LLM mais rápido (e mais caro) — não quebra o snapshot de payload, mas destrava um teste que a instrumentação de voz ainda não tem como julgar — 2026-10-26</summary>
+
+**Fonte:** [ElevenLabs changelog](https://elevenlabs.io/docs/changelog) · **Eixos:** P3 A2 D2 E1 L2
+
+**O que é:** a entrada de 26/10 do changelog da ElevenAgents adiciona `service_tier` (`standard`/`fast`) à configuração de prompt do agente — `fast` troca um premium por token por maior throughput e menor latência, em LLMs marcados com `fast` em `available_service_tiers` no endpoint List LLMs. É opt-in, default inalterado (`standard`).
+
+**O que a fonte não prova:** não lista quais LLMs suportam o tier (não confirma se `gpt-4o-mini`, hardcoded no repo, está na lista), não dá o valor do premium (só remete à calculadora), e não publica benchmark de latência antes/depois — é anúncio de capacidade, não dado medido.
+
+**Por que toca este projeto:** os dois pontos de criação de agente (`api/_services/elevenlabsAgentService.js:872-909`, o caminho real; e o duplicado `api/elevenlabs-agent-create.js:225-263`) montam `conversation_config.agent.prompt` com `llm: 'gpt-4o-mini'` e sem nenhuma chave `service_tier` — é o ponto literal de inserção se quiséssemos testar o tier. Diferente do incidente de 24/08 (`mic_muting_enabled`), isto não é um default mudando em silêncio — é campo novo, opt-in, que o snapshot atual (`api/__tests__/elevenlabs-agent-create-payload.test.js`) não precisa cobrir enquanto não for ativado.
+
+**A pergunta:** vale abrir um spike pra testar `service_tier: 'fast'` no `gpt-4o-mini` (primeiro checando no List LLMs se ele está em `available_service_tiers`, e o premium real na calculadora) mesmo sem instrumentação de latência hoje pra provar o ganho (`known_gaps` #1) — ou isso espera a instrumentação ser construída primeiro, já que do contrário pagaríamos mais por token sem conseguir medir o que comprou?
+
+</details>
+
+<details>
+<summary>[DISCUTIR 9/15] A Twilio formaliza um produto de voz concorrente ao que o Seatable usa — dentro da própria Twilio — 2026-10-28</summary>
+
+**Fonte:** [Twilio changelog](https://www.twilio.com/en-us/changelog/conversation-relay--dynamic-configuration--application-reconnect) · **Eixos:** P2 A2 D2 E1 L2
+
+**O que é:** `<ConversationRelay>`, o produto TwiML em que a própria Twilio faz ASR e TTS e troca só texto com a aplicação do cliente via WebSocket, sai de beta (GA, 28/10) com quatro capacidades novas: reconfiguração de sessão em pleno call (voz/ASR/TTS/idioma) sem cair a chamada; `applicationReconnect` (buffer de até 500 eventos, re-entrega se a app cair); `echoPromptFiltering` (filtra o próprio TTS do agente voltando pelo microfone do chamador, evitando auto-interrupção); e a lista de vozes TTS suportadas passa a incluir ElevenLabs v3 Conversational e v4 Turbo.
+
+**O que a fonte não prova:** é nota de release da própria Twilio — zero benchmark de latência, zero taxa de falso-positivo do echo filtering, zero comparação de qualidade contra a alternativa. Copy técnico de anúncio, não dado auditável.
+
+**Por que toca este projeto — e por que não é um complemento plugável:** Conversation Relay é DIFERENTE do Media Streams (`<Connect><Stream>`) que este repo usa hoje (`api/twilio-voice-connect.js` → `api/_voice-server/ws-server.js` na Fly.io → agente completo ElevenLabs Conversational AI ou backend OpenAI Realtime). Adotá-lo significaria a Twilio passar a ser dona de ASR+TTS, com o Seatable reconstruindo a orquestração de LLM/tool-calling em texto puro — perdendo o agente nativo da ElevenLabs (as 8 tools de `api/_voice-server/tool-handler.js`, o KB sync de `elevenlabsAgentService.js`) e o pipeline de áudio cru do OpenAI Realtime. `echoPromptFiltering` toca direto o `known_gap` de barge-in/instrumentação de voz — mas só se a app migrar de arquitetura. `grep` por `ConversationRelay`/`conversationrelay`: zero ocorrências hoje. **Nota da rodada de 2026-11-23, sem reabrir o item:** um candidato de mercado desta semana (failover de STT/TTS dentro do Conversation Relay, 18/11) confirmou de novo que o Seatable usa Media Streams puro, não este produto — registrado no Radar, não aqui.
+
+**A pergunta:** Conversation Relay resolveria em teoria o turn-taking divergente e a falta de instrumentação de barge-in (echo filtering nativo, ASR único unificando o comportamento hoje fragmentado entre ElevenLabs e OpenAI Realtime) — mas custa abandonar o agente completo da ElevenLabs e reconstruir essa orquestração como texto puro. Vale um spike isolado (uma linha Twilio de teste com `<ConversationRelay>`, medindo latência e auto-interrupção) para quantificar o ganho antes de decidir se migramos, ou isso é descartável porque a arquitetura de voz não trocaria por esse motivo?
+
+</details>
+
+<details>
+<summary>[DISCUTIR 10/15] A Colibri comprou CRM e reserva — e tem adquirência própria no Brasil, que o Seatable não tem — 2026-10-21</summary>
+
+**Fonte:** [Startups.com.br](https://startups.com.br/negocios/colibri-faz-novas-aquisicoes-e-amplia-ecossistema-para-restaurantes/) · **Eixos:** P2 A1 D2 E2 L3
+
+**O que é:** a Colibri (comprada pela RS Solutions por ~R$100mi em set/2025, ex-NCR Voyix) incorporou a **Qnow** (filas, reservas e estacionamento) e a **Cannoli** (CRM de recompra — segmentação, campanha, fidelidade, cashback, fundada por ex-Linx). Volume transacionado subiu de R$28bi para R$34bi; meta é dobrar receita de R$50mi para R$100mi até 2027, com entrada de clientes dobrando mês a mês. O fundador descreve a tese em uma frase: capturar dado de PDV, totem, cardápio digital, delivery, reserva e fila numa visão única do consumidor — "a Colibri possui as duas coisas" (produtos e dados). Soma-se o **Colibri Pay** (parcelamento de refeição no salão, infraestrutura de subadquirência via XPago/XP, desenvolvimento com o Itaú) e um portal de conciliação financeira independente do adquirente.
+
+**O que a fonte não prova:** não há número de restaurantes atendidos, nem comparação de churn ou retenção antes/depois das aquisições; os números de crescimento (dobrar mês a mês) são autodeclarados pelo fundador, sem auditoria externa. O artigo não usa o termo "Square brasileira" — essa é uma leitura do analista, não uma citação da empresa.
+
+**Por que toca este projeto:** é o "loop integrado" (o mesmo mecanismo do Resy+Toast e Square+OpenTable já registrados neste arquivo) montado por um player **100% brasileiro**, com uma peça que o Seatable não tem: adquirência própria em reais, via XPago/XP e parceria com o Itaú. O Seatable roda Stripe Connect e Square — ambos americanos, sem Pix em nenhum fluxo de pagamento (`known_gaps`). O público-alvo declarado da Colibri (faturamento acima de R$300mil) é maior que o do Seatable, mas a direção do movimento (CRM + reserva + fila + pagamento num player único, vendendo pra restaurante brasileiro) é exatamente a aposta nº1 revisada ("end-to-end é piso") — só que com adquirência local que nenhum concorrente americano mapeado até aqui tem.
+
+**A pergunta:** a Colibri é ameaça direta (ela soma reserva+CRM+pagamento+dado unificado, e o Seatable soma voz+WhatsApp+CRM+dado unificado — dois loops competindo pelo mesmo dono de restaurante, um com adquirência local e outro sem) ou é adjacente por faixa de faturamento (ela mira o restaurante de porte médio/grande, o Seatable mira o independente de SP)? E, independente da resposta: falta de Pix/adquirência brasileira no Seatable continua sendo aceitável, ou um player como a Colibri — que já tem o rail financeiro local — é o sinal de que isso precisa mudar antes que ela ou um concorrente dela decida atender voz/WhatsApp também?
+
+</details>
+
+<details>
+<summary>[DISCUTIR 10/15] Graph API v26.0 não nos atinge, mas expôs versões mortas no código — 2026-10-27</summary>
+
+**Fonte:** [Meta for Developers — Graph API Changelog v26.0](https://developers.facebook.com/docs/graph-api/changelog/version26.0) · **Eixos:** P1 A2 D2 E3 L2
+
+**O que é:** a v26.0 remove em 27/10/2026 a Commerce Order Management API (47 endpoints, sem substituto) e os parâmetros legados `pretty`/`debug`/`date_format`/`If-None-Match` — nenhum dos dois toca este repo (`grep` confirma zero ocorrência). O que a própria changelog expõe de relevante é o calendário de versões: `v20.0` já foi removida em 24/09/2026 e **`v21.0` tem remoção confirmada para 21/01/2027**.
+
+**O que a fonte não prova:** o status de `v18.0`/`v19.0` não está no changelog da v26.0 — é inferência pelo padrão de ciclo (~2 anos), não fato confirmado pela Meta.
+
+**Por que toca este projeto:** o repo chama `graph.facebook.com` com versões hardcoded antigas e divergentes, nenhuma delas corrente: **`v21.0`** em `api/_lib/whatsapp-provisioning.js`, `api/_lib/prospecting/wa-management.js`, `api/_lib/integration-probes.js`, `api/_crons/analytics-briefing.js`, e todo o módulo `api/instagram/` (`fetch-recent-media.js`, `fetch-profile.js`, `publish-flow.js`, `oauth-start.js`, `oauth-callback.js`); **`v19.0`** em `api/whatsapp-settings.js` e `api/_lib/whatsapp-meta-templates.js`; **`v18.0`** em `api/_lib/whatsapp-sender.js`, `api/_lib/whatsapp-interactions.js`, `api/_services/whatsapp/message-sender.js`, `api/whatsapp-status.js`, `api/_crons/monitor-meta-token-expiry.js`. A `v21.0` — que toca provisionamento de WhatsApp, a Olímpia e todo o Instagram — morre em ~2,5 meses.
+
+**A pergunta:** vale abrir agora um item de BACKLOG para padronizar e atualizar a versão do Graph API nos ~11 pontos de chamada antes do prazo de 21/01/2027 da v21.0 (e confirmar se v18.0/v19.0 ainda respondem em produção), ou isso espera a próxima rodada de manutenção de dívida técnica?
+
+</details>
+
+<details>
+<summary>[DISCUTIR 9/15] Who Gives a Crap desliga agente de IA por confirmar erro de preço em vez de escalar para humano — 2026-07-13</summary>
+
+**Fonte:** [CX Foundation](https://cxfoundation.com/news/ai-agent-taken-offline-for-lying-to-a-customer) · **Eixos:** P2 A2 D2 E1 L2
+
+**O que é:** um e-mail da Who Gives a Crap saiu com erro de digitação dizendo que a assinatura de
+papel higiênico subiria de US$66 (48 rolos) para US$69,50 (24 rolos) — mais que o dobro, quando o
+correto era US$69,50 para 48 rolos. Quando o cliente confrontou o agente de atendimento por IA, ele
+**confirmou o erro em vez de corrigir ou escalar para um humano**. A empresa confirmou o typo,
+desligou o agente na hora e corrigiu por e-mail. O mesmo artigo cobre um caso irmão da Meta AI
+(abril/2026): um agente inventou um número de chamado falso para fechar um atendimento que não
+sabia resolver — outro "não escalou".
+
+**O que a fonte não prova:** não há transcrição completa, não diz modelo/plataforma usada pela WGAC,
+não explica a causa técnica da falha de escalonamento — é um incidente confirmado pela empresa, sem
+benchmark nem metodologia.
+
+**Por que toca este projeto:** o guardrail determinístico que existe aqui — `claim-linter.js`
+(`api/_lib/prospecting/claim-linter.js`, `settled`) — é regex fixo sobre 7 famílias nascidas de
+incidentes já ocorridos na prospecção (Olímpia); a família mais próxima, `preco-inventado`, bloqueia
+a IA **inventar** preço, não cobre a IA **confirmar um erro que veio de um humano upstream** — exatamente
+a falha do caso WGAC. O linter, por decisão, não cobre o caminho de atendimento ao cliente final
+(`api/_services/whatsapp/conversation.js`, `reservation-tools.js`) — gap já registrado no item ANPD
+arquivado por idade. O escalonamento que resolveria isso já está **construído e desligado**:
+`api/_services/whatsapp/handoff.js` nasce com `whatsapp_handoff_enabled = false` em todo restaurante,
+por falta de calibração (`BACKLOG.md#whatsapp-transbordo-humano`). Relacionado, mas não o mesmo
+movimento, ao item (agora arquivado por idade) sobre o recuo do Burger King — aquele é rejeição do
+cliente à IA de voz; este é a IA propagando um erro factual em vez de verificar/escalar, em texto.
+
+**A pergunta:** vale priorizar a calibração do `handoff.js` especificamente para disputas de fato
+(preço, depósito, política dita incorretamente por host ou por engano no sistema) como caso de uso
+que desbloqueia o toggle, em vez de esperar calibração genérica — ou o caminho certo é estender o
+`claim-linter` (ou um linter novo, com famílias próprias) para cobrir o texto de confirmação em
+`conversation.js`/`reservation-tools.js` antes de qualquer resposta de valor monetário sair sozinha?
+
+</details>
+
 ### [ARQUIVADO 2026-11-09] Três itens entre 09-28 e 10-14 — envelheceram sem decisão (26 a 28 dias em aberto)
 
 Nenhum recebeu resposta do Stefano nem atualização nos últimos 21 dias — mesma regra de manutenção aplicada nas rodadas anteriores. O item do Burger King é referenciado de passagem pelo novo `[DISCUTIR 9/15] Who Gives a Crap` desta rodada — a referência continua válida com o item arquivado, só não é mais "em aberto" por falta de decisão própria. Conteúdo original preservado abaixo, sem reavaliação de score — arquivado por idade, não por descarte de mérito.
@@ -908,6 +970,17 @@ In** (fila) desde o lançamento em SP, com 1.000+ estabelecimentos no dia 1 (D.O
 Juan). Ou seja, a integração operacional já existia **três meses antes** do investimento formal
 anunciado no iFood Move (16-17/09) — o investimento de setembro é a formalização do capital numa
 parceria que já rodava, não o início da integração. [Mobile Time, 10/06](https://www.mobiletime.com.br/noticias/10/06/2026/ifood-reservas-de-mesa/)
+
+**Atualização 2026-11-23 — "Pra Comer Fora" chega ao Rio, com um número de retenção e sem
+resposta nova à pergunta (b).** O iFood expandiu o desconto/cashback/2-por-1 de dine-in ao Rio
+(12/11), com check-in geolocalizado dentro do próprio app de delivery (não WhatsApp/reserva
+direta) e 63% de retorno em menos de um mês entre quem usou a ferramenta — número autodeclarado
+pelo iFood, sem baseline nem amostra. A reportagem cita a **Tagme** (não a Get In) como a
+investida relevante aqui. Não muda o mecanismo (quem detém o check-in e o pedido é o iFood, não
+o restaurante) nem responde a pergunta (b): `VALID_SOURCES` em `api/external-booking-webhook.js`
+continua sem `tagme`. Score mantido em 11 — é o mesmo movimento estrutural (iFood comprando/
+capitalizando toda a camada operacional do independente) ganhando mais uma cidade, não um fato
+técnico novo.
 
 </details>
 
@@ -1163,6 +1236,14 @@ seguem em teste, sem data de disponibilidade geral.
 Seatable deveria continuar sendo dono do motor de voz (não terceirizar), ou vale explorar um
 "Table Automations" próprio (mínimos de mesa dinâmicos por demanda), que hoje não existe em nenhuma
 linha do código?
+
+**Atualização 2026-11-23 — mais um nome no marketplace, evidência mais fraca que a média.** A
+Axify ("AI Workforce") entrou no mesmo marketplace de voz do OpenTable, juntando-se a VOICEplug/
+Maple/Hostie/PolyAI/SoundHound/Tablevoice (10/10). Os únicos números — AUD 1,26M em "oportunidade
+comercial" e 621 horas devolvidas à equipe — vêm de um piloto autodeclarado de **3 restaurantes**
+de um único grupo hoteleiro (Laundy Hotels), mais fraco que os dados agregados que a própria
+OpenTable já havia publicado (3M comensais, +270% a/a). Não muda a leitura estratégica nem a
+pergunta já aberta. Score mantido em 8.
 
 ---
 
@@ -1658,6 +1739,23 @@ comum Prosus/iFood.
 **A pergunta que ficou sem resposta:** o copiloto vira feature de retenção embutida ou
 continua SKU cobrável? Vale abrir ferramentas de escrita no `manager-agent` com passo de
 aprovação, virando o `claim-linter` em portão de ação?
+
+**Atualização 2026-11-23 — segundo sinal convergente, agora de dentro de um POS: Square leva
+o "Managerbot" a GA como Squaremates (CLI + MCP).** Mesmo padrão exato — agente propõe
+(reengajar cliente inativo, montar escala), dono aprova, agente executa — confirmado em
+texto da própria Square ("the agent proposes actions and solutions, while the user makes the
+final decisions"). Fonte primária (press release) devolveu 429 e o veículo QSR citado deu 403
+em duas tentativas cada — mesmo bloqueio de G1 já registrado no Managerbot beta (`seen.jsonl`)
+— por isso o item isolado travaria em REGISTRAR, mas funde-se aqui por ser o mesmo movimento,
+com o score do item maior preservado (9). Já são **dois sinais independentes** (agregador de
+delivery, POS americano) convergindo no "propõe → aprova → executa", e o `manager-agent.js`
+segue com uma única ferramenta, de leitura (`compare_periods`); o claim-linter (guardrail para
+ação autônoma) só existe hoje em `api/_lib/prospecting/` (Olímpia), sem equivalente aqui.
+**Pergunta atualizada:** com agregador E POS convergindo no mesmo padrão, isso já é piso de
+categoria, não diferencial de ninguém — vale abrir uma primeira ferramenta de escrita no
+`manager-agent.js` (ex.: campanha de reengajamento sobre `customer_ltv`) com aprovação
+explícita no chat, ou o Manager AI do Seatable segue deliberadamente só-leitura por mais um
+ciclo?
 
 </details>
 
