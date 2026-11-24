@@ -67,3 +67,10 @@ it('rejects non-POST calls', async () => {
   const req = request(), res = response(); req.method = 'GET'; await handler(req, res);
   expect(res.status).toHaveBeenCalledWith(405); expect(mockSchema).not.toHaveBeenCalled();
 });
+it('trims a trailing line break in VOICE_WS_URL (24/11: production value ended in \\n, every grant was refused)', async () => {
+  process.env.VOICE_WS_URL = `${wsUrl}\n`;
+  jest.isolateModules(() => { handler = require('../twilio-voice-connect'); });
+  const req = request(), res = response(); await handler(req, res);
+  expect(mockIssueGrant).toHaveBeenCalledWith(expect.objectContaining({ wsUrl }));
+  expect(res.send.mock.calls[0][0]).toContain(`<Stream url="${wsUrl}">`);
+});
