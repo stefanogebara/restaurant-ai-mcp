@@ -167,7 +167,7 @@ export default function ReservationsList({
                 type="button"
                 onClick={() => setDayFilter('today')}
                 className={`px-4 py-1.5 transition-all border-r border-glass-border-dark ${
-                  dayFilter === 'today' ? 'bg-[#FAFAF9] text-[#1C1917]' : 'text-[#A8A29E] hover:text-[#1C1917]'
+                  dayFilter === 'today' ? 'bg-white text-deep-charcoal' : 'text-[#A8A29E] hover:text-deep-charcoal'
                 }`}
               >
                 {tl('today')}
@@ -176,7 +176,7 @@ export default function ReservationsList({
                 type="button"
                 onClick={() => setDayFilter('tomorrow')}
                 className={`px-4 py-1.5 transition-all border-r border-glass-border-dark ${
-                  dayFilter === 'tomorrow' ? 'bg-[#FAFAF9] text-[#1C1917]' : 'text-[#A8A29E] hover:text-[#1C1917]'
+                  dayFilter === 'tomorrow' ? 'bg-white text-deep-charcoal' : 'text-[#A8A29E] hover:text-deep-charcoal'
                 }`}
               >
                 {tl('tomorrow')}
@@ -185,7 +185,7 @@ export default function ReservationsList({
                 type="button"
                 onClick={() => setDayFilter('week')}
                 className={`px-4 py-1.5 transition-all ${
-                  dayFilter === 'week' ? 'bg-[#FAFAF9] text-[#1C1917]' : 'text-[#A8A29E] hover:text-[#1C1917]'
+                  dayFilter === 'week' ? 'bg-white text-deep-charcoal' : 'text-[#A8A29E] hover:text-deep-charcoal'
                 }`}
                 title={tl('thisWeekHint')}
               >
@@ -235,7 +235,7 @@ export default function ReservationsList({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={tl('searchPlaceholder')}
-            className="w-full pl-9 pr-3 py-2 text-sm font-[Inter] border border-glass-border-input rounded-lg bg-white/60 placeholder-[#A8A29E] text-[#1C1917] focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/40 transition-colors"
+            className="w-full pl-9 pr-3 py-2 text-sm font-[Inter] border border-glass-border-input rounded-lg bg-white/60 placeholder-[#A8A29E] text-deep-charcoal focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/40 transition-colors"
             aria-label={tl('searchPlaceholder')}
           />
         </div>
@@ -253,7 +253,7 @@ export default function ReservationsList({
             const activeClasses = isRisk
               ? 'bg-amber-500 text-white'
               : 'bg-[#9F1239] text-white';
-            const inactiveClasses = 'bg-[#F5F5F4] text-[#78716C] hover:bg-[#E7E5E4] hover:text-[#1C1917]';
+            const inactiveClasses = 'bg-soft-gray text-muted-stone hover:bg-border-gray hover:text-deep-charcoal';
             return (
               <button
                 key={key}

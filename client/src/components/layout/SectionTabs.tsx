@@ -18,7 +18,7 @@ export default function SectionTabs() {
 
   return (
     <nav aria-label={t(group!.labelKey, group!.label)}
-      className="px-4 sm:px-6 lg:px-10 pt-6 lg:pt-8">
+      className="section-tabs px-4 sm:px-6 lg:px-10 pt-6 lg:pt-8">
       <div className="max-w-[1240px] flex gap-6 overflow-x-auto border-b hairline">
         {tabs.map((tab) => {
           const active = pathname === tab.path || pathname.startsWith(`${tab.path}/`);

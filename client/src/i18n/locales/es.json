@@ -111,6 +111,9 @@
     "askAIShort": "Preguntar"
   },
   "dashboard": {
+    "greetingMorning": "Buenos días",
+    "greetingAfternoon": "Buenas tardes",
+    "greetingEvening": "Buenas noches",
     "overview": "Vista General",
     "welcome": "Bienvenido",
     "goodMorning": "Buenos días",
