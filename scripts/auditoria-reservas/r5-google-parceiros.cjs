@@ -15,8 +15,8 @@
 const crypto = require('crypto');
 process.env.GOOGLE_BOOKING_SECRET = 'audit-google-secret-0001';
 const h = require('./harness.cjs');
-const google = h.load('api/google-booking/server.js');
-const partner = h.load('api/external-booking-webhook.js');
+const google = h.load('api/_app/google-booking/server.js');
+const partner = h.load('api/_app/external-booking-webhook.js');
 
 const T2 = '22222222-2222-4222-8222-222222222222';
 const DAY = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);

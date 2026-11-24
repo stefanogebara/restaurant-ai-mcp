@@ -38,7 +38,7 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !OPENROUTER_API_KEY) {
   process.exit(2);
 }
 
-const { HANDOFF_TOOL } = require('../api/_services/whatsapp/handoff');
+const { HANDOFF_TOOL } = require('../api/_app/_services/whatsapp/handoff');
 
 /**
  * A frase que o system prompt manda usar quando a IA não sabe

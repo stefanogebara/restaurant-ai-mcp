@@ -13,9 +13,9 @@
 //   V9a voice alternatives the booking refuses -> 0
 const h = require('./harness.cjs');
 const { Client } = require('pg');
-const voiceTools = h.load('api/_lib/tool-handlers.js');
-const { getRestaurantById } = h.load('api/_lib/restaurant-loader.js');
-const whatsapp = h.load('api/_services/whatsapp/reservation-tools.js');
+const voiceTools = h.load('api/_app/_lib/tool-handlers.js');
+const { getRestaurantById } = h.load('api/_app/_lib/restaurant-loader.js');
+const whatsapp = h.load('api/_app/_services/whatsapp/reservation-tools.js');
 const T2 = '22222222-2222-4222-8222-222222222222';
 const settings = { advance_booking_days: 10, max_party_size: 6 };
 const hours = Object.fromEntries(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']

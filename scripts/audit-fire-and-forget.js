@@ -44,7 +44,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const ROOT = path.join(__dirname, '..', 'api');
+const ROOT = path.join(__dirname, '..', 'api', '_app');
 const FOLLOW_LINES = 30;
 
 // Each entry suppresses any flagged line in `file` whose text contains

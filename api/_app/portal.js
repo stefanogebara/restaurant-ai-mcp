@@ -1,0 +1,735 @@
+/**
+ * Public Portal API
+ *
+ * Public (no auth) endpoints for customer-facing booking portal.
+ * URL pattern: /api/portal?action=...
+ *
+ * Actions:
+ *   GET  ?action=restaurant&slug=X           - Look up restaurant by slug
+ *   GET  ?action=availability&restaurant_id=X&date=Y&party_size=Z - Available time slots
+ *   POST ?action=reserve                     - Create a reservation
+ */
+
+const { supabaseAdmin, bookGuestReservation } = require('./_lib/supabase');
+const { checkGuestSlots } = require('./_lib/guest-slots');
+const { generateSecureReservationId } = require('./_lib/secure-id');
+const { checkAndApplyRateLimit, peekFailureCount, bumpFailureCount } = require('./_lib/rate-limit');
+const { trackUsage } = require('./_lib/usage-tracking');
+const { sendReservationConfirmationEmail, sendNewBookingAlertEmail } = require('./_lib/email');
+const { sendNewBookingAlertWhatsApp, sendReservationConfirmation, isWhatsAppConfigured } = require('./_lib/whatsapp-sender');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
+const { sanitizeStringXSS } = require('./_lib/validation');
+const { validateReservation: validateReservationRules } = require('./_lib/reservation-validator');
+const { releaseRejectedDeposit, verifyPublicDeposit } = require('./_lib/reservation-deposits');
+const {
+  getMissingReservationCreateFields,
+  isValidReservationDate,
+  isValidReservationTime,
+  mapReservationSummary,
+  normalizeReservationCreateInput,
+} = require('../../shared/reservation-contract.cjs');
+const logger = createSecureLogger('Portal');
+
+module.exports = async (req, res) => {
+  // CORS for public portal
+  setInternalCors(req, res);
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  // Cheap envelope validation BEFORE the rate-limit roundtrip so bots sending
+  // garbage `action=` strings don't burn a Lambda or consume a rate-limit token
+  // waiting on Upstash. Real attackers exercising a valid action still hit the
+  // limiter below; this just short-circuits the obviously-invalid traffic.
+  const action = req.query.action || (req.body && req.body.action);
+  const ACTION_METHODS = {
+    restaurant: ['GET'],
+    availability: ['GET'],
+    reserve: ['POST'],
+    reservation: ['GET'],
+  };
+  const allowed = ACTION_METHODS[action];
+  if (!allowed) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid action. Use: restaurant, availability, reserve, reservation',
+    });
+  }
+  if (!allowed.includes(req.method)) {
+    res.setHeader('Allow', allowed.join(', '));
+    return res.status(405).json({
+      success: false,
+      error: 'method_not_allowed',
+      message: `Action '${action}' requires ${allowed.join(' or ')}`,
+    });
+  }
+
+  // Rate limit: 30 requests per minute for public endpoints
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'api');
+  if (rateLimited) return;
+
+  // Body size validation: reject payloads > 1MB to prevent abuse
+  if (req.body) {
+    const bodySize = Buffer.byteLength(JSON.stringify(req.body), 'utf8');
+    if (bodySize > 1_048_576) {
+      logger.warn('[Portal] Rejected oversized body:', { size: bodySize });
+      return res.status(413).json({
+        success: false,
+        error: 'Request body too large. Maximum size is 1MB.'
+      });
+    }
+  }
+
+  try {
+
+    switch (action) {
+      case 'restaurant':
+        return await handleGetRestaurant(req, res);
+      case 'availability':
+        return await handleGetAvailability(req, res);
+      case 'reserve':
+        return await handleCreateReservation(req, res);
+      case 'reservation':
+        return await handleGetReservation(req, res);
+    }
+  } catch (error) {
+    logger.error('[Portal] Unhandled error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Something went wrong. Please try again.'
+    });
+  }
+};
+
+// ============================================================
+// GET ?action=restaurant&slug=X
+// Look up restaurant public info by slug
+// ============================================================
+/**
+ * Restaurant slugs are normalised lowercase letters / digits / hyphens, 1-100
+ * chars. Validating before the query keeps junk like `'; DROP TABLE …` from
+ * appearing in Supabase's query logs, and short-circuits brute-force scans
+ * with weird payloads (path traversal, quotes, embedded HTML) cheaply.
+ */
+const SLUG_PATTERN = /^[a-z0-9-]{1,100}$/;
+
+/**
+ * Per-IP failure budget for slug lookups. The api tier (60 req/min) lets
+ * 3600 lookups/hour through — plenty for a slug-enumeration scan. Real
+ * customers basically NEVER hit 404 on a slug lookup (the URL was given
+ * to them by the restaurant); attackers hit 404 on >99% of attempts.
+ * After SLUG_LOOKUP_FAIL_LIMIT 404s in SLUG_LOOKUP_FAIL_WINDOW seconds,
+ * we 429 the IP for that whole window. Generous enough that one mistyped
+ * URL won't lock anyone out, tight enough to make a 10k-slug scan
+ * impractical (would take 8+ days at 50/hour).
+ */
+const SLUG_LOOKUP_FAIL_LIMIT = 50;
+const SLUG_LOOKUP_FAIL_WINDOW = 3600; // 1 hour
+const SLUG_LOOKUP_NAMESPACE = 'slug-lookup-fail';
+
+async function handleGetRestaurant(req, res) {
+  const { slug } = req.query;
+
+  if (!slug) {
+    return res.status(400).json({
+      success: false,
+      message: 'Missing required parameter: slug'
+    });
+  }
+
+  if (typeof slug !== 'string' || !SLUG_PATTERN.test(slug)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid slug format'
+    });
+  }
+
+  // Pre-check: has this IP burned too many 404s on slug lookups recently?
+  // If yes, refuse the work before hitting Supabase. The legitimate-customer
+  // false-positive rate is effectively zero — they always have a known slug.
+  const failCount = await peekFailureCount(req, SLUG_LOOKUP_NAMESPACE);
+  if (failCount >= SLUG_LOOKUP_FAIL_LIMIT) {
+    return res.status(429).json({
+      success: false,
+      message: 'Too many invalid lookups. Please try again later.',
+    });
+  }
+
+  // cover_image_url ships in migration 20260609 — select it, but fall back to
+  // the legacy column list if the migration hasn't been applied yet so the
+  // public booking page never 404s on a schema race.
+  const BASE_COLS = 'id, restaurant_name, restaurant_type, city, country, phone, email, website, business_hours, reservation_settings, average_dining_duration_minutes, slug, deposit_config, whatsapp_enabled';
+  let { data, error } = await supabaseAdmin
+    .schema('restaurant')
+    .from('restaurant_config')
+    .select(`${BASE_COLS}, cover_image_url`)
+    .eq('slug', slug)
+    .eq('is_active', true)
+    .eq('onboarding_completed', true)
+    .single();
+
+  if (error && /cover_image_url|column .* does not exist/i.test(error.message || '')) {
+    ({ data, error } = await supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select(BASE_COLS)
+      .eq('slug', slug)
+      .eq('is_active', true)
+      .eq('onboarding_completed', true)
+      .single());
+  }
+
+  if (error || !data) {
+    // 404 — bump the failure counter so an enumeration scan progressively
+    // burns through its budget. Success paths intentionally don't bump.
+    await bumpFailureCount(req, SLUG_LOOKUP_NAMESPACE, SLUG_LOOKUP_FAIL_WINDOW);
+    return res.status(404).json({
+      success: false,
+      message: 'Restaurant not found'
+    });
+  }
+
+  // Return only public-safe fields
+  const businessHours = data.business_hours || {};
+  const reservationSettings = data.reservation_settings || {};
+
+  return res.status(200).json({
+    success: true,
+    data: {
+      id: data.id,
+      name: data.restaurant_name,
+      type: data.restaurant_type,
+      city: data.city,
+      country: data.country,
+      phone: data.phone,
+      email: data.email,
+      website: data.website,
+      slug: data.slug,
+      business_hours: businessHours,
+      max_party_size: reservationSettings.max_party_size || 12,
+      min_party_size: reservationSettings.min_party_size || 1,
+      advance_booking_days: reservationSettings.advance_booking_days || 30,
+      average_dining_duration: data.average_dining_duration_minutes || 90,
+      cancellation_policy: reservationSettings.cancellation_policy || null,
+      deposit_config: data.deposit_config || { enabled: false },
+      // Honest signal for the booking confirmation page so it doesn't promise
+      // a WhatsApp reminder the restaurant can't actually send (audit BUG #25).
+      whatsapp_enabled: data.whatsapp_enabled === true,
+      // Owner-uploaded cover photo (restaurant-photos bucket). null → booking
+      // page falls back to the gradient + cuisine-emoji card.
+      cover_image_url: data.cover_image_url || null
+    }
+  });
+}
+
+// ============================================================
+// GET ?action=reservation&id=RES-XXXX
+// Look up a single reservation by confirmation ID (public, no auth)
+// Only returns non-sensitive fields for the confirmation page
+// ============================================================
+/**
+ * Reservation IDs always start with "RES-" and contain only uppercase
+ * letters, digits, and hyphens. New IDs are generated by secure-id.js as
+ *   RES-YYYYMMDD-XXXXXXXXXXXX   (12 random alphanumeric)
+ * but legacy IDs from earlier formats (no date segment, shorter random
+ * tail) are still in the DB, so the pattern is intentionally broad
+ * within the allowed character set. Anything outside `[A-Z0-9-]` after
+ * the RES- prefix is junk and gets bounced before hitting Supabase.
+ */
+const RESERVATION_ID_PATTERN = /^RES-[A-Z0-9-]{1,55}$/i;
+const RESERVATION_LOOKUP_NAMESPACE = 'reservation-lookup-fail';
+
+async function handleGetReservation(req, res) {
+  const { id } = req.query;
+
+  if (!id) {
+    return res.status(400).json({ success: false, error: 'Missing required parameter: id' });
+  }
+
+  // Basic sanity check on format to avoid full-table scans on junk input
+  if (typeof id !== 'string' || id.length > 60) {
+    return res.status(400).json({ success: false, error: 'Invalid reservation ID' });
+  }
+  if (!RESERVATION_ID_PATTERN.test(id)) {
+    return res.status(400).json({ success: false, error: 'Invalid reservation ID format' });
+  }
+
+  // Same defense as handleGetRestaurant: a real customer hitting this
+  // endpoint has the ID in their confirmation URL — they almost never
+  // 404. An enumeration scan 404s on >99% of attempts. Cap the IP's
+  // 404 budget so brute-force scraping reservations becomes impractical.
+  const failCount = await peekFailureCount(req, RESERVATION_LOOKUP_NAMESPACE);
+  if (failCount >= SLUG_LOOKUP_FAIL_LIMIT) {
+    return res.status(429).json({
+      success: false,
+      error: 'Too many invalid lookups. Please try again later.',
+    });
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('reservations')
+    .select('id, reservation_id, restaurant_id, customer_name, party_size, date, time, status')
+    .eq('reservation_id', id)
+    .single();
+
+  if (error || !data) {
+    await bumpFailureCount(req, RESERVATION_LOOKUP_NAMESPACE, SLUG_LOOKUP_FAIL_WINDOW);
+    return res.status(404).json({ success: false, error: 'Reservation not found' });
+  }
+
+  // Fetch restaurant name for display
+  const { data: rest } = await supabaseAdmin
+    .schema('restaurant')
+    .from('restaurant_config')
+    .select('restaurant_name')
+    .eq('id', data.restaurant_id)
+    .single();
+
+  return res.status(200).json({
+    success: true,
+    reservation: mapReservationSummary(data, {
+      restaurant_name: rest ? rest.restaurant_name : 'Restaurant'
+    })
+  });
+}
+
+// ============================================================
+// GET ?action=availability&restaurant_id=X&date=Y&party_size=Z
+// Get available time slots for a given date
+// ============================================================
+
+// Statuses of a time inside a service period: offered (ok) or shown taken.
+// Past times, times less than an hour away, closed hours, after the last
+// seating and dates past the window are left out of the list.
+const SERVICE_STATUSES = new Set(['ok', 'unavailable', 'party_too_large']);
+
+/**
+ * The page's time list, answered by the booking rule: every half hour of the
+ * date goes to public.check_guest_slots (the slot checks of
+ * book_guest_reservation, in the restaurant's zone, with its service periods,
+ * last seating, day and party limits and seats from every channel). A time
+ * shown as available is a time the booking accepts. Until 15/11/2026 this had
+ * its own rule (weekday from the server clock, first open to last close, a
+ * party-size duration, a 60-seat fallback, no day or party limit): in
+ * scripts/auditoria-reservas/r10-pagina-horarios.cjs the booking refused 37 of
+ * the 49 times it showed as available.
+ */
+async function handleGetAvailability(req, res) {
+  const { restaurant_id, date, party_size } = req.query;
+
+  if (!restaurant_id || !date || !party_size) {
+    return res.status(400).json({
+      success: false,
+      message: 'Missing required parameters: restaurant_id, date, party_size'
+    });
+  }
+
+  const partySize = parseInt(party_size, 10);
+  if (isNaN(partySize) || partySize < 1 || partySize > 20) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid party_size. Must be between 1 and 20.'
+    });
+  }
+
+  // Validate date format (YYYY-MM-DD)
+  if (!isValidReservationDate(date)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid date format. Use YYYY-MM-DD.'
+    });
+  }
+
+  // Get restaurant info
+  const { data: restaurant, error: restError } = await supabaseAdmin
+    .schema('restaurant')
+    .from('restaurant_config')
+    .select('id, restaurant_name, reservation_settings')
+    .eq('id', restaurant_id)
+    .eq('is_active', true)
+    .single();
+
+  if (restError || !restaurant) {
+    return res.status(404).json({
+      success: false,
+      message: 'Restaurant not found'
+    });
+  }
+
+  const starts = [];
+  for (let minutes = 0; minutes < 24 * 60; minutes += 30) {
+    starts.push(`${date}T${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`);
+  }
+  const answer = await checkGuestSlots(restaurant_id, partySize, starts);
+  if (!answer.ok) {
+    logger.error('[Portal] Availability rule unavailable:', { status: answer.status });
+    return res.status(answer.status === 'restaurant_unavailable' ? 404 : 500).json({
+      success: false,
+      message: answer.status === 'restaurant_unavailable' ? 'Restaurant not found' : 'Could not check availability.'
+    });
+  }
+
+  const slots = answer.slots
+    .filter(slot => SERVICE_STATUSES.has(slot.status))
+    .map(slot => ({
+      time: slot.time,
+      available: slot.status === 'ok',
+      available_seats: Math.max(0, Number(slot.seats_available) || 0),
+    }));
+
+  if (slots.length === 0) {
+    const statuses = new Set(answer.slots.map(slot => slot.status));
+    if (statuses.size === 1 && statuses.has('invalid_input')) {
+      // A well-formed but impossible date, such as 2027-02-30.
+      return res.status(400).json({ success: false, message: 'Invalid date format. Use YYYY-MM-DD.' });
+    }
+    const days = (restaurant.reservation_settings || {}).advance_booking_days;
+    const message = statuses.has('too_far')
+      ? `Reservations can only be made up to ${days} days in advance.`
+      : statuses.has('past_slot') || statuses.has('too_soon') ? 'No times left on this day.' : 'Restaurant is closed on this day.';
+    return res.status(200).json({ success: true, available: false, message, slots: [] });
+  }
+
+  return res.status(200).json({
+    success: true,
+    restaurant_name: restaurant.restaurant_name,
+    date,
+    party_size: partySize,
+    // First and last time shown for this date (the list itself is the rule's).
+    operating_hours: { open: slots[0].time, close: slots[slots.length - 1].time },
+    slots
+  });
+}
+
+// ============================================================
+// POST ?action=reserve
+// Create a public reservation
+// ============================================================
+async function handleCreateReservation(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({
+      success: false,
+      message: 'POST method required for reservations'
+    });
+  }
+
+  const input = normalizeReservationCreateInput(req.body || {}, { requireRestaurantId: true });
+  const missingFields = getMissingReservationCreateFields(input, { requireRestaurantId: true });
+  const {
+    restaurant_id,
+    customer_name,
+    customer_phone,
+    customer_email,
+    party_size,
+    date,
+    time,
+    special_requests,
+  } = input;
+  const quoteId = req.body?.deposit_quote_id;
+
+  // Validate required fields
+  if (missingFields.length > 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'Missing required fields: restaurant_id, customer_name, customer_phone, party_size, date, time'
+    });
+  }
+
+  // Validate phone number: at least 10 digits after stripping non-numeric chars
+  const phoneDigits = String(customer_phone).replace(/\D/g, '');
+  if (phoneDigits.length < 10) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid phone number. Must contain at least 10 digits.'
+    });
+  }
+
+  // Sanitize customer name (XSS prevention + max length)
+  const sanitizedName = sanitizeStringXSS(customer_name, { maxLength: 200 });
+
+  if (party_size < 1 || party_size > 20) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid party_size. Must be between 1 and 20.'
+    });
+  }
+  const partySize = party_size;
+
+  if (special_requests && special_requests.length > 1000) {
+    return res.status(400).json({
+      success: false,
+      message: 'Special requests must be 1000 characters or fewer.'
+    });
+  }
+
+  // Validate date format
+  if (!isValidReservationDate(date)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid date format. Use YYYY-MM-DD.'
+    });
+  }
+
+  // Validate time format
+  if (!isValidReservationTime(time)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid time format. Use HH:MM.'
+    });
+  }
+
+  // Cheap early refusal: before yesterday in UTC is the past in every zone.
+  // The exact check uses the restaurant's local date once it is loaded.
+  const utcYesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+  if (!quoteId && date < utcYesterday) {
+    return res.status(400).json({
+      success: false,
+      message: 'Cannot book for a past date.'
+    });
+  }
+
+  // Verify restaurant exists and is active
+  const { data: restaurant, error: restError } = await supabaseAdmin
+    .schema('restaurant')
+    .from('restaurant_config')
+    .select('id, restaurant_name, email, whatsapp_enabled, whatsapp_phone_number, agent_language, reservation_settings, business_hours, timezone')
+    .eq('id', restaurant_id)
+    .eq('is_active', true)
+    .eq('onboarding_completed', true)
+    .single();
+
+  if (restError || !restaurant) {
+    return res.status(404).json({
+      success: false,
+      message: 'Restaurant not found'
+    });
+  }
+
+  // Don't allow past dates — "today" is the restaurant's local date, not UTC
+  // (after 21:00 in São Paulo the UTC date is already tomorrow).
+  const { getLocalDate } = require('./_lib/timezone');
+  let today;
+  try { today = getLocalDate(restaurant.timezone || 'UTC'); } catch { today = getLocalDate('UTC'); }
+  if (!quoteId && date < today) {
+    return res.status(400).json({
+      success: false,
+      message: 'Cannot book for a past date.'
+    });
+  }
+
+  // Check party size limits
+  const settings = restaurant.reservation_settings || {};
+  const maxParty = settings.max_party_size || 12;
+  if (!quoteId && partySize > maxParty) {
+    return res.status(400).json({
+      success: false,
+      message: `Maximum party size is ${maxParty}. Please call us for larger groups.`
+    });
+  }
+
+  // Validate against business hours
+  const validation = validateReservationRules(
+    { date, time, party_size: partySize },
+    {
+      business_hours: restaurant.business_hours,
+      timezone: restaurant.timezone,
+      max_party_size: settings.max_party_size,
+      max_advance_days: settings.advance_booking_days,
+      // The hour of notice belongs to the booking rule (too_soon).
+      min_advance_hours: 0,
+    }
+  );
+
+  if (!quoteId && !validation.valid) {
+    return res.status(400).json({
+      success: false,
+      message: validation.message
+    });
+  }
+
+  let deposit;
+  if (quoteId !== undefined && quoteId !== null) {
+    try {
+      if (typeof quoteId === 'string') {
+        deposit = await verifyPublicDeposit(quoteId, { ...input, customer_name: sanitizedName });
+      }
+    } catch (error) {
+      logger.error('[Portal] Deposit verification unavailable', { code: error.code });
+      return res.status(503).json({ success: false, code: 'deposit_retry', message: 'Could not verify the deposit. Please try again.' });
+    }
+    if (!deposit) {
+      return res.status(409).json({ success: false, code: 'deposit_invalid', message: 'No usable deposit authorization was found for this booking.' });
+    }
+  }
+
+  // The portal RPC locks the policy and quote around the shared seat rule and insert.
+  const reservationId = generateSecureReservationId();
+
+  const booked = await bookGuestReservation(restaurant_id, {
+    reservation_id: reservationId,
+    source: 'online_portal',
+    customer_name: sanitizedName,
+    customer_phone: customer_phone.trim(),
+    customer_email: customer_email ? customer_email.trim() : null,
+    party_size,
+    date,
+    time,
+    special_requests: special_requests || null,
+  }, { deposit });
+
+  if (booked.status === 'existing') {
+    return res.status(200).json({
+      success: true,
+      reservation: mapReservationSummary({ ...booked.data, status: booked.data.reservation_status }, {
+        restaurant_name: restaurant.restaurant_name,
+      }),
+    });
+  }
+
+  if (booked.status !== 'created') {
+    if (deposit && booked.data?.release_intent &&
+        !await releaseRejectedDeposit(deposit.id, restaurant_id, booked.data.release_intent)) {
+      return res.status(503).json({
+        success: false,
+        code: 'deposit_retry',
+        message: 'The booking could not be made. Please retry so we can finish releasing the hold.',
+      });
+    }
+    const depositRefusal = {
+      deposit_required: 'A deposit authorization is required to book at this restaurant.',
+      deposit_invalid: 'No usable deposit authorization was found for this booking.',
+      deposit_quote_changed: 'The deposit quote has expired or changed. Please request a new quote.',
+      deposit_closed: 'This deposit quote is closed. Please request a new quote.',
+      deposit_consumed: 'This deposit was already used for a reservation.',
+    }[booked.status];
+    if (depositRefusal) {
+      return res.status(409).json({ success: false, code: booked.status, message: depositRefusal });
+    }
+    if (booked.status === 'unavailable') {
+      const seatsLeft = booked.data?.seats_available;
+      return res.status(409).json({
+        success: false,
+        ...(booked.data?.release_intent ? { code: 'deposit_closed' } : {}),
+        message: `Sorry, ${time} is no longer available for ${partySize} guests.` +
+          (seatsLeft === undefined ? '' : ` Only ${seatsLeft} seats remain at that time.`),
+        ...(seatsLeft === undefined ? {} : { available_seats: seatsLeft }),
+      });
+    }
+    const refusal = {
+      past_slot: 'That time has already passed. Please choose a later time.',
+      too_soon: 'Reservations must be made at least 1 hour in advance. Please choose a later time.',
+      too_far: `Reservations can only be made up to ${settings.advance_booking_days} days in advance.`,
+      outside_hours: 'The restaurant does not take bookings at that time. Please choose another time.',
+      too_late: 'That time is after the last seating. Please choose an earlier time.',
+      party_too_large: `Maximum party size is ${maxParty}. Please call us for larger groups.`,
+      invalid_input: 'Invalid reservation details. Please check the form and try again.',
+      timezone_unavailable: 'Could not verify the restaurant time zone. Please call the restaurant directly.',
+    }[booked.status];
+    if (refusal) {
+      return res.status(400).json({
+        success: false,
+        ...(booked.data?.release_intent ? { code: 'deposit_closed' } : {}),
+        message: refusal,
+      });
+    }
+    if (booked.status === 'restaurant_unavailable') {
+      return res.status(404).json({ success: false, message: 'Restaurant not found' });
+    }
+    logger.error('[Portal] Error creating reservation:', { status: booked.status, error: booked.error });
+    return res.status(500).json({
+      success: false,
+      message: 'Could not create reservation. Please try again.'
+    });
+  }
+
+  const newRes = {
+    id: booked.data.id,
+    reservation_id: booked.data.reservation_id,
+    customer_name: booked.data.customer_name,
+    party_size: booked.data.party_size,
+    date: booked.data.date,
+    time: booked.data.time,
+    status: booked.data.reservation_status
+  };
+
+  // Confirmation channels — must be awaited before res.json(201). Vercel
+  // terminates the Lambda the instant the response is sent, killing any
+  // in-flight Resend / Graph API requests. Verified: booking POST returned
+  // 201 in 1.7s while `Reservation confirmation email sent` log never
+  // landed → customer received NO email. Same shape as the RELATORIO PDF
+  // bug (commit 34b786f2). Run all 4 channels in parallel via
+  // Promise.allSettled so total wall time is bounded by the slowest one
+  // (~2s for Resend) rather than the sum.
+  const notifications = [
+    // Metered-billing increment now part of the awaited bundle so it
+    // doesn't lose the race with Lambda shutdown either.
+    trackUsage(restaurant_id, 'portal_booking'),
+  ];
+  if (customer_email) {
+    notifications.push(sendReservationConfirmationEmail({
+      customerEmail: customer_email.trim(),
+      customerName: sanitizedName,
+      restaurantName: restaurant.restaurant_name,
+      reservationId,
+      partySize: party_size,
+      date,
+      time,
+      specialRequests: special_requests,
+      cancellationPolicy: (restaurant.reservation_settings || {}).cancellation_policy,
+      language: restaurant.language || 'en',
+    }).catch(err => logger.error('[Portal] Customer email failed:', err.message)));
+  }
+  if (restaurant.email) {
+    notifications.push(sendNewBookingAlertEmail({
+      ownerEmail: restaurant.email,
+      restaurantName: restaurant.restaurant_name,
+      customerName: sanitizedName,
+      customerPhone: customer_phone.trim(),
+      customerEmail: customer_email ? customer_email.trim() : null,
+      reservationId,
+      partySize: party_size,
+      date,
+      time,
+      specialRequests: special_requests,
+    }).catch(err => logger.error('[Portal] Owner alert email failed:', err.message)));
+  }
+  if (restaurant.whatsapp_enabled && restaurant.whatsapp_phone_number && isWhatsAppConfigured()) {
+    notifications.push(sendNewBookingAlertWhatsApp(restaurant.whatsapp_phone_number, {
+      reservationId,
+      customerName: sanitizedName,
+      customerPhone: customer_phone.trim(),
+      partySize: party_size,
+      date,
+      time,
+    }).catch(err => logger.error('[Portal] Owner WhatsApp alert failed:', err.message)));
+  }
+  if (restaurant.whatsapp_enabled && isWhatsAppConfigured() && customer_phone) {
+    notifications.push(sendReservationConfirmation(customer_phone.trim(), {
+      customerName: sanitizedName,
+      restaurantName: restaurant.restaurant_name,
+      language: restaurant.agent_language || 'en',
+      reservationId,
+      date,
+      time,
+      partySize: party_size,
+    }).catch(err => logger.warn('[Portal] Customer WhatsApp confirmation failed (non-fatal):', err.message)));
+  }
+  // 8s ceiling so a stuck integration can't blow the Lambda's maxDuration.
+  // Resend/Graph API both normally complete in <2s; if they don't, the
+  // reservation is already saved and the customer can retrieve it via
+  // confirmation page or contact the restaurant.
+  await Promise.race([
+    Promise.allSettled(notifications),
+    new Promise(resolve => setTimeout(resolve, 8000)),
+  ]);
+
+  return res.status(201).json({
+    success: true,
+    message: `Reservation confirmed for ${party_size} guests on ${date} at ${time}`,
+    reservation: mapReservationSummary(newRes, {
+      restaurant_name: restaurant.restaurant_name
+    })
+  });
+}

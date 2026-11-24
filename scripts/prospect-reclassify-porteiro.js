@@ -29,10 +29,10 @@
 
 require('dotenv').config();
 
-const { semHumanoNaThread, pareceAutoAtendimento } = require('../api/_lib/prospecting/prospect-state');
+const { semHumanoNaThread, pareceAutoAtendimento } = require('../api/_app/_lib/prospecting/prospect-state');
 const {
   listProspectLeads, loadHistory, patchLead, recordEvent,
-} = require('../api/_lib/prospecting/prospect-store');
+} = require('../api/_app/_lib/prospecting/prospect-store');
 
 const argv = process.argv.slice(2);
 const has = (f) => argv.includes(f);

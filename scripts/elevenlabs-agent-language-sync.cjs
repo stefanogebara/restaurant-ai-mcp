@@ -10,7 +10,7 @@
  *   node scripts/elevenlabs-agent-language-sync.cjs --configs configs.json --apply <restaurant_id>
  *
  * --configs: JSON array of restaurant_config rows (export with the SQL in the
- *   header of api/_lib/elevenlabs-language-sync.js callers, or the query below).
+ *   header of api/_app/_lib/elevenlabs-language-sync.js callers, or the query below).
  *   Reading configs from a file keeps this script away from the Supabase
  *   service key; it only needs ELEVENLABS_API_KEY in the environment.
  * --apply <id>: PATCH that one restaurant's agent (one PATCH: language, first
@@ -28,7 +28,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { planLanguageSync, fetchAgent: getAgent, syncAgentLanguage } = require(path.join(__dirname, '../api/_lib/elevenlabs-language-sync'));
+const { planLanguageSync, fetchAgent: getAgent, syncAgentLanguage } = require(path.join(__dirname, '../api/_app/_lib/elevenlabs-language-sync'));
 
 function parseArgs(argv) {
   const args = { configs: null, apply: null };

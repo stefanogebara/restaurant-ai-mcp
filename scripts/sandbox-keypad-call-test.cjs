@@ -46,8 +46,8 @@ const { execFile } = require('node:child_process');
 const assert = require('node:assert/strict');
 const { setTimeout: delay } = require('node:timers/promises');
 
-const { createKeypadHandler } = require('../api/_lib/keypad-reservation');
-const { createKeypadReservationRequest, SANDBOX_RESTAURANT } = require('../api/_lib/keypad-reservation-request');
+const { createKeypadHandler } = require('../api/_app/_lib/keypad-reservation');
+const { createKeypadReservationRequest, SANDBOX_RESTAURANT } = require('../api/_app/_lib/keypad-reservation-request');
 const { buildKeypadTool, instructions, TOOL_NAME, GRANT_HEADER, GRANT_VARIABLE } = require('./_lib/sandbox-keypad-receptionist.cjs');
 
 const SANDBOX_TABLE = 'a61fb25d-70ae-44a7-a624-7c43aeed928d';

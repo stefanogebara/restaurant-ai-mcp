@@ -12,7 +12,7 @@ global.Date = class extends RealDate {
   constructor(...a) { super(...(a.length ? a : [FROZEN])); }
   static now() { return FROZEN; }
 };
-const { validateReservation } = require(path.join(process.env.AUDIT_REPO || path.resolve(__dirname, '../..'), 'api/_lib/reservation-validator.js'));
+const { validateReservation } = require(path.join(process.env.AUDIT_REPO || path.resolve(__dirname, '../..'), 'api/_app/_lib/reservation-validator.js'));
 const hours = Object.fromEntries(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
   .map(d => [d, { is_open: true, open_time: '18:00', close_time: '23:00' }]));
 const restaurant = { business_hours: hours, timezone: 'America/Sao_Paulo' };

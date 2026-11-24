@@ -8,7 +8,7 @@
  *        shape when called without credentials.
  *
  *   Q.2  Briefing channel-fallback to text: server-side change
- *        in api/_lib/briefing-sender.js. Can't fault-inject
+ *        in api/_app/_lib/briefing-sender.js. Can't fault-inject
  *        ElevenLabs/Storage from outside, so this spec only
  *        confirms the manager-briefings cron endpoint exists +
  *        gates on CRON_SECRET.

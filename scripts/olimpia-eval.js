@@ -94,7 +94,7 @@ const SINTESE_MODEL = flag('sintese', 'anthropic/claude-fable-5');
 // Predicados reais do produto (puros). Se o require explodir por ambiente,
 // seguimos sem as flags — o juiz avalia mesmo assim.
 let preds = null;
-try { preds = require('../api/_lib/prospecting/prospect-state'); } catch { preds = null; }
+try { preds = require('../api/_app/_lib/prospecting/prospect-state'); } catch { preds = null; }
 
 // ---------------------------------------------------------------- supabase
 async function sb(pathQ) {
@@ -199,10 +199,10 @@ function extrairJson(texto) {
  */
 function dataDaUltimaMudancaDePersona() {
   const arquivos = [
-    'api/_lib/prospecting/prospect-agent.js',
-    'api/_lib/prospecting/prospect-state.js',
-    'api/_lib/prospecting/prospect-nudge.js',
-    'api/_lib/prospecting/prospect-responder.js',
+    'api/_app/_lib/prospecting/prospect-agent.js',
+    'api/_app/_lib/prospecting/prospect-state.js',
+    'api/_app/_lib/prospecting/prospect-nudge.js',
+    'api/_app/_lib/prospecting/prospect-responder.js',
   ];
   try {
     const { execFileSync } = require('child_process');
@@ -360,7 +360,7 @@ async function julgar(t) {
 
 // ---------------------------------------------------------------- síntese
 async function sintetizar(julgados, bodyPorNome) {
-  const fontes = ['api/_lib/prospecting/prospect-agent.js', 'api/_lib/prospecting/prospect-product.js']
+  const fontes = ['api/_app/_lib/prospecting/prospect-agent.js', 'api/_app/_lib/prospecting/prospect-product.js']
     .map((f) => `===== ${f} =====\n${fs.readFileSync(path.join(REPO, f), 'utf8')}`)
     .join('\n\n');
   const escada = Object.entries(bodyPorNome).map(([n, b]) => `--- ${n}\n${b}`).join('\n\n');

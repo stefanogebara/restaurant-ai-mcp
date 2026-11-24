@@ -65,7 +65,7 @@ reviews:
         diretório com prefixo _ vira função serverless na Vercel — biblioteca em
         caminho elegível é bug de deploy. Nunca require() de um handler irmão:
         a NFT derruba a função importadora do manifesto sem erro de build.
-    - path: 'api/cron/**/*.js'
+    - path: 'api/_app/cron/**/*.js'
       instructions: >-
         Cron precisa de checagem de CRON_SECRET E do interruptor isCronEnabled,
         nessa ordem, antes de qualquer trabalho pago. Intervalo MENOR que 15

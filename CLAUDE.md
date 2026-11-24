@@ -39,23 +39,24 @@ Build minutes are within the included Pro quota (6000/mo) — a 13-min build
 - **Deploys**: ONE per push (Vercel Git integration handles it). No duplicate
   GitHub Action hooks. Batch commits — stage changes, push once.
 
-### Function bundling (deploy time + dead-URL hygiene)
-Every `.js` file under `api/` becomes a serverless function UNLESS it's in a
-directory starting with `_` (`api/_lib/`, `api/_services/`, `api/_ml/`). Library
-code accidentally placed in a non-underscore dir gets deployed as a broken
-function (returns FUNCTION_INVOCATION_FAILED on every hit) AND adds ~3.4s of
-NFT-trace/bundle time per deploy.
-- **Helpers/services → `api/_*/` dirs.** Never put `module.exports = {...}`
-  library modules in a function-eligible path.
-- **Never `require()` a sibling handler file** (`require('./other-handler')`
-  where that file is `module.exports = async (req,res)`). Vercel's NFT silently
-  DROPS the importing function from the deploy manifest with no build error —
-  the endpoint 404s in prod. Extract shared logic to `api/_lib/` instead.
-  (This was the /api/demo 404 root cause, June 2026.)
-- **Family consolidation** (folding `square-{auth,callback,sync}` → `square.js`
-  with `?route=`) is available but yields sub-noise build deltas (~7s for 2
-  functions, inside ±1min build variance). Only worth it for code hygiene, not
-  cost. A webhook member with `bodyParser:false` must stay standalone.
+### One serverless function (since 2026-11-24)
+Vercel compiles every `.js` file under `api/` as its own function, each with
+its own copy of node_modules. This project had 162 of them and an ~11 minute
+build. Now **`api/index.js` is the only function**; the whole server lives in
+`api/_app/` (the underscore keeps it out of compilation), and `vercel.json`
+rewrites `/api/*` (plus `/blog`, `/vs`, `/v3`, `/sitemap.xml`, `/proposta`,
+`/restaurants`, `/sistema-de-reservas`) to it.
+- **Never add a `.js` file directly under `api/`.** `routes.test.js` fails if you do.
+- **New endpoint:** the handler file under `api/_app/` (same `module.exports =
+  async (req, res)` shape as before) **plus one line in `api/_app/routes.js`**.
+  `routes.test.js` fails if a handler has no line.
+- **Address aliases** (what the old per-file rewrites did, e.g.
+  `/blog/:slug -> seo/artigo?slug=`) live in `REWRITES` in `api/_app/router.js`.
+- **The router never reads `req.body`.** Webhooks that verify signatures
+  (stripe, square, elevenlabs, whatsapp) read the raw stream themselves.
+- **One `maxDuration` (300 s) for everything.** Billing is by actual duration,
+  so the ceiling costs nothing by itself; jobs keep their own internal budgets.
+- Helpers/services still go in `api/_app/_lib/`, `_services/`, etc.
 
 ## Workflow Orchestration
 
@@ -290,7 +291,9 @@ restaurant-ai-mcp/
 │       ├── types/              # TypeScript types
 │       └── i18n/               # EN + ES translations
 ├── api/
-│   ├── _lib/                   # Shared: supabase.js, auth.js, rate-limit.js, secure-logger.js
+│   ├── index.js                # THE serverless function (routes to api/_app)
+│   ├── _app/                   # The whole server (handlers, _lib, _services, crons, tests)
+│   ├── _lib/                   # (now api/_app/_lib) supabase.js, auth.js, rate-limit.js, secure-logger.js
 │   ├── cron/                   # Cron jobs
 │   ├── ml/                     # ML prediction engine
 │   ├── onboarding/             # Onboarding API

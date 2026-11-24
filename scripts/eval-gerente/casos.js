@@ -2,7 +2,7 @@
  * A bateria de avaliação do Gerente IA.
  *
  * Cada caso declara o que o agente PROMETE fazer, e a promessa vem do próprio
- * system prompt (api/_lib/manager-agent.js) — não de expectativa inventada.
+ * system prompt (api/_app/_lib/manager-agent.js) — não de expectativa inventada.
  * Testar o que ele não prometeu produziria reprovação injusta e ruído.
  *
  * As checagens automáticas (`checa`) recebem `{ texto, blocos, caso, contexto }`

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Rename api/services/ → api/_services/ and update all imports.
+ * Rename api/services/ → api/_app/_services/ and update all imports.
  *
  * Why: Every file under api/services/ is a library (module.exports = { ... }),
  * not a request handler. But Vercel sees them under api/ and deploys each
@@ -10,11 +10,11 @@
  * handler.
  *
  * Vercel's convention: files under directories starting with underscore
- * (api/_lib/, api/_services/) are NOT treated as function entrypoints;
+ * (api/_app/_lib/, api/_app/_services/) are NOT treated as function entrypoints;
  * they're only bundled when an importing handler requires them.
  *
  * What this script does:
- *   1. `git mv api/services api/_services`
+ *   1. `git mv api/services api/_app/_services`
  *   2. Rewrites every `require(...services/...)` import in api/, client/,
  *      scripts/ to use `_services/` instead
  *   3. Verifies node --check passes on every touched .js file
@@ -57,9 +57,9 @@ async function* walk(dir, predicate) {
 }
 
 // 1. git mv the directory
-console.log('Step 1: git mv api/services → api/_services');
+console.log('Step 1: git mv api/services → api/_app/_services');
 try {
-  git('mv', 'api/services', 'api/_services');
+  git('mv', 'api/services', 'api/_app/_services');
 } catch (e) {
   console.error('git mv failed — already moved?');
   process.exit(1);
@@ -108,7 +108,7 @@ for (const f of touchedFiles) {
   }
 }
 if (failed > 0) {
-  console.error(`${failed} files failed syntax check — rollback with: git checkout -- api/ client/ scripts/ && git mv api/_services api/services`);
+  console.error(`${failed} files failed syntax check — rollback with: git checkout -- api/ client/ scripts/ && git mv api/_app/_services api/services`);
   process.exit(1);
 }
 console.log('All .js files parse clean');

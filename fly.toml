@@ -2,7 +2,7 @@ app = 'seatable-voice'
 primary_region = 'cdg'
 
 [build]
-  dockerfile = 'api/_voice-server/Dockerfile'
+  dockerfile = 'api/_app/_voice-server/Dockerfile'
 
 [env]
   NODE_ENV = 'production'

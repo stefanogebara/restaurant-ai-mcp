@@ -57,9 +57,9 @@ const soEsteCaso = process.argv.includes('--caso')
   ? process.argv[process.argv.indexOf('--caso') + 1]
   : null;
 
-const { runManagerAgent } = require(resolve(raiz, 'api/_lib/manager-agent.js'));
+const { runManagerAgent } = require(resolve(raiz, 'api/_app/_lib/manager-agent.js'));
 const { buildRestaurantSnapshot } = (() => {
-  try { return require(resolve(raiz, 'api/_services/restaurantSnapshot.js')); }
+  try { return require(resolve(raiz, 'api/_app/_services/restaurantSnapshot.js')); }
   catch { return {}; }
 })();
 

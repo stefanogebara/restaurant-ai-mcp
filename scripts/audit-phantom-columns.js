@@ -38,7 +38,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const ROOT = path.join(__dirname, '..', 'api');
+const ROOT = path.join(__dirname, '..', 'api', '_app');
 const SNAPSHOT = JSON.parse(fs.readFileSync(path.join(__dirname, 'schema-snapshot.json'), 'utf8'));
 const CAMINHO_DIVIDA = path.join(__dirname, 'phantom-columns.divida.json');
 

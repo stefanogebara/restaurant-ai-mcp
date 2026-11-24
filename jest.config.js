@@ -6,7 +6,7 @@ module.exports = {
   // don't resolve their _lib imports from there and must not run or count.
   testPathIgnorePatterns: ['/node_modules/', '<rootDir>/api/_unused/'],
   moduleFileExtensions: ['js', 'json'],
-  collectCoverageFrom: ['api/**/*.js', '!api/_ml/**', '!api/_unused/**', '!api/node_modules/**'],
+  collectCoverageFrom: ['api/**/*.js', '!api/_app/_ml/**', '!api/_unused/**', '!api/node_modules/**'],
   coverageDirectory: 'coverage',
   // Allow promise rejections to be handled asynchronously (e.g. after runAllTimersAsync).
   // Without this, Jest 30 + Node 22 incorrectly fails tests where a rejection is caught

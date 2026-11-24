@@ -6,7 +6,7 @@
 // R4a: WhatsApp books 8 (no table assignment) -> voice asks for 4. Expected: refused.
 // R4b (control): voice books 8 (assigns both tables) -> WhatsApp asks for 4. Expected: refused.
 const h = require('./harness.cjs');
-const tools = h.load('api/_lib/tool-handlers.js');
+const tools = h.load('api/_app/_lib/tool-handlers.js');
 const T2 = '22222222-2222-4222-8222-222222222222';
 const DAY = '2026-11-26';
 const hours = Object.fromEntries(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']

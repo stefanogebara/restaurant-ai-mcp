@@ -169,7 +169,7 @@ function collectFileStructure() {
 }
 
 function collectTestStats() {
-  const backendDir = path.join(ROOT, 'api/__tests__');
+  const backendDir = path.join(ROOT, 'api/_app/__tests__');
   const backendCount = fs.existsSync(backendDir)
     ? fs.readdirSync(backendDir).filter(f => f.endsWith('.test.js')).length
     : 0;
