@@ -22,7 +22,7 @@ import { FALA_DO_CLIENTE, AMOSTRAS, ROTULO_TAG, ORDEM_PADRAO } from '../personaP
  * funcionaria. O teste lê o fonte do servidor e extrai os literais.
  */
 
-const SERVIDOR = resolve(__dirname, '../../../../api/_lib/persona-proposta.js');
+const SERVIDOR = resolve(__dirname, '../../../../api/_app/_lib/persona-proposta.js');
 
 /** Extrai `const NOME = { ... };` do fonte do servidor e avalia o literal. */
 function literalDoServidor(nome: string): unknown {
