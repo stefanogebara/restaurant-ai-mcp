@@ -106,3 +106,10 @@ describe('GA server events', () => {
   });
 });
 
+describe('end_call tool', () => {
+  it('offers end_call, so the AI can hang up after its goodbye', async () => {
+    const { socket } = await connected();
+    const update = socket.sent.find((m) => m.type === 'session.update');
+    expect(update.session.tools.map((t) => t.name)).toContain('end_call');
+  });
+});
