@@ -438,11 +438,11 @@ export default function Dashboard() {
 
           {/* ---- Welcome Guide for New Users ---- */}
           {isDashboardEmpty && !isLoading && (
-            <div className="bg-[#FFF7ED] border border-amber-200 rounded-xl px-4 sm:px-6 py-4 sm:py-5 mb-8 sm:mb-12">
-              <h3 className="text-sm font-semibold text-amber-900 mb-1">
+            <div className={`rounded-xl border px-4 sm:px-6 py-4 sm:py-5 mb-8 sm:mb-12 ${isNight ? 'border-amber-400/25 bg-amber-400/[0.08]' : 'bg-[#FFF7ED] border-amber-200'}`}>
+              <h3 className={`text-sm font-semibold mb-1 ${isNight ? 'text-amber-200' : 'text-amber-900'}`}>
                 {t('dashboard.welcomeGuide.title', 'Your dashboard is ready!')}
               </h3>
-              <p className="text-sm text-amber-800">
+              <p className={`text-sm ${isNight ? 'text-amber-100/70' : 'text-amber-800'}`}>
                 {t('dashboard.welcomeGuide.description', 'Reservations, waitlist, and activity will appear here as your restaurant starts receiving guests. Add a walk-in or create a reservation to get started.')}
               </p>
             </div>

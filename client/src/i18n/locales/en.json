@@ -111,6 +111,9 @@
     "askAIShort": "Ask"
   },
   "dashboard": {
+    "greetingMorning": "Good morning",
+    "greetingAfternoon": "Good afternoon",
+    "greetingEvening": "Good evening",
     "overview": "Overview",
     "welcome": "Welcome",
     "goodMorning": "Good morning",

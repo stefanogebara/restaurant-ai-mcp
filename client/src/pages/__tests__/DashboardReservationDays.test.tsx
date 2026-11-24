@@ -93,14 +93,14 @@ it('shows the restaurant weekday and calendar date rather than the travelling ho
 it('greets the restaurant evening even when the Madrid browser is after midnight', () => {
   expect(new Date().getHours()).toBe(0);
   renderWithProviders(page());
-  expect(screen.getByText('Boa noite 👋')).toBeVisible();
-  expect(screen.queryByText('Bom dia 👋')).not.toBeInTheDocument();
+  expect(screen.getByText('Good evening 👋')).toBeVisible();
+  expect(screen.queryByText('Good morning 👋')).not.toBeInTheDocument();
 });
 
 it('uses the UTC fallback consistently for header, greeting and reservation groups', () => {
   state.timezone = 'invalid/zone';
   renderWithProviders(page());
   expect(screen.getByText('Monday, November 9')).toBeVisible();
-  expect(screen.getByText('Boa noite 👋')).toBeVisible();
+  expect(screen.getByText('Good evening 👋')).toBeVisible();
   expect(screen.getByText('Restaurant Today Guest')).toBeVisible();
 });

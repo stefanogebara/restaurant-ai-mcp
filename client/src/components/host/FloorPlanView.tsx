@@ -264,12 +264,12 @@ export default function FloorPlanView({
                       ) : shape === 'booth' ? (
                         <>
                           <rect x={x} y={y} width={w} height={h} rx={13} fill={st.fill} stroke={st.stroke} strokeWidth={2} strokeDasharray={st.dash} />
-                          {!isOccupied && <rect x={x + 3} y={y + 3} width={w - 6} height={h / 3} rx={7} fill="white" opacity={0.25} />}
+                          {!isOccupied && <rect x={x + 3} y={y + 3} width={w - 6} height={h / 3} rx={7} fill="white" opacity={night ? 0.06 : 0.25} />}
                         </>
                       ) : (
                         <>
                           <rect x={x} y={y} width={w} height={h} rx={12} fill={st.fill} stroke={st.stroke} strokeWidth={2} strokeDasharray={st.dash} />
-                          {!isOccupied && <rect x={x + 3} y={y + 3} width={w - 6} height={h / 3} rx={7} fill="white" opacity={0.25} />}
+                          {!isOccupied && <rect x={x + 3} y={y + 3} width={w - 6} height={h / 3} rx={7} fill="white" opacity={night ? 0.06 : 0.25} />}
                         </>
                       )}
 
