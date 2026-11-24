@@ -21,7 +21,7 @@ parallel-agents/
 # Keep ml_models/ - we need the trained model for production
 
 # Exclude test files (they get bundled as serverless functions, adding ~10min to build)
-api/__tests__/
+api/_app/__tests__/
 client/src/**/__tests__/
 **/*.test.js
 **/*.test.ts
@@ -36,7 +36,7 @@ test-results/
 .playwright-mcp/
 
 # Migrations/docs/wiki/scripts — not needed in serverless bundle
-api/migrations/
+api/_app/migrations/
 docs/
 wiki/
 scripts/

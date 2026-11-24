@@ -26,7 +26,7 @@ const PROJECT_REF = new URL(SUPABASE_URL).hostname.split('.')[0];
 
 (async () => {
   if (!ANON_KEY) { console.error('SUPABASE_ANON_KEY missing'); process.exit(1); }
-  const { supabaseAdmin } = require('../api/_lib/supabase');
+  const { supabaseAdmin } = require('../api/_app/_lib/supabase');
 
   const { data, error } = await supabaseAdmin.auth.admin.generateLink({
     type: 'magiclink',

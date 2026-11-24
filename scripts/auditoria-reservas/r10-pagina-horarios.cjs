@@ -15,7 +15,7 @@
 //   P10d the page books the first available time of each date -> 201 each
 const h = require('./harness.cjs');
 const { Client } = require('pg');
-const portal = h.load('api/portal.js');
+const portal = h.load('api/_app/portal.js');
 const T2 = '22222222-2222-4222-8222-222222222222';
 const settings = { advance_booking_days: 10, max_party_size: 6 };
 const hours = Object.fromEntries(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']

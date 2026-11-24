@@ -12,7 +12,7 @@
 //   W5 control: 7 days ahead, 2 guests     -> available; booking created
 const crypto = require('crypto');
 const h = require('./harness.cjs');
-const tools = h.load('api/_services/whatsapp/reservation-tools.js');
+const tools = h.load('api/_app/_services/whatsapp/reservation-tools.js');
 const T2 = '22222222-2222-4222-8222-222222222222';
 const hours = Object.fromEntries(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
   .map(d => [d, { is_open: true, open_time: '18:00', close_time: '23:00' }]));

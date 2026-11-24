@@ -15,8 +15,8 @@
 // Run it on main to see the overbooking, and on the fix to see the refusal.
 const h = require('./harness.cjs');
 const { Client } = require('pg');
-const tools = h.load('api/_lib/tool-handlers.js');
-const portal = h.load('api/portal.js');
+const tools = h.load('api/_app/_lib/tool-handlers.js');
+const portal = h.load('api/_app/portal.js');
 
 const T2 = '22222222-2222-4222-8222-222222222222';
 const DAY = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);

@@ -36,6 +36,13 @@ pular()     { echo "PULA: $1";  exit 0; }
 # 10–11/11/2026 isso custou cerca de doze builds pagos de ramos de agentes.
 # Sem VERCEL_ENV (fora da Vercel) cai na regra por caminhos abaixo: produção
 # sempre define a variável, então a falha continua para o lado de construir.
+# Exceção única (regra do time): um ramo bisect/* constrói a pré-visualização
+# quando a mudança é o próprio build, para testar o runtime antes da produção.
+# Apague o ramo depois.
+case "${VERCEL_GIT_COMMIT_REF:-}" in
+  bisect/*) construir "ramo ${VERCEL_GIT_COMMIT_REF} — teste do próprio build" ;;
+esac
+
 if [ -n "${VERCEL_ENV:-}" ] && [ "$VERCEL_ENV" != "production" ]; then
   pular "ambiente $VERCEL_ENV — pré-visualização desligada desde 23/09/2026"
 fi

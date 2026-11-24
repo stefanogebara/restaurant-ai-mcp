@@ -11,7 +11,7 @@
 // Load environment variables from .env file
 require('dotenv').config();
 
-const { textToSpeech, calculateCost } = require('./api/_lib/cartesia');
+const { textToSpeech, calculateCost } = require('./api/_app/_lib/cartesia');
 
 async function testCartesia() {
   console.log('🎤 Testing Cartesia TTS Integration...\n');

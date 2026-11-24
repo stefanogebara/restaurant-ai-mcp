@@ -76,7 +76,7 @@ const PLACES_FIELD_MASK = [
   'places.primaryTypeDisplayName',
 ].join(',');
 
-// ─── Reused from api/scrape-restaurant.js ───────────────────────────────────
+// ─── Reused from api/_app/scrape-restaurant.js ───────────────────────────────────
 
 function parseBusinessHours(openingHours) {
   if (!openingHours?.periods) return null;

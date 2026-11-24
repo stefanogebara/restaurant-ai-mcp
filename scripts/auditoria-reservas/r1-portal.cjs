@@ -4,7 +4,7 @@
 // be refused when it double-books a table, leaves business hours, exceeds
 // capacity, or targets a finished visit; a refusal changes nothing.
 const h = require('./harness.cjs');
-const portal = h.load('api/customer-reservation.js');
+const portal = h.load('api/_app/customer-reservation.js');
 const { A, B, C } = h.GUESTS;
 
 const digits = p => p.replace(/\D/g, '');

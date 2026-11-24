@@ -38,8 +38,8 @@ for (const arquivo of ['.env.production.local', '.env']) {
   }
 }
 
-const { supabaseAdmin } = require(path.join(RAIZ, 'api/_lib/supabase.js'));
-const { extrairCelularDoSite } = require(path.join(RAIZ, 'api/_lib/prospecting/numero-do-site.js'));
+const { supabaseAdmin } = require(path.join(RAIZ, 'api/_app/_lib/supabase.js'));
+const { extrairCelularDoSite } = require(path.join(RAIZ, 'api/_app/_lib/prospecting/numero-do-site.js'));
 
 const args = process.argv.slice(2);
 const GRAVAR = args.includes('--gravar');

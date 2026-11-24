@@ -8,19 +8,19 @@ const fs = require('fs');
 const path = require('path');
 
 const filesToUpdate = [
-  'api/batch-predict.js',
-  'api/host-dashboard.js',
-  'api/subscription-status.js',
-  'api/stripe-webhook.js',
-  'api/reservations.js',
-  'api/waitlist.js',
-  'api/health.js',
-  'api/predictive-analytics.js',
-  'api/cron/check-late-reservations.js',
-  'api/elevenlabs-webhook.js',
-  'api/analytics.js',
-  'api/check-availability.js',
-  'api/get-wait-time.js'
+  'api/_app/batch-predict.js',
+  'api/_app/host-dashboard.js',
+  'api/_app/subscription-status.js',
+  'api/_app/stripe-webhook.js',
+  'api/_app/reservations.js',
+  'api/_app/waitlist.js',
+  'api/_app/health.js',
+  'api/_app/predictive-analytics.js',
+  'api/_app/cron/check-late-reservations.js',
+  'api/_app/elevenlabs-webhook.js',
+  'api/_app/analytics.js',
+  'api/_app/check-availability.js',
+  'api/_app/get-wait-time.js'
 ];
 
 console.log('\n========================================');

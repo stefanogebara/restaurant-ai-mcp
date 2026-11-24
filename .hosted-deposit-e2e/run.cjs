@@ -87,8 +87,8 @@ async function main() {
   const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
   const evidence = {
     sourceCommit: git('rev-parse', 'HEAD'),
-    sourcePatch: digest(git('diff','HEAD','--','api/request-deposit-link.js','api/stripe-webhook.js') +
-      fs.readFileSync(path.join(root, 'api/_lib/hosted-reservation-deposit.js'))),
+    sourcePatch: digest(git('diff','HEAD','--','api/_app/request-deposit-link.js','api/_app/stripe-webhook.js') +
+      fs.readFileSync(path.join(root, 'api/_app/_lib/hosted-reservation-deposit.js'))),
     migration: createHash('sha256').update(fs.readFileSync(path.join(root, migration))).digest('hex'),
     account: expectedAccount, testMode: true, run, passed: false, results: {}, cleanup: [],
   };

@@ -15,7 +15,7 @@ Build must exit with code 0 and show "built in" message.
 
 ### 2. API Syntax Check
 ```bash
-cd /c/Users/stefa/restaurant-ai-mcp && for f in api/*.js api/_lib/*.js; do node -c "$f" 2>&1 || echo "SYNTAX ERROR: $f"; done 2>&1 | grep "SYNTAX ERROR" || echo "All API files OK"
+cd /c/Users/stefa/restaurant-ai-mcp && for f in api/*.js api/_app/_lib/*.js; do node -c "$f" 2>&1 || echo "SYNTAX ERROR: $f"; done 2>&1 | grep "SYNTAX ERROR" || echo "All API files OK"
 ```
 
 ### 3. Backend Tests

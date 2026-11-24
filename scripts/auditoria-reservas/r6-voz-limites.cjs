@@ -13,8 +13,8 @@
 //   A4 availability for 7 guests       -> not available (PARTY_TOO_LARGE)
 //   A5 control: availability 7 days    -> available
 const h = require('./harness.cjs');
-const tools = h.load('api/_lib/tool-handlers.js');
-const { getRestaurantById } = h.load('api/_lib/restaurant-loader.js');
+const tools = h.load('api/_app/_lib/tool-handlers.js');
+const { getRestaurantById } = h.load('api/_app/_lib/restaurant-loader.js');
 const T2 = '22222222-2222-4222-8222-222222222222';
 const hours = Object.fromEntries(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
   .map(d => [d, { is_open: true, open_time: '18:00', close_time: '23:00' }]));

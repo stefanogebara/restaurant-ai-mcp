@@ -14,7 +14,7 @@
  * with no context):
  *   - Repo is a Vercel-deployed app. Every .js file under api/ becomes
  *     a serverless function unless excluded.
- *   - api/_lib/* is the established library convention (underscore = lib).
+ *   - api/_app/_lib/* is the established library convention (underscore = lib).
  *   - Current build is 15-17 min for ~238 functions. Per-function NFT
  *     trace ~3.4s. Cutting 20 functions saves ~1 min.
  *   - We already KNOW api/services/ (43 files) is library code wrongly
@@ -84,10 +84,10 @@ file wastes ~3.4s of NFT-trace + bundle time per build, plus exposes a
 broken URL that returns FUNCTION_INVOCATION_FAILED.
 
 You're hunting for OTHER directories with this pattern. SKIP api/services/
-(already known — 43 files, will be moved to api/_services/ separately).
+(already known — 43 files, will be moved to api/_app/_services/ separately).
 
 Vercel convention: any file under api/ becomes a function UNLESS it's in
-a directory starting with underscore (api/_lib/, api/_services/, etc.) or
+a directory starting with underscore (api/_app/_lib/, api/_app/_services/, etc.) or
 the filename itself starts with underscore.
 
 How to find them:
@@ -102,9 +102,9 @@ How to find them:
      directory as a candidate to move to api/_<name>/.
 
 Known good directories that should NOT be flagged:
-  - api/cron/ (real handlers, scheduled by vercel.json)
-  - api/onboarding/ (likely handlers)
-  - api/instagram/ (likely handlers)
+  - api/_app/cron/ (real handlers, scheduled by vercel.json)
+  - api/_app/onboarding/ (likely handlers)
+  - api/_app/instagram/ (likely handlers)
   - api/ml/ (mostly handlers but verify)
 
 For each directory you flag, include:
@@ -154,7 +154,7 @@ For each finding:
   - risk: "low" (move require inside function)
   - fix: "Move \`const { X } = require('<pkg>')\` from line N to inside <function-name>"
 
-DO NOT flag api/_lib/* files — those are libs shared across handlers
+DO NOT flag api/_app/_lib/* files — those are libs shared across handlers
 where pervasive use is expected.
 
 Return a FindingReport with category="heavy-deps".
@@ -218,9 +218,9 @@ References to look for:
 If NONE of the four reference types hits → likely dead, flag.
 
 Skip these known-good even-if-no-direct-reference handlers:
-  - api/api-not-found.js (catch-all target)
-  - api/sitemap.js (referenced via /sitemap.xml rewrite)
-  - api/_lib/* (not function files)
+  - api/_app/api-not-found.js (catch-all target)
+  - api/_app/sitemap.js (referenced via /sitemap.xml rewrite)
+  - api/_app/_lib/* (not function files)
   - Webhook receivers (whatsapp-webhook, stripe-webhook, etc.) — only
     flag these if you can't find their secret-keyed config anywhere.
 

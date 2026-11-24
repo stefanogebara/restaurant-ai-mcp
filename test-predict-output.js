@@ -1,5 +1,5 @@
 const { predictNoShow } = require('./api/ml/predict');
-const { getCustomerStats } = require('./api/_lib/customer-history');
+const { getCustomerStats } = require('./api/_app/_lib/customer-history');
 
 async function testPredict() {
   const reservation = {

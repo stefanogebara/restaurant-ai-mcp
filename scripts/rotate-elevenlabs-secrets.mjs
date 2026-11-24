@@ -37,8 +37,8 @@ const {
   getOrCreateWebhookSecret,
   buildToolDefinitions,
   createToolsViaAPI,
-} = require('../api/_services/elevenlabsAgentService');
-const { supabaseAdmin } = require('../api/_lib/supabase');
+} = require('../api/_app/_services/elevenlabsAgentService');
+const { supabaseAdmin } = require('../api/_app/_lib/supabase');
 
 const ELEVENLABS_BASE = 'https://api.elevenlabs.io/v1/convai';
 const API_KEY = process.env.ELEVENLABS_API_KEY;

@@ -26,7 +26,7 @@
  * ── Allow-list ──────────────────────────────────────────────────────
  * Entries are anchored to CODE, not line numbers. An earlier version
  * keyed them as `path:line`; by Aug 2026 thirteen of sixteen entries had
- * rotted (api/services → api/_services was renamed, other files shifted)
+ * rotted (api/services → api/_app/_services was renamed, other files shifted)
  * and were silently suppressing arbitrary lines — a real fire-and-forget
  * landing on one of those line numbers would have been swallowed. Line
  * numbers move; the statement text is what we actually judged safe.

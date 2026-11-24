@@ -7,7 +7,7 @@ const path = require('path');
 require('dotenv').config();
 require('dotenv').config({ path: path.join(__dirname, '.env.local'), override: true });
 
-const { validateCritical } = require('./api/_lib/validate-env');
+const { validateCritical } = require('./api/_app/_lib/validate-env');
 if (process.env.NODE_ENV !== 'test') {
   try {
     validateCritical();
@@ -19,7 +19,7 @@ if (process.env.NODE_ENV !== 'test') {
 
 const express = require('express');
 const cors = require('cors');
-const { addRequestId } = require('./api/_lib/request-id');
+const { addRequestId } = require('./api/_app/_lib/request-id');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -36,20 +36,20 @@ app.use((req, res, next) => {
 });
 
 // Load and mount API endpoints
-const onboardingComplete = require('./api/onboarding/complete.js');
-const onboardingStatus = require('./api/onboarding/status.js');
-const hostDashboard = require('./api/host-dashboard.js');
-const analytics = require('./api/analytics.js');
-const waitlist = require('./api/waitlist.js');
-const batchPredict = require('./api/batch-predict.js');
-const portal = require('./api/portal.js');
-const reservations = require('./api/reservations.js');
+const onboardingComplete = require('./api/_app/onboarding/complete.js');
+const onboardingStatus = require('./api/_app/onboarding/status.js');
+const hostDashboard = require('./api/_app/host-dashboard.js');
+const analytics = require('./api/_app/analytics.js');
+const waitlist = require('./api/_app/waitlist.js');
+const batchPredict = require('./api/_app/batch-predict.js');
+const portal = require('./api/_app/portal.js');
+const reservations = require('./api/_app/reservations.js');
 
-const mlPerformance = require('./api/ml-performance.js');
-const ltv = require('./api/ltv.js');
-const pricing = require('./api/pricing.js');
-const agentConversations = require('./api/agent-conversations.js');
-const tableConfig = require('./api/table-config.js');
+const mlPerformance = require('./api/_app/ml-performance.js');
+const ltv = require('./api/_app/ltv.js');
+const pricing = require('./api/_app/pricing.js');
+const agentConversations = require('./api/_app/agent-conversations.js');
+const tableConfig = require('./api/_app/table-config.js');
 
 // Create mock req/res wrappers for Vercel functions
 const createHandler = (handler) => {

@@ -5,252 +5,48 @@
   "outputDirectory": "client/dist",
   "regions": ["fra1"],
   "functions": {
-    "api/manager-chat.js": {
-      "maxDuration": 120
-    },
-    "api/twilio-voice-connect.js": {
-      "maxDuration": 120
-    },
-    "api/waha-webhook.js": {
-      "maxDuration": 120
-    },
-    "api/whatsapp-webhook.js": {
-      "maxDuration": 120
-    },
-    "api/prospect-enrich.js": {
-      "maxDuration": 120
-    },
-    "api/prospect-discovery-worker.js": {
-      "maxDuration": 60
-    },
-    "api/cron/run-2min.js": {
-      "maxDuration": 120
-    },
-    "api/cron/run-5min.js": {
-      "maxDuration": 300
-    },
-    "api/**/*.js": {
-      "excludeFiles": "{lambda/**,api/__tests__/**,**/*.test.js,**/*.spec.js,ml-training-data/**,e2e/**,.claude/**,seatable-ads/**,reels-toolkit/**,remotion/**}",
+    "api/index.js": {
+      "excludeFiles": "{lambda/**,api/_app/__tests__/**,**/*.test.js,**/*.spec.js,ml-training-data/**,e2e/**,.claude/**,seatable-ads/**,reels-toolkit/**,remotion/**}",
       "memory": 512,
-      "maxDuration": 60
+      "maxDuration": 300
     }
   },
   "rewrites": [
     {
-      "source": "/api/prospect-discover",
-      "destination": "/api/prospect-discover.js"
-    },
-    {
-      "source": "/api/prospect-dispatch",
-      "destination": "/api/prospect-dispatch.js"
-    },
-    {
-      "source": "/api/racha-notify",
-      "destination": "/api/racha-notify.js"
-    },
-    {
-      "source": "/api/prospect-enrich",
-      "destination": "/api/prospect-enrich.js"
-    },
-    {
-      "source": "/api/prospect-admin",
-      "destination": "/api/prospect-admin.js"
-    },
-    {
-      "source": "/api/prospect-close",
-      "destination": "/api/prospect-close.js"
-    },
-    {
       "source": "/proposta",
-      "destination": "/api/racha-proposta.js"
-    },
-    {
-      "source": "/api/racha-proposta",
-      "destination": "/api/racha-proposta.js"
-    },
-    {
-      "source": "/api/prospect-discovery-worker",
-      "destination": "/api/prospect-discovery-worker.js"
-    },
-    {
-      "source": "/api/previa-event",
-      "destination": "/api/previa-event.js"
+      "destination": "/api/index.js"
     },
     {
       "source": "/sitemap.xml",
-      "destination": "/api/sitemap"
-    },
-    {
-      "source": "/api/demo/create",
-      "destination": "/api/demo?action=create"
-    },
-    {
-      "source": "/api/demo/session",
-      "destination": "/api/demo?action=session"
-    },
-    {
-      "source": "/api/demo/convert",
-      "destination": "/api/demo?action=convert"
-    },
-    {
-      "source": "/api/demo/attach-contact",
-      "destination": "/api/demo?action=attach-contact"
+      "destination": "/api/index.js"
     },
     {
       "source": "/restaurants/:city/:cuisine",
-      "destination": "/api/seo/city-cuisine?city=:city&cuisine=:cuisine"
+      "destination": "/api/index.js"
     },
     {
       "source": "/sistema-de-reservas/:city/:cuisine",
-      "destination": "/api/seo/reservas?city=:city&cuisine=:cuisine"
+      "destination": "/api/index.js"
     },
     {
       "source": "/blog",
-      "destination": "/api/seo/blog-index"
+      "destination": "/api/index.js"
     },
     {
       "source": "/blog/:slug",
-      "destination": "/api/seo/artigo?slug=:slug"
+      "destination": "/api/index.js"
     },
     {
       "source": "/vs/:competitor",
-      "destination": "/api/seo/vs?competitor=:competitor"
+      "destination": "/api/index.js"
     },
     {
-      "source": "/api/voice-experiments",
-      "destination": "/api/voice-experiments.js"
-    },
-    {
-      "source": "/api/event-checkout",
-      "destination": "/api/event-checkout.js"
-    },
-    {
-      "source": "/api/event-booking-confirm",
-      "destination": "/api/event-booking-confirm.js"
-    },
-    {
-      "source": "/api/event-refund",
-      "destination": "/api/event-refund.js"
-    },
-    {
-      "source": "/api/event-public",
-      "destination": "/api/event-public.js"
-    },
-    {
-      "source": "/api/voice-forward",
-      "destination": "/api/voice-forward.js"
-    },
-    {
-      "source": "/api/booking-qr",
-      "destination": "/api/booking-qr.js"
-    },
-    {
-      "source": "/api/booking-token",
-      "destination": "/api/booking-token.js"
-    },
-    {
-      "source": "/api/widget-config",
-      "destination": "/api/widget-config.js"
-    },
-    {
-      "source": "/api/campaign-automations",
-      "destination": "/api/campaign-automations.js"
-    },
-    {
-      "source": "/api/campaign-unsubscribe",
-      "destination": "/api/campaign-unsubscribe.js"
-    },
-    {
-      "source": "/api/api-keys",
-      "destination": "/api/api-keys.js"
-    },
-    {
-      "source": "/api/webhooks-config",
-      "destination": "/api/webhooks-config.js"
-    },
-    {
-      "source": "/api/pos/service-completion",
-      "destination": "/api/pos/service-completion.js"
-    },
-    {
-      "source": "/api/pos/reservations",
-      "destination": "/api/pos/reservations.js"
-    },
-    {
-      "source": "/api/pos/table-status",
-      "destination": "/api/pos/table-status.js"
-    },
-    {
-      "source": "/api/square/auth",
-      "destination": "/api/square?route=auth"
-    },
-    {
-      "source": "/api/square/callback",
-      "destination": "/api/square?route=callback"
-    },
-    {
-      "source": "/api/square/sync",
-      "destination": "/api/square?route=sync"
-    },
-    {
-      "source": "/api/square/webhook",
-      "destination": "/api/square-webhook.js"
-    },
-    {
-      "source": "/api/request-deposit-link",
-      "destination": "/api/request-deposit-link.js"
-    },
-    {
-      "source": "/api/admin-health",
-      "destination": "/api/admin-health.js"
-    },
-    {
-      "source": "/api/ical-feed",
-      "destination": "/api/ical-feed.js"
-    },
-    {
-      "source": "/api/external-booking-webhook",
-      "destination": "/api/external-booking-webhook.js"
-    },
-    {
-      "source": "/api/google-booking/server",
-      "destination": "/api/google-booking/server.js"
-    },
-    {
-      "source": "/v3/HealthCheck",
-      "destination": "/api/google-booking/server.js?action=HealthCheck"
-    },
-    {
-      "source": "/v3/HealthCheck/",
-      "destination": "/api/google-booking/server.js?action=HealthCheck"
-    },
-    {
-      "source": "/v3/BatchAvailabilityLookup",
-      "destination": "/api/google-booking/server.js?action=BatchAvailabilityLookup"
-    },
-    {
-      "source": "/v3/CreateBooking",
-      "destination": "/api/google-booking/server.js?action=CreateBooking"
-    },
-    {
-      "source": "/v3/UpdateBooking",
-      "destination": "/api/google-booking/server.js?action=UpdateBooking"
-    },
-    {
-      "source": "/api/customer-reservation",
-      "destination": "/api/customer-reservation.js"
-    },
-    {
-      "source": "/api/report-pdf",
-      "destination": "/api/report-pdf.js"
-    },
-    {
-      "source": "/api/subscription/status",
-      "destination": "/api/subscription-status.js"
+      "source": "/v3/:path*",
+      "destination": "/api/index.js"
     },
     {
       "source": "/api/(.*)",
-      "destination": "/api/api-not-found"
+      "destination": "/api/index.js"
     },
     {
       "source": "/(.*)",

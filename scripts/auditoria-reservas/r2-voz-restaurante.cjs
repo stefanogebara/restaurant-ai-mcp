@@ -8,7 +8,7 @@
 // guest's phone/e-mail/code; cancel/modify by code from a different caller
 // number must be refused and change nothing.
 const h = require('./harness.cjs');
-const webhook = h.load('api/elevenlabs-webhook.js');
+const webhook = h.load('api/_app/elevenlabs-webhook.js');
 const { A } = h.GUESTS;
 const auth = { authorization: 'Bearer el_whsec_audit_secret_0001', 'x-caller-number': '+5511999990000' };
 
