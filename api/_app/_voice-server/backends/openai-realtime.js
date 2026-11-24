@@ -4,14 +4,21 @@
  * Connects to OpenAI's Realtime API via WebSocket for voice-to-voice AI.
  * Handles bidirectional audio streaming, tool calls, and session management.
  *
- * Protocol: JSON messages over WebSocket
+ * Protocol: the GA Realtime API (JSON messages over WebSocket).
  * Audio format: PCM 16-bit signed LE, 24kHz mono, base64 encoded
+ *
+ * 24/11/2026: OpenAI turned off the beta shape (`OpenAI-Beta: realtime=v1`,
+ * gpt-4o-realtime-preview, flat session fields, response.audio.delta); every
+ * call closed with `beta_api_shape_disabled`. Do not bring back the beta
+ * header or field names. Guard: __tests__/openai-realtime-backend.test.js.
  */
 
 const WebSocket = require('ws');
 const BaseBackend = require('./base-backend');
 
-const OPENAI_REALTIME_URL = 'wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview';
+const OPENAI_REALTIME_MODEL = 'gpt-realtime';
+const OPENAI_REALTIME_URL = `wss://api.openai.com/v1/realtime?model=${OPENAI_REALTIME_MODEL}`;
+const PCM_24K = { type: 'audio/pcm', rate: 24000 };
 const CONNECTION_TIMEOUT_MS = 10000;
 
 class OpenAIRealtimeBackend extends BaseBackend {
@@ -32,8 +39,7 @@ class OpenAIRealtimeBackend extends BaseBackend {
 
     this.ws = new WebSocket(OPENAI_REALTIME_URL, {
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'OpenAI-Beta': 'realtime=v1'
+        Authorization: `Bearer ${apiKey}`
       }
     });
 
@@ -76,8 +82,10 @@ class OpenAIRealtimeBackend extends BaseBackend {
       this._emitError({ type: 'websocket_error', message: error.message });
     });
 
-    // Configure the session
+    // Configure the session, then greet: the caller hears the restaurant
+    // first instead of silence until they speak.
     this._sendSessionUpdate(config);
+    this._sendGreeting(config.firstMessage);
     this.connected = true;
     this.logger.info('Connected to OpenAI Realtime API');
   }
@@ -88,20 +96,38 @@ class OpenAIRealtimeBackend extends BaseBackend {
     this._send({
       type: 'session.update',
       session: {
-        modalities: ['text', 'audio'],
+        type: 'realtime',
+        output_modalities: ['audio'],
         instructions: config.systemPrompt,
-        voice: config.voice || 'alloy',
-        input_audio_format: 'pcm16',
-        output_audio_format: 'pcm16',
-        input_audio_transcription: { model: 'whisper-1' },
-        turn_detection: {
-          type: 'server_vad',
-          threshold: 0.5,
-          prefix_padding_ms: 300,
-          silence_duration_ms: 500
+        audio: {
+          input: {
+            format: PCM_24K,
+            transcription: { model: 'gpt-4o-transcribe' },
+            turn_detection: {
+              type: 'server_vad',
+              threshold: 0.5,
+              prefix_padding_ms: 300,
+              silence_duration_ms: 500
+            }
+          },
+          output: {
+            format: PCM_24K,
+            voice: config.voice || 'alloy'
+          }
         },
         tools,
         tool_choice: 'auto'
+      }
+    });
+  }
+
+  _sendGreeting(firstMessage) {
+    if (!firstMessage) return;
+    this._send({
+      type: 'response.create',
+      response: {
+        output_modalities: ['audio'],
+        instructions: `Greet the caller by saying exactly: "${firstMessage}"`
       }
     });
   }
@@ -267,21 +293,21 @@ class OpenAIRealtimeBackend extends BaseBackend {
         this.logger.info('Session configuration updated');
         break;
 
-      case 'response.audio.delta':
+      case 'response.output_audio.delta':
         // Audio chunk from AI - forward to Twilio
         if (message.delta) {
           this._emitAudio(message.delta);
         }
         break;
 
-      case 'response.audio_transcript.delta':
+      case 'response.output_audio_transcript.delta':
         // Partial transcript of AI speech
         if (message.delta) {
           this._emitTranscript({ type: 'ai', text: message.delta, partial: true });
         }
         break;
 
-      case 'response.audio_transcript.done':
+      case 'response.output_audio_transcript.done':
         // Complete transcript of AI speech
         if (message.transcript) {
           this._emitTranscript({ type: 'ai', text: message.transcript, partial: false });
@@ -330,6 +356,9 @@ class OpenAIRealtimeBackend extends BaseBackend {
         this.isResponseActive = true;
         break;
 
+      case 'response.output_audio.done':
+      case 'response.output_text.delta':
+      case 'response.output_text.done':
       case 'input_audio_buffer.committed':
       case 'input_audio_buffer.cleared':
       case 'response.output_item.added':
