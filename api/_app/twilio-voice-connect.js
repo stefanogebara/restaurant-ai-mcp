@@ -20,8 +20,11 @@ const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 
 const logger = createSecureLogger('TwilioVoiceConnect');
 
-// WebSocket server URL for the voice pipeline
-const VOICE_WS_URL = process.env.VOICE_WS_URL;
+// WebSocket server URL for the voice pipeline. Trimmed: on 24/11/2026 the
+// production value ended in a line break. voice-stream-auth parses it with
+// new URL() (which drops the break), so the raw value never matched and every
+// OpenAI call got the spoken error instead of the Fly server.
+const VOICE_WS_URL = process.env.VOICE_WS_URL?.trim();
 
 module.exports = async (req, res) => {
   setWebhookCors(req, res);
@@ -100,7 +103,7 @@ module.exports = async (req, res) => {
     // Route based on voice engine
     switch (effectiveEngine) {
       case 'openai_realtime': {
-        const wsUrl = restaurant.voice_ws_endpoint || VOICE_WS_URL;
+        const wsUrl = restaurant.voice_ws_endpoint?.trim() || VOICE_WS_URL;
 
         logger.info('Routing to OpenAI Realtime pipeline', {
           wsUrl,
