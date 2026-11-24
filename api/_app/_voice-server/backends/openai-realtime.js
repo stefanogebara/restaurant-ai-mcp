@@ -220,6 +220,12 @@ class OpenAIRealtimeBackend extends BaseBackend {
       },
       {
         type: 'function',
+        name: 'end_call',
+        description: 'Hang up the call. Use right after your short goodbye, when the caller is done or you cannot help further.',
+        parameters: { type: 'object', properties: {}, required: [] }
+      },
+      {
+        type: 'function',
         name: 'identify_restaurant',
         description: 'Identify which restaurant the customer wants. Use in multi-tenant mode.',
         parameters: {

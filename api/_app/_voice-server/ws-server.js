@@ -22,6 +22,7 @@ const { buildPersonaPrompt, buildFirstMessage } = require('../_lib/persona-promp
 const { twilioToOpenAI, openAIToTwilio } = require('./audio-converter');
 const { createSession, getSession, destroySession, getActiveSessions } = require('./session-manager');
 const { executeToolCall } = require('./tool-handler');
+const { requestHangup, handleHangupMark } = require('./call-ending');
 const OpenAIRealtimeBackend = require('./backends/openai-realtime');
 const { buildGuestContext } = require('../_services/guestMemory');
 
@@ -132,6 +133,7 @@ function handleTwilioConnection(ws) {
         case 'mark':
           if (!authenticated || message.streamSid !== streamSid) { ws.close(1008, 'Stream mismatch'); return; }
           handleMark(message);
+          handleHangupMark(ws, getSession(streamSid), message.mark?.name);
           break;
 
         case 'stop':
@@ -324,6 +326,13 @@ function setupBackendHandlers(ws, session, backend) {
       callId: toolCall.callId,
       streamSid
     });
+
+    if (toolCall.name === 'end_call') {
+      // No tool result: that would make the AI speak again. Hang up once
+      // Twilio has played the goodbye (see call-ending.js).
+      requestHangup(ws, session, (msg) => sendTwilioMessage(ws, streamSid, msg));
+      return;
+    }
 
     try {
       const result = await executeToolCall(
