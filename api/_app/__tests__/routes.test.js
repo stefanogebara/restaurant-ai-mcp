@@ -52,7 +52,8 @@ describe('addresses that the old per-file rewrites served', () => {
     ['/api/host-dashboard.js', 'host-dashboard', {}],
     ['/api/cron/run?group=daily', 'cron/run', {}],
     ['/api/onboarding/complete', 'onboarding/complete', {}],
-    ['/api/demo/create', 'demo', { action: 'create' }],
+    ['/api/demo/create', 'demo/index', { action: 'create' }],
+    ['/api/demo', 'demo/index', {}],
     ['/api/square/callback?code=1', 'square', { route: 'callback' }],
     ['/api/square/webhook', 'square-webhook', {}],
     ['/api/subscription/status', 'subscription-status', {}],
@@ -68,6 +69,12 @@ describe('addresses that the old per-file rewrites served', () => {
     ['/api/does-not-exist', 'api-not-found', {}],
   ])('%s → %s', (url, key, extra) => {
     expect(resolve(url)).toEqual({ key, extra });
+  });
+
+  it('every alias points at a handler that exists (the demo 500 on the first test deploy)', () => {
+    const { REWRITES } = require('../router');
+    const broken = REWRITES.map((r) => r.to).filter((to) => !routes[to] && !routes[`${to}/index`]);
+    expect(broken).toEqual([]);
   });
 
   it('every route key loads a handler function', () => {

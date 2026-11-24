@@ -34,6 +34,13 @@ function decode(value) {
   try { return decodeURIComponent(value); } catch { return value; }
 }
 
+/** The route key for a path: the file itself, or the folder's index.js. */
+function handlerKey(name) {
+  if (routes[name]) return name;
+  if (routes[`${name}/index`]) return `${name}/index`;
+  return null;
+}
+
 /** Which endpoint serves this address, and the query the old rewrite added. */
 function resolve(url) {
   const pathname = new URL(url || '/', 'http://localhost').pathname;
@@ -41,16 +48,12 @@ function resolve(url) {
     const m = pathname.match(rule.pattern);
     if (m) {
       const extra = rule.query ? rule.query(m.map(decode)) : {};
-      return { key: rule.to, extra };
+      return { key: handlerKey(rule.to) || NOT_FOUND, extra };
     }
   }
   const api = pathname.match(/^\/api\/(.+?)\/?$/);
-  if (api) {
-    const key = api[1].replace(/\.js$/, '');
-    if (routes[key]) return { key, extra: {} };
-    if (routes[`${key}/index`]) return { key: `${key}/index`, extra: {} };
-  }
-  return { key: NOT_FOUND, extra: {} };
+  const key = api && handlerKey(api[1].replace(/\.js$/, ''));
+  return { key: key || NOT_FOUND, extra: {} };
 }
 
 function setQuery(req, extra) {
