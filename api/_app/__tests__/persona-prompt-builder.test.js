@@ -180,3 +180,25 @@ describe('availability is never claimed without the tool (live finding, 14/11/20
     expect(prompt).toMatch(/never instead of it/);
   });
 });
+
+// Real call on 2026-11-25 (Fly voice server, Cantina Bella Vista): the caller
+// gave name, phone, date, time and party size in one sentence and the agent
+// booked one second later, with no read-back. The old line said "Once the
+// customer has confirmed all details ... call create_reservation IMMEDIATELY",
+// which the model read as "once you have all details".
+describe('buildPersonaPrompt — read back before booking', () => {
+  const config = { restaurant_name: 'Bistro', timezone: 'America/Sao_Paulo' };
+
+  test.each(['pt-BR', 'es-ES', 'en-US'])('%s: read back, ask, wait for a yes in the next turn', (language) => {
+    const prompt = buildPersonaPrompt(config, language, { channel: 'voice' });
+    expect(prompt).toMatch(/read back/i);
+    expect(prompt).toMatch(/even when the caller gives every detail at once/i);
+    expect(prompt).toMatch(/next turn/i);
+    expect(prompt).not.toMatch(/Once the customer has confirmed all details/);
+  });
+
+  test('the tool description itself demands the read-back', () => {
+    const prompt = buildPersonaPrompt(config, 'pt-BR', { channel: 'voice' });
+    expect(prompt).toMatch(/- create_reservation: [^\n]*read[- ]back/i);
+  });
+});
