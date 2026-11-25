@@ -12,6 +12,7 @@
 const { createSecureLogger } = require('../_lib/secure-logger');
 const toolHandlers = require('../_lib/tool-handlers');
 const { trackUsage } = require('../_lib/usage-tracking');
+const { normalizePhone } = require('../_lib/voice-phone');
 
 const logger = createSecureLogger('VoiceToolHandler');
 
@@ -69,7 +70,8 @@ async function executeToolCall(toolName, args, context) {
             time: args.time,
             party_size: args.party_size,
             customer_name: args.customer_name,
-            customer_phone: args.customer_phone || callerNumber,
+            // Same rule as the ElevenLabs webhook: E.164, else the caller ID.
+            customer_phone: normalizePhone(args.customer_phone, callerNumber) || callerNumber || args.customer_phone,
             customer_email: args.customer_email,
             special_requests: args.special_requests
           }
