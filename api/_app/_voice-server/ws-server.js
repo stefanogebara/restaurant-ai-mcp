@@ -22,7 +22,7 @@ const { buildPersonaPrompt, buildFirstMessage } = require('../_lib/persona-promp
 const { twilioToOpenAI, openAIToTwilio } = require('./audio-converter');
 const { createSession, getSession, destroySession, getActiveSessions } = require('./session-manager');
 const { executeToolCall } = require('./tool-handler');
-const { requestHangup, handleHangupMark } = require('./call-ending');
+const { requestHangup, handleHangupMark, cancelHangup, trackOutgoingAudio, clearPlayback } = require('./call-ending');
 const OpenAIRealtimeBackend = require('./backends/openai-realtime');
 const { buildGuestContext } = require('../_services/guestMemory');
 
@@ -313,6 +313,8 @@ function setupBackendHandlers(ws, session, backend) {
         streamSid,
         media: { payload: twilioAudio }
       });
+      // How long Twilio still has to play (the hang-up waits for it).
+      trackOutgoingAudio(session, Buffer.byteLength(twilioAudio, 'base64'));
     } catch (error) {
       logger.error('Audio conversion error (AI->Twilio):', {
         message: error.message
@@ -372,11 +374,17 @@ function setupBackendHandlers(ws, session, backend) {
       // User started speaking - interrupt AI
       session.isInterrupted = true;
 
+      // Never hang up on a caller who is talking. "clear" below makes Twilio
+      // return the end_call mark at once; cancelling first makes it a no-op.
+      // The AI answers and can call end_call again.
+      if (cancelHangup(session)) logger.info('Hang-up cancelled: caller is talking', { streamSid });
+
       // Clear Twilio's audio buffer to stop current AI speech
       sendTwilioMessage(ws, streamSid, {
         event: 'clear',
         streamSid
       });
+      clearPlayback(session);
 
       // Tell AI to stop generating
       backend.interrupt().catch((err) => {
